@@ -1,0 +1,17 @@
+{
+  "name": "devloopfeed",
+  "version": "0.1.0",
+  "private": true,
+  "description": "DevLoopFeed full-stack TypeScript workspace.",
+  "type": "module",
+  "scripts": {
+    "dev:api": "npm --prefix api run dev",
+    "dev:web": "npm --prefix web run dev",
+    "build:api": "npm --prefix api run build",
+    "build:web": "npm --prefix web run build",
+    "start:api": "npm --prefix api run start",
+    "check:api": "npm --prefix api run typecheck",
+    "check:web": "npm --prefix web run typecheck",
+    "check": "npm run check:api && npm run check:web"
+  }
+}
