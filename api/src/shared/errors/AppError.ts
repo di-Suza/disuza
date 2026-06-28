@@ -7,6 +7,8 @@ class AppError extends Error {
     readonly details: unknown = null,
   ) {
     super(message);
+    Object.setPrototypeOf(this, new.target.prototype);
+    Error.captureStackTrace?.(this, new.target);
   }
 }
 
