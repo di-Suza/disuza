@@ -3,51 +3,36 @@ import { z } from 'zod';
 
 dotenv.config({ quiet: true });
 
-const envSchema = z
-  .object({
-    NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
-    PORT: z.coerce.number().int().min(1).max(65535).default(8080),
-    MONGODB_URI: z.string().trim().min(1).default('mongodb://localhost:27017/devloopfeed'),
-    CORS_ORIGIN: z.string().trim().min(1).default('http://localhost:5173'),
-    LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']).default('info'),
-    JWT_ACCESS_SECRET: z.string().trim().min(32).default('devloopfeed_access_secret_change_me_32_chars'),
-    JWT_REFRESH_SECRET: z.string().trim().min(32).default('devloopfeed_refresh_secret_change_me_32_chars'),
-    ACCESS_TOKEN_EXPIRES_IN: z.string().trim().min(1).default('15m'),
-    REFRESH_TOKEN_EXPIRES_IN: z.string().trim().min(1).default('7d'),
-  })
-  .superRefine((value, ctx) => {
-    if (value.NODE_ENV === 'production' && value.CORS_ORIGIN === '*') {
-      ctx.addIssue({
-        code: 'custom',
-        path: ['CORS_ORIGIN'],
-        message: 'CORS_ORIGIN must be restricted in production',
-      });
-    }
+const emptyStringToUndefined = (value: unknown) => {
+  if (typeof value === 'string' && value.trim() === '') return undefined;
+  return value;
+};
 
-    if (
-      value.NODE_ENV === 'production'
-      && value.JWT_ACCESS_SECRET === 'devloopfeed_access_secret_change_me_32_chars'
-    ) {
-      ctx.addIssue({
-        code: 'custom',
-        path: ['JWT_ACCESS_SECRET'],
-        message: 'JWT_ACCESS_SECRET must be configured in production',
-      });
-    }
+const optionalString = z.preprocess(emptyStringToUndefined, z.string().trim().optional());
+const optionalEmail = z.preprocess(emptyStringToUndefined, z.string().trim().email().optional());
 
-    if (
-      value.NODE_ENV === 'production'
-      && value.JWT_REFRESH_SECRET === 'devloopfeed_refresh_secret_change_me_32_chars'
-    ) {
-      ctx.addIssue({
-        code: 'custom',
-        path: ['JWT_REFRESH_SECRET'],
-        message: 'JWT_REFRESH_SECRET must be configured in production',
-      });
-    }
-  });
+const rawEnvSchema = z.object({
+  NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
+  PORT: z.coerce.number().int().min(1).max(65535).default(8080),
+  MONGODB_URI: z.string().trim().min(1).default('mongodb://localhost:27017/devloopfeed'),
+  CORS_ORIGIN: z.string().trim().min(1).default('http://localhost:5173'),
+  LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']).default('info'),
+  JWT_ACCESS_SECRET: z.string().trim().min(32).default('devloopfeed_access_secret_change_me_32_chars'),
+  JWT_REFRESH_SECRET: z.string().trim().min(32).default('devloopfeed_refresh_secret_change_me_32_chars'),
+  ACCESS_TOKEN_EXPIRES_IN: z.string().trim().min(1).default('15m'),
+  REFRESH_TOKEN_EXPIRES_IN: z.string().trim().min(1).default('7d'),
+  REFRESH_COOKIE_NAME: z.string().trim().min(1).default('refreshToken'),
+  REFRESH_COOKIE_MAX_AGE_MS: z.coerce.number().int().min(1000).default(7 * 24 * 60 * 60 * 1000),
+  COOKIE_SECURE: z.coerce.boolean().optional(),
+  COOKIE_SAME_SITE: z.enum(['strict', 'lax', 'none']).default('lax'),
+  COOKIE_DOMAIN: optionalString,
+  RESEND_API_KEY: optionalString,
+  SENDER_EMAIL: optionalEmail,
+  GOOGLE_CLIENT_ID: optionalString,
+  GOOGLE_CLIENT_SECRET: optionalString,
+});
 
-const result = envSchema.safeParse(process.env);
+const result = rawEnvSchema.safeParse(process.env);
 
 if (!result.success) {
   const details = result.error.issues
@@ -57,6 +42,48 @@ if (!result.success) {
   throw new Error(`Invalid environment configuration: ${details}`);
 }
 
-const env = Object.freeze(result.data);
+const parsedEnv = result.data;
+const derivedEnv = {
+  ...parsedEnv,
+  COOKIE_SECURE: parsedEnv.COOKIE_SECURE ?? parsedEnv.NODE_ENV === 'production',
+};
+
+const validationErrors: string[] = [];
+
+if (derivedEnv.NODE_ENV === 'production' && derivedEnv.CORS_ORIGIN === '*') {
+  validationErrors.push('CORS_ORIGIN must be restricted in production');
+}
+
+if (
+  derivedEnv.NODE_ENV === 'production'
+  && derivedEnv.JWT_ACCESS_SECRET === 'devloopfeed_access_secret_change_me_32_chars'
+) {
+  validationErrors.push('JWT_ACCESS_SECRET must be configured in production');
+}
+
+if (
+  derivedEnv.NODE_ENV === 'production'
+  && derivedEnv.JWT_REFRESH_SECRET === 'devloopfeed_refresh_secret_change_me_32_chars'
+) {
+  validationErrors.push('JWT_REFRESH_SECRET must be configured in production');
+}
+
+if (derivedEnv.COOKIE_SAME_SITE === 'none' && !derivedEnv.COOKIE_SECURE) {
+  validationErrors.push('COOKIE_SECURE must be true when COOKIE_SAME_SITE is none');
+}
+
+if (derivedEnv.NODE_ENV === 'production' && !derivedEnv.RESEND_API_KEY) {
+  validationErrors.push('RESEND_API_KEY must be configured in production');
+}
+
+if (derivedEnv.NODE_ENV === 'production' && !derivedEnv.SENDER_EMAIL) {
+  validationErrors.push('SENDER_EMAIL must be configured in production');
+}
+
+if (validationErrors.length > 0) {
+  throw new Error(`Invalid environment configuration: ${validationErrors.join('; ')}`);
+}
+
+const env = Object.freeze(derivedEnv);
 
 export default env;

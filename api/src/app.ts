@@ -8,6 +8,7 @@ import requestLogger from './shared/middleware/requestLogger.js';
 import errorHandler from './shared/middleware/errorHandler.js';
 import notFoundHandler from './shared/middleware/notFoundHandler.js';
 import healthRoutes from './modules/health/health.route.js';
+import authRoutes from './modules/auth/auth.route.js';
 
 class App {
   private readonly app: Express;
@@ -48,6 +49,7 @@ class App {
 
   private registerRoutes(): void {
     this.app.use('/api/health', healthRoutes);
+    this.app.use('/api/auth', authRoutes);
   }
 
   private registerErrorMiddleware(): void {

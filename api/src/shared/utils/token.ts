@@ -8,6 +8,8 @@ type TokenSubject = {
   id: string;
   email?: string;
   role?: string;
+  sessionId?: string;
+  purpose?: string;
 };
 
 type AppTokenPayload = JwtPayload & TokenSubject & {
@@ -18,6 +20,7 @@ class TokenService {
   private sign(payload: AppTokenPayload, secret: string, expiresIn: string): string {
     const options: SignOptions = {
       expiresIn: expiresIn as SignOptions['expiresIn'],
+      issuer: 'DevLoopFeed',
     };
 
     return jwt.sign(payload, secret, options);
@@ -25,7 +28,9 @@ class TokenService {
 
   private verify(token: string, secret: string, tokenType: TokenTypeValue): AppTokenPayload {
     try {
-      const payload = jwt.verify(token, secret) as AppTokenPayload;
+      const payload = jwt.verify(token, secret, {
+        issuer: 'DevLoopFeed',
+      }) as AppTokenPayload;
 
       if (payload.tokenType !== tokenType) {
         throw new UnauthorizedError('Invalid token type');
@@ -39,6 +44,16 @@ class TokenService {
 
       throw new UnauthorizedError('Invalid or expired token');
     }
+  }
+
+  getExpiryDate(token: string): Date {
+    const decoded = jwt.decode(token) as JwtPayload | null;
+
+    if (!decoded?.exp) {
+      throw new UnauthorizedError('Invalid token expiry');
+    }
+
+    return new Date(decoded.exp * 1000);
   }
 
   signAccessToken(subject: TokenSubject): string {
@@ -63,12 +78,28 @@ class TokenService {
     );
   }
 
+  signPasswordResetToken(subject: TokenSubject): string {
+    return this.sign(
+      {
+        ...subject,
+        tokenType: TokenType.PASSWORD_RESET,
+        purpose: 'forgot-password',
+      },
+      env.JWT_ACCESS_SECRET,
+      '5m',
+    );
+  }
+
   verifyAccessToken(token: string): AppTokenPayload {
     return this.verify(token, env.JWT_ACCESS_SECRET, TokenType.ACCESS);
   }
 
   verifyRefreshToken(token: string): AppTokenPayload {
     return this.verify(token, env.JWT_REFRESH_SECRET, TokenType.REFRESH);
+  }
+
+  verifyPasswordResetToken(token: string): AppTokenPayload {
+    return this.verify(token, env.JWT_ACCESS_SECRET, TokenType.PASSWORD_RESET);
   }
 }
 

@@ -139,3 +139,52 @@ Each future feature should update this file with:
 - why it was added
 - how it fits the architecture
 - what command was used to verify it
+## Step 3: Backend Auth Module
+
+Built the backend auth module on a dedicated feature branch.
+
+Added:
+
+- `users` module with `User` model and repository
+- `auth` module with route, controller, service, validators, and repository wiring
+- `AuthSession` model for device/session-level refresh token tracking
+- OTP model, repository, and service
+- email OTP sending through Resend
+- Google OAuth login/register support
+- auth middleware for Bearer access tokens
+- auth rate limiter for sensitive auth endpoints
+- refresh-token cookie helper
+
+Auth strategy:
+
+```txt
+Access token: returned in API response body
+Refresh token: stored in HttpOnly cookie
+Refresh token hash: stored in auth_sessions collection
+```
+
+Why:
+
+This keeps the short-lived access token out of persistent browser storage while still allowing secure refresh through an HttpOnly cookie. The DB-backed session model lets the app revoke one device session, revoke all sessions, and rotate refresh tokens during refresh.
+
+V1 behavior preserved:
+
+- signup OTP flow
+- verify OTP and register
+- login with failed-attempt lockout
+- Google login/register
+- forgot-password OTP flow
+- logout current device
+- logout all devices
+- `/me` authenticated user endpoint
+
+Important v2 improvement:
+
+Access token is no longer saved in cookies. Only the refresh token uses cookies. Session management now uses a richer `auth_sessions` model with token hash, device metadata, expiry, revocation time, and revocation reason.
+
+Verification used:
+
+```bash
+npm run check:api
+npm run build:api
+```
