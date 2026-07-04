@@ -1,6 +1,7 @@
+import AppProviders from './app/providers/AppProviders';
+
 function App() {
-  return <main className="app-shell" aria-label="DevLoopFeed application" />;
+  return <AppProviders />;
 }
 
 export default App;
-
