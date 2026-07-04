@@ -9,6 +9,7 @@ import {
 } from '../state/authSlice';
 import type {
   ApiEnvelope,
+  ApiResult,
   AuthPayload,
   AuthUser,
   ForgotPasswordOtpRequest,
@@ -25,8 +26,22 @@ type RefreshTokenResponse = {
   accessToken: string;
 };
 
+type MessageOnlyResponse = {
+  success: boolean;
+  message: string;
+};
+
 const unwrapEnvelope = <T>(response: ApiEnvelope<T>): T => response.data;
+const unwrapEnvelopeWithMessage = <T>(response: ApiEnvelope<T>): ApiResult<T> => ({
+  ...response.data,
+  message: response.message,
+});
 const unwrapUser = (response: ApiEnvelope<{ user: AuthUser }>): AuthUser => response.data.user;
+const unwrapUserWithMessage = (response: ApiEnvelope<{ user: AuthUser }>): ApiResult<{ user: AuthUser }> => ({
+  user: response.data.user,
+  message: response.message,
+});
+const unwrapMessage = (response: MessageOnlyResponse): { message: string } => ({ message: response.message });
 
 export const authApi = api.injectEndpoints({
   endpoints: (builder) => ({
@@ -45,41 +60,41 @@ export const authApi = api.injectEndpoints({
         }
       },
     }),
-    sendOtp: builder.mutation<OtpResponse, SendOtpRequest>({
+    sendOtp: builder.mutation<ApiResult<OtpResponse>, SendOtpRequest>({
       query: (body) => ({
         url: '/auth/sendOtp',
         method: 'POST',
         body,
       }),
-      transformResponse: unwrapEnvelope<OtpResponse>,
+      transformResponse: unwrapEnvelopeWithMessage<OtpResponse>,
     }),
-    verifyAndRegister: builder.mutation<AuthPayload, VerifyAndRegisterRequest>({
+    verifyAndRegister: builder.mutation<ApiResult<AuthPayload>, VerifyAndRegisterRequest>({
       query: (body) => ({
         url: '/auth/verifyAndRegister',
         method: 'POST',
         body,
       }),
-      transformResponse: unwrapEnvelope<AuthPayload>,
+      transformResponse: unwrapEnvelopeWithMessage<AuthPayload>,
       async onQueryStarted(_arg, { dispatch, queryFulfilled }) {
         try {
           const { data } = await queryFulfilled;
-          dispatch(setCredentials(data));
+          dispatch(setCredentials({ user: data.user, accessToken: data.accessToken }));
         } catch {
           // Mutation consumers surface the error in the form.
         }
       },
     }),
-    login: builder.mutation<AuthPayload, LoginRequest>({
+    login: builder.mutation<ApiResult<AuthPayload>, LoginRequest>({
       query: (body) => ({
         url: '/auth/login',
         method: 'POST',
         body,
       }),
-      transformResponse: unwrapEnvelope<AuthPayload>,
+      transformResponse: unwrapEnvelopeWithMessage<AuthPayload>,
       async onQueryStarted(_arg, { dispatch, queryFulfilled }) {
         try {
           const { data } = await queryFulfilled;
-          dispatch(setCredentials(data));
+          dispatch(setCredentials({ user: data.user, accessToken: data.accessToken }));
         } catch {
           // Mutation consumers surface the error in the form.
         }
@@ -90,6 +105,7 @@ export const authApi = api.injectEndpoints({
         url: '/auth/logout',
         method: 'POST',
       }),
+      transformResponse: unwrapMessage,
       async onQueryStarted(_arg, { dispatch, queryFulfilled }) {
         try {
           await queryFulfilled;
@@ -104,6 +120,7 @@ export const authApi = api.injectEndpoints({
         url: '/auth/logoutAllDevices',
         method: 'POST',
       }),
+      transformResponse: unwrapMessage,
       async onQueryStarted(_arg, { dispatch, queryFulfilled }) {
         try {
           await queryFulfilled;
@@ -113,17 +130,17 @@ export const authApi = api.injectEndpoints({
         }
       },
     }),
-    googleLogin: builder.mutation<AuthPayload, GoogleLoginRequest>({
+    googleLogin: builder.mutation<ApiResult<AuthPayload>, GoogleLoginRequest>({
       query: (body) => ({
         url: '/auth/google',
         method: 'POST',
         body,
       }),
-      transformResponse: unwrapEnvelope<AuthPayload>,
+      transformResponse: unwrapEnvelopeWithMessage<AuthPayload>,
       async onQueryStarted(_arg, { dispatch, queryFulfilled }) {
         try {
           const { data } = await queryFulfilled;
-          dispatch(setCredentials(data));
+          dispatch(setCredentials({ user: data.user, accessToken: data.accessToken }));
         } catch {
           // Mutation consumers surface the error in the form.
         }
@@ -147,33 +164,34 @@ export const authApi = api.injectEndpoints({
         }
       },
     }),
-    sendOtpForForgotPassword: builder.mutation<OtpResponse, string>({
+    sendOtpForForgotPassword: builder.mutation<ApiResult<OtpResponse>, string>({
       query: (email) => ({
         url: '/auth/sendOtpForForgotPassword',
         method: 'POST',
         body: { email },
       }),
-      transformResponse: unwrapEnvelope<OtpResponse>,
+      transformResponse: unwrapEnvelopeWithMessage<OtpResponse>,
     }),
-    verifyOtpForForgotPassword: builder.mutation<ForgotPasswordTokenResponse, ForgotPasswordOtpRequest>({
+    verifyOtpForForgotPassword: builder.mutation<ApiResult<ForgotPasswordTokenResponse>, ForgotPasswordOtpRequest>({
       query: (body) => ({
         url: '/auth/verifyOtpForForgotPassword',
         method: 'POST',
         body,
       }),
-      transformResponse: unwrapEnvelope<ForgotPasswordTokenResponse>,
+      transformResponse: unwrapEnvelopeWithMessage<ForgotPasswordTokenResponse>,
     }),
-    updateNewPasswordForgotPassword: builder.mutation<AuthUser, UpdateForgotPasswordRequest>({
+    updateNewPasswordForgotPassword: builder.mutation<ApiResult<{ user: AuthUser }>, UpdateForgotPasswordRequest>({
       query: (body) => ({
         url: '/auth/updateNewPassword_ForgotPassword',
         method: 'POST',
         body,
       }),
-      transformResponse: unwrapUser,
+      transformResponse: unwrapUserWithMessage,
       async onQueryStarted(_arg, { dispatch, queryFulfilled }) {
         try {
-          const { data } = await queryFulfilled;
-          dispatch(setUser(data));
+          await queryFulfilled;
+          dispatch(clearSession());
+          dispatch(api.util.resetApiState());
         } catch {
           // Mutation consumers surface the error in the form.
         }

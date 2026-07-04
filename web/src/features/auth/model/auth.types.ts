@@ -33,6 +33,10 @@ export type ApiEnvelope<T> = {
   data: T;
 };
 
+export type ApiResult<T> = T & {
+  message: string;
+};
+
 export type AuthPayload = {
   user: AuthUser;
   accessToken: string;
@@ -77,4 +81,3 @@ export type UpdateForgotPasswordRequest = {
   token: string;
   newPassword: string;
 };
-
