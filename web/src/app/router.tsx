@@ -1,0 +1,55 @@
+import { lazy, Suspense, type ReactElement } from 'react';
+import { createBrowserRouter } from 'react-router-dom';
+
+import ProtectedLayout from '@/app/layouts/ProtectedLayout';
+import PublicLayout from '@/app/layouts/PublicLayout';
+import FullPageLoader from '@/shared/components/FullPageLoader/FullPageLoader';
+import NotFound from '@/shared/components/NotFound/NotFound';
+
+const DashboardPage = lazy(() => import('@/features/dashboard/ui/pages/DashboardPage'));
+const LandingPage = lazy(() => import('@/features/landing/ui/pages/LandingPage'));
+const SignInPage = lazy(() => import('@/features/auth/ui/pages/SignIn/SignIn'));
+const SignUpPage = lazy(() => import('@/features/auth/ui/pages/SignUp/SignUp'));
+
+const withSuspense = (element: ReactElement) => (
+  <Suspense fallback={<FullPageLoader />}>
+    {element}
+  </Suspense>
+);
+
+export const router = createBrowserRouter([
+  {
+    element: <PublicLayout />,
+    children: [
+      {
+        path: '/',
+        element: withSuspense(<LandingPage />),
+      },
+      {
+        path: '/auth/signin',
+        element: withSuspense(<SignInPage />),
+      },
+      {
+        path: '/auth/signup',
+        element: withSuspense(<SignUpPage />),
+      },
+    ],
+  },
+  {
+    element: <ProtectedLayout />,
+    children: [
+      {
+        path: '/dashboard',
+        element: withSuspense(<DashboardPage />),
+      },
+      {
+        path: '/home',
+        element: withSuspense(<DashboardPage />),
+      },
+    ],
+  },
+  {
+    path: '*',
+    element: <NotFound />,
+  },
+]);

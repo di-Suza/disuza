@@ -188,3 +188,60 @@ Verification used:
 npm run check:api
 npm run build:api
 ```
+
+## Step 4: Frontend Auth Flow
+
+Built the frontend auth foundation on `feature/web-auth-module`.
+
+Added:
+
+- Vite alias and frontend env typing
+- RTK Query API foundation with `baseQueryWithAuthGuard`
+- refresh-token retry flow guarded by `async-mutex`
+- Bearer access-token attachment from in-memory Redux state
+- auth slice for user, access token, auth status, and logout state
+- typed Redux store hooks
+- reusable UI primitives, toast provider, loader, error boundary, and lock-scroll hook
+- Sign In page with email/password and Google OAuth flow
+- Sign Up page with OTP registration flow
+- OTP verification modal with paste support, arrow navigation, resend timer, and remaining attempts
+- forgot-password modal with email, OTP, and reset-password steps
+- auth initializer that restores sessions through `/auth/me` + refresh cookie
+- public/protected route guards
+- lazy-loaded route pages for auth, landing, and protected dashboard shell
+
+Frontend auth strategy:
+
+```txt
+Access token: kept in Redux memory only
+Refresh token: sent by browser through HttpOnly cookie
+401 response: try /auth/refresh once, save new access token, retry original request
+Refresh failure: clear auth state and stay unauthenticated
+```
+
+Why:
+
+This follows the v2 backend auth strategy. The frontend does not store access tokens in `localStorage` or JS-readable cookies. RTK Query owns API calls and retries, while components stay focused on UI and hooks own page logic.
+
+V1 behavior preserved:
+
+- base auth guard refresh flow
+- signup OTP send/verify flow
+- login flow
+- Google auth flow
+- forgot-password OTP/reset flow
+- public route redirect when already authenticated
+- protected route redirect when unauthenticated
+- logout current device
+- logout all devices
+
+Important v2 improvement:
+
+The old cookie-based access-token assumption was replaced with explicit Bearer token handling because v2 backend returns access tokens in response bodies and stores only refresh tokens in cookies.
+
+Verification used:
+
+```bash
+npm run check:web
+npm run build:web
+```
