@@ -8,6 +8,7 @@ import {
 } from '../../shared/errors/index.js';
 import passwordService from '../../shared/utils/password.js';
 import mediaService, { type MediaService } from '../media/media.service.js';
+import postRepository, { type PostRepository } from '../posts/post.repository.js';
 import type { ProfilePicture } from './user.model.js';
 import userRepository, { type ProfessionalInfoUpdate, type UserRepository } from './user.repository.js';
 import blockRepository, { type BlockRepository } from './block/block.repository.js';
@@ -37,6 +38,7 @@ class UserService {
     private readonly blocks: BlockRepository = blockRepository,
     private readonly blockRules: BlockService = blockService,
     private readonly media: MediaService = mediaService,
+    private readonly posts: PostRepository = postRepository,
   ) {}
 
   private normalizePage(pageInput: unknown): number {
@@ -236,6 +238,10 @@ class UserService {
       };
     }
 
+    const userPosts = profileUser.postsCount > 0 ? await this.posts.findProfilePosts(profileUserId) : [];
+    const normalPosts = userPosts.filter((post) => post.isProjectPost === false);
+    const projectPosts = userPosts.filter((post) => post.isProjectPost === true);
+
     return {
       success: true,
       message: 'Profile User Fetched Successfully!',
@@ -245,8 +251,8 @@ class UserService {
         isBlocked: false,
         hasBlockedMe: false,
       },
-      normalPosts: [],
-      projectPosts: [],
+      normalPosts,
+      projectPosts,
     };
   }
 

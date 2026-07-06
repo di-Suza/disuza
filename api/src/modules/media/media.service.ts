@@ -9,9 +9,11 @@ import HttpStatus from '../../shared/constants/httpStatus.js';
 import {
   IMAGE_MIME_EXTENSION_MAP,
   MEDIA_FOLDERS,
+  MEDIA_MIME_EXTENSION_MAP,
   MEDIA_TAGS,
+  VIDEO_MIME_EXTENSION_MAP,
 } from './media.constants.js';
-import type { ClientUploadAuth, StoredMedia, UploadImageInput } from './media.types.js';
+import type { ClientUploadAuth, MediaKind, StoredMedia, UploadImageInput, UploadMediaInput } from './media.types.js';
 
 class MediaService {
   private client?: ImageKit;
@@ -25,14 +27,40 @@ class MediaService {
     return this.client;
   }
 
-  private getImageExtension(file: Express.Multer.File): string {
-    const extension = IMAGE_MIME_EXTENSION_MAP[file.mimetype as keyof typeof IMAGE_MIME_EXTENSION_MAP];
+  private getMediaType(file: Express.Multer.File): MediaKind {
+    if (file.mimetype in IMAGE_MIME_EXTENSION_MAP) return 'image';
+    if (file.mimetype in VIDEO_MIME_EXTENSION_MAP) return 'video';
+
+    throw new BadRequestError('Please attach only image or video files!');
+  }
+
+  private getMediaExtension(file: Express.Multer.File): string {
+    const extension = MEDIA_MIME_EXTENSION_MAP[file.mimetype as keyof typeof MEDIA_MIME_EXTENSION_MAP];
 
     if (!extension) {
-      throw new BadRequestError('Please attach only image files!');
+      throw new BadRequestError('Please attach only image or video files!');
     }
 
     return extension;
+  }
+
+  private assertExpectedType(file: Express.Multer.File, expectedType?: MediaKind): MediaKind {
+    const mediaType = this.getMediaType(file);
+
+    if (expectedType && mediaType !== expectedType) {
+      throw new BadRequestError(expectedType === 'image' ? 'Please attach only image files!' : 'Please attach only video files!');
+    }
+
+    return mediaType;
+  }
+
+  private assertFileSize(file: Express.Multer.File, mediaType: MediaKind): void {
+    const maxSize = mediaType === 'image' ? env.MEDIA_MAX_FILE_SIZE_BYTES : env.MEDIA_MAX_VIDEO_FILE_SIZE_BYTES;
+
+    if (file.size > maxSize) {
+      const maxSizeMb = Math.floor(maxSize / (1024 * 1024));
+      throw new BadRequestError(`${mediaType === 'image' ? 'Image' : 'Video'} file must be ${maxSizeMb}MB or smaller.`);
+    }
   }
 
   private createFileName(prefix: string, file: Express.Multer.File): string {
@@ -42,19 +70,20 @@ class MediaService {
       .replace(/-+/g, '-')
       .replace(/^-|-$/g, '') || 'media';
 
-    return `${safePrefix}-${Date.now()}-${randomUUID()}.${this.getImageExtension(file)}`;
+    return `${safePrefix}-${Date.now()}-${randomUUID()}.${this.getMediaExtension(file)}`;
   }
 
-  private assertStoredMedia(response: ImageKit.FileUploadResponse): StoredMedia {
+  private assertStoredMedia(response: ImageKit.FileUploadResponse, mediaType: MediaKind, fallbackMime: string): StoredMedia {
     if (!response.url || !response.fileId) {
       throw new AppError('Media upload did not return required storage metadata.', HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
-    const mime = typeof response.metadata?.mimeType === 'string' ? response.metadata.mimeType : undefined;
+    const mime = typeof response.metadata?.mimeType === 'string' ? response.metadata.mimeType : fallbackMime;
 
     return {
       url: response.url,
       fileId: response.fileId,
+      mediaType,
       filePath: response.filePath,
       name: response.name,
       thumbnailUrl: response.thumbnailUrl,
@@ -69,8 +98,11 @@ class MediaService {
     return Boolean(fileId && fileId !== '0' && fileId !== 'external');
   }
 
-  async uploadImage(input: UploadImageInput): Promise<StoredMedia> {
+  async uploadMedia(input: UploadMediaInput): Promise<StoredMedia> {
     const client = this.getClient();
+    const mediaType = this.assertExpectedType(input.file, input.expectedType);
+    this.assertFileSize(input.file, mediaType);
+
     const fileName = this.createFileName(input.fileNamePrefix, input.file);
 
     try {
@@ -82,11 +114,15 @@ class MediaService {
         useUniqueFileName: false,
       });
 
-      return this.assertStoredMedia(response);
+      return this.assertStoredMedia(response, mediaType, input.file.mimetype);
     } catch (error) {
-      logger.error({ error, folder: input.folder }, 'ImageKit upload failed');
-      throw new AppError('Image upload failed. Please try again.', HttpStatus.INTERNAL_SERVER_ERROR);
+      logger.error({ error, folder: input.folder, mediaType }, 'ImageKit upload failed');
+      throw new AppError('Media upload failed. Please try again.', HttpStatus.INTERNAL_SERVER_ERROR);
     }
+  }
+
+  uploadImage(input: UploadImageInput): Promise<StoredMedia> {
+    return this.uploadMedia({ ...input, expectedType: 'image' });
   }
 
   uploadProfilePicture(file: Express.Multer.File, userId: string): Promise<StoredMedia> {
@@ -98,15 +134,28 @@ class MediaService {
     });
   }
 
-  uploadPostImages(files: Express.Multer.File[], userId: string, postId: string): Promise<StoredMedia[]> {
+  uploadPostMedia(files: Express.Multer.File[], userId: string, postId: string): Promise<StoredMedia[]> {
     return Promise.all(
-      files.map((file, index) => this.uploadImage({
-        file,
-        folder: MEDIA_FOLDERS.postImages(userId, postId),
-        fileNamePrefix: `post-${userId}-${postId}-${index}`,
-        tags: [MEDIA_TAGS.postImage, `user-${userId}`, `post-${postId}`],
-      })),
+      files.map((file, index) => {
+        const mediaType = this.getMediaType(file);
+
+        return this.uploadMedia({
+          file,
+          folder: MEDIA_FOLDERS.postMedia(userId, postId),
+          fileNamePrefix: `post-${userId}-${postId}-${index}`,
+          tags: [
+            MEDIA_TAGS.postMedia,
+            mediaType === 'image' ? MEDIA_TAGS.postImage : MEDIA_TAGS.postVideo,
+            `user-${userId}`,
+            `post-${postId}`,
+          ],
+        });
+      }),
     );
+  }
+
+  uploadPostImages(files: Express.Multer.File[], userId: string, postId: string): Promise<StoredMedia[]> {
+    return this.uploadPostMedia(files, userId, postId);
   }
 
   async deleteFile(fileId?: string | null): Promise<void> {
@@ -116,7 +165,7 @@ class MediaService {
       await this.getClient().files.delete(fileId);
     } catch (error) {
       logger.error({ error, fileId }, 'ImageKit file delete failed');
-      throw new AppError('Image delete from storage failed.', HttpStatus.INTERNAL_SERVER_ERROR);
+      throw new AppError('Media delete from storage failed.', HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -141,7 +190,7 @@ class MediaService {
       await this.getClient().files.bulk.delete({ fileIds: managedFileIds });
     } catch (error) {
       logger.error({ error, count: managedFileIds.length }, 'ImageKit bulk delete failed');
-      throw new AppError('Images delete from storage failed.', HttpStatus.INTERNAL_SERVER_ERROR);
+      throw new AppError('Media delete from storage failed.', HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 

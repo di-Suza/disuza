@@ -8,6 +8,8 @@ type GeneralInfoUpdate = Partial<Pick<User, 'headline' | 'about'>>;
 
 type ProfessionalInfoUpdate = Partial<Pick<User, 'skills' | 'experiences' | 'educations' | 'interests' | 'languages'>>;
 
+type UserCounterField = 'followersCount' | 'followingCount' | 'postsCount' | 'projectsCount' | 'profileContributions';
+
 class UserRepository {
   create(data: CreateUserInput): Promise<UserDocument> {
     return UserModel.create(data);
@@ -102,7 +104,7 @@ class UserRepository {
     return data;
   }
 
-  incrementCounter(userId: string | Types.ObjectId, field: 'followersCount' | 'followingCount', value: 1 | -1) {
+  incrementCounter(userId: string | Types.ObjectId, field: UserCounterField, value: number) {
     return UserModel.findOneAndUpdate(
       { _id: userId, active: { $ne: false } },
       { $inc: { [field]: value } },
@@ -128,5 +130,5 @@ class UserRepository {
 
 const userRepository = new UserRepository();
 
-export { UserRepository, type CreateUserInput, type GeneralInfoUpdate, type ProfessionalInfoUpdate };
+export { UserRepository, type CreateUserInput, type GeneralInfoUpdate, type ProfessionalInfoUpdate, type UserCounterField };
 export default userRepository;
