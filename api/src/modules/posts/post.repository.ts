@@ -29,6 +29,19 @@ class PostRepository {
     return PostModel.findOne({ _id: postId, ...visiblePostQuery }).populate('user', 'profilePicture userName headline');
   }
 
+  findVisibleActionTarget(postId: string | Types.ObjectId) {
+    return PostModel.findOne({ _id: postId, ...visiblePostQuery })
+      .select('user')
+      .lean();
+  }
+
+  incrementLikesCount(postId: string | Types.ObjectId, delta: number) {
+    return PostModel.findOneAndUpdate(
+      { _id: postId, ...visiblePostQuery, ...(delta < 0 ? { 'counts.likes': { $gt: 0 } } : {}) },
+      { $inc: { 'counts.likes': delta } },
+      { new: true },
+    );
+  }
   findVisibleCommentTarget(postId: string | Types.ObjectId) {
     return PostModel.findOne({ _id: postId, ...visiblePostQuery })
       .select('user settings')

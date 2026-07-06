@@ -656,3 +656,51 @@ Verification used:
 npm --prefix web run typecheck
 npm --prefix web run build
 ```
+
+## Step 12: Backend Likes Module
+
+Built the backend likes module on `feature/api-likes-module`.
+
+Added:
+
+- `Like` model with unique `{ post, user }` index
+- likes repository for create-once, delete, existence checks, and liked-post lookup
+- likes service for like/unlike business rules
+- likes controller for v1-compatible responses
+- post repository helpers for action target lookup and likes count updates
+- `/api/post/likePost/:postId` route
+- `/api/post/unlikePost/:postId` route
+- real `isLiked` state in single post and feed responses
+
+Preserved v1 endpoint flow:
+
+```txt
+POST /api/post/likePost/:postId
+POST /api/post/unlikePost/:postId
+```
+
+Behavior:
+
+- liking a visible post creates one like per user/post
+- repeated like requests stay idempotent and return success
+- unliking removes the user's like if it exists
+- repeated unlike requests stay idempotent and return success
+- post `counts.likes` increments/decrements when the stored like state changes
+- like actions respect block rules through the post author interaction guard
+- single post and feed responses now return real `isLiked` values
+
+Why:
+
+Likes are a simple post interaction and should be separated from saved collections. This keeps the likes branch focused while leaving the larger saved-posts/collections flow for its own module.
+
+Deferred until supporting modules exist:
+
+- like notifications
+- contribution/activity history for likes
+- frontend like button wiring
+
+Verification used:
+
+```bash
+npm run build:api
+```
