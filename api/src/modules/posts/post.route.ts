@@ -4,6 +4,8 @@ import { uploadPostMedia } from '../media/media.middleware.js';
 import { authenticate } from '../../shared/middleware/auth.js';
 import validateRequest from '../../shared/middleware/validateRequest.js';
 import likeController from '../likes/like.controller.js';
+import saveController from '../saves/save.controller.js';
+import { collectionIdParamRules, collectionNameRules, savePostRules, savedCollectionPostsRules } from '../saves/validators/save.validator.js';
 import postController from './post.controller.js';
 import { createPostRules, pageQueryRules, postIdParamRules, updatePostRules } from './validators/post.validator.js';
 
@@ -24,6 +26,14 @@ class PostRoutes {
     this.router.delete('/deletePost/:postId', postIdParamRules, validateRequest, postController.deletePost);
     this.router.post('/likePost/:postId', postIdParamRules, validateRequest, likeController.likePost);
     this.router.post('/unlikePost/:postId', postIdParamRules, validateRequest, likeController.unlikePost);
+    this.router.post('/savePost', savePostRules, validateRequest, saveController.savePost);
+    this.router.delete('/unsavePost/:postId', postIdParamRules, validateRequest, saveController.unsavePost);
+    this.router.get('/getSavedPostsCollections', saveController.getSavedPostsCollections);
+    this.router.post('/createCollection', collectionNameRules, validateRequest, saveController.createCollection);
+    this.router.patch('/updateCollection/:id', collectionIdParamRules, collectionNameRules, validateRequest, saveController.updateCollection);
+    this.router.delete('/deleteCollection/:id', collectionIdParamRules, validateRequest, saveController.deleteCollection);
+    this.router.get('/savedCollections/:id/posts', savedCollectionPostsRules, validateRequest, saveController.getSavedCollectionPosts);
+    this.router.patch('/changeSavedPostCollection', savePostRules, validateRequest, saveController.changeSavedPostCollection);
     this.router.get('/feed', pageQueryRules, validateRequest, postController.getFeed);
   }
 
