@@ -76,6 +76,14 @@ export type DeletePostResponse = {
   alreadyDeleting: boolean;
 };
 
+export type PostLikeResponse = {
+  success: boolean;
+  message: string;
+  liked: boolean;
+  alreadyLiked?: boolean;
+  alreadyUnliked?: boolean;
+};
+
 export type PostsListResponse = {
   success: boolean;
   message: string;

@@ -697,10 +697,66 @@ Deferred until supporting modules exist:
 
 - like notifications
 - contribution/activity history for likes
-- frontend like button wiring
+- frontend like button wiring (completed in Step 13)
 
 Verification used:
 
 ```bash
 npm run build:api
+```
+
+## Step 13: Frontend Likes Module
+
+Built the frontend likes flow on `feature/web-likes-module`.
+
+Added:
+
+- typed `PostLikeResponse` for like/unlike API responses
+- `likePost` RTK Query mutation for `POST /api/post/likePost/:postId`
+- `unlikePost` RTK Query mutation for `POST /api/post/unlikePost/:postId`
+- optimistic cache updates for `getPost`, `getFeed`, and `getAllPosts`
+- profile/user activity invalidation after successful like state changes
+- `usePostLike` hook for PostCard like state, mutation calls, rollback, and error toast handling
+- interactive PostCard like button with pressed, loading, hidden-count, and active states
+- footer button CSS for accessible hover, focus, disabled, and active styles
+
+Preserved v1 endpoint flow:
+
+```txt
+POST /api/post/likePost/:postId
+POST /api/post/unlikePost/:postId
+```
+
+Frontend flow:
+
+```txt
+PostCard like button -> usePostLike -> postApi like/unlike mutation -> optimistic RTK cache patch
+Success -> keep patched post/feed/all-post caches + refresh profile/activity tags
+Failure -> rollback optimistic patches + restore local PostCard state + show toast
+```
+
+Behavior:
+
+- likes update instantly in the UI
+- repeated clicks are blocked while a like/unlike request is in flight
+- failed like/unlike requests rollback the button state and count
+- hidden like counts still keep the like action visible as `Like`/`Liked`
+- feed, all-posts, and single-post caches stay in sync after like/unlike
+- profile post cards are refreshed through `ProfileUser` invalidation
+
+Why:
+
+The backend likes module already preserves the v1 API contract, so the frontend only needs typed RTK Query mutations, predictable cache updates, and a focused hook instead of spreading like logic directly inside PostCard.
+
+Deferred until supporting modules exist:
+
+- saved collections frontend wiring
+- liked-posts activity screen wiring
+- real-time like notifications
+
+Verification used:
+
+```bash
+npm --prefix web run typecheck
+npm --prefix web run build
 ```
