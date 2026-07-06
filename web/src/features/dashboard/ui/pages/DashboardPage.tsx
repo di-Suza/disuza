@@ -1,6 +1,7 @@
 import { KeyRound, LockOpen, LogOut, MonitorX, Save, UserPlus, UserRound } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
+import DashboardPostsPanel from '@/features/posts/ui/components/DashboardPostsPanel';
 import Button from '@/shared/ui/Button';
 import Input from '@/shared/ui/Input';
 import { useDashboardPage } from './useDashboardPage';
@@ -59,6 +60,8 @@ const DashboardPage = () => {
           <article><strong>{Number(user?.followingCount || 0)}</strong><span>Following</span></article>
           <article><strong>{Number(user?.profileContributions || 0)}</strong><span>Contributions</span></article>
         </div>
+
+        <DashboardPostsPanel user={user} />
 
         <div className="dashboard-grid">
           <form className="profile-card" onSubmit={handleIdentitySubmit}>

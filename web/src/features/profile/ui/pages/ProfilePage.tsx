@@ -1,6 +1,7 @@
 import { Ban, Loader2, LockOpen, RefreshCw, UserPlus, UserRound, UserX } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
+import ProfilePostsSection from '@/features/posts/ui/components/ProfilePostsSection';
 import Button from '@/shared/ui/Button';
 import { getErrorMessage } from '@/shared/utils/getErrorMessage';
 import { useProfilePage } from './useProfilePage';
@@ -11,6 +12,7 @@ const listToChips = (items: unknown): string[] => Array.isArray(items) ? items.f
 const ProfilePage = () => {
   const {
     closeList,
+    currentUserId,
     error,
     followers,
     followersCount,
@@ -27,8 +29,10 @@ const ProfilePage = () => {
     isOwnProfile,
     isProfileError,
     listMode,
+    normalPosts,
     openList,
     profileUser,
+    projectPosts,
     refetch,
   } = useProfilePage();
 
@@ -128,10 +132,7 @@ const ProfilePage = () => {
               <div className="chip-list">{languages.length ? languages.map((language) => <span key={language}>{language}</span>) : <p className="empty-copy">No languages added.</p>}</div>
             </section>
 
-            <section className="profile-card">
-              <div className="profile-card__header"><h2>Posts</h2><p>Posts and project posts will appear when post module lands.</p></div>
-              <p className="empty-copy">No posts loaded in this module yet.</p>
-            </section>
+            <ProfilePostsSection normalPosts={normalPosts} projectPosts={projectPosts} profileUser={profileUser} viewerId={currentUserId} />
           </div>
         )}
       </section>

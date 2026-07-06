@@ -1,5 +1,3 @@
-import type { UserProfile } from '@/features/users/model/user.types';
-
 export type MediaKind = 'image' | 'video';
 
 export type PostMedia = {
@@ -32,7 +30,13 @@ export type PostCounts = {
   feedbacks: number;
 };
 
-export type PostAuthor = Pick<UserProfile, '_id' | 'userName' | 'profilePicture'> & {
+export type PostAuthor = {
+  _id: string;
+  userName: string;
+  profilePicture?: {
+    url?: string;
+    fileId?: string;
+  };
   headline?: string;
 };
 
@@ -40,12 +44,12 @@ export type Post = {
   _id: string;
   id?: string;
   user?: PostAuthor | string;
-  caption: string;
-  media: PostMedia[];
+  caption?: string;
+  media?: PostMedia[];
   images?: PostMedia[];
-  counts: PostCounts;
-  settings: PostSettings;
-  isProjectPost: boolean;
+  counts?: Partial<PostCounts>;
+  settings?: Partial<PostSettings>;
+  isProjectPost?: boolean;
   projectLinks?: ProjectLinks;
   isLiked?: boolean;
   isSaved?: boolean;

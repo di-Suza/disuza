@@ -7,6 +7,7 @@ import FullPageLoader from '@/shared/components/FullPageLoader/FullPageLoader';
 import NotFound from '@/shared/components/NotFound/NotFound';
 
 const DashboardPage = lazy(() => import('@/features/dashboard/ui/pages/DashboardPage'));
+const FeedPage = lazy(() => import('@/features/posts/ui/pages/FeedPage'));
 const LandingPage = lazy(() => import('@/features/landing/ui/pages/LandingPage'));
 const ProfilePage = lazy(() => import('@/features/profile/ui/pages/ProfilePage'));
 const SignInPage = lazy(() => import('@/features/auth/ui/pages/SignIn/SignIn'));
@@ -45,7 +46,7 @@ export const router = createBrowserRouter([
       },
       {
         path: '/home',
-        element: withSuspense(<DashboardPage />),
+        element: withSuspense(<FeedPage />),
       },
       {
         path: '/profile/:id',
