@@ -468,3 +468,55 @@ Verification used:
 npm run check:api
 npm run build:api
 ```
+
+## Step 9: Frontend Posts Feed and Composer Module
+
+Built the frontend posts module on `feature/web-posts-module`.
+
+Added:
+
+- typed RTK Query `postApi` for create, update, delete, single post, dashboard posts, and feed posts
+- shared post models for authors, counts, settings, project links, and ordered image/video media
+- post helper utilities for media ordering, author fallback, and video detection
+- reusable post media carousel for mixed image/video posts
+- create/edit post composer modal with multipart uploads
+- media reorder controls so the final carousel sequence is saved through `mediaOrder`
+- owner-only edit/delete actions with full post fetch before editing partial dashboard/profile results
+- dashboard posts panel with create post and recent own posts
+- `/home` feed page with all/following segmented view
+- profile posts section for normal posts and project posts
+- responsive CSS for feed, cards, composer, carousel, modals, and empty states
+
+Frontend flow:
+
+```txt
+Create/Edit modal -> FormData(media + settings + mediaOrder) -> postApi -> backend /api/post/*
+Feed/Profile/Dashboard -> postApi queries -> RTK Query cache tags -> UI refresh
+```
+
+Media upgrade from v1:
+
+```txt
+V1 frontend: image-only post assumptions
+V2 frontend: ordered carousel with images + videos
+```
+
+Why:
+
+The backend posts module is now mixed-media and order-aware, so the frontend needed a proper composer instead of an image-only UI. Keeping the composer logic in a custom hook keeps upload validation, order building, project-link validation, and API submission away from display components.
+
+Important v2 improvements:
+
+- API calls use RTK Query instead of ad hoc request helpers
+- post forms use `FormData` while keeping TypeScript models for response data
+- edit flow fetches the full post before editing so summary cards do not accidentally drop hidden media items
+- project posts keep required live demo and repository URLs
+- access-token retry still goes through the shared `baseQueryWithAuthGuard`
+- feed/dashboard/profile reuse the same post card/list primitives
+
+Verification used:
+
+```bash
+npm --prefix web run typecheck
+npm --prefix web run build
+```

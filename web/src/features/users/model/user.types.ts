@@ -1,4 +1,5 @@
 import type { AuthUser, ProfilePicture } from '@/features/auth/model/auth.types';
+import type { Post } from '@/features/posts/model/post.types';
 
 export type PortfolioExperience = {
   companyName: string;
@@ -70,8 +71,8 @@ export type ProfileUserResponse = {
   message: string;
   profileUser: UserProfile;
   blockedProfile?: boolean;
-  normalPosts?: unknown[];
-  projectPosts?: unknown[];
+  normalPosts?: Post[];
+  projectPosts?: Post[];
 };
 
 export type UserListResponse = {
