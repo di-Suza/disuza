@@ -468,3 +468,80 @@ Verification used:
 npm run check:api
 npm run build:api
 ```
+
+## Step 9: Backend Comments and Replies Module
+
+Built the backend comments module on `feature/api-comments-module`.
+
+Added:
+
+- `Comment` model with post, post owner, author, parent comment, reply target, and reply count fields
+- comments repository for create, top-level comments, replies, delete, and reply-count updates
+- post repository helpers for comment-target lookup and post comment-count updates
+- comments service with v1-compatible comment/reply business rules
+- comments controller, route, and `express-validator` validation rules
+- `/api/comment` route mount
+
+Preserved v1 endpoint names:
+
+```txt
+POST   /api/comment/postComment
+GET    /api/comment/getAllComments/:postId
+GET    /api/comment/getReplies/:commentId
+DELETE /api/comment/deleteComment
+```
+
+Preserved v1 response keys:
+
+```txt
+newComment
+allComments
+replies
+currentPage
+hasMore
+commentId
+deletedCount
+parentCommentId
+```
+
+Comment flow:
+
+- users can create top-level comments on visible posts
+- users can reply to top-level comments only
+- comments are blocked when the post author disables commenting
+- post comment count increments for both comments and replies
+- parent comment `replyCount` increments when a reply is added
+- top-level comments are paginated newest-first, with the viewer's own comments prioritized
+- replies are paginated oldest-first under their parent comment
+
+Delete flow:
+
+- comment author can delete their own comment or reply
+- post owner can delete any comment or reply on their post
+- deleting a reply removes only that reply and decrements parent `replyCount`
+- deleting a top-level comment removes the comment plus its replies
+- post comment count is decremented by the number of removed comment records
+
+Rules and guards:
+
+- all routes require auth
+- post existence ignores posts currently being deleted
+- block rules protect commenting, replying, viewing comments, and viewing replies
+- validators enforce MongoDB IDs, page/limit bounds, and non-empty comment text
+
+Why:
+
+Comments are the next engagement layer after posts. Keeping the same v1 endpoint and response shape makes frontend migration easier, while the v2 implementation separates persistence, business rules, HTTP handling, and validation into clear module boundaries.
+
+Deferred until supporting modules exist:
+
+- comment notifications
+- contribution heatmap side effects
+- user activity history integration
+- post cleanup queue integration for comments
+
+Verification used:
+
+```bash
+npm run build:api
+```
