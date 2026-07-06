@@ -306,3 +306,55 @@ Verification used:
 npm run check:api
 npm run build:api
 ```
+
+## Step 6: Frontend User Profile and Dashboard Flow
+
+Built the frontend layer for the backend user/profile module on `feature/web-user-profile-module`.
+
+Added:
+
+- typed user/profile models for portfolio, relationships, recommendations, and blocked users
+- RTK Query `userApi` with the same v1-style `/api/user/*` endpoint names
+- cache tags for profile users, followers, following, blocked users, recommendations, and account history
+- dashboard hook for identity, general info, portfolio, password, recommendations, blocked users, and logout flows
+- profile hook for public profile fetch, follow/unfollow, block/unblock, followers/following lists, and own-profile redirect handling
+- dashboard UI for editable identity, headline/about, skills/interests/languages, password update, recommendations, blocked users, and session actions
+- profile page UI for public profile details, relationship actions, block controls, stats, and followers/following modal
+- protected route for `/profile/:id`
+
+Frontend flow:
+
+```txt
+Dashboard edits -> userApi mutation -> backend /api/user/* -> auth user state refresh
+Profile page -> getProfileUser -> follow/block mutations -> invalidate profile/list caches
+```
+
+Why:
+
+The backend user/profile module is only useful once the frontend can call it. This step wires the module into RTK Query while keeping page logic in custom hooks and keeping components focused on rendering and interaction.
+
+V1 behavior preserved:
+
+- dashboard profile updates
+- password update
+- user recommendations
+- blocked users management
+- public profile fetch
+- follow/unfollow
+- block/unblock
+- followers/following list access
+
+Important v2 improvements:
+
+- endpoint typing is centralized
+- route-level profile code is lazy-loaded
+- API cache invalidation is explicit through RTK Query tags
+- page logic lives in custom hooks instead of large components
+- access tokens continue to flow through the shared auth guard
+
+Verification used:
+
+```bash
+npm run check:web
+npm --prefix web run build
+```
