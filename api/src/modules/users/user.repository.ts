@@ -1,8 +1,12 @@
 import type { Types } from 'mongoose';
 
-import UserModel, { type User, type UserDocument } from './user.model.js';
+import UserModel, { type ProfilePicture, type User, type UserDocument } from './user.model.js';
 
 type CreateUserInput = Pick<User, 'userName' | 'email'> & Partial<Pick<User, 'password' | 'profilePicture' | 'isGoogleUser' | 'role'>>;
+
+type GeneralInfoUpdate = Partial<Pick<User, 'headline' | 'about'>>;
+
+type ProfessionalInfoUpdate = Partial<Pick<User, 'skills' | 'experiences' | 'educations' | 'interests' | 'languages'>>;
 
 class UserRepository {
   create(data: CreateUserInput): Promise<UserDocument> {
@@ -13,9 +17,17 @@ class UserRepository {
     return UserModel.findOne({ _id: id, active: { $ne: false } });
   }
 
+  findByIdWithPassword(id: string | Types.ObjectId): Promise<UserDocument | null> {
+    return UserModel.findOne({ _id: id, active: { $ne: false } }).select('+password');
+  }
+
+  findProfileById(id: string | Types.ObjectId): Promise<UserDocument | null> {
+    return UserModel.findOne({ _id: id, active: { $ne: false } }).select('-lastLoginAt -isGoogleUser');
+  }
+
   findPublicById(id: string | Types.ObjectId) {
     return UserModel.findOne({ _id: id, active: { $ne: false } })
-      .select('_id userName email role profilePicture active isGoogleUser lastLoginAt')
+      .select('_id userName email role profilePicture headline about followersCount followingCount postsCount projectsCount profileContributions active isGoogleUser lastLoginAt')
       .lean();
   }
 
@@ -62,9 +74,59 @@ class UserRepository {
       { new: true },
     );
   }
+
+  updateIdentity(userId: string | Types.ObjectId, data: { userName?: string; profilePicture?: ProfilePicture }) {
+    return UserModel.findOneAndUpdate(
+      { _id: userId, active: { $ne: false } },
+      { $set: data },
+      { new: true, runValidators: true },
+    ).select('userName profilePicture');
+  }
+
+  updateGeneralInfo(userId: string | Types.ObjectId, data: GeneralInfoUpdate) {
+    return UserModel.findOneAndUpdate(
+      { _id: userId, active: { $ne: false } },
+      { $set: data },
+      { new: true, runValidators: true },
+    ).select('headline about');
+  }
+
+  async updateProfessionalInfo(userId: string | Types.ObjectId, data: ProfessionalInfoUpdate) {
+    const user = await UserModel.findOne({ _id: userId, active: { $ne: false } });
+
+    if (!user) return null;
+
+    Object.assign(user, data);
+    await user.save();
+
+    return data;
+  }
+
+  incrementCounter(userId: string | Types.ObjectId, field: 'followersCount' | 'followingCount', value: 1 | -1) {
+    return UserModel.findOneAndUpdate(
+      { _id: userId, active: { $ne: false } },
+      { $inc: { [field]: value } },
+      { new: true },
+    );
+  }
+
+  findRecommendationUsers(ids: Array<string | Types.ObjectId>, limit: number) {
+    return UserModel.find({ _id: { $in: ids }, active: { $ne: false } })
+      .select('userName profilePicture headline profileContributions')
+      .limit(limit)
+      .lean();
+  }
+
+  findFallbackRecommendations(excludedIds: Array<string | Types.ObjectId>, limit: number) {
+    return UserModel.find({ _id: { $nin: excludedIds }, active: { $ne: false } })
+      .select('userName profilePicture headline profileContributions')
+      .sort({ profileContributions: -1, followersCount: -1, createdAt: -1 })
+      .limit(limit)
+      .lean();
+  }
 }
 
 const userRepository = new UserRepository();
 
-export { UserRepository, type CreateUserInput };
+export { UserRepository, type CreateUserInput, type GeneralInfoUpdate, type ProfessionalInfoUpdate };
 export default userRepository;
