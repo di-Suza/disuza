@@ -2,6 +2,7 @@ import { Edit3, ExternalLink, GitFork, Heart, Loader2, MessageCircle, Trash2, Us
 import { memo, useCallback, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 
+import CommentModal from '@/features/comments/ui/components/CommentModal';
 import { useDeletePostMutation, useGetPostQuery } from '@/features/posts/api/post.api';
 import { getPostAuthor, getPostImageUrl, getPostOwnerId, getPostMedia } from '@/features/posts/model/post.helpers';
 import type { Post, PostAuthor } from '@/features/posts/model/post.types';
@@ -30,6 +31,7 @@ const formatPostDate = (value?: string) => {
 const PostCard = ({ className, compact = false, fallbackAuthor, post, viewerId }: PostCardProps) => {
   const { showError, showSuccess } = useToast();
   const [isEditOpen, setEditOpen] = useState(false);
+  const [isCommentsOpen, setCommentsOpen] = useState(false);
   const [deletePost, { isLoading: isDeleting }] = useDeletePostMutation();
   const { data: fullPostData, isFetching: isPostFetching } = useGetPostQuery(post._id, { skip: !isEditOpen });
 
@@ -40,6 +42,7 @@ const PostCard = ({ className, compact = false, fallbackAuthor, post, viewerId }
   const orderedMedia = useMemo(() => getPostMedia(post), [post]);
   const postDate = formatPostDate(post.createdAt);
   const counts = post.counts || {};
+  const commentsDisabled = Boolean(post.settings?.commentsDisabled);
   const canShowProjectLinks = Boolean(post.isProjectPost && post.projectLinks?.liveDemoUrl && post.projectLinks?.repositoryUrl);
   const editablePost = fullPostData?.post || null;
 
@@ -99,7 +102,13 @@ const PostCard = ({ className, compact = false, fallbackAuthor, post, viewerId }
 
       <footer className="post-card__footer">
         {!post.settings?.hideLikesCount && <span><Heart size={16} aria-hidden="true" />{Number(counts.likes || 0)}</span>}
-        <span><MessageCircle size={16} aria-hidden="true" />{post.settings?.commentsDisabled ? 'Off' : Number(counts.comments || 0)}</span>
+        {commentsDisabled ? (
+          <span><MessageCircle size={16} aria-hidden="true" />Off</span>
+        ) : (
+          <button type="button" className="post-card__footer-button" onClick={() => setCommentsOpen(true)} aria-label="Open comments">
+            <MessageCircle size={16} aria-hidden="true" />{Number(counts.comments || 0)}
+          </button>
+        )}
       </footer>
 
       {isEditOpen && (
@@ -109,6 +118,14 @@ const PostCard = ({ className, compact = false, fallbackAuthor, post, viewerId }
           onClose={() => setEditOpen(false)}
           post={editablePost || post}
           isPostLoading={isPostFetching && !editablePost}
+        />
+      )}
+
+      {isCommentsOpen && (
+        <CommentModal
+          isOpen={isCommentsOpen}
+          onClose={() => setCommentsOpen(false)}
+          post={post}
         />
       )}
     </article>

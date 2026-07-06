@@ -139,6 +139,7 @@ Each future feature should update this file with:
 - why it was added
 - how it fits the architecture
 - what command was used to verify it
+
 ## Step 3: Backend Auth Module
 
 Built the backend auth module on a dedicated feature branch.
@@ -592,10 +593,66 @@ Deferred until supporting modules exist:
 - user activity history integration
 - post cleanup queue integration for comments
 
-
-
 Verification used:
 
 ```bash
 npm run build:api
+```
+
+## Step 11: Frontend Comments and Replies Module
+
+Built the frontend comments module on `feature/web-comments-module`.
+
+Added:
+
+- typed comments models for comment author, comment item, requests, and responses
+- RTK Query `commentApi` with v1-compatible endpoint names
+- paginated comments query with cache merge by post
+- paginated replies query with cache merge by parent comment
+- post comment mutation for top-level comments and replies
+- delete comment mutation for comments and replies
+- reusable comments modal with loading, error, empty, pagination, and composer states
+- lazy-loaded replies UI under each parent comment
+- reply target state with cancel behavior
+- owner/comment-author delete controls
+- PostCard comment button wiring
+- responsive CSS for comments modal, comment items, replies, and composer
+
+Preserved v1 endpoint flow:
+
+```txt
+POST   /api/comment/postComment
+GET    /api/comment/getAllComments/:postId
+GET    /api/comment/getReplies/:commentId
+DELETE /api/comment/deleteComment
+```
+
+Frontend flow:
+
+```txt
+PostCard comment button -> CommentModal -> commentApi -> /api/comment/*
+Top-level comment -> comments cache insert -> post/feed/profile tags refresh
+Reply -> replies cache insert + parent replyCount update -> post/feed/profile tags refresh
+Delete reply -> replies cache remove + parent replyCount update -> post/feed/profile tags refresh
+Delete parent comment -> comments cache remove -> backend deletes replies too -> post/feed/profile tags refresh
+```
+
+Why:
+
+The backend comments module keeps the v1 API contract, so the frontend can preserve the same user-facing behavior while moving the implementation into typed RTK Query endpoints and focused React hooks/components.
+
+Important v2 improvements:
+
+- comments API typing is centralized
+- modal logic lives in `useCommentModal`
+- replies are loaded only when the user opens them
+- cache updates are scoped to comments/replies and post list invalidation is explicit
+- delete buttons follow the backend rule: comment author or post owner
+- PostCard remains focused and delegates discussion UI to the comments feature
+
+Verification used:
+
+```bash
+npm --prefix web run typecheck
+npm --prefix web run build
 ```
