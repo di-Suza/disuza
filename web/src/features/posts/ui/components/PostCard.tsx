@@ -6,6 +6,7 @@ import CommentModal from '@/features/comments/ui/components/CommentModal';
 import { useDeletePostMutation, useGetPostQuery } from '@/features/posts/api/post.api';
 import { getPostAuthor, getPostImageUrl, getPostOwnerId, getPostMedia } from '@/features/posts/model/post.helpers';
 import type { Post, PostAuthor } from '@/features/posts/model/post.types';
+import { usePostLike } from '@/features/posts/ui/hooks/usePostLike';
 import { useToast } from '@/shared/hooks/useToast';
 import Button from '@/shared/ui/Button';
 import { cn } from '@/shared/utils/cn';
@@ -34,6 +35,7 @@ const PostCard = ({ className, compact = false, fallbackAuthor, post, viewerId }
   const [isCommentsOpen, setCommentsOpen] = useState(false);
   const [deletePost, { isLoading: isDeleting }] = useDeletePostMutation();
   const { data: fullPostData, isFetching: isPostFetching } = useGetPostQuery(post._id, { skip: !isEditOpen });
+  const { isLiked, isLikeUpdating, likesCount, toggleLike } = usePostLike(post);
 
   const author = getPostAuthor(post, fallbackAuthor);
   const ownerId = getPostOwnerId(post, fallbackAuthor);
@@ -43,6 +45,7 @@ const PostCard = ({ className, compact = false, fallbackAuthor, post, viewerId }
   const postDate = formatPostDate(post.createdAt);
   const counts = post.counts || {};
   const commentsDisabled = Boolean(post.settings?.commentsDisabled);
+  const hideLikesCount = Boolean(post.settings?.hideLikesCount);
   const canShowProjectLinks = Boolean(post.isProjectPost && post.projectLinks?.liveDemoUrl && post.projectLinks?.repositoryUrl);
   const editablePost = fullPostData?.post || null;
 
@@ -101,7 +104,17 @@ const PostCard = ({ className, compact = false, fallbackAuthor, post, viewerId }
       )}
 
       <footer className="post-card__footer">
-        {!post.settings?.hideLikesCount && <span><Heart size={16} aria-hidden="true" />{Number(counts.likes || 0)}</span>}
+        <button
+          type="button"
+          className={cn('post-card__footer-button post-card__footer-button--like', isLiked && 'is-active')}
+          onClick={toggleLike}
+          disabled={isLikeUpdating}
+          aria-label={isLiked ? 'Unlike post' : 'Like post'}
+          aria-pressed={isLiked}
+        >
+          {isLikeUpdating ? <Loader2 className="spin" size={16} aria-hidden="true" /> : <Heart size={16} aria-hidden="true" />}
+          {hideLikesCount ? (isLiked ? 'Liked' : 'Like') : likesCount}
+        </button>
         {commentsDisabled ? (
           <span><MessageCircle size={16} aria-hidden="true" />Off</span>
         ) : (

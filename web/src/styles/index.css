@@ -1347,15 +1347,32 @@ svg {
   align-items: center;
   gap: 7px;
   border: 0;
+  border-radius: 999px;
   background: transparent;
   color: var(--text-secondary);
-  padding: 0;
+  padding: 4px 6px;
   font-size: 13px;
   font-weight: 850;
+  transition: color 160ms ease, background 160ms ease, opacity 160ms ease;
 }
 
-.post-card__footer-button:hover {
+.post-card__footer-button:hover:not(:disabled),
+.post-card__footer-button:focus-visible {
+  background: rgba(16, 185, 129, 0.08);
   color: var(--accent);
+  outline: none;
+}
+
+.post-card__footer-button:disabled {
+  opacity: 0.7;
+}
+
+.post-card__footer-button.is-active {
+  color: var(--accent);
+}
+
+.post-card__footer-button--like.is-active svg:not(.spin) {
+  fill: var(--accent);
 }
 
 .comments-backdrop {
