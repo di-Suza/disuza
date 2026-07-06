@@ -56,7 +56,7 @@ class UserController {
   }
 
   private async handleUpdateUserNameAndPP(req: Request, res: Response) {
-    const updatedData = await this.service.updateUserNameAndPP(req.user!.id, req.body);
+    const updatedData = await this.service.updateUserNameAndPP(req.user!.id, req.body, req.file);
 
     res.status(201).json({
       success: true,

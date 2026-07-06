@@ -358,3 +358,46 @@ Verification used:
 npm run check:web
 npm --prefix web run build
 ```
+
+## Step 7: Backend Media Storage Module
+
+Built the backend media/storage foundation on `feature/api-media-storage-module`.
+
+Added:
+
+- ImageKit storage integration through the modern `@imagekit/nodejs` SDK
+- multer memory-upload middleware for image-only multipart requests
+- centralized media service for upload, single delete, safe cleanup, bulk delete, post images, and profile pictures
+- media constants for allowed image MIME types, ImageKit folders, and storage tags
+- `/api/media/upload-auth` endpoint for future direct client-side ImageKit uploads
+- environment validation for ImageKit keys, URL endpoint, upload size, and post image count
+- Multer error normalization inside the global error handler
+- profile picture upload support in the existing `/api/user/updateUserNameAndPP` endpoint
+
+Preserved v1 behavior:
+
+```txt
+PATCH /api/user/updateUserNameAndPP
+multipart field: profilePicture
+storage folder: /DevloopFeed/ProfilePictures
+old managed profile picture is cleaned up after successful DB update
+```
+
+Why:
+
+Media upload/delete is a shared concern. Profile pictures, post images, saved collection covers, and future cleanup queues should not call the storage SDK directly from feature services. The media service becomes the single boundary around ImageKit, so future modules can reuse it safely.
+
+Important v2 improvements:
+
+- deprecated `imagekit` package was avoided in favor of `@imagekit/nodejs`
+- storage config is validated in production but lazy-loaded for local development
+- uploaded profile pictures are not swapped in the database until storage upload succeeds
+- newly uploaded files are cleaned up if the database update fails
+- old profile pictures are cleaned up safely after the new profile state is saved
+- file validation and upload limits are centralized
+
+Verification used:
+
+```bash
+npm run check:api
+```

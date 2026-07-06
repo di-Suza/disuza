@@ -30,6 +30,14 @@ const rawEnvSchema = z.object({
   SENDER_EMAIL: optionalEmail,
   GOOGLE_CLIENT_ID: optionalString,
   GOOGLE_CLIENT_SECRET: optionalString,
+  IMAGEKIT_PUBLIC_KEY: optionalString,
+  IMAGEKIT_PRIVATE_KEY: optionalString,
+  IMAGEKIT_URL_ENDPOINT: optionalString,
+  IMAGE_KIT_PUBLIC: optionalString,
+  IMAGE_KIT_PRIVATE: optionalString,
+  IMAGE_KIT_URL_ENDPOINT: optionalString,
+  MEDIA_MAX_FILE_SIZE_BYTES: z.coerce.number().int().min(1024).max(25 * 1024 * 1024).default(5 * 1024 * 1024),
+  MEDIA_POST_IMAGE_MAX_COUNT: z.coerce.number().int().min(1).max(10).default(5),
 });
 
 const result = rawEnvSchema.safeParse(process.env);
@@ -45,7 +53,10 @@ if (!result.success) {
 const parsedEnv = result.data;
 const derivedEnv = {
   ...parsedEnv,
-  COOKIE_SECURE: parsedEnv.COOKIE_SECURE ?? parsedEnv.NODE_ENV === 'production',
+  COOKIE_SECURE: parsedEnv.COOKIE_SECURE ?? (parsedEnv.NODE_ENV === 'production'),
+  IMAGEKIT_PUBLIC_KEY: parsedEnv.IMAGEKIT_PUBLIC_KEY ?? parsedEnv.IMAGE_KIT_PUBLIC,
+  IMAGEKIT_PRIVATE_KEY: parsedEnv.IMAGEKIT_PRIVATE_KEY ?? parsedEnv.IMAGE_KIT_PRIVATE,
+  IMAGEKIT_URL_ENDPOINT: parsedEnv.IMAGEKIT_URL_ENDPOINT ?? parsedEnv.IMAGE_KIT_URL_ENDPOINT,
 };
 
 const validationErrors: string[] = [];
@@ -78,6 +89,14 @@ if (derivedEnv.NODE_ENV === 'production' && !derivedEnv.RESEND_API_KEY) {
 
 if (derivedEnv.NODE_ENV === 'production' && !derivedEnv.SENDER_EMAIL) {
   validationErrors.push('SENDER_EMAIL must be configured in production');
+}
+
+if (derivedEnv.NODE_ENV === 'production' && !derivedEnv.IMAGEKIT_PRIVATE_KEY) {
+  validationErrors.push('IMAGEKIT_PRIVATE_KEY must be configured in production');
+}
+
+if (derivedEnv.NODE_ENV === 'production' && !derivedEnv.IMAGEKIT_URL_ENDPOINT) {
+  validationErrors.push('IMAGEKIT_URL_ENDPOINT must be configured in production');
 }
 
 if (validationErrors.length > 0) {

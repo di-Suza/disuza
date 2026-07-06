@@ -1,6 +1,7 @@
 import { Router } from 'express';
 
 import { authenticate } from '../../shared/middleware/auth.js';
+import { uploadProfilePicture } from '../media/media.middleware.js';
 import validateRequest from '../../shared/middleware/validateRequest.js';
 import userController from './user.controller.js';
 import {
@@ -33,7 +34,7 @@ class UserRoutes {
     this.router.post('/verifyDeleteAccountOtp', verifyDeleteAccountOtpRules, validateRequest, userController.verifyAccountDeleteOtp);
     this.router.delete('/deleteAccount', userController.deleteUserAccount);
 
-    this.router.patch('/updateUserNameAndPP', updateUserNameAndPPRules, validateRequest, userController.updateUserNameAndPP);
+    this.router.patch('/updateUserNameAndPP', uploadProfilePicture, updateUserNameAndPPRules, validateRequest, userController.updateUserNameAndPP);
     this.router.patch('/updateGeneralInfo', updateGeneralInfoRules, validateRequest, userController.updateGeneralInfo);
     this.router.patch('/updateProfessionalInfo', updateProfessionalInfoRules, validateRequest, userController.updateProfessionalInfo);
 

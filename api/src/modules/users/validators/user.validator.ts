@@ -1,3 +1,4 @@
+import type { Request } from 'express';
 import { body, query } from 'express-validator';
 
 import { mongoIdParam } from '../../../shared/validators/common.js';
@@ -57,7 +58,10 @@ const updateUserNameAndPPRules = [
     .withMessage('Profile picture file id must be a string')
     .trim(),
   body()
-    .custom((value) => Boolean(value.userName || value.ppRemoved || value.profilePictureUrl))
+    .custom((value, { req }) => {
+      const requestWithFile = req as Request & { file?: Express.Multer.File };
+      return Boolean(value.userName || value.ppRemoved || value.profilePictureUrl || requestWithFile.file);
+    })
     .withMessage('At least one field (User Name or Profile Picture) must be provided!'),
 ];
 

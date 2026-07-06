@@ -7,6 +7,7 @@ import {
   UnauthorizedError,
 } from '../../shared/errors/index.js';
 import passwordService from '../../shared/utils/password.js';
+import mediaService, { type MediaService } from '../media/media.service.js';
 import type { ProfilePicture } from './user.model.js';
 import userRepository, { type ProfessionalInfoUpdate, type UserRepository } from './user.repository.js';
 import blockRepository, { type BlockRepository } from './block/block.repository.js';
@@ -35,6 +36,7 @@ class UserService {
     private readonly follows: FollowRepository = followRepository,
     private readonly blocks: BlockRepository = blockRepository,
     private readonly blockRules: BlockService = blockService,
+    private readonly media: MediaService = mediaService,
   ) {}
 
   private normalizePage(pageInput: unknown): number {
@@ -79,7 +81,7 @@ class UserService {
     await this.users.updatePassword(userId, nextPasswordHash);
   }
 
-  async updateUserNameAndPP(userId: string, input: IdentityUpdateInput) {
+  async updateUserNameAndPP(userId: string, input: IdentityUpdateInput, file?: Express.Multer.File) {
     const user = await this.users.findById(userId);
 
     if (!user) {
@@ -88,16 +90,32 @@ class UserService {
 
     const updateData: { userName?: string; profilePicture?: ProfilePicture } = {};
     const userName = input.userName?.trim();
+    let uploadedProfilePictureFileId: string | undefined;
+    let previousProfilePictureFileIdToDelete: string | undefined;
 
     if (userName && userName !== user.userName) {
       updateData.userName = userName;
     }
 
-    if (input.ppRemoved) {
+    if (file) {
+      const uploadedProfilePicture = await this.media.uploadProfilePicture(file, userId);
+      uploadedProfilePictureFileId = uploadedProfilePicture.fileId;
+      previousProfilePictureFileIdToDelete = this.media.isManagedFileId(user.profilePicture.fileId)
+        ? user.profilePicture.fileId
+        : undefined;
+      updateData.profilePicture = {
+        url: uploadedProfilePicture.url,
+        fileId: uploadedProfilePicture.fileId,
+      };
+    } else if (input.ppRemoved) {
+      previousProfilePictureFileIdToDelete = this.media.isManagedFileId(user.profilePicture.fileId)
+        ? user.profilePicture.fileId
+        : undefined;
       updateData.profilePicture = DEFAULT_PROFILE_PICTURE;
-    }
-
-    if (input.profilePictureUrl) {
+    } else if (input.profilePictureUrl) {
+      previousProfilePictureFileIdToDelete = this.media.isManagedFileId(user.profilePicture.fileId)
+        ? user.profilePicture.fileId
+        : undefined;
       updateData.profilePicture = {
         url: input.profilePictureUrl,
         fileId: input.profilePictureFileId || 'external',
@@ -108,10 +126,22 @@ class UserService {
       throw new BadRequestError('At least one field (User Name or Profile Picture) must be provided!');
     }
 
-    const updatedUser = await this.users.updateIdentity(userId, updateData);
+    let updatedUser;
+
+    try {
+      updatedUser = await this.users.updateIdentity(userId, updateData);
+    } catch (error) {
+      await this.media.tryDeleteFile(uploadedProfilePictureFileId);
+      throw error;
+    }
 
     if (!updatedUser) {
+      await this.media.tryDeleteFile(uploadedProfilePictureFileId);
       throw new NotFoundError('User Not Found!');
+    }
+
+    if (previousProfilePictureFileIdToDelete && previousProfilePictureFileIdToDelete !== updatedUser.profilePicture.fileId) {
+      await this.media.tryDeleteFile(previousProfilePictureFileIdToDelete);
     }
 
     return {
