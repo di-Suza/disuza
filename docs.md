@@ -139,6 +139,7 @@ Each future feature should update this file with:
 - why it was added
 - how it fits the architecture
 - what command was used to verify it
+
 ## Step 3: Backend Auth Module
 
 Built the backend auth module on a dedicated feature branch.
@@ -513,6 +514,141 @@ Important v2 improvements:
 - project posts keep required live demo and repository URLs
 - access-token retry still goes through the shared `baseQueryWithAuthGuard`
 - feed/dashboard/profile reuse the same post card/list primitives
+
+Verification used:
+
+```bash
+npm --prefix web run typecheck
+npm --prefix web run build
+```
+
+## Step 10: Backend Comments and Replies Module
+
+Built the backend comments module on `feature/api-comments-module`.
+
+Added:
+
+- `Comment` model with post, post owner, author, parent comment, reply target, and reply count fields
+- comments repository for create, top-level comments, replies, delete, and reply-count updates
+- post repository helpers for comment-target lookup and post comment-count updates
+- comments service with v1-compatible comment/reply business rules
+- comments controller, route, and `express-validator` validation rules
+- `/api/comment` route mount
+
+Preserved v1 endpoint names:
+
+```txt
+POST   /api/comment/postComment
+GET    /api/comment/getAllComments/:postId
+GET    /api/comment/getReplies/:commentId
+DELETE /api/comment/deleteComment
+```
+
+Preserved v1 response keys:
+
+```txt
+newComment
+allComments
+replies
+currentPage
+hasMore
+commentId
+deletedCount
+parentCommentId
+```
+
+Comment flow:
+
+- users can create top-level comments on visible posts
+- users can reply to top-level comments only
+- comments are blocked when the post author disables commenting
+- post comment count increments for both comments and replies
+- parent comment `replyCount` increments when a reply is added
+- top-level comments are paginated newest-first, with the viewer's own comments prioritized
+- replies are paginated oldest-first under their parent comment
+
+Delete flow:
+
+- comment author can delete their own comment or reply
+- post owner can delete any comment or reply on their post
+- deleting a reply removes only that reply and decrements parent `replyCount`
+- deleting a top-level comment removes the comment plus its replies
+- post comment count is decremented by the number of removed comment records
+
+Rules and guards:
+
+- all routes require auth
+- post existence ignores posts currently being deleted
+- block rules protect commenting, replying, viewing comments, and viewing replies
+- validators enforce MongoDB IDs, page/limit bounds, and non-empty comment text
+
+Why:
+
+Comments are the next engagement layer after posts. Keeping the same v1 endpoint and response shape makes frontend migration easier, while the v2 implementation separates persistence, business rules, HTTP handling, and validation into clear module boundaries.
+
+Deferred until supporting modules exist:
+
+- comment notifications
+- contribution heatmap side effects
+- user activity history integration
+- post cleanup queue integration for comments
+
+Verification used:
+
+```bash
+npm run build:api
+```
+
+## Step 11: Frontend Comments and Replies Module
+
+Built the frontend comments module on `feature/web-comments-module`.
+
+Added:
+
+- typed comments models for comment author, comment item, requests, and responses
+- RTK Query `commentApi` with v1-compatible endpoint names
+- paginated comments query with cache merge by post
+- paginated replies query with cache merge by parent comment
+- post comment mutation for top-level comments and replies
+- delete comment mutation for comments and replies
+- reusable comments modal with loading, error, empty, pagination, and composer states
+- lazy-loaded replies UI under each parent comment
+- reply target state with cancel behavior
+- owner/comment-author delete controls
+- PostCard comment button wiring
+- responsive CSS for comments modal, comment items, replies, and composer
+
+Preserved v1 endpoint flow:
+
+```txt
+POST   /api/comment/postComment
+GET    /api/comment/getAllComments/:postId
+GET    /api/comment/getReplies/:commentId
+DELETE /api/comment/deleteComment
+```
+
+Frontend flow:
+
+```txt
+PostCard comment button -> CommentModal -> commentApi -> /api/comment/*
+Top-level comment -> comments cache insert -> post/feed/profile tags refresh
+Reply -> replies cache insert + parent replyCount update -> post/feed/profile tags refresh
+Delete reply -> replies cache remove + parent replyCount update -> post/feed/profile tags refresh
+Delete parent comment -> comments cache remove -> backend deletes replies too -> post/feed/profile tags refresh
+```
+
+Why:
+
+The backend comments module keeps the v1 API contract, so the frontend can preserve the same user-facing behavior while moving the implementation into typed RTK Query endpoints and focused React hooks/components.
+
+Important v2 improvements:
+
+- comments API typing is centralized
+- modal logic lives in `useCommentModal`
+- replies are loaded only when the user opens them
+- cache updates are scoped to comments/replies and post list invalidation is explicit
+- delete buttons follow the backend rule: comment author or post owner
+- PostCard remains focused and delegates discussion UI to the comments feature
 
 Verification used:
 
