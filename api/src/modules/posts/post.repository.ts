@@ -1,0 +1,77 @@
+import type { FilterQuery, Types } from 'mongoose';
+
+import PostModel, { type Post, type PostDocument, type PostMedia, type PostSettings, type ProjectLinks } from './post.model.js';
+
+type CreatePostInput = {
+  _id: Types.ObjectId;
+  user: string | Types.ObjectId;
+  caption: string;
+  media: PostMedia[];
+  settings: PostSettings;
+  isProjectPost: boolean;
+  projectLinks?: ProjectLinks;
+};
+
+type UpdatePostInput = Partial<Pick<Post, 'caption' | 'media' | 'settings' | 'projectLinks'>>;
+
+const visiblePostQuery = { isDeleting: { $ne: true } } as const;
+
+class PostRepository {
+  create(data: CreatePostInput): Promise<PostDocument> {
+    return PostModel.create(data);
+  }
+
+  findOwnedVisibleById(postId: string | Types.ObjectId, userId: string | Types.ObjectId): Promise<PostDocument | null> {
+    return PostModel.findOne({ _id: postId, user: userId, ...visiblePostQuery });
+  }
+
+  findVisibleById(postId: string | Types.ObjectId): Promise<PostDocument | null> {
+    return PostModel.findOne({ _id: postId, ...visiblePostQuery }).populate('user', 'profilePicture userName headline');
+  }
+
+  findDashboardPosts(userId: string | Types.ObjectId, page: number, limit: number) {
+    return PostModel.find({ user: userId, ...visiblePostQuery })
+      .sort({ createdAt: -1 })
+      .select({ settings: 0, user: 0, projectLinks: 0, media: { $slice: 1 } })
+      .skip((page - 1) * limit)
+      .limit(limit)
+      .lean();
+  }
+
+  findProfilePosts(userId: string | Types.ObjectId) {
+    return PostModel.find({ user: userId, ...visiblePostQuery })
+      .select({ settings: 0, user: 0, counts: 0, projectLinks: 0, media: { $slice: 1 } })
+      .sort({ createdAt: -1 })
+      .lean();
+  }
+
+  updateById(postId: string | Types.ObjectId, data: UpdatePostInput): Promise<PostDocument | null> {
+    return PostModel.findOneAndUpdate(
+      { _id: postId, ...visiblePostQuery },
+      { $set: data },
+      { new: true, runValidators: true },
+    ).populate('user', 'profilePicture userName headline');
+  }
+
+  markDeleting(postId: string | Types.ObjectId, userId: string | Types.ObjectId) {
+    return PostModel.findOneAndUpdate(
+      { _id: postId, user: userId },
+      { isDeleting: true, deletedAt: new Date() },
+      { new: true },
+    );
+  }
+
+  findFeedPosts(filter: FilterQuery<Post>, page: number, limit: number) {
+    return PostModel.find({ ...filter, ...visiblePostQuery })
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit)
+      .populate('user', 'userName profilePicture headline')
+      .lean();
+  }
+}
+
+const postRepository = new PostRepository();
+
+export { PostRepository, type CreatePostInput, type UpdatePostInput, visiblePostQuery };
+export default postRepository;
