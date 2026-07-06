@@ -9,6 +9,7 @@ import errorHandler from './shared/middleware/errorHandler.js';
 import notFoundHandler from './shared/middleware/notFoundHandler.js';
 import healthRoutes from './modules/health/health.route.js';
 import authRoutes from './modules/auth/auth.route.js';
+import mediaRoutes from './modules/media/media.route.js';
 import userRoutes from './modules/users/user.route.js';
 
 class App {
@@ -51,6 +52,7 @@ class App {
   private registerRoutes(): void {
     this.app.use('/api/health', healthRoutes);
     this.app.use('/api/auth', authRoutes);
+    this.app.use('/api/media', mediaRoutes);
     this.app.use('/api/user', userRoutes);
   }
 
@@ -64,4 +66,3 @@ const appFactory = new App();
 
 export { App };
 export default appFactory.getInstance();
-

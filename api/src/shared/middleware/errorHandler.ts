@@ -9,6 +9,16 @@ type NormalizedError = {
   details: unknown;
 };
 
+const multerErrorMessages: Record<string, string> = {
+  LIMIT_FILE_SIZE: 'File is too large.',
+  LIMIT_FILE_COUNT: 'Too many files uploaded.',
+  LIMIT_UNEXPECTED_FILE: 'Unexpected file field.',
+  LIMIT_PART_COUNT: 'Too many form parts.',
+  LIMIT_FIELD_KEY: 'Field name is too long.',
+  LIMIT_FIELD_VALUE: 'Field value is too long.',
+  LIMIT_FIELD_COUNT: 'Too many form fields.',
+};
+
 function normalizeError(error: unknown): NormalizedError {
   if (error instanceof AppError) {
     return {
@@ -19,7 +29,27 @@ function normalizeError(error: unknown): NormalizedError {
   }
 
   if (typeof error === 'object' && error !== null && 'name' in error) {
-    const namedError = error as { name?: string; message?: string; code?: number; keyValue?: unknown; errors?: unknown };
+    const namedError = error as {
+      name?: string;
+      message?: string;
+      code?: string | number;
+      field?: string;
+      keyValue?: unknown;
+      errors?: unknown;
+    };
+
+    if (namedError.name === 'MulterError') {
+      const errorCode = typeof namedError.code === 'string' ? namedError.code : 'MULTER_ERROR';
+
+      return {
+        statusCode: 400,
+        message: multerErrorMessages[errorCode] || namedError.message || 'Invalid file upload request.',
+        details: {
+          code: errorCode,
+          field: namedError.field || null,
+        },
+      };
+    }
 
     if (namedError.name === 'CastError') {
       return {
