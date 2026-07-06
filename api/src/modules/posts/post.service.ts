@@ -4,6 +4,7 @@ import { BadRequestError, NotFoundError } from '../../shared/errors/index.js';
 import mediaService, { type MediaService } from '../media/media.service.js';
 import type { StoredMedia } from '../media/media.types.js';
 import blockService, { type BlockService } from '../users/block/block.service.js';
+import likeRepository, { type LikeRepository } from '../likes/like.repository.js';
 import followRepository, { type FollowRepository } from '../users/follow/follow.repository.js';
 import userRepository, { type UserRepository } from '../users/user.repository.js';
 import type { Post, PostMedia, PostSettings, ProjectLinks } from './post.model.js';
@@ -46,6 +47,7 @@ class PostService {
   constructor(
     private readonly posts: PostRepository = postRepository,
     private readonly users: UserRepository = userRepository,
+    private readonly likes: LikeRepository = likeRepository,
     private readonly follows: FollowRepository = followRepository,
     private readonly blockRules: BlockService = blockService,
     private readonly media: MediaService = mediaService,
@@ -280,7 +282,10 @@ class PostService {
   }
 
   async getPost(currentUserId: string, postId: string) {
-    const post = await this.posts.findVisibleById(postId);
+    const [post, isLiked] = await Promise.all([
+      this.posts.findVisibleById(postId),
+      this.likes.exists(currentUserId, postId),
+    ]);
 
     if (!post) {
       throw new NotFoundError("Post doesn't exist!");
@@ -291,7 +296,7 @@ class PostService {
 
     return {
       ...post.toObject(),
-      isLiked: false,
+      isLiked,
       isSaved: false,
     };
   }
@@ -409,9 +414,14 @@ class PostService {
     }
 
     const posts = await this.posts.findFeedPosts(filter, page, limit);
+    const likedPostIds = await this.likes.findLikedPostIds(userId, posts.map((post) => post._id));
 
     return {
-      posts: posts.map((post) => ({ ...post, isLiked: false, isSaved: false })),
+      posts: posts.map((post) => ({
+        ...post,
+        isLiked: likedPostIds.has(post._id.toString()),
+        isSaved: false,
+      })),
       page,
       hasMore: posts.length === limit,
     };
