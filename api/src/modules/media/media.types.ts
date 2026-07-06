@@ -1,6 +1,9 @@
+type MediaKind = 'image' | 'video';
+
 type StoredMedia = {
   url: string;
   fileId: string;
+  mediaType: MediaKind;
   filePath?: string;
   name?: string;
   thumbnailUrl?: string;
@@ -10,12 +13,15 @@ type StoredMedia = {
   mime?: string;
 };
 
-type UploadImageInput = {
+type UploadMediaInput = {
   file: Express.Multer.File;
   folder: string;
   fileNamePrefix: string;
   tags?: string[];
+  expectedType?: MediaKind;
 };
+
+type UploadImageInput = Omit<UploadMediaInput, 'expectedType'>;
 
 type ClientUploadAuth = {
   token: string;
@@ -25,4 +31,4 @@ type ClientUploadAuth = {
   urlEndpoint: string;
 };
 
-export type { ClientUploadAuth, StoredMedia, UploadImageInput };
+export type { ClientUploadAuth, MediaKind, StoredMedia, UploadImageInput, UploadMediaInput };

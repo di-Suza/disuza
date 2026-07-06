@@ -37,7 +37,9 @@ const rawEnvSchema = z.object({
   IMAGE_KIT_PRIVATE: optionalString,
   IMAGE_KIT_URL_ENDPOINT: optionalString,
   MEDIA_MAX_FILE_SIZE_BYTES: z.coerce.number().int().min(1024).max(25 * 1024 * 1024).default(5 * 1024 * 1024),
+  MEDIA_MAX_VIDEO_FILE_SIZE_BYTES: z.coerce.number().int().min(1024).max(100 * 1024 * 1024).default(50 * 1024 * 1024),
   MEDIA_POST_IMAGE_MAX_COUNT: z.coerce.number().int().min(1).max(10).default(5),
+  MEDIA_POST_MEDIA_MAX_COUNT: z.coerce.number().int().min(1).max(10).default(5),
 });
 
 const result = rawEnvSchema.safeParse(process.env);
