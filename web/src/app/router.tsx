@@ -8,6 +8,7 @@ import NotFound from '@/shared/components/NotFound/NotFound';
 
 const DashboardPage = lazy(() => import('@/features/dashboard/ui/pages/DashboardPage'));
 const LandingPage = lazy(() => import('@/features/landing/ui/pages/LandingPage'));
+const ProfilePage = lazy(() => import('@/features/profile/ui/pages/ProfilePage'));
 const SignInPage = lazy(() => import('@/features/auth/ui/pages/SignIn/SignIn'));
 const SignUpPage = lazy(() => import('@/features/auth/ui/pages/SignUp/SignUp'));
 
@@ -45,6 +46,10 @@ export const router = createBrowserRouter([
       {
         path: '/home',
         element: withSuspense(<DashboardPage />),
+      },
+      {
+        path: '/profile/:id',
+        element: withSuspense(<ProfilePage />),
       },
     ],
   },
