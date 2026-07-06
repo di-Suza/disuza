@@ -401,3 +401,70 @@ Verification used:
 ```bash
 npm run check:api
 ```
+
+## Step 8: Backend Posts Module With Mixed Media
+
+Built the backend posts module on `feature/api-posts-module`.
+
+Added:
+
+- `Post` model with ordered `media` array instead of image-only storage
+- post repository, service, controller, validators, and routes
+- `/api/post` route mount
+- create post flow with multipart media uploads
+- dashboard posts fetch through `/api/post/getAllPosts`
+- single post fetch through `/api/post/getPost/:postId`
+- update post flow through `/api/post/updatePost/:postId`
+- delete post flow through `/api/post/deletePost/:postId`
+- feed fetch through `/api/post/feed`
+- profile response integration so public profiles can include normal and project posts
+
+Media upgrade:
+
+```txt
+V1: images only
+V2: ordered media carousel with images + videos
+```
+
+New post media shape:
+
+```txt
+media[] -> url, fileId, mediaType, order, thumbnailUrl, width, height, size, mime
+```
+
+Create flow:
+
+- accepts multipart media through `media` field
+- keeps upload order by default
+- supports optional `mediaOrder` for explicit carousel order
+- supports project posts with required `liveDemoUrl` and `repositoryUrl`
+
+Update flow:
+
+- accepts new media uploads during edit
+- supports preserving existing media by `fileId`
+- supports mixing existing media and new uploads in one `mediaOrder`
+- saves final carousel sequence by normalized `order`
+- cleans newly uploaded files if validation or DB update fails
+- safely removes old storage files when they are removed from the carousel
+
+Why:
+
+Posts are the core product surface after auth, users, and media storage. Adding videos now avoids locking the schema into image-only assumptions. Storing an ordered mixed-media array makes the frontend carousel simple and future-friendly.
+
+Important v2 improvements:
+
+- storage is centralized through the media service
+- videos use separate upload size limits
+- post media supports both image and video MIME types
+- carousel order is persisted explicitly
+- post counters update through the user repository
+- block rules are applied when viewing posts and feed data
+- profile posts are now loaded from the posts repository
+
+Verification used:
+
+```bash
+npm run check:api
+npm run build:api
+```
