@@ -760,3 +760,64 @@ Verification used:
 npm --prefix web run typecheck
 npm --prefix web run build
 ```
+
+## Step 14: Backend Saves And Collections Module
+
+Built the backend saves/collections module on `feature/api-saves-module`.
+
+Added:
+
+- `Save` model for user/post saved relations
+- `SavedPostsCollection` model for user-owned save collections
+- saves constants for the default collection name and default cover image
+- save repository for save relation CRUD, lookup, and saved-post pagination aggregations
+- saved collection repository for collection CRUD, selected collection management, and cover updates
+- save service for save/unsave, collection CRUD, move-to-collection, cover refresh, and blocked-user filtering
+- save controller with v1-compatible response messages
+- save validators using `express-validator`
+- v1-compatible post routes for save and collection APIs
+- post repository helpers for save action targets and cover media
+- real `isSaved` state in single post and feed responses
+
+Preserved v1 endpoint flow:
+
+```txt
+POST   /api/post/savePost
+DELETE /api/post/unsavePost/:postId
+GET    /api/post/getSavedPostsCollections
+POST   /api/post/createCollection
+PATCH  /api/post/updateCollection/:id
+DELETE /api/post/deleteCollection/:id
+GET    /api/post/savedCollections/:id/posts
+PATCH  /api/post/changeSavedPostCollection
+```
+
+Behavior:
+
+- saving a post uses the requested collection when it belongs to the user
+- if no requested collection is available, the selected collection is used
+- if no collection exists, `All Saved` is created as the default system collection
+- only one collection stays selected for the user
+- moving a saved post refreshes source and target collection cover metadata
+- unsaving refreshes the affected collection cover
+- system generated collections cannot be renamed or deleted
+- saved collection post lists hide deleted posts and posts from blocked users
+- saved collection post responses include `isSaved: true` and real `isLiked`
+- feed and single-post responses now return real `isSaved` values
+
+Why:
+
+Saves have collection management, selected-state behavior, and cover metadata, so they are kept separate from likes. This makes the larger save flow easier to reason about and gives the frontend a stable typed API surface.
+
+Deferred until frontend branch:
+
+- save button wiring
+- manage collections modal
+- saved collections list UI
+- saved collection posts UI
+
+Verification used:
+
+```bash
+npm run build:api
+```
