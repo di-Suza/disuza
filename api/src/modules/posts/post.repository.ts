@@ -29,6 +29,20 @@ class PostRepository {
     return PostModel.findOne({ _id: postId, ...visiblePostQuery }).populate('user', 'profilePicture userName headline');
   }
 
+  findVisibleCommentTarget(postId: string | Types.ObjectId) {
+    return PostModel.findOne({ _id: postId, ...visiblePostQuery })
+      .select('user settings')
+      .lean();
+  }
+
+  incrementCommentsCount(postId: string | Types.ObjectId, delta: number) {
+    return PostModel.findOneAndUpdate(
+      { _id: postId, ...visiblePostQuery },
+      { $inc: { 'counts.comments': delta } },
+      { new: true },
+    );
+  }
+
   findDashboardPosts(userId: string | Types.ObjectId, page: number, limit: number) {
     return PostModel.find({ user: userId, ...visiblePostQuery })
       .sort({ createdAt: -1 })
