@@ -245,3 +245,64 @@ Verification used:
 npm run check:web
 npm run build:web
 ```
+
+## Step 5: Backend User Profile and Social Module
+
+Built the first backend user/profile module on `feature/api-user-profile-module`.
+
+Added:
+
+- `Follow` model and repository
+- `Block` model and repository
+- block service for block-status checks and interaction guards
+- expanded user repository for profile, identity, portfolio, recommendations, and counter updates
+- user service layer for profile updates, password updates, follow/unfollow, block/unblock, blocked users, followers/following, recommendations, and public profile fetch
+- user controller, route, and `express-validator` validation rules
+- `/api/user` route mount
+
+Preserved v1 endpoint names:
+
+```txt
+POST   /api/user/updatePassword
+PATCH  /api/user/updateUserNameAndPP
+PATCH  /api/user/updateGeneralInfo
+PATCH  /api/user/updateProfessionalInfo
+GET    /api/user/getProfileUser/:id
+GET    /api/user/getUserAccountHistory
+GET    /api/user/blockedUsers
+GET    /api/user/recommendations
+POST   /api/user/followUser/:id
+DELETE /api/user/unfollowUser/:id
+POST   /api/user/blockUser/:id
+DELETE /api/user/unblockUser/:id
+GET    /api/user/getFollowers/:id
+GET    /api/user/getFollowing/:id
+```
+
+Why:
+
+User/profile APIs are the next layer after auth because most product features depend on the authenticated user, profile data, relationship state, and block rules. The module keeps the same v1 behavior shape but moves database work into repositories and business rules into services.
+
+Important v2 improvements:
+
+- follow/block data has dedicated repositories
+- block visibility rules are centralized
+- self-follow and self-block checks are explicit
+- follow cleanup runs when a user is blocked
+- recommendations exclude self, blocked users, and already-followed users
+- validators use Express middleware instead of ad hoc checks
+
+Deferred until supporting modules exist:
+
+- profile picture binary upload/storage integration
+- profile posts/project posts loading
+- notification side effects for follows
+- full account deletion cleanup queue
+- real activity history from posts/comments/messages
+
+Verification used:
+
+```bash
+npm run check:api
+npm run build:api
+```
