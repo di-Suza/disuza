@@ -13,6 +13,9 @@ export const api = createApi({
     'BlockedUsers',
     'UserRecommendations',
     'UserAccountHistory',
+    'Posts',
+    'Post',
+    'Feed',
   ],
   endpoints: () => ({}),
 });
