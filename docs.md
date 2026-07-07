@@ -1130,3 +1130,49 @@ Verification used:
 npm --prefix web run typecheck
 npm --prefix web run build
 ```
+
+## Step 21: Backend Search And Discover Module
+
+Built the backend search and discover flow on `feature/api-search-module`.
+
+Added:
+
+- search repository for user search, post search, top contributors, trending posts, and result counts
+- search service for safe pagination, limit normalization, blocked-user filtering, regex escaping, and viewer state enrichment
+- search controller and route mounted at `/api/search`
+- request validators using `express-validator`
+- liked/saved viewer state on returned posts so search results can reuse post cards safely
+
+Preserved v1 endpoint flow:
+
+```txt
+GET /api/search?q=&userPage=&postPage=&limit=
+GET /api/search/discover?page=&limit=
+```
+
+Behavior:
+
+- search matches active users by username or email
+- search matches visible posts by caption
+- blocked users are hidden from both user and post results
+- deleted/deleting posts are excluded
+- discover returns top contributors and trending posts
+- trending posts are ordered by likes count and recent activity
+- pagination returns `hasMoreUsers`, `hasMorePosts`, and `hasMoreTrendingPosts`
+- post results include `isLiked` and `isSaved` for the current viewer
+
+Why:
+
+Search and discover depend on already migrated users, posts, likes, saves, and block rules, so this is a clean next module after notifications. Keeping DB queries in the repository and interaction rules in the service preserves v1 behavior while avoiding unsafe regex input and keeping frontend result rendering reusable.
+
+Deferred until later modules:
+
+- full-text indexes after production search needs are clearer
+- richer ranking using contributions, follows, and engagement signals
+- search analytics/history
+
+Verification used:
+
+```bash
+npm run build:api
+```
