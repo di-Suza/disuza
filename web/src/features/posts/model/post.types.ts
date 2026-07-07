@@ -84,6 +84,75 @@ export type PostLikeResponse = {
   alreadyUnliked?: boolean;
 };
 
+export type SavedCollection = {
+  _id: string;
+  id?: string;
+  name: string;
+  owner?: string;
+  isSystemGenerated?: boolean;
+  selected?: boolean;
+  coverImage?: string;
+  postsCount?: number;
+  createdAt?: string;
+  updatedAt?: string;
+};
+
+export type SavePostRequest = {
+  postId: string;
+  collectionId?: string;
+};
+
+export type SavePostResult = {
+  saved: boolean;
+  message?: string;
+  collection?: Pick<SavedCollection, '_id' | 'name'>;
+};
+
+export type SavePostResponse = {
+  success: boolean;
+  message: string;
+  data: SavePostResult;
+};
+
+export type UnsavePostResponse = {
+  success: boolean;
+  message: string;
+  saved: boolean;
+};
+
+export type SavedCollectionsResponse = {
+  success: boolean;
+  message: string;
+  collections: SavedCollection[];
+};
+
+export type SavedCollectionResponse = {
+  success: boolean;
+  message: string;
+  collection: SavedCollection;
+};
+
+export type DeleteCollectionResponse = {
+  success: boolean;
+  message: string;
+  deletedSaves?: number;
+};
+
+export type SavedCollectionPostsResponse = {
+  success: boolean;
+  message: string;
+  collection: SavedCollection;
+  posts: Post[];
+  page: number;
+  hasMore: boolean;
+};
+
+export type SavedCollectionPostsQueryArgs = {
+  collectionId: string;
+  page?: number;
+  limit?: number;
+};
+
 export type PostsListResponse = {
   success: boolean;
   message: string;

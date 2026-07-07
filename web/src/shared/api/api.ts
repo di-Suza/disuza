@@ -18,6 +18,8 @@ export const api = createApi({
     'Feed',
     'Comments',
     'CommentReplies',
+    'SavedPostsCollections',
+    'SavedCollectionPosts',
   ],
   endpoints: () => ({}),
 });
