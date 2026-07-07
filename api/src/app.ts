@@ -8,6 +8,7 @@ import requestLogger from './shared/middleware/requestLogger.js';
 import errorHandler from './shared/middleware/errorHandler.js';
 import notFoundHandler from './shared/middleware/notFoundHandler.js';
 import healthRoutes from './modules/health/health.route.js';
+import issueRoutes from './modules/issues/issue.route.js';
 import authRoutes from './modules/auth/auth.route.js';
 import mediaRoutes from './modules/media/media.route.js';
 import notificationRoutes from './modules/notifications/notification.route.js';
@@ -55,6 +56,7 @@ class App {
 
   private registerRoutes(): void {
     this.app.use('/api/health', healthRoutes);
+    this.app.use('/api/issue', issueRoutes);
     this.app.use('/api/auth', authRoutes);
     this.app.use('/api/media', mediaRoutes);
     this.app.use('/api/notification', notificationRoutes);
