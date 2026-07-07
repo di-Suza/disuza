@@ -811,13 +811,76 @@ Saves have collection management, selected-state behavior, and cover metadata, s
 
 Deferred until frontend branch:
 
-- save button wiring
-- manage collections modal
-- saved collections list UI
-- saved collection posts UI
+- save button wiring (completed in Step 15)
+- manage collections modal (completed in Step 15)
+- saved collections list UI (completed in Step 15)
+- saved collection posts UI (completed in Step 15)
 
 Verification used:
 
 ```bash
 npm run build:api
+```
+
+## Step 15: Frontend Saves And Collections Module
+
+Built the frontend saves/collections flow on `feature/web-saves-module`.
+
+Added:
+
+- saved collection RTK Query tag types
+- typed save/collection request and response models
+- `savePost` mutation for `POST /api/post/savePost`
+- `unsavePost` mutation for `DELETE /api/post/unsavePost/:postId`
+- saved collection list query
+- saved collection posts query
+- create, update, delete, and change-collection mutations
+- optimistic `isSaved` cache patches for single post, feed, dashboard posts, and saved collection posts
+- `usePostSave` hook for PostCard save state, mutation calls, rollback, and error handling
+- PostCard save/unsave button
+- PostCard manage collections button when a post is saved
+- manage collections modal for selecting or creating a collection for a post
+- dashboard saved collections panel for collection CRUD and saved-post browsing
+- responsive CSS for save controls, save modal, collection cards, and saved dashboard panel
+
+Preserved v1 endpoint flow:
+
+```txt
+POST   /api/post/savePost
+DELETE /api/post/unsavePost/:postId
+GET    /api/post/getSavedPostsCollections
+POST   /api/post/createCollection
+PATCH  /api/post/updateCollection/:id
+DELETE /api/post/deleteCollection/:id
+GET    /api/post/savedCollections/:id/posts
+PATCH  /api/post/changeSavedPostCollection
+```
+
+Frontend flow:
+
+```txt
+PostCard save button -> usePostSave -> save/unsave mutation -> optimistic isSaved patch
+Saved PostCard manage button -> ManageSaveCollectionsModal -> collection query/create/change mutation
+Dashboard -> SavedCollectionsPanel -> collection query/create/update/delete + saved collection posts query
+```
+
+Behavior:
+
+- save/unsave updates the PostCard immediately
+- failed save/unsave requests rollback local and RTK Query cache state
+- saved posts can be moved to another collection from the manage modal
+- users can create collections while saving a post
+- dashboard shows saved collections, collection covers, post counts, and saved posts
+- non-system collections can be renamed or deleted from the dashboard panel
+- saved collection post cards reuse the existing PostCard flow, including likes, comments, and save controls
+
+Why:
+
+The saves feature has more state than likes because it includes collection ownership, selected collections, and saved-post browsing. The frontend keeps direct post interactions in focused hooks while collection management lives in dedicated saves components.
+
+Verification used:
+
+```bash
+npm --prefix web run typecheck
+npm --prefix web run build
 ```
