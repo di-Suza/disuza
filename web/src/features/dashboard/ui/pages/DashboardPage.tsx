@@ -2,6 +2,7 @@ import { KeyRound, LockOpen, LogOut, MonitorX, Save, UserPlus, UserRound } from 
 import { Link } from 'react-router-dom';
 
 import DashboardPostsPanel from '@/features/posts/ui/components/DashboardPostsPanel';
+import SavedCollectionsPanel from '@/features/saves/ui/components/SavedCollectionsPanel';
 import Button from '@/shared/ui/Button';
 import Input from '@/shared/ui/Input';
 import { useDashboardPage } from './useDashboardPage';
@@ -62,6 +63,7 @@ const DashboardPage = () => {
         </div>
 
         <DashboardPostsPanel user={user} />
+        <SavedCollectionsPanel viewerId={user?._id} />
 
         <div className="dashboard-grid">
           <form className="profile-card" onSubmit={handleIdentitySubmit}>
