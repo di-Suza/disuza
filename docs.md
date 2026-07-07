@@ -1071,3 +1071,62 @@ Verification used:
 ```bash
 npm run build:api
 ```
+
+## Step 20: Frontend Notifications Module
+
+Built the frontend notifications flow on `feature/web-notifications-module`.
+
+Added:
+
+- notifications RTK Query API layer for listing, mark-all-read, delete-one, and delete-all actions
+- typed notification models for v1 notification types and populated sender/content data
+- notification helper utilities for rendering icons, action text, thumbnails, and safe content previews
+- notifications page at `/notifications`
+- `useNotificationsPage` hook for pagination, navigation decisions, optimistic actions, delayed mark-read, and toast handling
+- dashboard and feed navigation entry points for notifications
+- responsive notification list styling aligned with the current dashboard/feed UI
+
+Preserved v1 endpoint flow:
+
+```txt
+GET    /api/notification/getNotifications
+PATCH  /api/notification/markAllAsRead
+DELETE /api/notification/deleteNotification/:notificationId
+DELETE /api/notification/deleteAllNotifications
+```
+
+Frontend flow:
+
+```txt
+NotificationsPage -> useNotificationsPage -> notification RTK Query API -> /api/notification/*
+```
+
+Behavior:
+
+- notifications are fetched with paginated RTK Query cache merging
+- unread notifications are marked read after a short delay with timeout cleanup
+- users can delete a single notification or clear all notifications
+- follow notifications navigate to the sender profile
+- like/comment/reply notifications currently navigate to the feed until a post-detail route exists
+- collab notification actions are deferred until collab modules exist
+- load more preserves already loaded notifications while fetching the next page
+- dashboard and feed pages expose notifications navigation
+
+Why:
+
+Notifications are a cross-feature activity surface, so the UI keeps API state in RTK Query and page interaction logic in a dedicated hook. This keeps rendering focused while preserving the v1 notification behavior and fixing the old delayed mark-read cleanup risk.
+
+Deferred until later modules:
+
+- direct post-detail navigation after a post detail route exists
+- comment/reply notification UI deep links after comments UI is fully connected
+- collab request and accepted actions after collab modules exist
+- realtime socket updates after the v2 socket layer is rebuilt
+- notification preferences
+
+Verification used:
+
+```bash
+npm --prefix web run typecheck
+npm --prefix web run build
+```

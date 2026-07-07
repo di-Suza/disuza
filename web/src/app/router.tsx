@@ -9,6 +9,7 @@ import NotFound from '@/shared/components/NotFound/NotFound';
 const DashboardPage = lazy(() => import('@/features/dashboard/ui/pages/DashboardPage'));
 const FeedPage = lazy(() => import('@/features/posts/ui/pages/FeedPage'));
 const LandingPage = lazy(() => import('@/features/landing/ui/pages/LandingPage'));
+const NotificationsPage = lazy(() => import('@/features/notifications/ui/pages/NotificationsPage'));
 const ProfilePage = lazy(() => import('@/features/profile/ui/pages/ProfilePage'));
 const SignInPage = lazy(() => import('@/features/auth/ui/pages/SignIn/SignIn'));
 const SignUpPage = lazy(() => import('@/features/auth/ui/pages/SignUp/SignUp'));
@@ -51,6 +52,10 @@ export const router = createBrowserRouter([
       {
         path: '/profile/:id',
         element: withSuspense(<ProfilePage />),
+      },
+      {
+        path: '/notifications',
+        element: withSuspense(<NotificationsPage />),
       },
     ],
   },
