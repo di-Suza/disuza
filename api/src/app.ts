@@ -10,6 +10,7 @@ import notFoundHandler from './shared/middleware/notFoundHandler.js';
 import healthRoutes from './modules/health/health.route.js';
 import authRoutes from './modules/auth/auth.route.js';
 import mediaRoutes from './modules/media/media.route.js';
+import notificationRoutes from './modules/notifications/notification.route.js';
 import postRoutes from './modules/posts/post.route.js';
 import reportRoutes from './modules/reports/report.route.js';
 import userRoutes from './modules/users/user.route.js';
@@ -55,6 +56,7 @@ class App {
     this.app.use('/api/health', healthRoutes);
     this.app.use('/api/auth', authRoutes);
     this.app.use('/api/media', mediaRoutes);
+    this.app.use('/api/notification', notificationRoutes);
     this.app.use('/api/post', postRoutes);
     this.app.use('/api/report', reportRoutes);
     this.app.use('/api/user', userRoutes);
