@@ -922,7 +922,7 @@ Reports should be a generic moderation module because posts, profiles, and later
 
 Deferred until later modules:
 
-- profile report UI wiring
+- profile report UI wiring (completed in Step 18)
 - message report support with conversation membership checks
 - admin moderation/review workflow
 
@@ -966,7 +966,47 @@ Reports are part of moderation, not post ownership, so the UI keeps report form 
 
 Deferred until later modules:
 
-- profile report trigger wiring
+- profile report trigger wiring (completed in Step 18)
+- message report flow with conversation membership rules
+- admin moderation/review dashboard
+
+Verification used:
+
+```bash
+npm --prefix web run typecheck
+npm --prefix web run build
+```
+
+## Step 18: Frontend Profile Reports Trigger
+
+Built the profile report trigger on `feature/web-profile-reports-module`.
+
+Added:
+
+- profile page report modal state in `useProfilePage`
+- profile hero report button for reportable profiles
+- `ReportModal` reuse with `onModel="User"`
+- profile report visibility guard for blocked profile states
+
+Frontend flow:
+
+```txt
+ProfilePage report button -> ReportModal -> useReportModal -> createReport mutation -> POST /api/report
+```
+
+Behavior:
+
+- own profile still redirects to dashboard, so self-report is not exposed in the UI
+- visible unblocked profiles can be reported through the shared report modal
+- blocked profiles do not show report action because backend report creation respects block interaction rules
+- profile reports reuse the same validation, duplicate-report handling, toast feedback, and API layer as post reports
+
+Why:
+
+The reports module was designed as a generic moderation flow, so profile reporting only needs a trigger and target model wiring. Keeping form logic in the shared report modal prevents duplicate report UI state across posts and profiles.
+
+Deferred until later modules:
+
 - message report flow with conversation membership rules
 - admin moderation/review dashboard
 
