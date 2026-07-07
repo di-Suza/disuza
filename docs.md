@@ -1234,3 +1234,47 @@ Verification used:
 npm --prefix web run typecheck
 npm --prefix web run build
 ```
+
+## Step 23: Backend Issues Module
+
+Built the backend issue/report-a-problem flow on `feature/api-issues-module`.
+
+Added:
+
+- `Issue` model with v1 categories: `Bug`, `Spam`, `Abuse`, `Technical`, and `Other`
+- issue statuses: `Pending`, `In-Progress`, `Resolved`, and `Dismissed`
+- issue repository for latest-report lookup and issue creation
+- issue service for category validation, description validation, cooldown enforcement, and creation
+- issue controller and route mounted at `/api/issue`
+- request validators using `express-validator`
+
+Preserved v1 endpoint flow:
+
+```txt
+POST /api/issue
+```
+
+Behavior:
+
+- authenticated users can submit a support/problem issue
+- category defaults to `Bug` if not provided
+- description is required and capped at 1000 characters
+- each user can submit only one issue every 5 minutes
+- cooldown violations return a 429 error
+- successful submission returns the v1-style category success message
+
+Why:
+
+Issues are app-support reports, separate from moderation reports for posts/users/messages. Keeping this module separate avoids mixing user-facing support tickets with content moderation reports while preserving the existing v1 report-a-problem flow.
+
+Deferred until later modules:
+
+- admin issue review dashboard
+- issue status update APIs
+- user-facing issue history
+
+Verification used:
+
+```bash
+npm run build:api
+```
