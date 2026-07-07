@@ -1,4 +1,4 @@
-import { Edit3, ExternalLink, GitFork, Heart, Loader2, MessageCircle, Trash2, UserRound } from 'lucide-react';
+import { Bookmark, Edit3, ExternalLink, FolderOpen, GitFork, Heart, Loader2, MessageCircle, Trash2, UserRound } from 'lucide-react';
 import { memo, useCallback, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 
@@ -7,6 +7,8 @@ import { useDeletePostMutation, useGetPostQuery } from '@/features/posts/api/pos
 import { getPostAuthor, getPostImageUrl, getPostOwnerId, getPostMedia } from '@/features/posts/model/post.helpers';
 import type { Post, PostAuthor } from '@/features/posts/model/post.types';
 import { usePostLike } from '@/features/posts/ui/hooks/usePostLike';
+import ManageSaveCollectionsModal from '@/features/saves/ui/components/ManageSaveCollectionsModal';
+import { usePostSave } from '@/features/saves/ui/hooks/usePostSave';
 import { useToast } from '@/shared/hooks/useToast';
 import Button from '@/shared/ui/Button';
 import { cn } from '@/shared/utils/cn';
@@ -33,9 +35,11 @@ const PostCard = ({ className, compact = false, fallbackAuthor, post, viewerId }
   const { showError, showSuccess } = useToast();
   const [isEditOpen, setEditOpen] = useState(false);
   const [isCommentsOpen, setCommentsOpen] = useState(false);
+  const [isCollectionsOpen, setCollectionsOpen] = useState(false);
   const [deletePost, { isLoading: isDeleting }] = useDeletePostMutation();
   const { data: fullPostData, isFetching: isPostFetching } = useGetPostQuery(post._id, { skip: !isEditOpen });
   const { isLiked, isLikeUpdating, likesCount, toggleLike } = usePostLike(post);
+  const { isSaved, isSaveUpdating, markSaved, toggleSave } = usePostSave(post);
 
   const author = getPostAuthor(post, fallbackAuthor);
   const ownerId = getPostOwnerId(post, fallbackAuthor);
@@ -122,6 +126,22 @@ const PostCard = ({ className, compact = false, fallbackAuthor, post, viewerId }
             <MessageCircle size={16} aria-hidden="true" />{Number(counts.comments || 0)}
           </button>
         )}
+        <button
+          type="button"
+          className={cn('post-card__footer-button post-card__footer-button--save', isSaved && 'is-active')}
+          onClick={toggleSave}
+          disabled={isSaveUpdating}
+          aria-label={isSaved ? 'Unsave post' : 'Save post'}
+          aria-pressed={isSaved}
+        >
+          {isSaveUpdating ? <Loader2 className="spin" size={16} aria-hidden="true" /> : <Bookmark size={16} aria-hidden="true" />}
+          {isSaved ? 'Saved' : 'Save'}
+        </button>
+        {isSaved && (
+          <button type="button" className="post-card__footer-button" onClick={() => setCollectionsOpen(true)} aria-label="Manage saved collection">
+            <FolderOpen size={16} aria-hidden="true" />Manage
+          </button>
+        )}
       </footer>
 
       {isEditOpen && (
@@ -139,6 +159,15 @@ const PostCard = ({ className, compact = false, fallbackAuthor, post, viewerId }
           isOpen={isCommentsOpen}
           onClose={() => setCommentsOpen(false)}
           post={post}
+        />
+      )}
+
+      {isCollectionsOpen && (
+        <ManageSaveCollectionsModal
+          isOpen={isCollectionsOpen}
+          onClose={() => setCollectionsOpen(false)}
+          postId={post._id}
+          onSaved={markSaved}
         />
       )}
     </article>
