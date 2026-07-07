@@ -22,6 +22,7 @@ export const api = createApi({
     'SavedCollectionPosts',
     'Reports',
     'Notifications',
+    'Search',
   ],
   endpoints: () => ({}),
 });
