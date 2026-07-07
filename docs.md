@@ -1016,3 +1016,58 @@ Verification used:
 npm --prefix web run typecheck
 npm --prefix web run build
 ```
+
+## Step 19: Backend Notifications Module
+
+Built the backend notifications flow on `feature/api-notifications-module`.
+
+Added:
+
+- `Notification` model with v1 notification types: `LIKE`, `FOLLOW`, `COMMENT`, `COMMENT_REPLY`, `COLLAB_REQUEST`, and `COLLAB_ACCEPTED`
+- `expiresAt` field and TTL index for future expiring collab request notifications
+- notification repository for create, populated reads, unread counts, mark-read, delete-one, delete-all, and metadata-based cleanup
+- notification service for pagination, blocked-user filtering, orphan cleanup, self-notification prevention, blocked-interaction prevention, send, remove, and lookup helpers
+- notification controller and route mounted at `/api/notification`
+- request validators for pagination and notification id params
+- like notification creation/removal from like/unlike post flow
+- follow notification creation/removal from follow/unfollow flow
+- follow notification cleanup when blocking removes follow relationships
+
+Preserved v1 endpoint flow:
+
+```txt
+GET    /api/notification/getNotifications
+PATCH  /api/notification/markAllAsRead
+DELETE /api/notification/deleteNotification/:notificationId
+DELETE /api/notification/deleteAllNotifications
+```
+
+Behavior:
+
+- liking a post creates a `LIKE` notification for the post owner
+- unliking removes the matching `LIKE` notification
+- following a user creates a `FOLLOW` notification for the followed user
+- unfollowing removes the matching `FOLLOW` notification
+- blocking a user removes follow relationships and related follow notifications
+- users do not receive notifications from themselves
+- notifications are not created across blocked relationships
+- notification listing hides senders blocked by either side
+- orphaned content-backed notifications are cleaned when fetched
+- `User` target notifications hide `contentId` in the response, matching v1 behavior
+
+Why:
+
+Notifications connect social actions across the app, so the backend module centralizes notification persistence and cleanup instead of scattering notification queries through likes and users. Realtime socket emit is intentionally deferred until the socket layer is rebuilt in v2.
+
+Deferred until later modules:
+
+- comment and reply notification hooks after comments backend is present in the active branch chain
+- collab request and accepted notification hooks after collab module exists
+- realtime socket emit for `new_notification` and `delete_notification`
+- notification preferences
+
+Verification used:
+
+```bash
+npm run build:api
+```
