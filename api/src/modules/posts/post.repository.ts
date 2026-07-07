@@ -35,6 +35,18 @@ class PostRepository {
       .lean();
   }
 
+  findVisibleSaveTarget(postId: string | Types.ObjectId) {
+    return PostModel.findOne({ _id: postId, ...visiblePostQuery })
+      .select({ user: 1, media: { $slice: 1 } })
+      .lean();
+  }
+
+  findVisibleCoverMedia(postId: string | Types.ObjectId) {
+    return PostModel.findOne({ _id: postId, ...visiblePostQuery })
+      .select({ media: { $slice: 1 } })
+      .lean();
+  }
+
   incrementLikesCount(postId: string | Types.ObjectId, delta: number) {
     return PostModel.findOneAndUpdate(
       { _id: postId, ...visiblePostQuery, ...(delta < 0 ? { 'counts.likes': { $gt: 0 } } : {}) },
