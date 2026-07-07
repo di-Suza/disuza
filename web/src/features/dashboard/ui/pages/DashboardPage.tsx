@@ -1,4 +1,4 @@
-import { KeyRound, LockOpen, LogOut, MonitorX, Save, UserPlus, UserRound } from 'lucide-react';
+import { Bell, KeyRound, LockOpen, LogOut, MonitorX, Save, UserPlus, UserRound } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 import DashboardPostsPanel from '@/features/posts/ui/components/DashboardPostsPanel';
@@ -54,6 +54,11 @@ const DashboardPage = () => {
             <h1>{user?.userName || 'DevLoopFeed user'}</h1>
             <p>{user?.email}</p>
           </div>
+        </div>
+
+        <div className="dashboard-actions dashboard-actions--top">
+          <Link to="/home" className="button button--secondary">Feed</Link>
+          <Link to="/notifications" className="button button--secondary"><Bell size={18} aria-hidden="true" />Notifications</Link>
         </div>
 
         <div className="profile-stats" aria-label="Your profile stats">

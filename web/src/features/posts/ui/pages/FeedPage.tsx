@@ -1,5 +1,6 @@
-import { ImagePlus, Loader2, RefreshCw } from 'lucide-react';
+import { Bell, ImagePlus, Loader2, RefreshCw } from 'lucide-react';
 import { useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 
 import type { PostAuthor } from '@/features/posts/model/post.types';
 import Button from '@/shared/ui/Button';
@@ -41,6 +42,9 @@ const FeedPage = () => {
                 Following
               </button>
             </div>
+            <Link to="/notifications" className="button button--ghost button--icon" aria-label="Notifications">
+              <Bell size={18} aria-hidden="true" />
+            </Link>
             <Button variant="ghost" className="button--icon" onClick={() => refetch()} disabled={isFetching} aria-label="Refresh feed">
               {isFetching ? <Loader2 className="spin" size={18} aria-hidden="true" /> : <RefreshCw size={18} aria-hidden="true" />}
             </Button>
