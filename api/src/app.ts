@@ -12,6 +12,7 @@ import authRoutes from './modules/auth/auth.route.js';
 import mediaRoutes from './modules/media/media.route.js';
 import postRoutes from './modules/posts/post.route.js';
 import reportRoutes from './modules/reports/report.route.js';
+import commentRoutes from './modules/comments/comment.route.js';
 import userRoutes from './modules/users/user.route.js';
 
 class App {
@@ -57,6 +58,7 @@ class App {
     this.app.use('/api/media', mediaRoutes);
     this.app.use('/api/post', postRoutes);
     this.app.use('/api/report', reportRoutes);
+    this.app.use('/api/comment', commentRoutes);
     this.app.use('/api/user', userRoutes);
   }
 
