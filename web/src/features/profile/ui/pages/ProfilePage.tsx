@@ -1,7 +1,8 @@
-import { Ban, Loader2, LockOpen, RefreshCw, UserPlus, UserRound, UserX } from 'lucide-react';
+import { Ban, Flag, Loader2, LockOpen, RefreshCw, UserPlus, UserRound, UserX } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 import ProfilePostsSection from '@/features/posts/ui/components/ProfilePostsSection';
+import ReportModal from '@/features/reports/ui/components/ReportModal';
 import Button from '@/shared/ui/Button';
 import { getErrorMessage } from '@/shared/utils/getErrorMessage';
 import { useProfilePage } from './useProfilePage';
@@ -12,6 +13,7 @@ const listToChips = (items: unknown): string[] => Array.isArray(items) ? items.f
 const ProfilePage = () => {
   const {
     closeList,
+    closeReport,
     currentUserId,
     error,
     followers,
@@ -28,9 +30,11 @@ const ProfilePage = () => {
     isMutating,
     isOwnProfile,
     isProfileError,
+    isReportOpen,
     listMode,
     normalPosts,
     openList,
+    openReport,
     profileUser,
     projectPosts,
     refetch,
@@ -74,6 +78,7 @@ const ProfilePage = () => {
   const interests = listToChips(profileUser.interests);
   const languages = listToChips(profileUser.languages);
   const relationshipList = listMode === 'followers' ? followers : following;
+  const canReportProfile = !profileUser.isBlocked && !profileUser.blockedProfile;
 
   return (
     <main className="dashboard-shell dashboard-shell--wide">
@@ -99,6 +104,12 @@ const ProfilePage = () => {
               {profileUser.isBlocked ? <LockOpen size={18} aria-hidden="true" /> : <Ban size={18} aria-hidden="true" />}
               {profileUser.isBlocked ? 'Unblock' : 'Block'}
             </Button>
+            {canReportProfile && (
+              <Button onClick={openReport} variant="ghost" aria-label="Report profile">
+                <Flag size={18} aria-hidden="true" />
+                Report
+              </Button>
+            )}
           </div>
         </div>
 
@@ -136,6 +147,15 @@ const ProfilePage = () => {
           </div>
         )}
       </section>
+
+      {isReportOpen && canReportProfile && (
+        <ReportModal
+          isOpen={isReportOpen}
+          onClose={closeReport}
+          targetId={profileUser._id}
+          onModel="User"
+        />
+      )}
 
       {isListOpen && (
         <div className="modal-backdrop" role="dialog" aria-modal="true" aria-label={`${listMode} list`}>

@@ -25,6 +25,7 @@ export const useProfilePage = () => {
 
   const [listMode, setListMode] = useState<RelationshipListMode>('followers');
   const [isListOpen, setListOpen] = useState(false);
+  const [isReportOpen, setReportOpen] = useState(false);
 
   const {
     data,
@@ -58,6 +59,8 @@ export const useProfilePage = () => {
   }, []);
 
   const closeList = useCallback(() => setListOpen(false), []);
+  const openReport = useCallback(() => setReportOpen(true), []);
+  const closeReport = useCallback(() => setReportOpen(false), []);
 
   const handleFollowToggle = useCallback(async () => {
     if (!profileUser) return;
@@ -89,6 +92,7 @@ export const useProfilePage = () => {
 
   return useMemo(() => ({
     closeList,
+    closeReport,
     currentUserId,
     error,
     followers: followersQuery.data?.followers || [],
@@ -104,18 +108,21 @@ export const useProfilePage = () => {
     isListFetching: followersQuery.isFetching || followingQuery.isFetching,
     isListOpen,
     isLoading,
+    isReportOpen,
     isMutating: isFollowLoading || isUnfollowLoading || isBlockLoading || isUnblockLoading,
     isOwnProfile,
     isProfileError: isError,
     listMode,
     normalPosts: data?.normalPosts || [],
     openList,
+    openReport,
     profileUser,
     profileUserId,
     projectPosts: data?.projectPosts || [],
     refetch,
   }), [
     closeList,
+    closeReport,
     currentUserId,
     data?.normalPosts,
     data?.projectPosts,
@@ -133,11 +140,13 @@ export const useProfilePage = () => {
     isFollowLoading,
     isListOpen,
     isLoading,
+    isReportOpen,
     isOwnProfile,
     isUnblockLoading,
     isUnfollowLoading,
     listMode,
     openList,
+    openReport,
     profileUser,
     profileUserId,
     refetch,
