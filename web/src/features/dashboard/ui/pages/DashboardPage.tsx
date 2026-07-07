@@ -1,6 +1,8 @@
-import { Bell, KeyRound, LockOpen, LogOut, MonitorX, Save, Search, UserPlus, UserRound } from 'lucide-react';
+import { useState } from 'react';
+import { AlertCircle, Bell, KeyRound, LockOpen, LogOut, MonitorX, Save, Search, UserPlus, UserRound } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
+import ReportAProblemModal from '@/features/issues/ui/components/ReportAProblemModal';
 import DashboardPostsPanel from '@/features/posts/ui/components/DashboardPostsPanel';
 import SavedCollectionsPanel from '@/features/saves/ui/components/SavedCollectionsPanel';
 import Button from '@/shared/ui/Button';
@@ -40,6 +42,7 @@ const DashboardPage = () => {
     user,
   } = useDashboardPage();
 
+  const [isProblemModalOpen, setProblemModalOpen] = useState(false);
   const avatarUrl = getAvatarUrl(user?.profilePicture?.url);
 
   return (
@@ -186,6 +189,10 @@ const DashboardPage = () => {
         </div>
 
         <div className="dashboard-actions dashboard-actions--footer">
+          <Button variant="secondary" onClick={() => setProblemModalOpen(true)}>
+            <AlertCircle size={18} aria-hidden="true" />
+            Report a problem
+          </Button>
           <Button variant="secondary" onClick={handleLogout} disabled={isLogoutLoading || isLogoutAllLoading}>
             <LogOut size={18} aria-hidden="true" />
             {isLogoutLoading ? 'Logging out...' : 'Log out'}
@@ -196,6 +203,7 @@ const DashboardPage = () => {
           </Button>
         </div>
       </section>
+      <ReportAProblemModal isOpen={isProblemModalOpen} onClose={() => setProblemModalOpen(false)} />
     </main>
   );
 };

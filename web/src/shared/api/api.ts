@@ -23,6 +23,7 @@ export const api = createApi({
     'Reports',
     'Notifications',
     'Search',
+    'Issues',
   ],
   endpoints: () => ({}),
 });
