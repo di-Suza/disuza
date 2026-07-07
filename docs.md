@@ -1176,3 +1176,61 @@ Verification used:
 ```bash
 npm run build:api
 ```
+
+## Step 22: Frontend Search And Discover Module
+
+Built the frontend search and discover flow on `feature/web-search-module`.
+
+Added:
+
+- search RTK Query API layer for `/search` and `/search/discover`
+- typed search and discover response models
+- shared `useDebounce` hook for delayed search queries with cleanup
+- `/search` route with lazy-loaded page
+- `useSearchPage` hook for discover pagination, debounced search, result merging, loading/error state, and current-user navigation rules
+- reusable `SearchUserCard` for top contributors and matched users
+- search page UI with top contributors, trending posts, users, posts, and load-more actions
+- dashboard and feed navigation entry points for search
+- responsive search styling aligned with the current dashboard/feed UI
+
+Preserved v1 endpoint flow:
+
+```txt
+GET /api/search?q=&userPage=&postPage=&limit=
+GET /api/search/discover?page=&limit=
+```
+
+Frontend flow:
+
+```txt
+SearchPage -> useSearchPage -> search RTK Query API -> /api/search/*
+```
+
+Behavior:
+
+- discover view shows top contributors and trending posts when the search input is empty
+- search input is debounced before calling the API
+- changing the query resets user and post pagination safely
+- search results merge paginated users/posts without duplicates
+- users navigate to their profile, while the current user navigates to dashboard
+- posts reuse the existing compact post card flow, including current like/save/comment/report behaviors
+- load-more actions are split for users, search posts, and trending posts
+- search errors and loading states are isolated from the inactive discover/search mode
+
+Why:
+
+Search is a read-heavy cross-feature surface, so the frontend keeps network state in RTK Query and interaction state in a dedicated page hook. Reusing existing post cards keeps social actions consistent while the module preserves v1 discover/search behavior.
+
+Deferred until later modules:
+
+- direct post-detail navigation after a post detail route exists
+- advanced search filters and sorting
+- dedicated search history or recent searches
+- full-text/autocomplete UX after backend search ranking matures
+
+Verification used:
+
+```bash
+npm --prefix web run typecheck
+npm --prefix web run build
+```

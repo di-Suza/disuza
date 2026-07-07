@@ -1,4 +1,4 @@
-import { Bell, KeyRound, LockOpen, LogOut, MonitorX, Save, UserPlus, UserRound } from 'lucide-react';
+import { Bell, KeyRound, LockOpen, LogOut, MonitorX, Save, Search, UserPlus, UserRound } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 import DashboardPostsPanel from '@/features/posts/ui/components/DashboardPostsPanel';
@@ -58,6 +58,7 @@ const DashboardPage = () => {
 
         <div className="dashboard-actions dashboard-actions--top">
           <Link to="/home" className="button button--secondary">Feed</Link>
+          <Link to="/search" className="button button--secondary"><Search size={18} aria-hidden="true" />Search</Link>
           <Link to="/notifications" className="button button--secondary"><Bell size={18} aria-hidden="true" />Notifications</Link>
         </div>
 

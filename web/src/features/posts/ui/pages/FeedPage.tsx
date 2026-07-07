@@ -1,4 +1,4 @@
-import { Bell, ImagePlus, Loader2, RefreshCw } from 'lucide-react';
+import { Bell, ImagePlus, Loader2, RefreshCw, Search } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 
@@ -42,6 +42,9 @@ const FeedPage = () => {
                 Following
               </button>
             </div>
+            <Link to="/search" className="button button--ghost button--icon" aria-label="Search">
+              <Search size={18} aria-hidden="true" />
+            </Link>
             <Link to="/notifications" className="button button--ghost button--icon" aria-label="Notifications">
               <Bell size={18} aria-hidden="true" />
             </Link>
