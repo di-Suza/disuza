@@ -4,6 +4,8 @@ import { uploadPostMedia } from '../media/media.middleware.js';
 import { authenticate } from '../../shared/middleware/auth.js';
 import validateRequest from '../../shared/middleware/validateRequest.js';
 import likeController from '../likes/like.controller.js';
+import reportController from '../reports/report.controller.js';
+import { postReportRules } from '../reports/validators/report.validator.js';
 import saveController from '../saves/save.controller.js';
 import { collectionIdParamRules, collectionNameRules, savePostRules, savedCollectionPostsRules } from '../saves/validators/save.validator.js';
 import postController from './post.controller.js';
@@ -24,6 +26,7 @@ class PostRoutes {
     this.router.get('/getPost/:postId', postIdParamRules, validateRequest, postController.getPost);
     this.router.patch('/updatePost/:postId', uploadPostMedia, updatePostRules, validateRequest, postController.updatePost);
     this.router.delete('/deletePost/:postId', postIdParamRules, validateRequest, postController.deletePost);
+    this.router.post('/reportPost', postReportRules, validateRequest, reportController.reportPost);
     this.router.post('/likePost/:postId', postIdParamRules, validateRequest, likeController.likePost);
     this.router.post('/unlikePost/:postId', postIdParamRules, validateRequest, likeController.unlikePost);
     this.router.post('/savePost', savePostRules, validateRequest, saveController.savePost);

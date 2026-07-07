@@ -884,3 +884,50 @@ Verification used:
 npm --prefix web run typecheck
 npm --prefix web run build
 ```
+## Step 16: Backend Reports Module
+
+Built the backend reports module on `feature/api-reports-module`.
+
+Added:
+
+- `Report` model with `Post`, `User`, and future `Message` target support
+- report repository for duplicate checks, create, and current-user report history
+- report service for target validation, self-report prevention, block-rule checks, duplicate prevention, and paginated report history
+- report controller for generic reports, post-report compatibility, and my-reports
+- report route mounted at `/api/report`
+- v1-compatible post report route at `/api/post/reportPost`
+- report validators using `express-validator`
+
+Preserved v1 endpoint flow:
+
+```txt
+POST /api/report
+GET  /api/report/my-reports
+POST /api/post/reportPost
+```
+
+Behavior:
+
+- post reports are fully supported now
+- user/profile reports are supported by the same module for future UI wiring
+- message reports are intentionally guarded until the messaging module exists
+- users cannot report their own post/profile
+- users cannot report the same target more than once
+- report creation respects block interaction rules
+- report history returns current user's reports with target preview data
+
+Why:
+
+Reports should be a generic moderation module because posts, profiles, and later messages all share the same report lifecycle. The current implementation focuses on post reports while keeping the target model structure ready for profile reports later.
+
+Deferred until later modules:
+
+- profile report UI wiring
+- message report support with conversation membership checks
+- admin moderation/review workflow
+
+Verification used:
+
+```bash
+npm run build:api
+```
