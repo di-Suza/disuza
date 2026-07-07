@@ -8,6 +8,7 @@ import {
 } from '../../shared/errors/index.js';
 import passwordService from '../../shared/utils/password.js';
 import mediaService, { type MediaService } from '../media/media.service.js';
+import notificationService, { type NotificationService } from '../notifications/notification.service.js';
 import postRepository, { type PostRepository } from '../posts/post.repository.js';
 import type { ProfilePicture } from './user.model.js';
 import userRepository, { type ProfessionalInfoUpdate, type UserRepository } from './user.repository.js';
@@ -39,6 +40,7 @@ class UserService {
     private readonly blockRules: BlockService = blockService,
     private readonly media: MediaService = mediaService,
     private readonly posts: PostRepository = postRepository,
+    private readonly notifications: NotificationService = notificationService,
   ) {}
 
   private normalizePage(pageInput: unknown): number {
@@ -281,6 +283,14 @@ class UserService {
       this.users.incrementCounter(followUserId, 'followersCount', 1),
     ]);
 
+    await this.notifications.send({
+      senderId: userId,
+      recipientId: followUserId,
+      type: 'FOLLOW',
+      contentId: followUserId,
+      onModel: 'User',
+    });
+
     return { alreadyFollowing: false };
   }
 
@@ -294,9 +304,14 @@ class UserService {
     await Promise.all([
       this.users.incrementCounter(userId, 'followingCount', -1),
       this.users.incrementCounter(followUserId, 'followersCount', -1),
+      this.notifications.remove({
+        senderId: userId,
+        recipientId: followUserId,
+        type: 'FOLLOW',
+        contentId: followUserId,
+      }),
     ]);
   }
-
   async getFollowers(currentUserId: string, userId: string, pageInput: unknown, limitInput: unknown) {
     await this.blockRules.ensureUsersCanInteract(currentUserId, userId, 'view followers of');
 
@@ -325,6 +340,12 @@ class UserService {
       cleanupTasks.push(
         this.users.incrementCounter(userId, 'followingCount', -1),
         this.users.incrementCounter(targetUserId, 'followersCount', -1),
+        this.notifications.remove({
+          senderId: userId,
+          recipientId: targetUserId,
+          type: 'FOLLOW',
+          contentId: targetUserId,
+        }),
       );
     }
 
@@ -332,6 +353,12 @@ class UserService {
       cleanupTasks.push(
         this.users.incrementCounter(targetUserId, 'followingCount', -1),
         this.users.incrementCounter(userId, 'followersCount', -1),
+        this.notifications.remove({
+          senderId: targetUserId,
+          recipientId: userId,
+          type: 'FOLLOW',
+          contentId: userId,
+        }),
       );
     }
 
@@ -342,7 +369,6 @@ class UserService {
       removedTargetFollowsCurrent: Boolean(targetFollowsCurrent),
     };
   }
-
   async blockUser(userId: string, blockedUserId: string) {
     if (userId.toString() === blockedUserId.toString()) {
       throw new BadRequestError('You cannot block yourself!');

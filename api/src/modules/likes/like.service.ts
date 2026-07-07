@@ -1,4 +1,5 @@
 import { NotFoundError } from '../../shared/errors/index.js';
+import notificationService, { type NotificationService } from '../notifications/notification.service.js';
 import blockService, { type BlockService } from '../users/block/block.service.js';
 import postRepository, { type PostRepository } from '../posts/post.repository.js';
 import likeRepository, { type LikeRepository } from './like.repository.js';
@@ -14,6 +15,7 @@ class LikeService {
     private readonly likes: LikeRepository = likeRepository,
     private readonly posts: PostRepository = postRepository,
     private readonly blockRules: BlockService = blockService,
+    private readonly notifications: NotificationService = notificationService,
   ) {}
 
   private async getPostActionTarget(userId: string, postId: string, action: string) {
@@ -43,9 +45,16 @@ class LikeService {
       throw new NotFoundError('Post not found');
     }
 
+    await this.notifications.send({
+      senderId: userId,
+      recipientId: post.user,
+      type: 'LIKE',
+      contentId: post._id,
+      onModel: 'Post',
+    });
+
     return { liked: true, alreadyLiked: false };
   }
-
   async unlikePost(userId: string, postId: string): Promise<LikeActionResult> {
     const post = await this.getPostActionTarget(userId, postId, 'unlike posts from');
     const result = await this.likes.deleteOne(userId, postId);
@@ -54,7 +63,15 @@ class LikeService {
       return { liked: false, alreadyUnliked: true };
     }
 
-    await this.posts.incrementLikesCount(post._id, -1);
+    await Promise.all([
+      this.posts.incrementLikesCount(post._id, -1),
+      this.notifications.remove({
+        senderId: userId,
+        recipientId: post.user,
+        type: 'LIKE',
+        contentId: post._id,
+      }),
+    ]);
 
     return { liked: false, alreadyUnliked: false };
   }
