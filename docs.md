@@ -931,3 +931,48 @@ Verification used:
 ```bash
 npm run build:api
 ```
+
+## Step 17: Frontend Post Reports Module
+
+Built the frontend post-report flow on `feature/web-post-reports-module`.
+
+Added:
+
+- reports RTK Query API layer for creating reports and fetching current-user report history
+- typed report models and shared report reason list
+- reusable `ReportModal` component that supports `Post`, `User`, and future `Message` targets
+- `useReportModal` hook for local form state, validation, submit handling, body scroll lock, and toast feedback
+- PostCard report action for non-owner posts
+- responsive report modal styling aligned with the existing modal system
+
+Frontend flow:
+
+```txt
+PostCard report button -> ReportModal -> useReportModal -> createReport mutation -> POST /api/report
+```
+
+Behavior:
+
+- post owners continue to see edit/delete actions instead of report
+- non-owner posts show a report action in the card header
+- report submit requires a reason and details before hitting the API
+- successful report submit closes the modal and shows server feedback
+- failed report submit shows normalized API errors, including duplicate-report responses
+- the modal is target-model aware, so profile reports can reuse it later without rebuilding the UI flow
+
+Why:
+
+Reports are part of moderation, not post ownership, so the UI keeps report form state in a focused reports feature instead of mixing it into PostCard. PostCard only decides when to open the modal.
+
+Deferred until later modules:
+
+- profile report trigger wiring
+- message report flow with conversation membership rules
+- admin moderation/review dashboard
+
+Verification used:
+
+```bash
+npm --prefix web run typecheck
+npm --prefix web run build
+```
