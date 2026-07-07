@@ -1278,3 +1278,53 @@ Verification used:
 ```bash
 npm run build:api
 ```
+
+## Step 24: Frontend Issues Module
+
+Built the frontend report-a-problem flow on `feature/web-issues-module`.
+
+Added:
+
+- issues RTK Query API layer for submitting support/problem reports
+- typed issue category/status models
+- `ReportAProblemModal` component using the existing modal system
+- `useReportAProblemModal` hook for category state, description state, validation, submit handling, body scroll lock, and toast feedback
+- dashboard trigger button for opening the report-a-problem modal
+
+Preserved v1 endpoint flow:
+
+```txt
+POST /api/issue
+```
+
+Frontend flow:
+
+```txt
+Dashboard report button -> ReportAProblemModal -> useReportAProblemModal -> submitIssue mutation -> POST /api/issue
+```
+
+Behavior:
+
+- category defaults to `Bug`
+- description is required before submit
+- description is capped at 1000 characters
+- successful submit shows the server success message and closes the modal
+- failed submit shows normalized API errors, including the 5-minute cooldown response
+- failed submit keeps the modal open so the user does not lose their typed description
+
+Why:
+
+Issue reporting is a support flow rather than content moderation, so it lives in a dedicated issues feature instead of the reports feature. The dashboard exposes the action because it is account/app-level feedback, matching the v1 report-a-problem entry point while using v2 modal and hook patterns.
+
+Deferred until later modules:
+
+- issue history for users
+- admin issue review dashboard
+- issue status update UI
+
+Verification used:
+
+```bash
+npm --prefix web run typecheck
+npm --prefix web run build
+```
