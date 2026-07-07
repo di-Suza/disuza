@@ -1,4 +1,4 @@
-import { Bookmark, Edit3, ExternalLink, FolderOpen, GitFork, Heart, Loader2, MessageCircle, Trash2, UserRound } from 'lucide-react';
+import { Bookmark, Edit3, ExternalLink, Flag, FolderOpen, GitFork, Heart, Loader2, MessageCircle, Trash2, UserRound } from 'lucide-react';
 import { memo, useCallback, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 
@@ -7,6 +7,7 @@ import { useDeletePostMutation, useGetPostQuery } from '@/features/posts/api/pos
 import { getPostAuthor, getPostImageUrl, getPostOwnerId, getPostMedia } from '@/features/posts/model/post.helpers';
 import type { Post, PostAuthor } from '@/features/posts/model/post.types';
 import { usePostLike } from '@/features/posts/ui/hooks/usePostLike';
+import ReportModal from '@/features/reports/ui/components/ReportModal';
 import ManageSaveCollectionsModal from '@/features/saves/ui/components/ManageSaveCollectionsModal';
 import { usePostSave } from '@/features/saves/ui/hooks/usePostSave';
 import { useToast } from '@/shared/hooks/useToast';
@@ -36,6 +37,7 @@ const PostCard = ({ className, compact = false, fallbackAuthor, post, viewerId }
   const [isEditOpen, setEditOpen] = useState(false);
   const [isCommentsOpen, setCommentsOpen] = useState(false);
   const [isCollectionsOpen, setCollectionsOpen] = useState(false);
+  const [isReportOpen, setReportOpen] = useState(false);
   const [deletePost, { isLoading: isDeleting }] = useDeletePostMutation();
   const { data: fullPostData, isFetching: isPostFetching } = useGetPostQuery(post._id, { skip: !isEditOpen });
   const { isLiked, isLikeUpdating, likesCount, toggleLike } = usePostLike(post);
@@ -79,7 +81,7 @@ const PostCard = ({ className, compact = false, fallbackAuthor, post, viewerId }
 
         <div className="post-card__header-actions">
           {post.isProjectPost && <span className="post-card__badge">Project</span>}
-          {isOwner && (
+          {isOwner ? (
             <>
               <Button variant="ghost" className="button--icon" onClick={() => setEditOpen(true)} aria-label="Edit post">
                 <Edit3 size={17} aria-hidden="true" />
@@ -88,6 +90,10 @@ const PostCard = ({ className, compact = false, fallbackAuthor, post, viewerId }
                 {isDeleting ? <Loader2 className="spin" size={17} aria-hidden="true" /> : <Trash2 size={17} aria-hidden="true" />}
               </Button>
             </>
+          ) : (
+            <Button variant="ghost" className="button--icon" onClick={() => setReportOpen(true)} aria-label="Report post">
+              <Flag size={17} aria-hidden="true" />
+            </Button>
           )}
         </div>
       </header>
@@ -168,6 +174,15 @@ const PostCard = ({ className, compact = false, fallbackAuthor, post, viewerId }
           onClose={() => setCollectionsOpen(false)}
           postId={post._id}
           onSaved={markSaved}
+        />
+      )}
+
+      {isReportOpen && (
+        <ReportModal
+          isOpen={isReportOpen}
+          onClose={() => setReportOpen(false)}
+          targetId={post._id}
+          onModel="Post"
         />
       )}
     </article>
