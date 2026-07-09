@@ -122,6 +122,11 @@ class NotificationService {
     });
   }
 
+  async removeManyForContent(contentIds: Array<string | Types.ObjectId>, types?: NotificationType[]) {
+    if (contentIds.length === 0) return null;
+    return this.notifications.deleteManyByContent({ contentIds, types });
+  }
+
   findOne(filter: NotificationFilter) {
     return this.notifications.findOne(filter);
   }

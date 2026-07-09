@@ -35,6 +35,20 @@ class PostRepository {
       .lean();
   }
 
+  findVisibleCommentTarget(postId: string | Types.ObjectId) {
+    return PostModel.findOne({ _id: postId, ...visiblePostQuery })
+      .select('user settings')
+      .lean();
+  }
+
+  incrementCommentsCount(postId: string | Types.ObjectId, delta: number) {
+    return PostModel.findOneAndUpdate(
+      { _id: postId, ...visiblePostQuery, ...(delta < 0 ? { 'counts.comments': { $gt: 0 } } : {}) },
+      { $inc: { 'counts.comments': delta } },
+      { new: true },
+    );
+  }
+
   findVisibleSaveTarget(postId: string | Types.ObjectId) {
     return PostModel.findOne({ _id: postId, ...visiblePostQuery })
       .select({ user: 1, media: { $slice: 1 } })
@@ -54,6 +68,22 @@ class PostRepository {
       { new: true },
     );
   }
+
+  incrementFeedbacksCount(postId: string | Types.ObjectId, delta: number) {
+    return PostModel.findOneAndUpdate(
+      { _id: postId, ...visiblePostQuery, ...(delta < 0 ? { 'counts.feedbacks': { $gt: 0 } } : {}) },
+      { $inc: { 'counts.feedbacks': delta } },
+      { new: true },
+    );
+  }
+
+  markUserPostsDeleting(userId: string | Types.ObjectId) {
+    return PostModel.updateMany(
+      { user: userId, isDeleting: { $ne: true } },
+      { isDeleting: true, deletedAt: new Date() },
+    );
+  }
+
   findDashboardPosts(userId: string | Types.ObjectId, page: number, limit: number) {
     return PostModel.find({ user: userId, ...visiblePostQuery })
       .sort({ createdAt: -1 })

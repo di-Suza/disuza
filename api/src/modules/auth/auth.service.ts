@@ -2,6 +2,7 @@ import type { Request } from 'express';
 import { OAuth2Client } from 'google-auth-library';
 
 import env from '../../config/env.js';
+import heatmapService, { type HeatmapService } from '../contributions/heatmap.service.js';
 import { Roles } from '../../shared/constants/roles.js';
 import {
   BadRequestError,
@@ -42,6 +43,7 @@ class AuthService {
     private readonly repository: AuthRepository = authRepository,
     private readonly sessions: AuthSessionService = authSessionService,
     private readonly otps: OtpService = otpService,
+    private readonly heatmap: HeatmapService = heatmapService,
   ) {
     this.googleClient = new OAuth2Client(
       env.GOOGLE_CLIENT_ID,
@@ -54,8 +56,16 @@ class AuthService {
     return email.trim().toLowerCase();
   }
 
-  private sanitizeUser(user: UserDocument) {
-    return user.toObject();
+  private async sanitizeUser(user: UserDocument) {
+    const [plainUser, heatmap] = await Promise.all([
+      Promise.resolve(user.toObject()),
+      this.heatmap.getHeatmap(user._id),
+    ]);
+
+    return {
+      ...plainUser,
+      heatmap,
+    };
   }
 
   private getTokenSubject(user: UserDocument) {
@@ -145,7 +155,7 @@ class AuthService {
     const { accessToken, refreshToken } = await this.createSessionTokens(user, req);
 
     return {
-      user: this.sanitizeUser(user),
+      user: await this.sanitizeUser(user),
       accessToken,
       refreshToken,
     };
@@ -188,7 +198,7 @@ class AuthService {
     const { accessToken, refreshToken } = await this.createSessionTokens(user, req);
 
     return {
-      user: this.sanitizeUser(user),
+      user: await this.sanitizeUser(user),
       accessToken,
       refreshToken,
     };
@@ -294,7 +304,7 @@ class AuthService {
 
     return {
       user: {
-        ...this.sanitizeUser(user),
+        ...(await this.sanitizeUser(user)),
         isNew,
       },
       accessToken,

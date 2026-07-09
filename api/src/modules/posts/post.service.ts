@@ -1,6 +1,7 @@
 import mongoose, { type FilterQuery } from 'mongoose';
 
 import { BadRequestError, NotFoundError } from '../../shared/errors/index.js';
+import heatmapService, { type HeatmapService } from '../contributions/heatmap.service.js';
 import mediaService, { type MediaService } from '../media/media.service.js';
 import type { StoredMedia } from '../media/media.types.js';
 import blockService, { type BlockService } from '../users/block/block.service.js';
@@ -53,6 +54,7 @@ class PostService {
     private readonly follows: FollowRepository = followRepository,
     private readonly blockRules: BlockService = blockService,
     private readonly media: MediaService = mediaService,
+    private readonly heatmap: HeatmapService = heatmapService,
   ) {}
 
   private normalizePage(pageInput: unknown): number {
@@ -261,6 +263,7 @@ class PostService {
 
       await Promise.all([
         this.users.incrementCounter(userId, 'postsCount', 1),
+        this.heatmap.updateContribution(userId, 'POST', post._id),
         ...(isProjectPost ? [this.users.incrementCounter(userId, 'projectsCount', 1)] : []),
       ]);
 
@@ -386,6 +389,7 @@ class PostService {
 
     await Promise.all([
       this.users.incrementCounter(userId, 'postsCount', -1),
+      this.heatmap.removeContribution(userId, post._id, 'POST'),
       ...(post.isProjectPost ? [this.users.incrementCounter(userId, 'projectsCount', -1)] : []),
       ...post.media.map((mediaItem) => this.media.tryDeleteFile(mediaItem.fileId)),
     ]);
