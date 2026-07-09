@@ -1374,3 +1374,53 @@ Verification used:
 ```bash
 npm run build:api
 ```
+
+## Step 26: Frontend Dashboard Management Module
+
+Built the frontend dashboard management layer on `feature/web-dashboard-module`.
+
+Added:
+
+- clickable followers and following stats with paginated user-list modals
+- dashboard activity modal for likes, follows, comments, and feedback history
+- reports history modal backed by the reports RTK Query API
+- blocked-users management modal with unblock support
+- privacy/account modal and delete-account OTP flow wiring
+- richer portfolio editor for experiences and educations alongside skills, interests, and languages
+- activity/settings action panel on the dashboard
+- responsive dashboard modal, settings, and portfolio editor styles
+
+Frontend flow:
+
+```txt
+Dashboard action -> dashboard modal/component -> RTK Query hook -> existing v2 API endpoint
+Portfolio editor -> useDashboardPage -> updateProfessionalInfo -> /api/user/updateProfessionalInfo
+```
+
+Behavior:
+
+- followers/following lists use the existing user social APIs
+- activity history uses `/api/user/getUserAccountHistory` from the backend dashboard support step
+- likes and follows show real activity data now
+- comments and feedback remain valid activity tabs but depend on their later backend modules for real data
+- report history reads the current user's submitted reports
+- blocked users can be unblocked from either the inline dashboard panel or modal
+- paginated modals keep already loaded rows when loading more
+- portfolio experience and education rows can be added, edited, removed, and submitted through the existing professional-info endpoint
+
+Why:
+
+The dashboard is the user's account control surface, so it needs more than profile edit fields. This step brings the useful v1 dashboard/More Settings flows into v2 while keeping network state in RTK Query, page logic in hooks, and modal UI in focused components.
+
+Deferred until later modules:
+
+- real comment activity after comments are active in the dashboard branch chain
+- feedback activity with messaging/chat modules
+- contribution heatmap persistence and APIs
+- final account deletion cleanup queue behavior after backend cleanup is rebuilt
+
+Verification used:
+
+```bash
+npm run check:web
+```
