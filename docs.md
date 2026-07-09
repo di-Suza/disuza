@@ -470,6 +470,8 @@ npm run check:api
 npm run build:api
 ```
 
+
+
 ## Step 9: Frontend Posts Feed and Composer Module
 
 Built the frontend posts module on `feature/web-posts-module`.
@@ -514,8 +516,6 @@ Important v2 improvements:
 - project posts keep required live demo and repository URLs
 - access-token retry still goes through the shared `baseQueryWithAuthGuard`
 - feed/dashboard/profile reuse the same post card/list primitives
-
-Verification used:
 
 ```bash
 npm --prefix web run typecheck

@@ -73,6 +73,16 @@ class PostRepository {
     return PostModel.findOneAndUpdate(
       { _id: postId, ...visiblePostQuery, ...(delta < 0 ? { 'counts.feedbacks': { $gt: 0 } } : {}) },
       { $inc: { 'counts.feedbacks': delta } },
+  findVisibleCommentTarget(postId: string | Types.ObjectId) {
+    return PostModel.findOne({ _id: postId, ...visiblePostQuery })
+      .select('user settings')
+      .lean();
+  }
+
+  incrementCommentsCount(postId: string | Types.ObjectId, delta: number) {
+    return PostModel.findOneAndUpdate(
+      { _id: postId, ...visiblePostQuery },
+      { $inc: { 'counts.comments': delta } },
       { new: true },
     );
   }
