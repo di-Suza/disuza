@@ -1,4 +1,4 @@
-import { Bookmark, Edit3, ExternalLink, Flag, FolderOpen, GitFork, Heart, Loader2, MessageCircle, MessageSquare, Trash2, UserRound } from 'lucide-react';
+import { Bookmark, Edit3, ExternalLink, FolderOpen, GitFork, Heart, Loader2, MessageCircle, MessageSquare, MessageSquareWarning, MoreHorizontal, Trash2, UserRound, X } from 'lucide-react';
 import { memo, useCallback, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 
@@ -40,6 +40,7 @@ const PostCard = ({ className, compact = false, fallbackAuthor, post, viewerId }
   const [isCollectionsOpen, setCollectionsOpen] = useState(false);
   const [isReportOpen, setReportOpen] = useState(false);
   const [isFeedbackOpen, setFeedbackOpen] = useState(false);
+  const [isOptionsOpen, setOptionsOpen] = useState(false);
   const [deletePost, { isLoading: isDeleting }] = useDeletePostMutation();
   const { data: fullPostData, isFetching: isPostFetching } = useGetPostQuery(post._id, { skip: !isEditOpen });
   const { isLiked, isLikeUpdating, likesCount, toggleLike } = usePostLike(post);
@@ -83,20 +84,35 @@ const PostCard = ({ className, compact = false, fallbackAuthor, post, viewerId }
 
         <div className="post-card__header-actions">
           {post.isProjectPost && <span className="post-card__badge">Project</span>}
-          {isOwner ? (
-            <>
-              <Button variant="ghost" className="button--icon" onClick={() => setEditOpen(true)} aria-label="Edit post">
-                <Edit3 size={17} aria-hidden="true" />
-              </Button>
-              <Button variant="danger" className="button--icon" onClick={handleDelete} disabled={isDeleting} aria-label="Delete post">
-                {isDeleting ? <Loader2 className="spin" size={17} aria-hidden="true" /> : <Trash2 size={17} aria-hidden="true" />}
-              </Button>
-            </>
-          ) : (
-            <Button variant="ghost" className="button--icon" onClick={() => setReportOpen(true)} aria-label="Report post">
-              <Flag size={17} aria-hidden="true" />
+          <div className="post-card__menu">
+            <Button variant="ghost" className="button--icon" onClick={() => setOptionsOpen((current) => !current)} aria-label="Post options">
+              <MoreHorizontal size={19} aria-hidden="true" />
             </Button>
-          )}
+            {isOptionsOpen && (
+              <>
+                <button type="button" className="post-card__menu-scrim" onClick={() => setOptionsOpen(false)} aria-label="Close post options" />
+                <div className="post-card__dropdown">
+                  {isOwner ? (
+                    <>
+                      <button type="button" onClick={() => { setOptionsOpen(false); setEditOpen(true); }}>
+                        <Edit3 size={16} aria-hidden="true" />Edit
+                      </button>
+                      <button type="button" className="is-danger" onClick={() => { setOptionsOpen(false); void handleDelete(); }} disabled={isDeleting}>
+                        {isDeleting ? <Loader2 className="spin" size={16} aria-hidden="true" /> : <Trash2 size={16} aria-hidden="true" />}Delete
+                      </button>
+                    </>
+                  ) : (
+                    <button type="button" className="is-danger" onClick={() => { setOptionsOpen(false); setReportOpen(true); }}>
+                      <MessageSquareWarning size={16} aria-hidden="true" />Report
+                    </button>
+                  )}
+                  <button type="button" className="is-muted" onClick={() => setOptionsOpen(false)}>
+                    <X size={16} aria-hidden="true" />Cancel
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
         </div>
       </header>
 
@@ -124,14 +140,19 @@ const PostCard = ({ className, compact = false, fallbackAuthor, post, viewerId }
           aria-label={isLiked ? 'Unlike post' : 'Like post'}
           aria-pressed={isLiked}
         >
-          {isLikeUpdating ? <Loader2 className="spin" size={16} aria-hidden="true" /> : <Heart size={16} aria-hidden="true" />}
-          {hideLikesCount ? (isLiked ? 'Liked' : 'Like') : likesCount}
+          <span>{isLikeUpdating ? <Loader2 className="spin" size={18} aria-hidden="true" /> : <Heart size={18} aria-hidden="true" />}{!hideLikesCount && Number(likesCount) > 0 && <small>{likesCount}</small>}</span>
+          <em>{isLiked ? 'Liked' : 'Like'}</em>
         </button>
         {commentsDisabled ? (
-          <span><MessageCircle size={16} aria-hidden="true" />Off</span>
+          <span className="post-card__footer-button is-disabled"><span><MessageCircle size={18} aria-hidden="true" /></span><em>Off</em></span>
         ) : (
           <button type="button" className="post-card__footer-button" onClick={() => setCommentsOpen(true)} aria-label="Open comments">
-            <MessageCircle size={16} aria-hidden="true" />{Number(counts.comments || 0)}
+            <span><MessageCircle size={18} aria-hidden="true" />{Number(counts.comments || 0) > 0 && <small>{Number(counts.comments || 0)}</small>}</span><em>Comment</em>
+          </button>
+        )}
+        {!isOwner && ownerId && (
+          <button type="button" className="post-card__footer-button" onClick={() => setFeedbackOpen(true)} aria-label="Send feedback">
+            <span><MessageSquare size={18} aria-hidden="true" /></span><em>Feedback</em>
           </button>
         )}
         <button
@@ -142,17 +163,12 @@ const PostCard = ({ className, compact = false, fallbackAuthor, post, viewerId }
           aria-label={isSaved ? 'Unsave post' : 'Save post'}
           aria-pressed={isSaved}
         >
-          {isSaveUpdating ? <Loader2 className="spin" size={16} aria-hidden="true" /> : <Bookmark size={16} aria-hidden="true" />}
-          {isSaved ? 'Saved' : 'Save'}
+          <span>{isSaveUpdating ? <Loader2 className="spin" size={18} aria-hidden="true" /> : <Bookmark size={18} aria-hidden="true" />}</span>
+          <em>{isSaved ? 'Saved' : 'Save'}</em>
         </button>
-        {!isOwner && ownerId && (
-          <button type="button" className="post-card__footer-button" onClick={() => setFeedbackOpen(true)} aria-label="Send feedback">
-            <MessageSquare size={16} aria-hidden="true" />Feedback
-          </button>
-        )}
         {isSaved && (
           <button type="button" className="post-card__footer-button" onClick={() => setCollectionsOpen(true)} aria-label="Manage saved collection">
-            <FolderOpen size={16} aria-hidden="true" />Manage
+            <span><FolderOpen size={18} aria-hidden="true" /></span><em>Manage</em>
           </button>
         )}
       </footer>
