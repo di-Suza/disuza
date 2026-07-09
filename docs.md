@@ -1469,3 +1469,44 @@ npm run build:api
 npm run build:web
 git diff --check
 ```
+
+## Step 28: Frontend V1 UI Parity Pass
+
+Reworked the frontend UI parity layer on `feature/web-v1-ui-parity`.
+
+Added and restored:
+
+- v1-style protected app shell with fixed desktop sidebar and mobile bottom navigation
+- sidebar route nesting through a dedicated `SidebarLayout`
+- `/messages` route shell so the v1 navigation item no longer falls through to 404 before the full messaging module
+- v1-style dashboard header, stats, section tabs, and focused content panels
+- dashboard More Settings structure with display, activities, collections, support, and privacy sections
+- dashboard add-post action connected to the existing post composer modal
+- v1-style feed layout with fixed feed switcher, centered feed column, inline recommendations, and desktop recommendations rail
+- v1-style post card interactions with three-dot options menu, vertical action bar labels/counts, media containment, and caption ordering
+
+Preserved flow intent:
+
+```txt
+Protected route -> SidebarLayout -> page content
+Dashboard header -> dashboard tab -> focused section content
+Feed switcher -> feed query -> centered post list + recommendations
+Post card options -> edit/delete/report modal flow
+```
+
+Why:
+
+The v2 frontend had the right feature wiring, but the dashboard and feed had too many actions visible in a single surface and no longer matched the v1 app experience. This step brings the familiar v1 layout back while keeping the v2 implementation style: TypeScript, feature folders, RTK Query, shared UI primitives, and local page/component state.
+
+Deferred until later modules:
+
+- full realtime `/messages` page implementation
+- collab rooms UI and socket flow
+- problem/admin/gen-AI flows
+
+Verification used:
+
+```bash
+npm run build:web
+git diff --check
+```
