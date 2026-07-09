@@ -4,6 +4,7 @@ import { createPortal } from 'react-dom';
 import { Link } from 'react-router-dom';
 
 import { useGetBlockedUsersQuery, useUnblockUserMutation } from '@/features/users/api/user.api';
+import type { BlockedUserItem } from '@/features/users/model/user.types';
 import { useLockBodyScroll } from '@/shared/hooks/useLockBodyScroll';
 import { useToast } from '@/shared/hooks/useToast';
 import Button from '@/shared/ui/Button';
@@ -16,8 +17,14 @@ type DashboardBlockedUsersModalProps = {
 
 const getAvatarUrl = (url: unknown): string | null => (typeof url === 'string' && url.trim() ? url : null);
 
+const mergeBlockedUsers = (current: BlockedUserItem[], next: BlockedUserItem[]) => {
+  const existingIds = new Set(current.map((item) => item._id));
+  return [...current, ...next.filter((item) => !existingIds.has(item._id))];
+};
+
 const DashboardBlockedUsersModal = ({ isOpen, onClose }: DashboardBlockedUsersModalProps) => {
   const [page, setPage] = useState(1);
+  const [blockedUsers, setBlockedUsers] = useState<BlockedUserItem[]>([]);
   const { showError, showSuccess } = useToast();
   const { data, isFetching } = useGetBlockedUsersQuery({ page }, { skip: !isOpen });
   const [unblockUser, { isLoading: isUnblocking }] = useUnblockUserMutation();
@@ -25,21 +32,28 @@ const DashboardBlockedUsersModal = ({ isOpen, onClose }: DashboardBlockedUsersMo
   useLockBodyScroll(isOpen);
 
   useEffect(() => {
-    if (isOpen) setPage(1);
+    if (isOpen) {
+      setPage(1);
+      setBlockedUsers([]);
+    }
   }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen || !data?.blockedUsers.length) return;
+    setBlockedUsers((current) => (page === 1 ? data.blockedUsers : mergeBlockedUsers(current, data.blockedUsers)));
+  }, [data?.blockedUsers, isOpen, page]);
 
   const handleUnblock = async (userId: string) => {
     try {
       const result = await unblockUser(userId).unwrap();
       showSuccess(result.message);
+      setBlockedUsers((current) => current.filter((item) => item.blockedUser?._id !== userId));
     } catch (error) {
       showError(getErrorMessage(error));
     }
   };
 
   if (!isOpen) return null;
-
-  const blockedUsers = data?.blockedUsers || [];
 
   return createPortal(
     <div className="modal-backdrop report-modal-backdrop" role="dialog" aria-modal="true" onMouseDown={onClose}>

@@ -81,16 +81,25 @@ const getActivityBody = (activity: unknown, type: DashboardActivityType) => {
 
 const DashboardActivitiesModal = ({ isOpen, onClose, type }: DashboardActivitiesModalProps) => {
   const [page, setPage] = useState(1);
+  const [activities, setActivities] = useState<unknown[]>([]);
   const copy = useMemo(() => activityCopy[type], [type]);
   const Icon = activityIcon[type];
   const { data, isFetching } = useGetUserAccountHistoryQuery({ type, page }, { skip: !isOpen });
-  const activities = data?.activities || [];
+  const latestActivities = data?.activities || [];
 
   useLockBodyScroll(isOpen);
 
   useEffect(() => {
-    if (isOpen) setPage(1);
+    if (isOpen) {
+      setPage(1);
+      setActivities([]);
+    }
   }, [isOpen, type]);
+
+  useEffect(() => {
+    if (!isOpen || latestActivities.length === 0) return;
+    setActivities((current) => (page === 1 ? latestActivities : [...current, ...latestActivities]));
+  }, [isOpen, latestActivities, page]);
 
   if (!isOpen) return null;
 

@@ -32,16 +32,30 @@ const getReportTitle = (report: Report): string => {
   return `Reported ${report.onModel.toLowerCase()}`;
 };
 
+const mergeReports = (current: Report[], next: Report[]) => {
+  const existingIds = new Set(current.map((report) => report._id));
+  return [...current, ...next.filter((report) => !existingIds.has(report._id))];
+};
+
 const DashboardReportsModal = ({ isOpen, onClose }: DashboardReportsModalProps) => {
   const [page, setPage] = useState(1);
+  const [reports, setReports] = useState<Report[]>([]);
   const { data, isFetching } = useGetMyReportsQuery({ page, limit: 10 }, { skip: !isOpen });
-  const reports = data?.reports || [];
+  const latestReports = data?.reports || [];
 
   useLockBodyScroll(isOpen);
 
   useEffect(() => {
-    if (isOpen) setPage(1);
+    if (isOpen) {
+      setPage(1);
+      setReports([]);
+    }
   }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen || latestReports.length === 0) return;
+    setReports((current) => (page === 1 ? latestReports : mergeReports(current, latestReports)));
+  }, [isOpen, latestReports, page]);
 
   if (!isOpen) return null;
 

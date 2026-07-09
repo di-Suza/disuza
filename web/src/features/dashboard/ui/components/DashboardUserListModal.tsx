@@ -31,8 +31,14 @@ const getUserList = (
   following?: UserProfile[],
 ): UserProfile[] => (type === 'followers' ? followers || [] : following || []);
 
+const mergeUsers = (current: UserProfile[], next: UserProfile[]) => {
+  const existingIds = new Set(current.map((user) => user._id));
+  return [...current, ...next.filter((user) => !existingIds.has(user._id))];
+};
+
 const DashboardUserListModal = ({ isOpen, onClose, type, userId }: DashboardUserListModalProps) => {
   const [page, setPage] = useState(1);
+  const [users, setUsers] = useState<UserProfile[]>([]);
   const copy = useMemo(() => getModalCopy(type), [type]);
   const shouldSkip = !isOpen || !userId;
 
@@ -40,13 +46,21 @@ const DashboardUserListModal = ({ isOpen, onClose, type, userId }: DashboardUser
   const followingQuery = useGetFollowingQuery({ userId: userId || '', page }, { skip: shouldSkip || type !== 'following' });
 
   const activeQuery = type === 'followers' ? followersQuery : followingQuery;
-  const users = getUserList(type, followersQuery.data?.followers, followingQuery.data?.following);
+  const latestUsers = getUserList(type, followersQuery.data?.followers, followingQuery.data?.following);
 
   useLockBodyScroll(isOpen);
 
   useEffect(() => {
-    if (isOpen) setPage(1);
+    if (isOpen) {
+      setPage(1);
+      setUsers([]);
+    }
   }, [isOpen, type, userId]);
+
+  useEffect(() => {
+    if (!isOpen || latestUsers.length === 0) return;
+    setUsers((current) => (page === 1 ? latestUsers : mergeUsers(current, latestUsers)));
+  }, [isOpen, latestUsers, page]);
 
   if (!isOpen) return null;
 
