@@ -35,6 +35,18 @@ class LikeRepository {
     return Boolean(like);
   }
 
+
+  async findUserActivity(userId: string | Types.ObjectId, page: number, limit: number) {
+    return LikeModel.find({ user: userId })
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit)
+      .populate({
+        path: 'post',
+        select: { caption: 1, media: { $slice: 1 }, user: 1, createdAt: 1 },
+      })
+      .lean();
+  }
   async findLikedPostIds(userId: string | Types.ObjectId, postIds: Array<string | Types.ObjectId>): Promise<Set<string>> {
     if (postIds.length === 0) return new Set();
 

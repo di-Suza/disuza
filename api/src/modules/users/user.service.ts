@@ -8,6 +8,7 @@ import {
 } from '../../shared/errors/index.js';
 import passwordService from '../../shared/utils/password.js';
 import mediaService, { type MediaService } from '../media/media.service.js';
+import likeRepository, { type LikeRepository } from '../likes/like.repository.js';
 import notificationService, { type NotificationService } from '../notifications/notification.service.js';
 import postRepository, { type PostRepository } from '../posts/post.repository.js';
 import type { ProfilePicture } from './user.model.js';
@@ -39,6 +40,7 @@ class UserService {
     private readonly blocks: BlockRepository = blockRepository,
     private readonly blockRules: BlockService = blockService,
     private readonly media: MediaService = mediaService,
+    private readonly likes: LikeRepository = likeRepository,
     private readonly posts: PostRepository = postRepository,
     private readonly notifications: NotificationService = notificationService,
   ) {}
@@ -477,14 +479,36 @@ class UserService {
     return this.users.findFallbackRecommendations([...excludedIds], safeLimit);
   }
 
-  getUserAccountHistory(_userId: string, type: string) {
+  async getUserAccountHistory(userId: string, type: string, pageInput: unknown, limitInput: unknown) {
     const supportedTypes = ['likes', 'comments', 'follows', 'feedbacks'];
 
     if (!supportedTypes.includes(type)) {
       throw new BadRequestError('Invalid Type');
     }
 
-    return [];
+    const page = this.normalizePage(pageInput);
+    const limit = this.normalizeLimit(limitInput, 10, 20);
+
+    if (type === 'comments' || type === 'feedbacks') {
+      return [];
+    }
+
+    const blockedUserIds = await this.blockRules.getBlockedUserIds(userId);
+
+    if (type === 'follows') {
+      return this.follows.findFollowingActivity(userId, blockedUserIds, page, limit);
+    }
+
+    const blockedUserIdSet = new Set(blockedUserIds.map((id) => id.toString()));
+    const likes = await this.likes.findUserActivity(userId, page, limit);
+
+    const populatedLikes = likes as Array<{ post?: { user?: Types.ObjectId | string } | null }>;
+
+    return populatedLikes.filter((activity) => {
+      const post = activity.post as { user?: Types.ObjectId | string } | null | undefined;
+      if (!post?.user) return false;
+      return !blockedUserIdSet.has(post.user.toString());
+    });
   }
 
   verifyAccountDeletePassword(): never {
