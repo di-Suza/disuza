@@ -102,7 +102,7 @@ class UserController {
   }
 
   private async handleVerifyAccountDeletePassword(req: Request, res: Response) {
-    this.service.verifyAccountDeletePassword();
+    await this.service.verifyAccountDeletePassword(req.user!.id, req.body.password);
 
     res.status(200).json({
       success: true,
@@ -110,8 +110,8 @@ class UserController {
     });
   }
 
-  private async handleSendAccountDeleteOtp(_req: Request, res: Response) {
-    this.service.sendAccountDeleteOtp();
+  private async handleSendAccountDeleteOtp(req: Request, res: Response) {
+    await this.service.sendAccountDeleteOtp(req.user!.id);
 
     res.status(200).json({
       success: true,
@@ -119,8 +119,8 @@ class UserController {
     });
   }
 
-  private async handleVerifyAccountDeleteOtp(_req: Request, res: Response) {
-    this.service.verifyAccountDeleteOtp();
+  private async handleVerifyAccountDeleteOtp(req: Request, res: Response) {
+    await this.service.verifyAccountDeleteOtp(req.user!.id, req.body.otp);
 
     res.status(200).json({
       success: true,
@@ -128,8 +128,8 @@ class UserController {
     });
   }
 
-  private async handleDeleteUserAccount(_req: Request, res: Response) {
-    this.service.deleteUserAccount();
+  private async handleDeleteUserAccount(req: Request, res: Response) {
+    await this.service.deleteUserAccount(req.user!.id);
 
     res.status(200).json({
       success: true,

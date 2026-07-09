@@ -13,6 +13,22 @@ import { getErrorMessage } from '@/shared/utils/getErrorMessage';
 
 const NOTIFICATION_PAGE_SIZE = 10;
 
+const getRecord = (value: unknown): Record<string, unknown> | null => (
+  typeof value === 'object' && value !== null ? value as Record<string, unknown> : null
+);
+
+const getNotificationPostId = (notification: NotificationItem): string | null => {
+  const content = getRecord(notification.contentId);
+  if (!content) return null;
+
+  if (typeof content._id === 'string' && notification.onModel === 'Post') return content._id;
+
+  const post = getRecord(content.post);
+  if (typeof post?._id === 'string') return post._id;
+
+  return null;
+};
+
 export const useNotificationsPage = () => {
   const navigate = useNavigate();
   const { showError, showSuccess } = useToast();
@@ -49,7 +65,8 @@ export const useNotificationsPage = () => {
     }
 
     if (notification.type === 'LIKE' || notification.type === 'COMMENT' || notification.type === 'COMMENT_REPLY') {
-      navigate('/home');
+      const postId = getNotificationPostId(notification);
+      navigate(postId ? `/post/${postId}` : '/home');
       return;
     }
 

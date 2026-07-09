@@ -112,6 +112,14 @@ class UserRepository {
     );
   }
 
+  markInactive(userId: string | Types.ObjectId) {
+    return UserModel.findOneAndUpdate(
+      { _id: userId, active: { $ne: false } },
+      { active: false, deletedAt: new Date() },
+      { new: true },
+    ).select('_id email profilePicture');
+  }
+
   findRecommendationUsers(ids: Array<string | Types.ObjectId>, limit: number) {
     return UserModel.find({ _id: { $in: ids }, active: { $ne: false } })
       .select('userName profilePicture headline profileContributions')

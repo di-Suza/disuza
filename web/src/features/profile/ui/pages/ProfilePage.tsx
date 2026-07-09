@@ -1,6 +1,9 @@
-import { Ban, Flag, Loader2, LockOpen, RefreshCw, UserPlus, UserRound, UserX } from 'lucide-react';
+import { Ban, Flag, Loader2, LockOpen, MessageSquare, RefreshCw, UserPlus, UserRound, UserX } from 'lucide-react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 
+import ContributionHeatmap from '@/features/dashboard/ui/components/ContributionHeatmap';
+import SendFeedbackModal from '@/features/messages/ui/components/SendFeedbackModal';
 import ProfilePostsSection from '@/features/posts/ui/components/ProfilePostsSection';
 import ReportModal from '@/features/reports/ui/components/ReportModal';
 import Button from '@/shared/ui/Button';
@@ -11,6 +14,7 @@ const avatarUrl = (url: unknown): string | null => (typeof url === 'string' && u
 const listToChips = (items: unknown): string[] => Array.isArray(items) ? items.filter((item): item is string => typeof item === 'string') : [];
 
 const ProfilePage = () => {
+  const [isFeedbackOpen, setFeedbackOpen] = useState(false);
   const {
     closeList,
     closeReport,
@@ -79,6 +83,7 @@ const ProfilePage = () => {
   const languages = listToChips(profileUser.languages);
   const relationshipList = listMode === 'followers' ? followers : following;
   const canReportProfile = !profileUser.isBlocked && !profileUser.blockedProfile;
+  const canSendFeedback = canReportProfile && Boolean(profileUser._id && profileUser._id !== currentUserId);
 
   return (
     <main className="dashboard-shell dashboard-shell--wide">
@@ -104,6 +109,12 @@ const ProfilePage = () => {
               {profileUser.isBlocked ? <LockOpen size={18} aria-hidden="true" /> : <Ban size={18} aria-hidden="true" />}
               {profileUser.isBlocked ? 'Unblock' : 'Block'}
             </Button>
+            {canSendFeedback && (
+              <Button onClick={() => setFeedbackOpen(true)} variant="secondary">
+                <MessageSquare size={18} aria-hidden="true" />
+                Feedback
+              </Button>
+            )}
             {canReportProfile && (
               <Button onClick={openReport} variant="ghost" aria-label="Report profile">
                 <Flag size={18} aria-hidden="true" />
@@ -123,6 +134,8 @@ const ProfilePage = () => {
           <section className="profile-card profile-card--full"><h2>Blocked profile</h2><p className="empty-copy">Unblock this user to view their profile details.</p></section>
         ) : (
           <div className="dashboard-grid dashboard-grid--secondary">
+            <ContributionHeatmap heatmap={profileUser.heatmap} />
+
             <section className="profile-card profile-card--full">
               <div className="profile-card__header"><h2>About</h2><p>{isFetching ? 'Refreshing profile...' : 'Public profile summary.'}</p></div>
               <p className="profile-copy">{profileUser.about || 'No about section added yet.'}</p>
@@ -154,6 +167,16 @@ const ProfilePage = () => {
           onClose={closeReport}
           targetId={profileUser._id}
           onModel="User"
+        />
+      )}
+
+      {isFeedbackOpen && canSendFeedback && (
+        <SendFeedbackModal
+          isOpen={isFeedbackOpen}
+          onClose={() => setFeedbackOpen(false)}
+          feedbackOn="User"
+          receiverId={profileUser._id}
+          userId={profileUser._id}
         />
       )}
 

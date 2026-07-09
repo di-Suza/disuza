@@ -63,7 +63,7 @@ class CommentRepository {
     return comment.populate('user', 'profilePicture userName');
   }
 
-  getTopLevelComments(postId: string | Types.ObjectId, currentUserId: string | Types.ObjectId, page: number, limit: number, blockedUserIds: Types.ObjectId[]) {
+  getTopLevelComments(postId: string | Types.ObjectId, currentUserId: string | Types.ObjectId, page: number, limit: number, blockedUserIds: Types.ObjectId[], isPostOwner: boolean) {
     const skip = (page - 1) * limit;
     const viewerObjectId = new mongoose.Types.ObjectId(currentUserId.toString());
     const matchStage: Record<string, unknown> = {
@@ -80,7 +80,7 @@ class CommentRepository {
       {
         $addFields: {
           sortGroup: {
-            $cond: [{ $eq: ['$user', viewerObjectId] }, 0, 1],
+            $cond: [{ $and: [{ $eq: [isPostOwner, false] }, { $eq: ['$user', viewerObjectId] }] }, 0, 1],
           },
         },
       },
@@ -99,6 +99,20 @@ class CommentRepository {
       { $unwind: '$user' },
       { $project: { sortGroup: 0, __v: 0 } },
     ]);
+  }
+
+  findUserActivity(userId: string | Types.ObjectId, page: number, limit: number) {
+    return CommentModel.find({ user: userId })
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit)
+      .populate({ path: 'post', select: { media: { $slice: 1 }, caption: 1, _id: 1, user: 1 } })
+      .populate({
+        path: 'parentComment',
+        select: 'comment user',
+        populate: { path: 'user', select: 'userName profilePicture' },
+      })
+      .lean();
   }
 
   getReplies(parentCommentId: string | Types.ObjectId, page: number, limit: number, blockedUserIds: Types.ObjectId[]) {

@@ -2582,3 +2582,40 @@ svg {
     width: 100%;
   }
 }
+
+.contribution-card {
+  margin-top: 24px;
+}
+
+.contribution-heatmap {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(13px, 1fr));
+  gap: 5px;
+  min-height: 84px;
+  align-items: center;
+}
+
+.contribution-heatmap__day,
+.contribution-legend i {
+  display: block;
+  width: 13px;
+  height: 13px;
+  border-radius: 3px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.color-empty { background: var(--surface-muted); }
+.color-scale-1 { background: rgba(16, 185, 129, 0.25); }
+.color-scale-2 { background: rgba(16, 185, 129, 0.48); }
+.color-scale-3 { background: rgba(16, 185, 129, 0.72); }
+.color-scale-4 { background: var(--accent); }
+
+.contribution-legend {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 800;
+}

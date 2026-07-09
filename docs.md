@@ -1424,3 +1424,48 @@ Verification used:
 ```bash
 npm run check:web
 ```
+
+## Step 27: V1 Flow Parity Missing Fixes
+
+Built the missed v1 parity fixes on `fix/v1-flow-parity-missing-modules`.
+
+Added and restored:
+
+- backend comments module mounting and dashboard comment-history support
+- backend chat/feedback flow for user and post feedback messages
+- conversation and message persistence for feedback-style messaging
+- contribution heatmap persistence and API shaping for auth, profile, and dashboard user data
+- account deletion verification flow for password users and Google users
+- account cleanup behavior for sessions, user posts, and related account state
+- dashboard activity actions for unlike, delete comment, unsend feedback, and unfollow
+- post/profile feedback modals connected to the restored chat APIs
+- post detail page route for notification/activity navigation
+- notification navigation to direct post details for post-related actions
+- profile and dashboard heatmap UI
+- dashboard profile-picture file upload and remove flow
+
+Corrected earlier deferred notes:
+
+- Step 25/26 had comments, feedback, heatmap, and final account-deletion cleanup marked as deferred because those modules were not active in that branch chain yet.
+- After this step, those flows are no longer intentionally empty/deferred in the v1-parity branch: comments, feedback, heatmap, and account deletion are wired through the rebuilt backend/frontend modules.
+
+Preserved v1 flow intent:
+
+```txt
+Dashboard activity -> account history API -> item-specific action
+Post/Profile feedback -> chat feedback API -> dashboard feedback history
+Notification item -> direct post detail route when post context exists
+Delete account -> password verify for password users OR OTP for Google users -> delete account
+```
+
+Why:
+
+This branch exists specifically to close missed v1 behavior gaps without changing the product flow. The implementation keeps the v2 architecture standards already chosen for the rebuild: TypeScript modules, repositories/services/controllers on the backend, RTK Query on the frontend, focused hooks/components, and clean route-level wiring.
+
+Verification used:
+
+```bash
+npm run build:api
+npm run build:web
+git diff --check
+```

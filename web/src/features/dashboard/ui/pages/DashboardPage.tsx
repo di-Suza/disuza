@@ -30,6 +30,7 @@ import SavedCollectionsPanel from '@/features/saves/ui/components/SavedCollectio
 import Button from '@/shared/ui/Button';
 import Input from '@/shared/ui/Input';
 import DashboardAccountModal, { type DashboardAccountModalMode } from '../components/DashboardAccountModal';
+import ContributionHeatmap from '../components/ContributionHeatmap';
 import DashboardActivitiesModal, { type DashboardActivityType } from '../components/DashboardActivitiesModal';
 import DashboardBlockedUsersModal from '../components/DashboardBlockedUsersModal';
 import DashboardReportsModal from '../components/DashboardReportsModal';
@@ -49,6 +50,7 @@ const DashboardPage = () => {
     handleIdentitySubmit,
     handleLogout,
     handleLogoutAllDevices,
+    handleRemoveProfilePicture,
     handlePasswordSubmit,
     handleProfessionalSubmit,
     handleUnblockUser,
@@ -70,6 +72,7 @@ const DashboardPage = () => {
     updateExperienceField,
     updateGeneralField,
     updateIdentityField,
+    updateIdentityFile,
     updatePasswordField,
     updateProfessionalField,
     user,
@@ -113,6 +116,7 @@ const DashboardPage = () => {
           <article><strong>{Number(user?.profileContributions || 0)}</strong><span>Contributions</span></article>
         </div>
 
+        <ContributionHeatmap heatmap={user?.heatmap} />
         <DashboardPostsPanel user={user} />
         <SavedCollectionsPanel viewerId={user?._id} />
 
@@ -145,9 +149,17 @@ const DashboardPage = () => {
             </label>
             <label className="field">
               <span>Profile picture URL</span>
-              <Input value={identityForm.profilePictureUrl} onChange={updateIdentityField('profilePictureUrl')} placeholder="https://..." />
+              <Input value={identityForm.profilePictureUrl} onChange={updateIdentityField('profilePictureUrl')} placeholder="https://..." disabled={Boolean(identityForm.profilePictureFile)} />
             </label>
-            <Button type="submit" disabled={isBusy}><Save size={18} aria-hidden="true" />Save identity</Button>
+            <label className="field">
+              <span>Profile picture file</span>
+              <Input type="file" accept="image/*" onChange={updateIdentityFile} />
+            </label>
+            {identityForm.profilePictureFile && <p className="empty-copy">Selected: {identityForm.profilePictureFile.name}</p>}
+            <div className="dashboard-actions dashboard-actions--compact">
+              <Button type="button" variant="secondary" onClick={handleRemoveProfilePicture}>Remove picture</Button>
+              <Button type="submit" disabled={isBusy}><Save size={18} aria-hidden="true" />Save identity</Button>
+            </div>
           </form>
 
           <form className="profile-card" onSubmit={handleGeneralSubmit}>

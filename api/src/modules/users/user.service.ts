@@ -2,15 +2,23 @@ import type { Types } from 'mongoose';
 
 import {
   BadRequestError,
-  ConflictError,
+  ForbiddenError,
   NotFoundError,
+  TooManyRequestsError,
   UnauthorizedError,
 } from '../../shared/errors/index.js';
 import passwordService from '../../shared/utils/password.js';
+import otpRepository, { type OtpRepository } from '../auth/otp.repository.js';
+import otpService, { type OtpService } from '../auth/otp.service.js';
+import authSessionService, { type AuthSessionService } from '../auth/session/authSession.service.js';
+import chatRepository, { type ChatRepository } from '../chat/chat.repository.js';
+import commentRepository, { type CommentRepository } from '../comments/comment.repository.js';
+import heatmapService, { type HeatmapService } from '../contributions/heatmap.service.js';
 import mediaService, { type MediaService } from '../media/media.service.js';
 import likeRepository, { type LikeRepository } from '../likes/like.repository.js';
 import notificationService, { type NotificationService } from '../notifications/notification.service.js';
 import postRepository, { type PostRepository } from '../posts/post.repository.js';
+import accountDeletionVerificationRepository, { type AccountDeletionVerificationRepository } from './accountDeletionVerification.repository.js';
 import type { ProfilePicture } from './user.model.js';
 import userRepository, { type ProfessionalInfoUpdate, type UserRepository } from './user.repository.js';
 import blockRepository, { type BlockRepository } from './block/block.repository.js';
@@ -43,6 +51,13 @@ class UserService {
     private readonly likes: LikeRepository = likeRepository,
     private readonly posts: PostRepository = postRepository,
     private readonly notifications: NotificationService = notificationService,
+    private readonly comments: CommentRepository = commentRepository,
+    private readonly chats: ChatRepository = chatRepository,
+    private readonly heatmap: HeatmapService = heatmapService,
+    private readonly otps: OtpService = otpService,
+    private readonly otpRecords: OtpRepository = otpRepository,
+    private readonly sessions: AuthSessionService = authSessionService,
+    private readonly accountDeletionVerifications: AccountDeletionVerificationRepository = accountDeletionVerificationRepository,
   ) {}
 
   private normalizePage(pageInput: unknown): number {
@@ -53,6 +68,22 @@ class UserService {
   private normalizeLimit(limitInput: unknown, fallback: number, max: number): number {
     const limit = Number(limitInput) || fallback;
     return Math.min(Math.max(limit, 1), max);
+  }
+
+  private async getOtpWindowCount(email: string): Promise<number> {
+    const otpData = await this.otpRecords.findByEmail(email);
+
+    if (!otpData) return 0;
+
+    const diffInMinutes = Math.floor((Date.now() - otpData.lastResendTime.getTime()) / (1000 * 60));
+
+    if (diffInMinutes >= 10) return 0;
+
+    if (otpData.otpCount >= 3) {
+      throw new TooManyRequestsError(`Too many requests. Please try again after ${10 - diffInMinutes} minutes.`);
+    }
+
+    return otpData.otpCount;
   }
 
   private shuffleList<T>(items: T[]): T[] {
@@ -242,7 +273,10 @@ class UserService {
       };
     }
 
-    const userPosts = profileUser.postsCount > 0 ? await this.posts.findProfilePosts(profileUserId) : [];
+    const [userPosts, heatmap] = await Promise.all([
+      profileUser.postsCount > 0 ? this.posts.findProfilePosts(profileUserId) : Promise.resolve([]),
+      this.heatmap.getHeatmap(profileUserId),
+    ]);
     const normalPosts = userPosts.filter((post) => post.isProjectPost === false);
     const projectPosts = userPosts.filter((post) => post.isProjectPost === true);
 
@@ -251,6 +285,7 @@ class UserService {
       message: 'Profile User Fetched Successfully!',
       profileUser: {
         ...profileUser.toObject(),
+        heatmap,
         isFollowed: Boolean(isFollowed),
         isBlocked: false,
         hasBlockedMe: false,
@@ -488,20 +523,40 @@ class UserService {
 
     const page = this.normalizePage(pageInput);
     const limit = this.normalizeLimit(limitInput, 10, 20);
-
-    if (type === 'comments' || type === 'feedbacks') {
-      return [];
-    }
-
     const blockedUserIds = await this.blockRules.getBlockedUserIds(userId);
+    const blockedUserIdSet = new Set(blockedUserIds.map((id) => id.toString()));
 
     if (type === 'follows') {
       return this.follows.findFollowingActivity(userId, blockedUserIds, page, limit);
     }
 
-    const blockedUserIdSet = new Set(blockedUserIds.map((id) => id.toString()));
-    const likes = await this.likes.findUserActivity(userId, page, limit);
+    if (type === 'comments') {
+      const comments = await this.comments.findUserActivity(userId, page, limit);
+      return comments.filter((activity) => {
+        const post = activity.post as { user?: Types.ObjectId | string } | null | undefined;
+        if (!post?.user) return false;
+        return !blockedUserIdSet.has(post.user.toString());
+      });
+    }
 
+    if (type === 'feedbacks') {
+      const feedbacks = await this.chats.findFeedbackActivity(userId, page, limit);
+
+      return feedbacks.map((activity) => {
+        const normalizedActivity = { ...activity } as Record<string, unknown>;
+        const feedbackOn = normalizedActivity.feedbackOn as { _id?: unknown; type?: string } | undefined;
+
+        if (feedbackOn?._id) {
+          const { _id: feedbackDetails, ...restFeedbackOn } = feedbackOn;
+          normalizedActivity.feedbackDetails = feedbackDetails;
+          normalizedActivity.feedbackOn = restFeedbackOn;
+        }
+
+        return normalizedActivity;
+      });
+    }
+
+    const likes = await this.likes.findUserActivity(userId, page, limit);
     const populatedLikes = likes as Array<{ post?: { user?: Types.ObjectId | string } | null }>;
 
     return populatedLikes.filter((activity) => {
@@ -511,20 +566,92 @@ class UserService {
     });
   }
 
-  verifyAccountDeletePassword(): never {
-    throw new ConflictError('Account deletion flow will be enabled after cleanup queue infrastructure is added.');
+  async verifyAccountDeletePassword(userId: string, password: string) {
+    const user = await this.users.findByIdWithPassword(userId);
+
+    if (!user) {
+      throw new NotFoundError('Account not found.');
+    }
+
+    if (!user.password && user.isGoogleUser) {
+      throw new BadRequestError('Google accounts do not have a password to verify.');
+    }
+
+    const isMatch = await passwordService.compare(password, user.password || '');
+
+    if (!isMatch) {
+      throw new UnauthorizedError('Password is incorrect.');
+    }
+
+    await this.accountDeletionVerifications.upsert(userId, 'password');
+
+    return true;
   }
 
-  sendAccountDeleteOtp(): never {
-    throw new ConflictError('Account deletion OTP flow will be enabled after cleanup queue infrastructure is added.');
+  async sendAccountDeleteOtp(userId: string) {
+    const user = await this.users.findByIdWithPassword(userId);
+
+    if (!user) {
+      throw new NotFoundError('Account not found.');
+    }
+
+    if (!user.isGoogleUser || user.password) {
+      throw new BadRequestError('OTP delete verification is only for Google accounts.');
+    }
+
+    const currentCount = await this.getOtpWindowCount(user.email);
+    const updatedOtpRecord = await this.otps.sendAndSaveOtp(user.email, currentCount);
+
+    return {
+      email: user.email,
+      otpCount: updatedOtpRecord.otpCount,
+    };
   }
 
-  verifyAccountDeleteOtp(): never {
-    throw new ConflictError('Account deletion OTP flow will be enabled after cleanup queue infrastructure is added.');
+  async verifyAccountDeleteOtp(userId: string, otp: string) {
+    const user = await this.users.findByIdWithPassword(userId);
+
+    if (!user) {
+      throw new NotFoundError('Account not found.');
+    }
+
+    if (!user.isGoogleUser || user.password) {
+      throw new BadRequestError('OTP delete verification is only for Google accounts.');
+    }
+
+    const { otpMatched, verifyAttempts } = await this.otps.verifyOtp(user.email, otp);
+
+    if (!otpMatched) {
+      await this.otpRecords.incrementVerifyAttempts(user.email, verifyAttempts + 1);
+      throw new UnauthorizedError('OTP not matched!');
+    }
+
+    await Promise.all([
+      this.otpRecords.deleteByEmail(user.email),
+      this.accountDeletionVerifications.upsert(userId, 'otp'),
+    ]);
+
+    return true;
   }
 
-  deleteUserAccount(): never {
-    throw new UnauthorizedError('Account deletion is disabled until cleanup queue infrastructure is added.');
+  async deleteUserAccount(userId: string) {
+    const verified = await this.accountDeletionVerifications.findValid(userId);
+
+    if (!verified) {
+      throw new ForbiddenError('Please verify your account before deleting it.');
+    }
+
+    const user = await this.users.markInactive(userId);
+
+    if (!user) {
+      throw new NotFoundError('Account not found or already deleted.');
+    }
+
+    await Promise.all([
+      this.accountDeletionVerifications.deleteByUser(userId),
+      this.posts.markUserPostsDeleting(user._id),
+      this.sessions.revokeAllUserSessions(userId, 'LOGOUT_ALL'),
+    ]);
   }
 }
 

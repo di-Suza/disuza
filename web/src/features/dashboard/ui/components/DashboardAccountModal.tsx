@@ -2,6 +2,7 @@ import { Loader2, Shield, Trash2, X } from 'lucide-react';
 import { useEffect, useState, type FormEvent } from 'react';
 import { createPortal } from 'react-dom';
 
+import { useAppSelector } from '@/app/store/hooks';
 import {
   useDeleteAccountMutation,
   useSendDeleteAccountOtpMutation,
@@ -27,6 +28,7 @@ const DashboardAccountModal = ({ isOpen, mode, onClose }: DashboardAccountModalP
   const [otp, setOtp] = useState('');
   const [step, setStep] = useState<'password' | 'otp'>('password');
   const { showError, showSuccess } = useToast();
+  const isGoogleUser = useAppSelector((state) => Boolean(state.auth.user?.isGoogleUser));
 
   const [verifyPassword, verifyPasswordState] = useVerifyDeleteAccountPasswordMutation();
   const [sendOtp, sendOtpState] = useSendDeleteAccountOtpMutation();
@@ -49,11 +51,18 @@ const DashboardAccountModal = ({ isOpen, mode, onClose }: DashboardAccountModalP
     event.preventDefault();
 
     try {
+      if (isGoogleUser) {
+        const otpResult = await sendOtp().unwrap();
+        showSuccess(otpResult.message);
+        setStep('otp');
+        return;
+      }
+
       const passwordResult = await verifyPassword({ password }).unwrap();
       showSuccess(passwordResult.message);
-      const otpResult = await sendOtp().unwrap();
-      showSuccess(otpResult.message);
-      setStep('otp');
+      const deleteResult = await deleteAccount().unwrap();
+      showSuccess(deleteResult.message);
+      onClose();
     } catch (error) {
       showError(getErrorMessage(error));
     }
@@ -97,16 +106,18 @@ const DashboardAccountModal = ({ isOpen, mode, onClose }: DashboardAccountModalP
         {isDeleteMode ? (
           step === 'password' ? (
             <form className="dashboard-modal__form" onSubmit={handlePasswordSubmit}>
-              <p className="empty-copy">Confirm your password before starting account deletion.</p>
-              <label className="field">
-                <span>Password</span>
-                <Input type="password" value={password} onChange={(event) => setPassword(event.target.value)} placeholder="Current password" minLength={8} required />
-              </label>
+              <p className="empty-copy">{isGoogleUser ? 'Send an OTP to confirm account deletion.' : 'Confirm your password before deleting your account.'}</p>
+              {!isGoogleUser && (
+                <label className="field">
+                  <span>Password</span>
+                  <Input type="password" value={password} onChange={(event) => setPassword(event.target.value)} placeholder="Current password" minLength={8} required />
+                </label>
+              )}
               <footer className="report-modal__footer">
                 <Button variant="secondary" onClick={onClose}>Cancel</Button>
-                <Button variant="danger" type="submit" disabled={password.length < 8 || isBusy}>
+                <Button variant="danger" type="submit" disabled={(!isGoogleUser && password.length < 8) || isBusy}>
                   {isBusy ? <Loader2 className="spin" size={17} aria-hidden="true" /> : <Trash2 size={17} aria-hidden="true" />}
-                  Continue
+                  {isGoogleUser ? 'Send OTP' : 'Delete account'}
                 </Button>
               </footer>
             </form>

@@ -1,6 +1,8 @@
 import { Types } from 'mongoose';
 
 import { BadRequestError, ForbiddenError, NotFoundError } from '../../shared/errors/index.js';
+import heatmapService, { type HeatmapService } from '../contributions/heatmap.service.js';
+import notificationService, { type NotificationService } from '../notifications/notification.service.js';
 import postRepository, { type PostRepository } from '../posts/post.repository.js';
 import blockService, { type BlockService } from '../users/block/block.service.js';
 import commentRepository, { type CommentRepository } from './comment.repository.js';
@@ -21,6 +23,8 @@ class CommentService {
     private readonly comments: CommentRepository = commentRepository,
     private readonly posts: PostRepository = postRepository,
     private readonly blockRules: BlockService = blockService,
+    private readonly notifications: NotificationService = notificationService,
+    private readonly heatmap: HeatmapService = heatmapService,
   ) {}
 
   private normalizePage(pageInput: unknown): number {
@@ -77,9 +81,20 @@ class CommentService {
       replyToUser: parentComment?.user || null,
     });
 
+    const notificationRecipient = parentComment ? parentComment.user : post.user;
+    const notificationType = parentComment ? 'COMMENT_REPLY' : 'COMMENT';
+
     await Promise.all([
       this.comments.populateAuthor(newComment),
       this.posts.incrementCommentsCount(post._id, 1),
+      this.notifications.send({
+        senderId: userId,
+        recipientId: notificationRecipient,
+        type: notificationType,
+        contentId: newComment._id,
+        onModel: 'Comment',
+      }),
+      this.heatmap.updateContribution(userId, 'COMMENT', newComment._id, post.user),
       ...(parentComment ? [this.comments.incrementReplyCount(parentComment._id, 1)] : []),
     ]);
 
@@ -98,7 +113,14 @@ class CommentService {
     const page = this.normalizePage(pageInput);
     const limit = this.normalizeLimit(limitInput);
     const blockedUserIds = await this.blockRules.getBlockedUserIds(userId);
-    const allComments = await this.comments.getTopLevelComments(post._id, userId, page, limit, blockedUserIds);
+    const allComments = await this.comments.getTopLevelComments(
+      post._id,
+      userId,
+      page,
+      limit,
+      blockedUserIds,
+      post.user.toString() === userId.toString(),
+    );
 
     return {
       allComments,
@@ -154,17 +176,22 @@ class CommentService {
         this.comments.deleteOne(comment._id),
         this.posts.incrementCommentsCount(postId, -1),
         this.comments.incrementReplyCount(comment.parentComment, -1),
+        this.heatmap.removeContribution(comment.user, comment._id, 'COMMENT'),
+        this.notifications.removeManyForContent([comment._id], ['COMMENT', 'COMMENT_REPLY']),
       ]);
 
       return { deletedCount: 1, parentCommentId: comment.parentComment };
     }
 
     const replies = await this.comments.findReplies(comment._id);
-    const commentIds = [comment._id, ...replies.map((reply) => reply._id)];
+    const commentsToDelete = [comment, ...replies];
+    const commentIds = commentsToDelete.map((item) => item._id);
 
     await Promise.all([
       this.comments.deleteMany(commentIds),
       this.posts.incrementCommentsCount(postId, -commentIds.length),
+      ...commentsToDelete.map((item) => this.heatmap.removeContribution(item.user, item._id, 'COMMENT')),
+      this.notifications.removeManyForContent(commentIds, ['COMMENT', 'COMMENT_REPLY']),
     ]);
 
     return { deletedCount: commentIds.length, parentCommentId: null };

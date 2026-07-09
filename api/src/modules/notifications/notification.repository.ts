@@ -94,6 +94,13 @@ class NotificationRepository {
     return NotificationModel.deleteMany({ _id: { $in: notificationIds } });
   }
 
+  deleteManyByContent(filter: { contentIds: Array<string | Types.ObjectId>; types?: NotificationType[] }) {
+    return NotificationModel.deleteMany({
+      contentId: { $in: filter.contentIds },
+      ...(filter.types?.length ? { type: { $in: filter.types } } : {}),
+    });
+  }
+
   toObjectId(value: string | Types.ObjectId) {
     return new mongoose.Types.ObjectId(value.toString());
   }

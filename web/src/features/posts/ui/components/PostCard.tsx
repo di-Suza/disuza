@@ -1,8 +1,9 @@
-import { Bookmark, Edit3, ExternalLink, Flag, FolderOpen, GitFork, Heart, Loader2, MessageCircle, Trash2, UserRound } from 'lucide-react';
+import { Bookmark, Edit3, ExternalLink, Flag, FolderOpen, GitFork, Heart, Loader2, MessageCircle, MessageSquare, Trash2, UserRound } from 'lucide-react';
 import { memo, useCallback, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 
 import CommentModal from '@/features/comments/ui/components/CommentModal';
+import SendFeedbackModal from '@/features/messages/ui/components/SendFeedbackModal';
 import { useDeletePostMutation, useGetPostQuery } from '@/features/posts/api/post.api';
 import { getPostAuthor, getPostImageUrl, getPostOwnerId, getPostMedia } from '@/features/posts/model/post.helpers';
 import type { Post, PostAuthor } from '@/features/posts/model/post.types';
@@ -38,6 +39,7 @@ const PostCard = ({ className, compact = false, fallbackAuthor, post, viewerId }
   const [isCommentsOpen, setCommentsOpen] = useState(false);
   const [isCollectionsOpen, setCollectionsOpen] = useState(false);
   const [isReportOpen, setReportOpen] = useState(false);
+  const [isFeedbackOpen, setFeedbackOpen] = useState(false);
   const [deletePost, { isLoading: isDeleting }] = useDeletePostMutation();
   const { data: fullPostData, isFetching: isPostFetching } = useGetPostQuery(post._id, { skip: !isEditOpen });
   const { isLiked, isLikeUpdating, likesCount, toggleLike } = usePostLike(post);
@@ -143,6 +145,11 @@ const PostCard = ({ className, compact = false, fallbackAuthor, post, viewerId }
           {isSaveUpdating ? <Loader2 className="spin" size={16} aria-hidden="true" /> : <Bookmark size={16} aria-hidden="true" />}
           {isSaved ? 'Saved' : 'Save'}
         </button>
+        {!isOwner && ownerId && (
+          <button type="button" className="post-card__footer-button" onClick={() => setFeedbackOpen(true)} aria-label="Send feedback">
+            <MessageSquare size={16} aria-hidden="true" />Feedback
+          </button>
+        )}
         {isSaved && (
           <button type="button" className="post-card__footer-button" onClick={() => setCollectionsOpen(true)} aria-label="Manage saved collection">
             <FolderOpen size={16} aria-hidden="true" />Manage
@@ -183,6 +190,15 @@ const PostCard = ({ className, compact = false, fallbackAuthor, post, viewerId }
           onClose={() => setReportOpen(false)}
           targetId={post._id}
           onModel="Post"
+        />
+      )}
+      {isFeedbackOpen && ownerId && (
+        <SendFeedbackModal
+          isOpen={isFeedbackOpen}
+          onClose={() => setFeedbackOpen(false)}
+          feedbackOn="Post"
+          receiverId={ownerId}
+          postId={post._id}
         />
       )}
     </article>
