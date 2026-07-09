@@ -77,7 +77,7 @@ export const userApi = api.injectEndpoints({
         }
       },
     }),
-    updateUserNameAndPP: builder.mutation<UpdateEnvelope<UpdateIdentityResponse>, UpdateIdentityRequest>({
+    updateUserNameAndPP: builder.mutation<UpdateEnvelope<UpdateIdentityResponse>, UpdateIdentityRequest | FormData>({
       query: (body) => ({
         url: '/user/updateUserNameAndPP',
         method: 'PATCH',

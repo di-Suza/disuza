@@ -34,6 +34,13 @@ const createEmptyExperience = (): PortfolioExperience => ({ companyName: '', tim
 
 const createEmptyEducation = (): PortfolioEducation => ({ collegeName: '', timePeriod: '', course: '' });
 
+type IdentityFormState = {
+  userName: string;
+  profilePictureUrl: string;
+  profilePictureFile: File | null;
+  ppRemoved: boolean;
+};
+
 const toRecord = (value: unknown): Record<string, unknown> => (
   typeof value === 'object' && value !== null ? value as Record<string, unknown> : {}
 );
@@ -94,7 +101,7 @@ export const useDashboardPage = () => {
   const { data: recommendationsData, isFetching: isRecommendationsFetching } = useGetUserRecommendationsQuery({ limit: 8 });
   const { data: blockedUsersData, isFetching: isBlockedUsersFetching } = useGetBlockedUsersQuery({ page: 1 });
 
-  const [identityForm, setIdentityForm] = useState({ userName: '', profilePictureUrl: '' });
+  const [identityForm, setIdentityForm] = useState<IdentityFormState>({ userName: '', profilePictureUrl: '', profilePictureFile: null, ppRemoved: false });
   const [generalForm, setGeneralForm] = useState({ headline: '', about: '' });
   const [professionalForm, setProfessionalForm] = useState<ProfessionalFormState>({
     skills: '',
@@ -111,6 +118,8 @@ export const useDashboardPage = () => {
     setIdentityForm({
       userName: user.userName || '',
       profilePictureUrl: typeof user.profilePicture?.url === 'string' ? user.profilePicture.url : '',
+      profilePictureFile: null,
+      ppRemoved: false,
     });
     setGeneralForm({
       headline: typeof user.headline === 'string' ? user.headline : '',
@@ -143,8 +152,17 @@ export const useDashboardPage = () => {
     }
   }, [logoutAllDevices, showError, showSuccess]);
 
-  const updateIdentityField = useCallback((field: keyof typeof identityForm) => (event: ChangeEvent<HTMLInputElement>) => {
-    setIdentityForm((current) => ({ ...current, [field]: event.target.value }));
+  const updateIdentityField = useCallback((field: 'userName' | 'profilePictureUrl') => (event: ChangeEvent<HTMLInputElement>) => {
+    setIdentityForm((current) => ({ ...current, [field]: event.target.value, ppRemoved: false }));
+  }, []);
+
+  const updateIdentityFile = useCallback((event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0] || null;
+    setIdentityForm((current) => ({ ...current, profilePictureFile: file, profilePictureUrl: file ? '' : current.profilePictureUrl, ppRemoved: false }));
+  }, []);
+
+  const handleRemoveProfilePicture = useCallback(() => {
+    setIdentityForm((current) => ({ ...current, profilePictureFile: null, profilePictureUrl: '', ppRemoved: true }));
   }, []);
 
   const updateGeneralField = useCallback((field: keyof typeof generalForm) => (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -203,10 +221,20 @@ export const useDashboardPage = () => {
     event.preventDefault();
 
     try {
-      const result = await updateUserNameAndPP({
-        userName: identityForm.userName.trim(),
-        profilePictureUrl: identityForm.profilePictureUrl.trim() || undefined,
-      }).unwrap();
+      const body = identityForm.profilePictureFile || identityForm.ppRemoved
+        ? new FormData()
+        : {
+          userName: identityForm.userName.trim(),
+          profilePictureUrl: identityForm.profilePictureUrl.trim() || undefined,
+        };
+
+      if (body instanceof FormData) {
+        body.append('userName', identityForm.userName.trim());
+        if (identityForm.profilePictureFile) body.append('profilePicture', identityForm.profilePictureFile);
+        if (identityForm.ppRemoved) body.append('ppRemoved', 'true');
+      }
+
+      const result = await updateUserNameAndPP(body).unwrap();
       showSuccess(result.message);
     } catch (error) {
       showError(getErrorMessage(error));
@@ -285,6 +313,7 @@ export const useDashboardPage = () => {
     handleGeneralSubmit,
     handleIdentitySubmit,
     handleLogout,
+    handleRemoveProfilePicture,
     handleLogoutAllDevices,
     handlePasswordSubmit,
     handleProfessionalSubmit,
@@ -309,6 +338,7 @@ export const useDashboardPage = () => {
     updateEducationField,
     updateExperienceField,
     updateGeneralField,
+    updateIdentityFile,
     updateIdentityField,
     updatePasswordField,
     updateProfessionalField,
@@ -322,6 +352,7 @@ export const useDashboardPage = () => {
     handleGeneralSubmit,
     handleIdentitySubmit,
     handleLogout,
+    handleRemoveProfilePicture,
     handleLogoutAllDevices,
     handlePasswordSubmit,
     handleProfessionalSubmit,
@@ -345,6 +376,7 @@ export const useDashboardPage = () => {
     updateEducationField,
     updateExperienceField,
     updateGeneralField,
+    updateIdentityFile,
     updateIdentityField,
     updatePasswordField,
     updateProfessionalField,

@@ -34,6 +34,7 @@ const postInvalidationTags = (postId: string) => [
   'Posts' as const,
   'Feed' as const,
   'ProfileUser' as const,
+  'UserAccountHistory' as const,
 ];
 
 export const commentApi = api.injectEndpoints({
