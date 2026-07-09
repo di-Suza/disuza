@@ -3,12 +3,14 @@ import { createBrowserRouter } from 'react-router-dom';
 
 import ProtectedLayout from '@/app/layouts/ProtectedLayout';
 import PublicLayout from '@/app/layouts/PublicLayout';
+import SidebarLayout from '@/app/layouts/SidebarLayout';
 import FullPageLoader from '@/shared/components/FullPageLoader/FullPageLoader';
 import NotFound from '@/shared/components/NotFound/NotFound';
 
 const DashboardPage = lazy(() => import('@/features/dashboard/ui/pages/DashboardPage'));
 const FeedPage = lazy(() => import('@/features/posts/ui/pages/FeedPage'));
 const LandingPage = lazy(() => import('@/features/landing/ui/pages/LandingPage'));
+const MessagesPage = lazy(() => import('@/features/messages/ui/pages/MessagesPage'));
 const NotificationsPage = lazy(() => import('@/features/notifications/ui/pages/NotificationsPage'));
 const PostDetailPage = lazy(() => import('@/features/posts/ui/pages/PostDetailPage/PostDetailPage'));
 const ProfilePage = lazy(() => import('@/features/profile/ui/pages/ProfilePage'));
@@ -44,28 +46,37 @@ export const router = createBrowserRouter([
     element: <ProtectedLayout />,
     children: [
       {
-        path: '/dashboard',
-        element: withSuspense(<DashboardPage />),
-      },
-      {
-        path: '/home',
-        element: withSuspense(<FeedPage />),
-      },
-      {
-        path: '/profile/:id',
-        element: withSuspense(<ProfilePage />),
-      },
-      {
-        path: '/post/:postId',
-        element: withSuspense(<PostDetailPage />),
-      },
-      {
-        path: '/notifications',
-        element: withSuspense(<NotificationsPage />),
-      },
-      {
-        path: '/search',
-        element: withSuspense(<SearchPage />),
+        element: <SidebarLayout />,
+        children: [
+          {
+            path: '/dashboard',
+            element: withSuspense(<DashboardPage />),
+          },
+          {
+            path: '/home',
+            element: withSuspense(<FeedPage />),
+          },
+          {
+            path: '/messages',
+            element: withSuspense(<MessagesPage />),
+          },
+          {
+            path: '/profile/:id',
+            element: withSuspense(<ProfilePage />),
+          },
+          {
+            path: '/post/:postId',
+            element: withSuspense(<PostDetailPage />),
+          },
+          {
+            path: '/notifications',
+            element: withSuspense(<NotificationsPage />),
+          },
+          {
+            path: '/search',
+            element: withSuspense(<SearchPage />),
+          },
+        ],
       },
     ],
   },
