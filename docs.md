@@ -1328,3 +1328,49 @@ Verification used:
 npm --prefix web run typecheck
 npm --prefix web run build
 ```
+
+## Step 25: Backend Dashboard Activity Support
+
+Built backend dashboard activity support on `feature/api-dashboard-module`.
+
+Added:
+
+- liked-post activity query support in the likes repository
+- following activity query support in the follow repository
+- async account-history controller handling with page-aware service call
+- dashboard account-history service logic for `likes` and `follows`
+- blocked-user filtering for liked-post and follow activity results
+
+Preserved v1 endpoint flow:
+
+```txt
+GET /api/user/getUserAccountHistory?type=likes&page=1
+GET /api/user/getUserAccountHistory?type=follows&page=1
+GET /api/user/getUserAccountHistory?type=comments&page=1
+GET /api/user/getUserAccountHistory?type=feedbacks&page=1
+```
+
+Behavior:
+
+- `likes` returns recent liked posts with a cover media item and caption
+- `follows` returns recent followed users
+- blocked users are hidden from activity results
+- `comments` and `feedbacks` remain valid activity types but return empty lists until their dependent modules are active in this branch chain
+- invalid activity types still return validation/business errors
+
+Why:
+
+The dashboard activity modal needs real backend data. Likes and follows are already migrated, so they can be wired now. Comments and feedback depend on modules that are intentionally not part of the current active dashboard chain, so they are kept safe and non-breaking until those modules are ready.
+
+Deferred until later modules:
+
+- comment activity after comments backend is active in the dashboard branch chain
+- feedback activity after messaging/feedback modules are rebuilt
+- contribution heatmap persistence and APIs
+- account deletion cleanup queue flow
+
+Verification used:
+
+```bash
+npm run build:api
+```

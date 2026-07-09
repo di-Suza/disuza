@@ -91,8 +91,8 @@ class UserController {
   }
 
   private async handleGetUserAccountHistory(req: Request, res: Response) {
-    const activities = this.service.getUserAccountHistory(req.user!.id, String(req.query.type));
     const limit = 10;
+    const activities = await this.service.getUserAccountHistory(req.user!.id, String(req.query.type), req.query.page, limit);
 
     res.status(200).json({
       success: true,
@@ -226,4 +226,3 @@ const userController = new UserController();
 
 export { UserController };
 export default userController;
-
