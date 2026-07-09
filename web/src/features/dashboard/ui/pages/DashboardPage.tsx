@@ -1,5 +1,27 @@
 import { useState } from 'react';
-import { AlertCircle, Bell, KeyRound, LockOpen, LogOut, MonitorX, Save, Search, UserPlus, UserRound } from 'lucide-react';
+import {
+  Activity,
+  AlertCircle,
+  Ban,
+  Bell,
+  BookOpen,
+  BriefcaseBusiness,
+  FileText,
+  Heart,
+  KeyRound,
+  LockOpen,
+  LogOut,
+  MessageCircle,
+  MonitorX,
+  Plus,
+  Save,
+  Search,
+  Shield,
+  Trash2,
+  UserPlus,
+  UserRound,
+  UsersRound,
+} from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 import ReportAProblemModal from '@/features/issues/ui/components/ReportAProblemModal';
@@ -7,12 +29,19 @@ import DashboardPostsPanel from '@/features/posts/ui/components/DashboardPostsPa
 import SavedCollectionsPanel from '@/features/saves/ui/components/SavedCollectionsPanel';
 import Button from '@/shared/ui/Button';
 import Input from '@/shared/ui/Input';
+import DashboardAccountModal, { type DashboardAccountModalMode } from '../components/DashboardAccountModal';
+import DashboardActivitiesModal, { type DashboardActivityType } from '../components/DashboardActivitiesModal';
+import DashboardBlockedUsersModal from '../components/DashboardBlockedUsersModal';
+import DashboardReportsModal from '../components/DashboardReportsModal';
+import DashboardUserListModal, { type DashboardUserListType } from '../components/DashboardUserListModal';
 import { useDashboardPage } from './useDashboardPage';
 
 const getAvatarUrl = (url: unknown): string | null => (typeof url === 'string' && url.trim() ? url : null);
 
 const DashboardPage = () => {
   const {
+    addEducation,
+    addExperience,
     blockedUsers,
     generalForm,
     handleFollowRecommendation,
@@ -35,6 +64,10 @@ const DashboardPage = () => {
     passwordForm,
     professionalForm,
     recommendations,
+    removeEducation,
+    removeExperience,
+    updateEducationField,
+    updateExperienceField,
     updateGeneralField,
     updateIdentityField,
     updatePasswordField,
@@ -43,6 +76,11 @@ const DashboardPage = () => {
   } = useDashboardPage();
 
   const [isProblemModalOpen, setProblemModalOpen] = useState(false);
+  const [userListModal, setUserListModal] = useState<DashboardUserListType | null>(null);
+  const [activityModal, setActivityModal] = useState<DashboardActivityType | null>(null);
+  const [accountModal, setAccountModal] = useState<DashboardAccountModalMode | null>(null);
+  const [isReportsModalOpen, setReportsModalOpen] = useState(false);
+  const [isBlockedUsersModalOpen, setBlockedUsersModalOpen] = useState(false);
   const avatarUrl = getAvatarUrl(user?.profilePicture?.url);
 
   return (
@@ -66,13 +104,34 @@ const DashboardPage = () => {
         </div>
 
         <div className="profile-stats" aria-label="Your profile stats">
-          <article><strong>{Number(user?.followersCount || 0)}</strong><span>Followers</span></article>
-          <article><strong>{Number(user?.followingCount || 0)}</strong><span>Following</span></article>
+          <button type="button" onClick={() => setUserListModal('followers')}>
+            <strong>{Number(user?.followersCount || 0)}</strong><span>Followers</span>
+          </button>
+          <button type="button" onClick={() => setUserListModal('following')}>
+            <strong>{Number(user?.followingCount || 0)}</strong><span>Following</span>
+          </button>
           <article><strong>{Number(user?.profileContributions || 0)}</strong><span>Contributions</span></article>
         </div>
 
         <DashboardPostsPanel user={user} />
         <SavedCollectionsPanel viewerId={user?._id} />
+
+        <section className="profile-card dashboard-manager-card">
+          <div className="profile-card__header">
+            <h2>Activity and Settings</h2>
+            <p>Recent account activity, reports, privacy, and safety controls.</p>
+          </div>
+          <div className="dashboard-settings-grid">
+            <Button variant="secondary" onClick={() => setActivityModal('likes')}><Heart size={17} aria-hidden="true" />Likes</Button>
+            <Button variant="secondary" onClick={() => setActivityModal('follows')}><UserPlus size={17} aria-hidden="true" />Follows</Button>
+            <Button variant="secondary" onClick={() => setActivityModal('comments')}><MessageCircle size={17} aria-hidden="true" />Comments</Button>
+            <Button variant="secondary" onClick={() => setActivityModal('feedbacks')}><Activity size={17} aria-hidden="true" />Feedback</Button>
+            <Button variant="secondary" onClick={() => setReportsModalOpen(true)}><FileText size={17} aria-hidden="true" />Your reports</Button>
+            <Button variant="secondary" onClick={() => setBlockedUsersModalOpen(true)}><Ban size={17} aria-hidden="true" />Blocked users</Button>
+            <Button variant="secondary" onClick={() => setAccountModal('privacy')}><Shield size={17} aria-hidden="true" />Privacy</Button>
+            <Button variant="danger" onClick={() => setAccountModal('delete')}><Trash2 size={17} aria-hidden="true" />Delete account</Button>
+          </div>
+        </section>
 
         <div className="dashboard-grid">
           <form className="profile-card" onSubmit={handleIdentitySubmit}>
@@ -107,15 +166,46 @@ const DashboardPage = () => {
             <Button type="submit" disabled={isBusy}><Save size={18} aria-hidden="true" />Save info</Button>
           </form>
 
-          <form className="profile-card" onSubmit={handleProfessionalSubmit}>
+          <form className="profile-card profile-card--wide" onSubmit={handleProfessionalSubmit}>
             <div className="profile-card__header">
               <h2>Portfolio</h2>
-              <p>Comma-separated skills, interests, and languages.</p>
+              <p>Skills, experience, education, interests, and languages.</p>
             </div>
             <label className="field">
               <span>Skills</span>
               <Input value={professionalForm.skills} onChange={updateProfessionalField('skills')} placeholder="React, Node.js, MongoDB" />
             </label>
+            <div className="dashboard-array-editor">
+              <div className="dashboard-array-editor__header">
+                <span><BriefcaseBusiness size={17} aria-hidden="true" />Experience</span>
+                <Button variant="secondary" onClick={addExperience}><Plus size={16} aria-hidden="true" />Add</Button>
+              </div>
+              {professionalForm.experiences.map((experience, index) => (
+                <div className="dashboard-array-editor__row" key={`experience-${index}`}>
+                  <Input value={experience.companyName} onChange={updateExperienceField(index, 'companyName')} placeholder="Company or role" />
+                  <Input value={experience.timePeriod} onChange={updateExperienceField(index, 'timePeriod')} placeholder="Jan 2024 - Present" />
+                  <Button variant="ghost" className="button--icon" onClick={() => removeExperience(index)} aria-label="Remove experience">
+                    <Trash2 size={16} aria-hidden="true" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+            <div className="dashboard-array-editor">
+              <div className="dashboard-array-editor__header">
+                <span><BookOpen size={17} aria-hidden="true" />Education</span>
+                <Button variant="secondary" onClick={addEducation}><Plus size={16} aria-hidden="true" />Add</Button>
+              </div>
+              {professionalForm.educations.map((education, index) => (
+                <div className="dashboard-array-editor__row dashboard-array-editor__row--education" key={`education-${index}`}>
+                  <Input value={education.collegeName} onChange={updateEducationField(index, 'collegeName')} placeholder="College" />
+                  <Input value={education.course} onChange={updateEducationField(index, 'course')} placeholder="Course" />
+                  <Input value={education.timePeriod} onChange={updateEducationField(index, 'timePeriod')} placeholder="2021 - 2025" />
+                  <Button variant="ghost" className="button--icon" onClick={() => removeEducation(index)} aria-label="Remove education">
+                    <Trash2 size={16} aria-hidden="true" />
+                  </Button>
+                </div>
+              ))}
+            </div>
             <label className="field">
               <span>Interests</span>
               <Input value={professionalForm.interests} onChange={updateProfessionalField('interests')} placeholder="Open source, system design" />
@@ -203,7 +293,13 @@ const DashboardPage = () => {
           </Button>
         </div>
       </section>
+
       <ReportAProblemModal isOpen={isProblemModalOpen} onClose={() => setProblemModalOpen(false)} />
+      <DashboardUserListModal isOpen={Boolean(userListModal)} type={userListModal || 'followers'} userId={user?._id} onClose={() => setUserListModal(null)} />
+      <DashboardActivitiesModal isOpen={Boolean(activityModal)} type={activityModal || 'likes'} onClose={() => setActivityModal(null)} />
+      <DashboardReportsModal isOpen={isReportsModalOpen} onClose={() => setReportsModalOpen(false)} />
+      <DashboardBlockedUsersModal isOpen={isBlockedUsersModalOpen} onClose={() => setBlockedUsersModalOpen(false)} />
+      <DashboardAccountModal isOpen={Boolean(accountModal)} mode={accountModal || 'privacy'} onClose={() => setAccountModal(null)} />
     </main>
   );
 };
