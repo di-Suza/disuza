@@ -1510,3 +1510,38 @@ Verification used:
 npm run build:web
 git diff --check
 ```
+
+## Step 29: Exact V1 Feed, Post Card, and Dashboard UI Correction
+
+Tightened the frontend parity pass on `feature/web-v1-ui-parity` after comparing directly against the v1 JSX/CSS values.
+
+Corrected in this step:
+
+- removed the extra feed navbar action so the home feed navbar matches v1: logo plus All/Following dropdown only
+- copied the v1 logo asset into the v2 web assets and wired the feed navbar to use it
+- rebuilt the feed page spacing, fixed auto-hide navbar, centered 640px post column, inline recommendations, and desktop rail to match v1
+- rebuilt the post card structure around v1 dimensions, radii, media height, carousel controls, action labels/counts, project links, caption ordering, and options menu
+- removed the permanent saved-collections text under post cards and kept save management behind the v1-style transient save popover
+- restored the dashboard posts tab from full feed cards back to the v1 gallery preview grid with post count
+- added exact dashboard shell/header/tabs/content CSS values for v1-style spacing, shadows, borders, and responsive behavior
+
+Preserved flow intent:
+
+```txt
+Feed navbar -> All/Following dropdown only
+Feed page -> centered v1 post list -> inline/rail recommendations
+Post card -> media -> actions -> project links -> caption
+Dashboard -> v1 header -> tabs -> focused v1 content panels
+Dashboard posts -> gallery preview grid -> post detail route
+```
+
+Why:
+
+The first UI parity pass was close, but it still had v2 design decisions mixed in. This correction treats v1 as the visual source of truth and maps its Tailwind/CSS values into the v2 TypeScript component structure without changing the product flow.
+
+Verification used:
+
+```bash
+npm run build:web
+git diff --check
+```

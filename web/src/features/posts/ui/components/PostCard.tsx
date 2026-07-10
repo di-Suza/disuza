@@ -1,22 +1,37 @@
-import { Bookmark, Edit3, ExternalLink, FolderOpen, GitFork, Heart, Loader2, MessageCircle, MessageSquare, MessageSquareWarning, MoreHorizontal, Trash2, UserRound, X } from 'lucide-react';
-import { memo, useCallback, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import {
+  Bookmark,
+  ChevronLeft,
+  ChevronRight,
+  Edit3,
+  ExternalLink,
+  GitFork,
+  Heart,
+  Loader2,
+  MessageCircle,
+  MessageSquareWarning,
+  MoreHorizontal,
+  SendHorizontal,
+  Sparkles,
+  Trash2,
+  UserRound,
+  X,
+} from 'lucide-react';
+import { memo, useCallback, useMemo, useState, type ReactNode } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 import CommentModal from '@/features/comments/ui/components/CommentModal';
 import SendFeedbackModal from '@/features/messages/ui/components/SendFeedbackModal';
 import { useDeletePostMutation, useGetPostQuery } from '@/features/posts/api/post.api';
-import { getPostAuthor, getPostImageUrl, getPostOwnerId, getPostMedia } from '@/features/posts/model/post.helpers';
+import { getPostAuthor, getPostImageUrl, getPostOwnerId, getPostMedia, isVideoMedia } from '@/features/posts/model/post.helpers';
 import type { Post, PostAuthor } from '@/features/posts/model/post.types';
 import { usePostLike } from '@/features/posts/ui/hooks/usePostLike';
 import ReportModal from '@/features/reports/ui/components/ReportModal';
 import ManageSaveCollectionsModal from '@/features/saves/ui/components/ManageSaveCollectionsModal';
 import { usePostSave } from '@/features/saves/ui/hooks/usePostSave';
 import { useToast } from '@/shared/hooks/useToast';
-import Button from '@/shared/ui/Button';
 import { cn } from '@/shared/utils/cn';
 import { getErrorMessage } from '@/shared/utils/getErrorMessage';
 import PostComposerModal from './PostComposerModal';
-import PostMediaCarousel from './PostMediaCarousel';
 
 type PostCardProps = {
   post: Post;
@@ -26,21 +41,58 @@ type PostCardProps = {
   compact?: boolean;
 };
 
-const formatPostDate = (value?: string) => {
+const formatTime = (value?: string) => {
   if (!value) return '';
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return '';
+
+  const seconds = Math.max(1, Math.floor((Date.now() - date.getTime()) / 1000));
+  if (seconds < 60) return `${seconds}s ago`;
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `${days}d ago`;
   return new Intl.DateTimeFormat('en', { month: 'short', day: 'numeric' }).format(date);
 };
 
-const PostCard = ({ className, compact = false, fallbackAuthor, post, viewerId }: PostCardProps) => {
+const ActionItem = ({
+  active,
+  count,
+  disabled,
+  icon,
+  label,
+  onClick,
+}: {
+  active?: boolean;
+  count?: number;
+  disabled?: boolean;
+  icon: ReactNode;
+  label: string;
+  onClick: () => void | Promise<void>;
+}) => (
+  <button type="button" onClick={onClick} disabled={disabled} className="v1-post-action">
+    <span className={active ? 'is-active' : ''}>
+      {icon}
+      {count !== undefined && Number(count) > 0 && <small>{count}</small>}
+    </span>
+    <em>{label}</em>
+  </button>
+);
+
+const PostCard = ({ className, fallbackAuthor, post, viewerId }: PostCardProps) => {
+  const navigate = useNavigate();
   const { showError, showSuccess } = useToast();
   const [isEditOpen, setEditOpen] = useState(false);
   const [isCommentsOpen, setCommentsOpen] = useState(false);
   const [isCollectionsOpen, setCollectionsOpen] = useState(false);
   const [isReportOpen, setReportOpen] = useState(false);
   const [isFeedbackOpen, setFeedbackOpen] = useState(false);
-  const [isOptionsOpen, setOptionsOpen] = useState(false);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [showFullCaption, setShowFullCaption] = useState(false);
+  const [showSaveTooltip, setShowSaveTooltip] = useState(false);
+  const [currentIndex, setCurrentIndex] = useState(0);
   const [deletePost, { isLoading: isDeleting }] = useDeletePostMutation();
   const { data: fullPostData, isFetching: isPostFetching } = useGetPostQuery(post._id, { skip: !isEditOpen });
   const { isLiked, isLikeUpdating, likesCount, toggleLike } = usePostLike(post);
@@ -49,14 +101,25 @@ const PostCard = ({ className, compact = false, fallbackAuthor, post, viewerId }
   const author = getPostAuthor(post, fallbackAuthor);
   const ownerId = getPostOwnerId(post, fallbackAuthor);
   const avatarUrl = getPostImageUrl(author);
+  const media = useMemo(() => getPostMedia(post), [post]);
+  const activeMedia = media[currentIndex];
   const isOwner = Boolean(viewerId && ownerId && viewerId === ownerId);
-  const orderedMedia = useMemo(() => getPostMedia(post), [post]);
-  const postDate = formatPostDate(post.createdAt);
   const counts = post.counts || {};
   const commentsDisabled = Boolean(post.settings?.commentsDisabled);
   const hideLikesCount = Boolean(post.settings?.hideLikesCount);
-  const canShowProjectLinks = Boolean(post.isProjectPost && post.projectLinks?.liveDemoUrl && post.projectLinks?.repositoryUrl);
+  const caption = post.caption || '';
+  const shouldTruncate = caption.length > 100;
+  const visibleCaption = showFullCaption || !shouldTruncate ? caption : `${caption.slice(0, 100)}...`;
   const editablePost = fullPostData?.post || null;
+  const userName = author?.userName || 'User Name';
+
+  const goToPrevious = useCallback(() => {
+    setCurrentIndex((current) => (current === 0 ? media.length - 1 : current - 1));
+  }, [media.length]);
+
+  const goToNext = useCallback(() => {
+    setCurrentIndex((current) => (current + 1) % media.length);
+  }, [media.length]);
 
   const handleDelete = useCallback(async () => {
     if (!window.confirm('Delete this post?')) return;
@@ -69,154 +132,109 @@ const PostCard = ({ className, compact = false, fallbackAuthor, post, viewerId }
     }
   }, [deletePost, post._id, showError, showSuccess]);
 
-  return (
-    <article className={cn('post-card', compact && 'post-card--compact', className)}>
-      <header className="post-card__header">
-        <Link to={author?._id ? `/profile/${author._id}` : '/dashboard'} className="post-card__author">
-          <span className="post-card__avatar">
-            {avatarUrl ? <img src={avatarUrl} alt="" /> : <UserRound size={20} aria-hidden="true" />}
-          </span>
-          <span>
-            <strong>{author?.userName || 'DevLoopFeed user'}</strong>
-            <small>{postDate || author?.headline || 'Developer post'}</small>
-          </span>
-        </Link>
+  const handleSaveClick = useCallback(async () => {
+    const wasSaved = isSaved;
+    const didUpdate = await toggleSave();
 
-        <div className="post-card__header-actions">
-          {post.isProjectPost && <span className="post-card__badge">Project</span>}
-          <div className="post-card__menu">
-            <Button variant="ghost" className="button--icon" onClick={() => setOptionsOpen((current) => !current)} aria-label="Post options">
-              <MoreHorizontal size={19} aria-hidden="true" />
-            </Button>
-            {isOptionsOpen && (
-              <>
-                <button type="button" className="post-card__menu-scrim" onClick={() => setOptionsOpen(false)} aria-label="Close post options" />
-                <div className="post-card__dropdown">
-                  {isOwner ? (
-                    <>
-                      <button type="button" onClick={() => { setOptionsOpen(false); setEditOpen(true); }}>
-                        <Edit3 size={16} aria-hidden="true" />Edit
-                      </button>
-                      <button type="button" className="is-danger" onClick={() => { setOptionsOpen(false); void handleDelete(); }} disabled={isDeleting}>
-                        {isDeleting ? <Loader2 className="spin" size={16} aria-hidden="true" /> : <Trash2 size={16} aria-hidden="true" />}Delete
-                      </button>
-                    </>
-                  ) : (
-                    <button type="button" className="is-danger" onClick={() => { setOptionsOpen(false); setReportOpen(true); }}>
-                      <MessageSquareWarning size={16} aria-hidden="true" />Report
-                    </button>
-                  )}
-                  <button type="button" className="is-muted" onClick={() => setOptionsOpen(false)}>
-                    <X size={16} aria-hidden="true" />Cancel
-                  </button>
+    if (!wasSaved && didUpdate) {
+      setShowSaveTooltip(true);
+      window.setTimeout(() => setShowSaveTooltip(false), 3000);
+    }
+  }, [isSaved, toggleSave]);
+
+  return (
+    <article className={cn('v1-post-card-outer', className)}>
+      <div className="v1-post-card">
+        <header className="v1-post-card__header">
+          <button type="button" onClick={() => navigate(author?._id ? `/profile/${author._id}` : '/dashboard')} className="v1-post-card__author">
+            <span className="v1-post-card__avatar">
+              {avatarUrl ? <img src={avatarUrl} alt="" /> : <UserRound size={22} aria-hidden="true" />}
+            </span>
+            <span className="v1-post-card__author-copy">
+              <strong>{userName}</strong>
+              <small>{formatTime(post.createdAt)}</small>
+            </span>
+          </button>
+
+          <div className="v1-post-card__top-actions">
+            {post.isProjectPost && <span className="v1-post-card__project"><Sparkles size={12} aria-hidden="true" />Project</span>}
+            <div className="v1-post-card__menu">
+              <button type="button" onClick={() => setShowDropdown((current) => !current)} aria-label="Post options">
+                <MoreHorizontal size={20} aria-hidden="true" />
+              </button>
+              {showDropdown && (
+                <>
+                  <button type="button" className="v1-post-card__scrim" onClick={() => setShowDropdown(false)} aria-label="Close post options" />
+                  <div className="v1-post-card__dropdown">
+                    {isOwner && <button type="button" onClick={() => { setShowDropdown(false); setEditOpen(true); }}><Edit3 size={16} />Edit</button>}
+                    {isOwner && <button type="button" className="is-danger" onClick={() => { setShowDropdown(false); void handleDelete(); }} disabled={isDeleting}>{isDeleting ? <Loader2 className="spin" size={16} /> : <Trash2 size={16} />}Delete</button>}
+                    {!isOwner && <button type="button" className="is-danger" onClick={() => { setShowDropdown(false); setReportOpen(true); }}><MessageSquareWarning size={16} />Report</button>}
+                    <button type="button" className="is-muted" onClick={() => setShowDropdown(false)}><X size={16} />Cancel</button>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        </header>
+
+        {activeMedia && (
+          <section className="v1-post-card__media-shell">
+            <div className="v1-post-card__media-stage">
+              {!isVideoMedia(activeMedia) && <img className="v1-post-card__media-bg" src={activeMedia.url} alt="" aria-hidden="true" />}
+              <div className="v1-post-card__media-overlay" />
+              {isVideoMedia(activeMedia) ? (
+                <video className="v1-post-card__media-main" src={activeMedia.url} controls preload="metadata" />
+              ) : (
+                <img className="v1-post-card__media-main" src={activeMedia.url} alt={`Post content ${currentIndex + 1}`} loading="lazy" />
+              )}
+
+              {media.length > 1 && currentIndex > 0 && <button type="button" className="v1-post-card__media-nav v1-post-card__media-nav--left" onClick={goToPrevious} aria-label="Previous image"><ChevronLeft size={20} /></button>}
+              {media.length > 1 && currentIndex < media.length - 1 && <button type="button" className="v1-post-card__media-nav v1-post-card__media-nav--right" onClick={goToNext} aria-label="Next image"><ChevronRight size={20} /></button>}
+              {media.length > 1 && (
+                <div className="v1-post-card__dots">
+                  {media.map((item, index) => <button key={`${item.fileId}-${index}`} type="button" className={index === currentIndex ? 'is-active' : ''} onClick={() => setCurrentIndex(index)} aria-label={`Go to image ${index + 1}`} />)}
                 </div>
-              </>
+              )}
+            </div>
+          </section>
+        )}
+
+        <section className="v1-post-card__actions">
+          <ActionItem label="Like" count={hideLikesCount ? undefined : Number(likesCount || 0)} active={isLiked} disabled={isLikeUpdating} onClick={toggleLike} icon={<Heart size={20} className={isLiked ? 'is-filled' : ''} />} />
+          <ActionItem label="Comment" count={commentsDisabled ? undefined : Number(counts.comments || 0)} disabled={commentsDisabled} onClick={() => setCommentsOpen(true)} icon={<MessageCircle size={20} />} />
+          <ActionItem label="Feedback" disabled={isOwner || !ownerId} onClick={() => setFeedbackOpen(true)} icon={<SendHorizontal size={20} />} />
+          <div className="v1-post-card__save-action">
+            <ActionItem label="Save" active={isSaved} disabled={isSaveUpdating} onClick={handleSaveClick} icon={<Bookmark size={20} className={isSaved ? 'is-filled' : ''} />} />
+            {showSaveTooltip && (
+              <div className="v1-post-card__save-tooltip">
+                <span>Saved</span>
+                <button type="button" onClick={() => { setShowSaveTooltip(false); setCollectionsOpen(true); }}>Manage</button>
+              </div>
             )}
           </div>
-        </div>
-      </header>
+        </section>
 
-      {orderedMedia.length > 0 && <PostMediaCarousel media={orderedMedia} />}
-
-      {post.caption && <p className="post-card__caption">{post.caption}</p>}
-
-      {canShowProjectLinks && (
-        <div className="post-card__links">
-          <a href={post.projectLinks!.liveDemoUrl} target="_blank" rel="noreferrer">
-            <ExternalLink size={16} aria-hidden="true" />Live
-          </a>
-          <a href={post.projectLinks!.repositoryUrl} target="_blank" rel="noreferrer">
-            <GitFork size={16} aria-hidden="true" />Code
-          </a>
-        </div>
-      )}
-
-      <footer className="post-card__footer">
-        <button
-          type="button"
-          className={cn('post-card__footer-button post-card__footer-button--like', isLiked && 'is-active')}
-          onClick={toggleLike}
-          disabled={isLikeUpdating}
-          aria-label={isLiked ? 'Unlike post' : 'Like post'}
-          aria-pressed={isLiked}
-        >
-          <span>{isLikeUpdating ? <Loader2 className="spin" size={18} aria-hidden="true" /> : <Heart size={18} aria-hidden="true" />}{!hideLikesCount && Number(likesCount) > 0 && <small>{likesCount}</small>}</span>
-          <em>{isLiked ? 'Liked' : 'Like'}</em>
-        </button>
-        {commentsDisabled ? (
-          <span className="post-card__footer-button is-disabled"><span><MessageCircle size={18} aria-hidden="true" /></span><em>Off</em></span>
-        ) : (
-          <button type="button" className="post-card__footer-button" onClick={() => setCommentsOpen(true)} aria-label="Open comments">
-            <span><MessageCircle size={18} aria-hidden="true" />{Number(counts.comments || 0) > 0 && <small>{Number(counts.comments || 0)}</small>}</span><em>Comment</em>
-          </button>
+        {post.isProjectPost && (
+          <div className="v1-post-card__links">
+            {post.projectLinks?.liveDemoUrl && <a href={post.projectLinks.liveDemoUrl} target="_blank" rel="noopener noreferrer"><ExternalLink size={14} />Live Demo</a>}
+            {post.projectLinks?.repositoryUrl && <a href={post.projectLinks.repositoryUrl} target="_blank" rel="noopener noreferrer"><GitFork size={14} />Github</a>}
+          </div>
         )}
-        {!isOwner && ownerId && (
-          <button type="button" className="post-card__footer-button" onClick={() => setFeedbackOpen(true)} aria-label="Send feedback">
-            <span><MessageSquare size={18} aria-hidden="true" /></span><em>Feedback</em>
-          </button>
+
+        {caption && (
+          <p className="v1-post-card__caption">
+            <button type="button" onClick={() => navigate(author?._id ? `/profile/${author._id}` : '/dashboard')}>{userName}&nbsp;</button>
+            <span>{visibleCaption}</span>
+            {shouldTruncate && <button type="button" onClick={() => setShowFullCaption((current) => !current)}>{showFullCaption ? 'less' : 'more'}</button>}
+          </p>
         )}
-        <button
-          type="button"
-          className={cn('post-card__footer-button post-card__footer-button--save', isSaved && 'is-active')}
-          onClick={toggleSave}
-          disabled={isSaveUpdating}
-          aria-label={isSaved ? 'Unsave post' : 'Save post'}
-          aria-pressed={isSaved}
-        >
-          <span>{isSaveUpdating ? <Loader2 className="spin" size={18} aria-hidden="true" /> : <Bookmark size={18} aria-hidden="true" />}</span>
-          <em>{isSaved ? 'Saved' : 'Save'}</em>
-        </button>
-        {isSaved && (
-          <button type="button" className="post-card__footer-button" onClick={() => setCollectionsOpen(true)} aria-label="Manage saved collection">
-            <span><FolderOpen size={18} aria-hidden="true" /></span><em>Manage</em>
-          </button>
-        )}
-      </footer>
+      </div>
 
-      {isEditOpen && (
-        <PostComposerModal
-          isOpen={isEditOpen}
-          mode="edit"
-          onClose={() => setEditOpen(false)}
-          post={editablePost || post}
-          isPostLoading={isPostFetching && !editablePost}
-        />
-      )}
-
-      {isCommentsOpen && (
-        <CommentModal
-          isOpen={isCommentsOpen}
-          onClose={() => setCommentsOpen(false)}
-          post={post}
-        />
-      )}
-
-      {isCollectionsOpen && (
-        <ManageSaveCollectionsModal
-          isOpen={isCollectionsOpen}
-          onClose={() => setCollectionsOpen(false)}
-          postId={post._id}
-          onSaved={markSaved}
-        />
-      )}
-
-      {isReportOpen && (
-        <ReportModal
-          isOpen={isReportOpen}
-          onClose={() => setReportOpen(false)}
-          targetId={post._id}
-          onModel="Post"
-        />
-      )}
-      {isFeedbackOpen && ownerId && (
-        <SendFeedbackModal
-          isOpen={isFeedbackOpen}
-          onClose={() => setFeedbackOpen(false)}
-          feedbackOn="Post"
-          receiverId={ownerId}
-          postId={post._id}
-        />
-      )}
+      {isEditOpen && <PostComposerModal isOpen={isEditOpen} mode="edit" onClose={() => setEditOpen(false)} post={editablePost || post} isPostLoading={isPostFetching && !editablePost} />}
+      {isCommentsOpen && <CommentModal isOpen={isCommentsOpen} onClose={() => setCommentsOpen(false)} post={post} />}
+      {isCollectionsOpen && <ManageSaveCollectionsModal isOpen={isCollectionsOpen} onClose={() => setCollectionsOpen(false)} postId={post._id} onSaved={markSaved} />}
+      {isReportOpen && <ReportModal isOpen={isReportOpen} onClose={() => setReportOpen(false)} targetId={post._id} onModel="Post" />}
+      {isFeedbackOpen && ownerId && <SendFeedbackModal isOpen={isFeedbackOpen} onClose={() => setFeedbackOpen(false)} feedbackOn="Post" receiverId={ownerId} postId={post._id} />}
     </article>
   );
 };

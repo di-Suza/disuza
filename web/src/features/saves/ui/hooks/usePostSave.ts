@@ -30,7 +30,7 @@ export const usePostSave = (post: Post) => {
   }, []);
 
   const toggleSave = useCallback(async () => {
-    if (!post._id || isSaveUpdating) return;
+    if (!post._id || isSaveUpdating) return false;
 
     const previousState = saveState;
     const nextSaved = !previousState.isSaved;
@@ -42,9 +42,11 @@ export const usePostSave = (post: Post) => {
       } else {
         await unsavePost(post._id).unwrap();
       }
+      return true;
     } catch (error) {
       setSaveState(previousState);
       showError(getErrorMessage(error));
+      return false;
     }
   }, [isSaveUpdating, post._id, savePost, saveState, showError, unsavePost]);
 
