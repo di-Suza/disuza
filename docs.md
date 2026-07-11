@@ -1545,3 +1545,38 @@ Verification used:
 npm run build:web
 git diff --check
 ```
+
+### Dashboard completion pass
+
+Completed the remaining dashboard parity work on the same `feature/web-v1-ui-parity` branch by treating the v1 dashboard JSX and CSS as the visual source of truth.
+
+Restored and corrected:
+
+- exact dashboard header composition with Posts, Followers, Following, and the contribution badge
+- v1 Edit Profile modal, avatar update/remove UI, password accordion, and forgot-password handoff
+- all six portfolio editor tabs: Info, Skills, Experience, Education, Interests, and Language
+- v1 tag editors, suggestions, helper copy, timeline cards, add forms, and responsive states
+- full portfolio preview structure with profile stats, contribution heatmap, profile sections, post/project galleries, and preview-only actions
+- contribution heatmap framing and Activity Rules popover
+- compact Rooms empty state matching the current v1 dashboard presentation
+- More Settings navigation and Display, Activities History, Collections, Support & Legal, and Privacy & Security panels
+- v1-style activity history, followers/following, and reports modal presentation
+- original mobile, tablet, and desktop breakpoints for header stats, actions, tabs, portfolio forms, preview, and settings layout
+
+Preserved implementation boundaries:
+
+```txt
+Dashboard UI -> existing useDashboardPage handlers -> existing RTK Query mutations
+Dashboard modals -> existing RTK Query hooks -> existing v2 API endpoints
+```
+
+No backend endpoint, repository, service, request payload, or authentication behavior was changed during this UI parity pass.
+
+Verification used:
+
+```bash
+npm run build:web
+git diff --check
+```
+
+Desktop and mobile dashboard/portfolio smoke screenshots were also inspected for clipping, overflow, and breakpoint parity.
