@@ -1,4 +1,4 @@
-import { FileText, Loader2, X } from 'lucide-react';
+import { AlertTriangle, FileText, Loader2, MessageSquare, RotateCw, ShieldCheck, UserRound, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 
@@ -18,29 +18,24 @@ const formatDate = (value?: string): string => {
   return Number.isNaN(date.getTime()) ? '' : date.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
 };
 
-const getReportTitle = (report: Report): string => {
-  const target = report.targetId;
-
-  if (typeof target === 'object' && target && 'caption' in target && typeof target.caption === 'string') {
-    return target.caption || 'Reported post';
-  }
-
-  if (typeof target === 'object' && target && 'userName' in target && typeof target.userName === 'string') {
-    return target.userName || 'Reported profile';
-  }
-
-  return `Reported ${report.onModel.toLowerCase()}`;
-};
-
 const mergeReports = (current: Report[], next: Report[]) => {
   const existingIds = new Set(current.map((report) => report._id));
   return [...current, ...next.filter((report) => !existingIds.has(report._id))];
 };
 
+const getTargetTitle = (report: Report): string => {
+  const target = report.targetId;
+  if (typeof target === 'object' && target && 'caption' in target && typeof target.caption === 'string') return target.caption || 'Reported post';
+  if (typeof target === 'object' && target && 'userName' in target && typeof target.userName === 'string') return target.userName || 'Reported profile';
+  return `Reported ${report.onModel.toLowerCase()}`;
+};
+
+const getStatusClass = (status: Report['status']): string => `is-${status.toLowerCase()}`;
+
 const DashboardReportsModal = ({ isOpen, onClose }: DashboardReportsModalProps) => {
   const [page, setPage] = useState(1);
   const [reports, setReports] = useState<Report[]>([]);
-  const { data, isFetching } = useGetMyReportsQuery({ page, limit: 10 }, { skip: !isOpen });
+  const { data, isError, isFetching, refetch } = useGetMyReportsQuery({ page, limit: 10 }, { skip: !isOpen });
   const latestReports = data?.reports || [];
 
   useLockBodyScroll(isOpen);
@@ -61,44 +56,61 @@ const DashboardReportsModal = ({ isOpen, onClose }: DashboardReportsModalProps) 
 
   return createPortal(
     <div className="modal-backdrop report-modal-backdrop" role="dialog" aria-modal="true" onMouseDown={onClose}>
-      <section className="modal-card dashboard-modal" onMouseDown={(event) => event.stopPropagation()}>
-        <header className="modal-card__header report-modal__header">
-          <span className="report-modal__icon">
-            <FileText size={22} aria-hidden="true" />
-          </span>
-          <div>
-            <p className="state-panel__eyebrow">Moderation</p>
-            <h1>Your Reports</h1>
-          </div>
-          <Button variant="ghost" className="button--icon" onClick={onClose} aria-label="Close reports modal">
-            <X size={18} aria-hidden="true" />
-          </Button>
+      <section className="modal-card dashboard-reports-v1" onMouseDown={(event) => event.stopPropagation()}>
+        <button type="button" className="dashboard-reports-v1__close" onClick={onClose} aria-label="Close reports modal"><X size={16} /></button>
+        <header className="dashboard-reports-v1__header">
+          <span><ShieldCheck size={20} aria-hidden="true" /></span>
+          <div><p>Moderation</p><h2>Your Reports</h2></div>
         </header>
 
-        <div className="dashboard-modal__list">
-          {isFetching && reports.length === 0 && <p className="empty-copy">Loading reports...</p>}
-          {!isFetching && reports.length === 0 && <p className="empty-copy">No reports submitted yet.</p>}
-          {reports.map((report) => (
-            <article className="dashboard-modal__row dashboard-report-row" key={report._id}>
-              <span className="dashboard-modal__icon"><FileText size={18} aria-hidden="true" /></span>
-              <span>
-                <strong>{getReportTitle(report)}</strong>
-                <small>{report.reason} - {report.status}{formatDate(report.createdAt) ? ` - ${formatDate(report.createdAt)}` : ''}</small>
-                {report.response && <small>{report.response}</small>}
-              </span>
-            </article>
-          ))}
-        </div>
+        <div className="dashboard-reports-v1__scroll">
+          {isFetching && reports.length === 0 ? (
+            <div className="dashboard-reports-v1__state"><Loader2 className="spin" size={22} /><strong>Loading reports...</strong></div>
+          ) : isError ? (
+            <div className="dashboard-reports-v1__state">
+              <AlertTriangle size={24} /><strong>Reports could not be loaded</strong>
+              <Button onClick={() => refetch()}><RotateCw size={16} />Retry</Button>
+            </div>
+          ) : reports.length > 0 ? (
+            <div className="dashboard-reports-v1__content">
+              <div className="dashboard-reports-v1__summary">
+                <strong>{Number(data?.totalReports || reports.length)} submitted reports</strong>
+                <button type="button" onClick={() => refetch()} disabled={isFetching}><RotateCw className={isFetching ? 'spin' : ''} size={14} />Refresh</button>
+              </div>
 
-        <footer className="report-modal__footer">
-          <Button variant="secondary" onClick={onClose}>Close</Button>
-          {data?.hasMore && (
-            <Button onClick={() => setPage((current) => current + 1)} disabled={isFetching}>
-              {isFetching ? <Loader2 className="spin" size={17} aria-hidden="true" /> : <FileText size={17} aria-hidden="true" />}
-              Load more
-            </Button>
+              <div className="dashboard-reports-v1__list">
+                {reports.map((report) => {
+                  const Icon = report.onModel === 'User' ? UserRound : report.onModel === 'Message' ? MessageSquare : FileText;
+                  return (
+                    <article className="dashboard-report-v1" key={report._id}>
+                      <header>
+                        <span><Icon size={20} aria-hidden="true" /></span>
+                        <div><h3>Report on {report.onModel}</h3><p>{formatDate(report.createdAt)}</p></div>
+                        <em className={getStatusClass(report.status)}>{report.status}</em>
+                      </header>
+                      <div>
+                        <section><small>Target</small><strong>{getTargetTitle(report)}</strong></section>
+                        <section><small>Reason</small><strong>{report.reason}</strong></section>
+                        <section className="is-wide"><small>Description</small><p>{report.description || 'No description provided.'}</p></section>
+                        {report.response && <section className="is-wide"><small>Response</small><p>{report.response}</p></section>}
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
+
+              {data?.hasMore && (
+                <div className="dashboard-reports-v1__load-more">
+                  <button type="button" onClick={() => setPage((current) => current + 1)} disabled={isFetching}>
+                    {isFetching ? <Loader2 className="spin" size={16} /> : <RotateCw size={16} />}Load more
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="dashboard-reports-v1__state"><ShieldCheck size={28} /><strong>No reports submitted yet.</strong></div>
           )}
-        </footer>
+        </div>
       </section>
     </div>,
     document.body,
