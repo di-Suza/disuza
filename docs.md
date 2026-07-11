@@ -1545,3 +1545,45 @@ Verification used:
 npm run build:web
 git diff --check
 ```
+
+## Step 30: Product Architecture Documentation Foundation
+
+Established the product architecture documentation baseline on `chore/product-architecture-foundation`.
+
+Added:
+
+- `DevLoopFeed-Architecture-Guide.md` as the high-level system and product architecture source of truth
+- `ARCHITECTURE-DECISIONS.md` as a durable decision register with separate decision and delivery states
+- README links so architecture, decisions, and the chronological development journey are discoverable from the repository entry point
+- verified current maps for the v2 API and web applications
+- domain rules inherited from v1 for auth, social relationships, posts, media, comments, contributions, saves, reports, notifications, messaging, blocking, and collaborative rooms
+- current request, auth refresh, post, comment, feedback, and cleanup flows
+- explicit infrastructure boundaries for future Redis, Socket.IO, BullMQ, Yjs, Judge0, TURN, OpenAPI, testing, CI, and Docker work
+
+Documentation sources:
+
+- v1 root `README.md` and `docs.md`
+- v1 backend `devloop-feed-api/docs.md`
+- v1 frontend `devloop-feed-web/docs.md`
+- v1 `futureFixes.md` risk backlog
+- live v2 code and this development journal
+- the Collabify architecture guide for documentation and boundary inspiration only
+
+Important status rule:
+
+- `Implemented`: present and verified in v2.
+- `Partial`: a usable subset exists in v2.
+- `Planned`: accepted architecture, not delivered yet.
+- `Deferred`: intentionally waiting for dependencies or product decisions.
+
+Why:
+
+V2 already had good feature-level implementation history, but it did not yet have one system-level document explaining product boundaries, module ownership, cross-domain rules, current delivery status, and accepted future direction. This foundation prevents planned v1 capabilities from being mistaken for completed v2 work and gives future branches a stable place to record architecture changes.
+
+No runtime behavior or product flow changed in this step.
+
+Verification used:
+
+```bash
+git diff --check
+```
