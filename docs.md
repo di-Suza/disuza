@@ -1469,3 +1469,114 @@ npm run build:api
 npm run build:web
 git diff --check
 ```
+
+## Step 28: Frontend V1 UI Parity Pass
+
+Reworked the frontend UI parity layer on `feature/web-v1-ui-parity`.
+
+Added and restored:
+
+- v1-style protected app shell with fixed desktop sidebar and mobile bottom navigation
+- sidebar route nesting through a dedicated `SidebarLayout`
+- `/messages` route shell so the v1 navigation item no longer falls through to 404 before the full messaging module
+- v1-style dashboard header, stats, section tabs, and focused content panels
+- dashboard More Settings structure with display, activities, collections, support, and privacy sections
+- dashboard add-post action connected to the existing post composer modal
+- v1-style feed layout with fixed feed switcher, centered feed column, inline recommendations, and desktop recommendations rail
+- v1-style post card interactions with three-dot options menu, vertical action bar labels/counts, media containment, and caption ordering
+
+Preserved flow intent:
+
+```txt
+Protected route -> SidebarLayout -> page content
+Dashboard header -> dashboard tab -> focused section content
+Feed switcher -> feed query -> centered post list + recommendations
+Post card options -> edit/delete/report modal flow
+```
+
+Why:
+
+The v2 frontend had the right feature wiring, but the dashboard and feed had too many actions visible in a single surface and no longer matched the v1 app experience. This step brings the familiar v1 layout back while keeping the v2 implementation style: TypeScript, feature folders, RTK Query, shared UI primitives, and local page/component state.
+
+Deferred until later modules:
+
+- full realtime `/messages` page implementation
+- collab rooms UI and socket flow
+- problem/admin/gen-AI flows
+
+Verification used:
+
+```bash
+npm run build:web
+git diff --check
+```
+
+## Step 29: Exact V1 Feed, Post Card, and Dashboard UI Correction
+
+Tightened the frontend parity pass on `feature/web-v1-ui-parity` after comparing directly against the v1 JSX/CSS values.
+
+Corrected in this step:
+
+- removed the extra feed navbar action so the home feed navbar matches v1: logo plus All/Following dropdown only
+- copied the v1 logo asset into the v2 web assets and wired the feed navbar to use it
+- rebuilt the feed page spacing, fixed auto-hide navbar, centered 640px post column, inline recommendations, and desktop rail to match v1
+- rebuilt the post card structure around v1 dimensions, radii, media height, carousel controls, action labels/counts, project links, caption ordering, and options menu
+- removed the permanent saved-collections text under post cards and kept save management behind the v1-style transient save popover
+- restored the dashboard posts tab from full feed cards back to the v1 gallery preview grid with post count
+- added exact dashboard shell/header/tabs/content CSS values for v1-style spacing, shadows, borders, and responsive behavior
+
+Preserved flow intent:
+
+```txt
+Feed navbar -> All/Following dropdown only
+Feed page -> centered v1 post list -> inline/rail recommendations
+Post card -> media -> actions -> project links -> caption
+Dashboard -> v1 header -> tabs -> focused v1 content panels
+Dashboard posts -> gallery preview grid -> post detail route
+```
+
+Why:
+
+The first UI parity pass was close, but it still had v2 design decisions mixed in. This correction treats v1 as the visual source of truth and maps its Tailwind/CSS values into the v2 TypeScript component structure without changing the product flow.
+
+Verification used:
+
+```bash
+npm run build:web
+git diff --check
+```
+
+### Dashboard completion pass
+
+Completed the remaining dashboard parity work on the same `feature/web-v1-ui-parity` branch by treating the v1 dashboard JSX and CSS as the visual source of truth.
+
+Restored and corrected:
+
+- exact dashboard header composition with Posts, Followers, Following, and the contribution badge
+- v1 Edit Profile modal, avatar update/remove UI, password accordion, and forgot-password handoff
+- all six portfolio editor tabs: Info, Skills, Experience, Education, Interests, and Language
+- v1 tag editors, suggestions, helper copy, timeline cards, add forms, and responsive states
+- full portfolio preview structure with profile stats, contribution heatmap, profile sections, post/project galleries, and preview-only actions
+- contribution heatmap framing and Activity Rules popover
+- compact Rooms empty state matching the current v1 dashboard presentation
+- More Settings navigation and Display, Activities History, Collections, Support & Legal, and Privacy & Security panels
+- v1-style activity history, followers/following, and reports modal presentation
+- original mobile, tablet, and desktop breakpoints for header stats, actions, tabs, portfolio forms, preview, and settings layout
+
+Preserved implementation boundaries:
+
+```txt
+Dashboard UI -> existing useDashboardPage handlers -> existing RTK Query mutations
+Dashboard modals -> existing RTK Query hooks -> existing v2 API endpoints
+```
+
+No backend endpoint, repository, service, request payload, or authentication behavior was changed during this UI parity pass.
+
+Verification used:
+
+```bash
+npm run build:web
+git diff --check
+```
+
+Desktop and mobile dashboard/portfolio smoke screenshots were also inspected for clipping, overflow, and breakpoint parity.
