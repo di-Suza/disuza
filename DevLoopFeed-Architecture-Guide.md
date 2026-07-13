@@ -127,6 +127,9 @@ Current top-level structure:
 devloopfeed/
   api/                              Express and TypeScript backend
   web/                              React, Vite, and TypeScript frontend
+  contracts/                        REST/OpenAPI contract baseline
+  tests/                            Test strategy and future test layout
+  .github/workflows/ci.yml          Pull request typecheck and build gate
   README.md                         Quick project entry point
   docs.md                           Chronological development journal
   DevLoopFeed-Architecture-Guide.md System architecture and product rules
@@ -183,6 +186,20 @@ api/src/
     db.ts
     env.ts
     logger.ts
+  core/
+    events/
+    http/
+    policies/
+  infrastructure/
+    cache/
+    code-execution/
+    database/
+    email/
+    jobs/
+    oauth/
+    observability/
+    realtime/
+    storage/
   modules/
     auth/
     chat/
@@ -204,6 +221,7 @@ api/src/
     middleware/
     utils/
     validators/
+  testing/
   types/
 ```
 
@@ -222,7 +240,7 @@ modules/<domain>/
   <domain>.constants.ts         when constants are domain-owned
   validators/
     <domain>.validator.ts
-  index.ts                      planned public module API
+  index.ts                      public module API
 ```
 
 Rules:
@@ -232,7 +250,7 @@ Rules:
 - A service must not depend on Express request or response objects.
 - A repository must not decide product policy.
 - Shared code must be domain-neutral and reused by more than one module.
-- Cross-module imports should eventually go through each module's public `index.ts`.
+- Cross-module imports should move through each module's public `index.ts` as modules are revisited.
 
 Small modules may omit unnecessary files. The layer pattern is a responsibility model, not a requirement to generate empty boilerplate.
 
@@ -268,14 +286,15 @@ api/src/infrastructure/
   cache/
   database/
   jobs/
-  logger/
+  observability/
   realtime/
   storage/
   email/
+  oauth/
   code-execution/
 ```
 
-This move is evolutionary. Existing working code should migrate only when an adapter has real reuse or operational complexity.
+This move is evolutionary. Existing working code should migrate only when an adapter has real reuse or operational complexity. The infrastructure folders now exist as documented adapter targets; planned providers such as Redis, BullMQ, Socket.IO, and Judge0 must still be implemented before they are marked active.
 
 ## 7. Frontend Architecture
 
@@ -299,6 +318,26 @@ web/src/
     providers/
     store/
     router.tsx
+  pages/
+    dashboard/
+    feed/
+    landing/
+    messages/
+    notifications/
+    post-detail/
+    profile/
+    search/
+    sign-in/
+    sign-up/
+  widgets/
+  entities/
+    comment/
+    conversation/
+    issue/
+    notification/
+    post/
+    report/
+    user/
   features/
     auth/
     comments/
@@ -318,27 +357,31 @@ web/src/
     assets/
     components/
     config/
+    contracts/
     hooks/
     ui/
     utils/
+  testing/
   styles/
 ```
 
 ### 7.3 Import direction
 
-The current feature-first structure is retained while boundaries become stricter:
+The current feature-first structure now has route-level `pages` wrappers and reserved `widgets` and `entities` layers:
 
 ```txt
-app -> features -> shared
+app -> pages -> widgets -> features -> entities -> shared
 ```
 
 Rules:
 
 - `shared` cannot import a feature.
 - A feature should not reach into another feature's internal files casually.
-- Reused domain data types may later move to an `entities` layer.
-- Page composition and large reusable sections may later move to `pages` and `widgets` when there is enough complexity to justify them.
-- Public `index.ts` exports and lint-enforced boundaries are planned before the frontend becomes significantly larger.
+- Routes should lazy-load from `pages` rather than feature internals.
+- Reused domain data types may move to `entities` as modules are revisited.
+- Large reusable page sections may move to `widgets` when there is enough composition complexity to justify them.
+- Public `index.ts` exports now exist for feature slices and should become the preferred external entry point.
+- Lint-enforced boundaries remain planned before the frontend becomes significantly larger.
 
 The long-term direction is inspired by Feature-Sliced Design:
 
@@ -610,7 +653,7 @@ Current rules:
 - frontend request/response types must match actual API behavior;
 - breaking changes require an explicit decision and migration plan.
 
-OpenAPI is planned as the machine-readable contract. It should document auth, cookies, schemas, pagination, errors, and rate-limit responses. GraphQL is not required merely because the reference architecture uses it.
+OpenAPI now has a draft baseline in `contracts/openapi/devloopfeed.v2.yaml`. It is not complete endpoint coverage yet. It should document auth, cookies, schemas, pagination, errors, and rate-limit responses as modules are verified. GraphQL is not required merely because the reference architecture uses it.
 
 ## 14. Quality And Delivery Gates
 
@@ -620,6 +663,7 @@ Current baseline commands:
 npm run check
 npm run build:api
 npm run build:web
+npm run verify
 git diff --check
 ```
 
@@ -633,16 +677,16 @@ Target quality layers:
 6. Socket and worker integration tests for reconnect, idempotency, and cleanup.
 7. Visual regression checks for exact v1 parity surfaces.
 
-CI should run type checking, tests, builds, linting, and contract checks on pull requests. Docker can be added after feature work, but local infrastructure and deployment process types must remain explicit.
+CI now runs dependency install, type checking, and API/web builds on pull requests and pushes to `develop` and `main`. Tests, linting, visual checks, and contract validation should be added as their tools are introduced. Docker can be added after feature work, but local infrastructure and deployment process types must remain explicit.
 
 ## 15. Delivery Roadmap
 
 ### Foundation now
 
 - Keep this guide and the decision register current.
-- Add module public APIs and enforce import boundaries gradually.
-- Define a consistent REST response and OpenAPI strategy.
-- Add testing foundations and CI.
+- Continue moving cross-module imports to public APIs and enforce import boundaries gradually.
+- Expand the draft OpenAPI contract into verified endpoint coverage.
+- Add real automated tests on top of the testing and CI foundation.
 - Add indexes and transaction/reconciliation rules for migrated modules.
 
 ### Before full messaging and rooms

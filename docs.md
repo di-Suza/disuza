@@ -1658,3 +1658,37 @@ npm run build:api
 npm run build:web
 git diff --check
 ```
+
+## Step 32: Product Structure Foundation
+
+Built the first product-architecture structure pass on `chore/product-structure-foundation`.
+
+Completed the first eight foundation modifications before the remaining v1 module migration continues:
+
+- backend module public APIs with `api/src/modules/<domain>/index.ts`
+- centralized API route registry in `api/src/modules/index.ts`
+- backend `core` boundary for provider-neutral HTTP contracts, domain events, and policy decisions
+- backend `infrastructure` boundary for database, observability, storage, email, OAuth, cache, jobs, realtime, and future code execution adapters
+- frontend route-level `pages` layer so the router lazy-loads page entries instead of feature internals
+- frontend public feature/shared exports, plus reserved `entities` and `widgets` layers for gradual Feature-Sliced growth
+- root `contracts` folder with a draft OpenAPI baseline and REST contract rules
+- testing/CI foundation with test-layout docs, `npm run verify`, and a GitHub Actions typecheck/build workflow
+
+Deferred intentionally:
+
+- Docker/local infrastructure packaging and production deployment manifests remain for the final hardening phase after the app modules are complete.
+- Redis, BullMQ, Socket.IO, Yjs, Judge0, and TURN folders are structure targets only until real implementation branches add and verify those runtimes.
+- Full endpoint OpenAPI coverage, lint-enforced boundaries, and automated unit/integration/component/E2E tests are planned follow-up work on top of this foundation.
+
+Why:
+
+The app had working v2 modules, but the product-level folder boundaries were still mostly documentation. This step makes the accepted architecture visible in the repo without changing v1 product flow: modules keep their current behavior, routes remain REST-first, the web UI still renders through existing feature pages, and future migrations now have clear places for public APIs, contracts, adapters, tests, and large page composition.
+
+Verification used:
+
+```bash
+npm run verify
+git diff --check
+```
+
+Conflict-marker scan was also clean.
