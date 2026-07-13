@@ -146,6 +146,7 @@ const ChatWindow = ({
                   <div className="messages-v1-load-more">
                     <button type="button" onClick={loadMore} aria-label="Load older messages">
                       <RefreshCw size={16} aria-hidden="true" />
+                      <span>Load more</span>
                     </button>
                   </div>
                 ) : null}

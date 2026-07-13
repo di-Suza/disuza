@@ -17,6 +17,8 @@ const removeUnsentMessageFromDraft = (draft: GetMessagesResponse, messageId: str
   draft.messages = draft.messages.filter((message) => message._id !== messageId);
 };
 
+const normalizeMessagesForDisplay = (messages: ChatMessage[]) => [...messages].reverse();
+
 const applyUnsentConversationUpdate = (draft: GetConversationsResponse, payload: UnsendMessageResponse) => {
   const conversationIndex = draft.conversations.findIndex((conversation) => conversation._id === payload.conversationId);
 
@@ -35,6 +37,10 @@ export const chatApi = api.injectEndpoints({
       query: ({ conversationId, page = 1, limit }) => ({
         url: `/chat/getMessages/${conversationId}`,
         params: { page, ...(limit ? { limit } : {}) },
+      }),
+      transformResponse: (response: GetMessagesResponse) => ({
+        ...response,
+        messages: normalizeMessagesForDisplay(response.messages),
       }),
       providesTags: (_result, _error, arg) => [
         { type: 'Messages', id: arg.conversationId },

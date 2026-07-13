@@ -1,5 +1,5 @@
 import { Loader2, MessageCircle, MoreVertical, Search, Trash2, X } from 'lucide-react';
-import { memo, useMemo, useState, type KeyboardEvent, type MouseEvent } from 'react';
+import { memo, useEffect, useMemo, useState, type KeyboardEvent, type MouseEvent } from 'react';
 
 import { useAppDispatch } from '@/app/store/hooks';
 import { useDeleteConversationMutation } from '@/features/messages/api/chat.api';
@@ -19,11 +19,14 @@ type ConversationsProps = {
   selectedChat: ChatConversation | null;
 };
 
+const CONVERSATION_PAGE_SIZE = 12;
+
 const Conversations = ({ conversations, getConversationsLoading, handleChatSelect, selectedChat }: ConversationsProps) => {
   const dispatch = useAppDispatch();
   const { showError, showSuccess } = useToast();
   const [searchQuery, setSearchQuery] = useState('');
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const [visibleCount, setVisibleCount] = useState(CONVERSATION_PAGE_SIZE);
   const [deleteConversation, { isLoading: deletingConversation }] = useDeleteConversationMutation();
   const { handleConversationSelect, userId } = useConversations({ conversations, handleChatSelect, selectedChat });
 
@@ -33,6 +36,15 @@ const Conversations = ({ conversations, getConversationsLoading, handleChatSelec
 
     return conversations.filter((chat) => chat.otherUser?.userName?.toLowerCase().includes(query));
   }, [conversations, searchQuery]);
+  const visibleConversations = useMemo(
+    () => filteredConversations.slice(0, visibleCount),
+    [filteredConversations, visibleCount],
+  );
+  const hasMoreConversations = filteredConversations.length > visibleConversations.length;
+
+  useEffect(() => {
+    setVisibleCount(CONVERSATION_PAGE_SIZE);
+  }, [conversations.length, searchQuery]);
 
   const handleSelectChat = (chat: ChatConversation) => {
     handleConversationSelect(chat);
@@ -108,7 +120,8 @@ const Conversations = ({ conversations, getConversationsLoading, handleChatSelec
       ) : (
         <div className="messages-v1-list">
           {filteredConversations.length > 0 ? (
-            filteredConversations.map((chat) => {
+            <>
+              {visibleConversations.map((chat) => {
               const isActive = selectedChat?._id === chat._id;
               const hasUnread = Boolean(chat.isUnread && chat.lastMessage?.sender !== userId);
 
@@ -157,7 +170,19 @@ const Conversations = ({ conversations, getConversationsLoading, handleChatSelec
                   </div>
                 </article>
               );
-            })
+            })}
+
+              {hasMoreConversations && (
+                <div className="messages-v1-conversation-load-more">
+                  <button
+                    type="button"
+                    onClick={() => setVisibleCount((current) => current + CONVERSATION_PAGE_SIZE)}
+                  >
+                    Load more
+                  </button>
+                </div>
+              )}
+            </>
           ) : (
             <div className="messages-v1-empty-list">
               {searchQuery.trim() ? 'No conversations found' : 'No chats yet'}
