@@ -1,5 +1,6 @@
 import { Types } from 'mongoose';
 
+import realtimeService, { type RealtimeService } from '../../infrastructure/realtime/realtime.service.js';
 import { BadRequestError, ForbiddenError, NotFoundError } from '../../shared/errors/index.js';
 import heatmapService, { type HeatmapService } from '../contributions/heatmap.service.js';
 import postRepository, { type PostRepository } from '../posts/post.repository.js';
@@ -18,6 +19,7 @@ class ChatService {
     private readonly blockRules: BlockService = blockService,
     private readonly posts: PostRepository = postRepository,
     private readonly heatmap: HeatmapService = heatmapService,
+    private readonly realtime: RealtimeService = realtimeService,
   ) {}
 
   private normalizePage(pageInput: unknown): number {
@@ -124,11 +126,15 @@ class ChatService {
       ]);
     }
 
-    return {
+    const responseMessage = {
       ...newMessage,
       senderInfo: sender,
       conversationIsUnread: true,
     };
+
+    this.realtime.emitToUser(receiverId!.toString(), 'receive-message', responseMessage);
+
+    return responseMessage;
   }
 
   async getConversations(userId: string) {
@@ -254,7 +260,7 @@ class ChatService {
       await conversation.save();
     }
 
-    return {
+    const payload = {
       messageId: message._id,
       conversationId: conversation._id,
       participants: conversation.participants,
@@ -262,6 +268,12 @@ class ChatService {
       wasLastMessage,
       updatedAt: conversation.updatedAt,
     };
+
+    conversation.participants.forEach((participantId) => {
+      this.realtime.emitToUser(participantId.toString(), 'message-unsent', payload);
+    });
+
+    return payload;
   }
 
   async deleteConversationForUser(conversationId: string, userId: string) {
