@@ -81,7 +81,7 @@ export const chatApi = api.injectEndpoints({
       forceRefetch({ currentArg, previousArg }) {
         return currentArg?.page !== previousArg?.page || currentArg?.conversationId !== previousArg?.conversationId;
       },
-      async onCacheEntryAdded({ conversationId }, { updateCachedData, cacheDataLoaded, cacheEntryRemoved }) {
+      async onCacheEntryAdded({ conversationId }, { dispatch, updateCachedData, cacheDataLoaded, cacheEntryRemoved }) {
         const socket = getSocket();
         const handleReceiveMessage = (payload: unknown) => {
           if (!isChatMessage(payload) || payload.conversationId !== conversationId) return;
@@ -98,11 +98,16 @@ export const chatApi = api.injectEndpoints({
             removeUnsentMessageFromDraft(draft, payload.messageId);
           });
         };
+        const handleReconnect = () => {
+          dispatch(chatApi.util.invalidateTags([{ type: 'Messages', id: conversationId }]));
+        };
 
         try {
           await cacheDataLoaded;
           socket.on('receive-message', handleReceiveMessage);
           socket.on('message-unsent', handleMessageUnsent);
+          socket.on('connect', handleReconnect);
+          socket.io.on('reconnect', handleReconnect);
         } catch {
           // Cache was removed before it loaded.
         }
@@ -110,6 +115,8 @@ export const chatApi = api.injectEndpoints({
         await cacheEntryRemoved;
         socket.off('receive-message', handleReceiveMessage);
         socket.off('message-unsent', handleMessageUnsent);
+        socket.off('connect', handleReconnect);
+        socket.io.off('reconnect', handleReconnect);
       },
     }),
     getConversations: builder.query<GetConversationsResponse, void>({
@@ -149,11 +156,16 @@ export const chatApi = api.injectEndpoints({
           if (!isUnsendPayload(payload)) return;
           updateCachedData((draft) => applyUnsentConversationUpdate(draft, payload));
         };
+        const handleReconnect = () => {
+          dispatch(chatApi.util.invalidateTags(['Conversations']));
+        };
 
         try {
           await cacheDataLoaded;
           socket.on('receive-message', handleReceiveMessage);
           socket.on('message-unsent', handleMessageUnsent);
+          socket.on('connect', handleReconnect);
+          socket.io.on('reconnect', handleReconnect);
         } catch {
           // Cache was removed before it loaded.
         }
@@ -161,6 +173,8 @@ export const chatApi = api.injectEndpoints({
         await cacheEntryRemoved;
         socket.off('receive-message', handleReceiveMessage);
         socket.off('message-unsent', handleMessageUnsent);
+        socket.off('connect', handleReconnect);
+        socket.io.off('reconnect', handleReconnect);
       },
     }),
     sendMessage: builder.mutation<SendMessageResponse, SendMessageRequest>({

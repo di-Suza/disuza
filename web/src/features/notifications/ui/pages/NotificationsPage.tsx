@@ -1,4 +1,4 @@
-import { Bell, Loader2, RefreshCw, Trash2, UserRound } from 'lucide-react';
+import { Bell, Check, Loader2, LogIn, RefreshCw, Trash2, UserRound } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 import {
@@ -28,9 +28,12 @@ const formatNotificationDate = (value?: string) => {
 
 const NotificationsPage = () => {
   const {
+    activeActionId,
     error,
+    handleAcceptCollabFromNotification,
     handleDeleteAllNotifications,
     handleDeleteNotification,
+    handleEnterRoomFromNotification,
     handleLoadMore,
     handleNotificationClick,
     handleSenderClick,
@@ -112,6 +115,28 @@ const NotificationsPage = () => {
                   <div className="notification-card__body">
                     <p>{getNotificationText(notification)}</p>
                     <span>{formatNotificationDate(notification.createdAt)}</span>
+                    {notification.type === 'COLLAB_REQUEST' && (
+                      <button
+                        type="button"
+                        className="notification-card__action"
+                        disabled={activeActionId === notification._id}
+                        onClick={(event) => handleAcceptCollabFromNotification(event, notification)}
+                      >
+                        {activeActionId === notification._id ? <Loader2 className="spin" size={14} aria-hidden="true" /> : <Check size={14} aria-hidden="true" />}
+                        {activeActionId === notification._id ? 'Accepting...' : 'Accept Request'}
+                      </button>
+                    )}
+                    {notification.type === 'COLLAB_ACCEPTED' && (
+                      <button
+                        type="button"
+                        className="notification-card__action"
+                        disabled={activeActionId === notification._id}
+                        onClick={(event) => handleEnterRoomFromNotification(event, notification)}
+                      >
+                        {activeActionId === notification._id ? <Loader2 className="spin" size={14} aria-hidden="true" /> : <LogIn size={14} aria-hidden="true" />}
+                        {activeActionId === notification._id ? 'Opening...' : 'Enter Room'}
+                      </button>
+                    )}
                   </div>
 
                   {thumbnailUrl && (
