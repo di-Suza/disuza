@@ -21,6 +21,10 @@ class ChatRepository {
     return ConversationModel.findById(conversationId);
   }
 
+  findConversationByParticipant(conversationId: string | Types.ObjectId, userId: string | Types.ObjectId) {
+    return ConversationModel.findOne({ _id: conversationId, participants: userId });
+  }
+
   findConversationForUser(conversationId: string | Types.ObjectId, userId: string | Types.ObjectId) {
     return ConversationModel.findOne({ _id: conversationId, participants: userId, hiddenBy: { $ne: userId } });
   }
