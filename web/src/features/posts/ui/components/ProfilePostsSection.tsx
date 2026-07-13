@@ -12,12 +12,16 @@ type ProfilePostsSectionProps = {
 };
 
 const ProfilePostsSection = ({ normalPosts, profileUser, projectPosts, viewerId }: ProfilePostsSectionProps) => {
+  const hasNormalPosts = normalPosts.length > 0;
+  const hasProjectPosts = projectPosts.length > 0;
   const fallbackAuthor = useMemo<PostAuthor>(() => ({
     _id: profileUser._id,
     userName: profileUser.userName,
     profilePicture: profileUser.profilePicture,
     headline: profileUser.headline,
   }), [profileUser._id, profileUser.headline, profileUser.profilePicture, profileUser.userName]);
+
+  if (!hasNormalPosts && !hasProjectPosts) return null;
 
   return (
     <section className="profile-posts-section">
@@ -29,14 +33,18 @@ const ProfilePostsSection = ({ normalPosts, profileUser, projectPosts, viewerId 
       </div>
 
       <div className="profile-posts-section__columns">
-        <div className="profile-posts-section__column">
-          <h3>Posts</h3>
-          <PostList posts={normalPosts} viewerId={viewerId} fallbackAuthor={fallbackAuthor} compact emptyText="No posts yet." />
-        </div>
-        <div className="profile-posts-section__column">
-          <h3>Projects</h3>
-          <PostList posts={projectPosts} viewerId={viewerId} fallbackAuthor={fallbackAuthor} compact emptyText="No project posts yet." />
-        </div>
+        {hasProjectPosts && (
+          <div className="profile-posts-section__column">
+            <h3>Projects</h3>
+            <PostList posts={projectPosts} viewerId={viewerId} fallbackAuthor={fallbackAuthor} compact emptyText="No project posts yet." />
+          </div>
+        )}
+        {hasNormalPosts && (
+          <div className="profile-posts-section__column">
+            <h3>Posts</h3>
+            <PostList posts={normalPosts} viewerId={viewerId} fallbackAuthor={fallbackAuthor} compact emptyText="No posts yet." />
+          </div>
+        )}
       </div>
     </section>
   );

@@ -1,3 +1,5 @@
+import '../pages/DashboardPage.css';
+
 type ContributionDay = {
   date?: string;
   totalCount?: number;

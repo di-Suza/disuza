@@ -12,6 +12,7 @@ import { useProfilePage } from './useProfilePage';
 
 const avatarUrl = (url: unknown): string | null => (typeof url === 'string' && url.trim() ? url : null);
 const listToChips = (items: unknown): string[] => Array.isArray(items) ? items.filter((item): item is string => typeof item === 'string') : [];
+const listToRecords = <T,>(items: unknown): T[] => Array.isArray(items) ? items.filter((item): item is T => typeof item === 'object' && item !== null) : [];
 
 const ProfilePage = () => {
   const [isFeedbackOpen, setFeedbackOpen] = useState(false);
@@ -81,8 +82,12 @@ const ProfilePage = () => {
   const skills = listToChips(profileUser.skills);
   const interests = listToChips(profileUser.interests);
   const languages = listToChips(profileUser.languages);
+  const experiences = listToRecords<{ companyName?: string; timePeriod?: string }>(profileUser.experiences);
+  const educations = listToRecords<{ collegeName?: string; course?: string; timePeriod?: string }>(profileUser.educations);
   const relationshipList = listMode === 'followers' ? followers : following;
-  const canReportProfile = !profileUser.isBlocked && !profileUser.blockedProfile;
+  const isLimitedProfile = Boolean(profileUser.blockedProfile || profileUser.isBlocked || profileUser.hasBlockedMe);
+  const hasPosts = normalPosts.length > 0 || projectPosts.length > 0;
+  const canReportProfile = !isLimitedProfile;
   const canSendFeedback = canReportProfile && Boolean(profileUser._id && profileUser._id !== currentUserId);
 
   return (
@@ -125,38 +130,78 @@ const ProfilePage = () => {
         </div>
 
         <div className="profile-stats profile-stats--clickable">
+          <article><strong>{Number(profileUser.postsCount || normalPosts.length + projectPosts.length || 0)}</strong><span>Posts</span></article>
           <button type="button" onClick={() => openList('followers')}><strong>{followersCount}</strong><span>Followers</span></button>
           <button type="button" onClick={() => openList('following')}><strong>{followingCount}</strong><span>Following</span></button>
           <article><strong>{Number(profileUser.profileContributions || 0)}</strong><span>Contributions</span></article>
         </div>
 
-        {profileUser.blockedProfile ? (
+        {isLimitedProfile ? (
           <section className="profile-card profile-card--full"><h2>Blocked profile</h2><p className="empty-copy">Unblock this user to view their profile details.</p></section>
         ) : (
           <div className="dashboard-grid dashboard-grid--secondary">
             <ContributionHeatmap heatmap={profileUser.heatmap} />
 
-            <section className="profile-card profile-card--full">
-              <div className="profile-card__header"><h2>About</h2><p>{isFetching ? 'Refreshing profile...' : 'Public profile summary.'}</p></div>
-              <p className="profile-copy">{profileUser.about || 'No about section added yet.'}</p>
-            </section>
+            {profileUser.about && (
+              <section className="profile-card profile-card--full">
+                <div className="profile-card__header"><h2>About</h2><p>{isFetching ? 'Refreshing profile...' : 'Public profile summary.'}</p></div>
+                <p className="profile-copy">{profileUser.about}</p>
+              </section>
+            )}
 
-            <section className="profile-card">
-              <div className="profile-card__header"><h2>Skills</h2><p>Technical strengths.</p></div>
-              <div className="chip-list">{skills.length ? skills.map((skill) => <span key={skill}>{skill}</span>) : <p className="empty-copy">No skills added.</p>}</div>
-            </section>
+            {skills.length > 0 && (
+              <section className="profile-card">
+                <div className="profile-card__header"><h2>Skills</h2><p>Technical strengths.</p></div>
+                <div className="chip-list">{skills.map((skill) => <span key={skill}>{skill}</span>)}</div>
+              </section>
+            )}
 
-            <section className="profile-card">
-              <div className="profile-card__header"><h2>Interests</h2><p>Topics they care about.</p></div>
-              <div className="chip-list">{interests.length ? interests.map((interest) => <span key={interest}>{interest}</span>) : <p className="empty-copy">No interests added.</p>}</div>
-            </section>
+            {hasPosts && (
+              <ProfilePostsSection normalPosts={normalPosts} projectPosts={projectPosts} profileUser={profileUser} viewerId={currentUserId} />
+            )}
 
-            <section className="profile-card">
-              <div className="profile-card__header"><h2>Languages</h2><p>Programming languages.</p></div>
-              <div className="chip-list">{languages.length ? languages.map((language) => <span key={language}>{language}</span>) : <p className="empty-copy">No languages added.</p>}</div>
-            </section>
+            {experiences.length > 0 && (
+              <section className="profile-card profile-card--full">
+                <div className="profile-card__header"><h2>Experience</h2><p>Professional work and practice.</p></div>
+                <div className="profile-timeline-list">
+                  {experiences.map((experience, index) => (
+                    <article key={`${experience.companyName || 'experience'}-${index}`}>
+                      <strong>{experience.companyName || 'Experience'}</strong>
+                      {experience.timePeriod && <span>{experience.timePeriod}</span>}
+                    </article>
+                  ))}
+                </div>
+              </section>
+            )}
 
-            <ProfilePostsSection normalPosts={normalPosts} projectPosts={projectPosts} profileUser={profileUser} viewerId={currentUserId} />
+            {educations.length > 0 && (
+              <section className="profile-card profile-card--full">
+                <div className="profile-card__header"><h2>Education</h2><p>Learning history.</p></div>
+                <div className="profile-timeline-list">
+                  {educations.map((education, index) => (
+                    <article key={`${education.collegeName || 'education'}-${index}`}>
+                      <strong>{education.collegeName || 'Education'}</strong>
+                      {education.course && <small>{education.course}</small>}
+                      {education.timePeriod && <span>{education.timePeriod}</span>}
+                    </article>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {languages.length > 0 && (
+              <section className="profile-card">
+                <div className="profile-card__header"><h2>Languages</h2><p>Programming languages.</p></div>
+                <div className="chip-list">{languages.map((language) => <span key={language}>{language}</span>)}</div>
+              </section>
+            )}
+
+            {interests.length > 0 && (
+              <section className="profile-card">
+                <div className="profile-card__header"><h2>Interests</h2><p>Topics they care about.</p></div>
+                <div className="chip-list">{interests.map((interest) => <span key={interest}>{interest}</span>)}</div>
+              </section>
+            )}
           </div>
         )}
       </section>

@@ -387,7 +387,8 @@
 
 .dashboard-heatmap-v1__grid {
   display: grid;
-  min-width: 720px;
+  width: max-content;
+  max-width: 100%;
   grid-auto-flow: column;
   grid-auto-columns: 12px;
   grid-template-rows: repeat(7, 12px);
@@ -441,7 +442,10 @@
   opacity: 1;
 }
 
-.dashboard-rooms-v1 > div {
+.dashboard-room-state {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
   border: 1px dashed var(--border-secondary);
   border-radius: 16px;
   background: var(--bg-main);
@@ -449,8 +453,120 @@
   text-align: center;
 }
 
-.dashboard-rooms-v1 > div strong { display: block; }
-.dashboard-rooms-v1 > div p { margin-top: 4px; }
+.dashboard-room-state strong { display: block; }
+.dashboard-room-state p { margin-top: 4px; }
+
+.dashboard-room-list {
+  display: grid;
+  gap: 12px;
+}
+
+.dashboard-room-refresh {
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+.dashboard-room-card {
+  display: flex;
+  width: 100%;
+  align-items: flex-start;
+  gap: 12px;
+  border: 1px solid var(--border-secondary);
+  border-radius: 16px;
+  background: var(--bg-main);
+  color: var(--text-primary);
+  padding: 14px;
+  text-align: left;
+  transition: border-color 160ms ease, background 160ms ease, transform 160ms ease;
+}
+
+.dashboard-room-card:hover {
+  border-color: rgba(16, 185, 129, 0.45);
+  background: var(--surface-deep);
+  transform: translateY(-1px);
+}
+
+.dashboard-room-card__icon,
+.dashboard-room-card__avatar {
+  display: grid;
+  width: 48px;
+  height: 48px;
+  flex: 0 0 auto;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid var(--border-secondary);
+  border-radius: 16px;
+  background: rgba(16, 185, 129, 0.12);
+  color: var(--accent);
+}
+
+.dashboard-room-card__avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.dashboard-room-card__body,
+.dashboard-room-card__top > span {
+  display: grid;
+  min-width: 0;
+  gap: 4px;
+}
+
+.dashboard-room-card__body {
+  flex: 1;
+}
+
+.dashboard-room-card__top {
+  display: flex;
+  min-width: 0;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.dashboard-room-card__top strong,
+.dashboard-room-card__top small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dashboard-room-card__top small,
+.dashboard-room-card__body > small {
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+.dashboard-room-card__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.dashboard-room-card__chips em {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: 1px solid var(--border-secondary);
+  border-radius: 999px;
+  color: var(--text-secondary);
+  padding: 4px 9px;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 700;
+}
+
+.dashboard-room-card__chips em.is-success {
+  color: var(--accent);
+}
+
+.dashboard-room-card__chips em.is-warning {
+  border-color: rgba(245, 158, 11, 0.25);
+  background: rgba(245, 158, 11, 0.1);
+  color: #facc15;
+}
 
 .portfolio-builder-v1 {
   padding: 16px;

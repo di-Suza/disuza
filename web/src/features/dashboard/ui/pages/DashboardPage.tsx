@@ -40,6 +40,7 @@ import DashboardBlockedUsersModal from '../components/DashboardBlockedUsersModal
 import DashboardEditProfileModal from '../components/DashboardEditProfileModal';
 import DashboardPortfolioEditor from '../components/DashboardPortfolioEditor';
 import DashboardReportsModal from '../components/DashboardReportsModal';
+import DashboardRoomsPanel from '../components/DashboardRoomsPanel';
 import DashboardUserListModal, { type DashboardUserListType } from '../components/DashboardUserListModal';
 import ContributionHeatmap from '../components/ContributionHeatmap';
 import HeatmapRules from '../components/HeatmapRules';
@@ -193,12 +194,7 @@ const DashboardPage = () => {
           {activeTab === 'posts' && <DashboardPostsPanel user={user} />}
           {activeTab === 'portfolio' && <DashboardPortfolioEditor {...dashboard} />}
 
-          {activeTab === 'rooms' && (
-            <div className="dashboard-rooms-v1">
-              <header><div><h2>Your Rooms</h2><p>Continue shared rooms or practice privately.</p></div><button type="button" disabled>Open Personal Room</button></header>
-              <div><strong>No rooms yet</strong><p>Start with a personal room and add problems whenever you want.</p></div>
-            </div>
-          )}
+          {activeTab === 'rooms' && <DashboardRoomsPanel />}
 
           {activeTab === 'more' && (
             <div className="more-page-v1">
