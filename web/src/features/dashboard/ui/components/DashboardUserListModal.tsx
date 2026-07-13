@@ -1,4 +1,4 @@
-import { Loader2, UserRound, UsersRound, X } from 'lucide-react';
+import { Loader2, RotateCw, UserRound, UsersRound, X } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Link } from 'react-router-dom';
@@ -21,8 +21,8 @@ const getAvatarUrl = (url: unknown): string | null => (typeof url === 'string' &
 
 const getModalCopy = (type: DashboardUserListType) => (
   type === 'followers'
-    ? { title: 'Followers', eyebrow: 'Network', empty: 'No followers yet.' }
-    : { title: 'Following', eyebrow: 'Network', empty: 'Not following anyone yet.' }
+    ? { title: 'Followers', empty: 'No followers yet.' }
+    : { title: 'Following', empty: 'No following yet.' }
 );
 
 const getUserList = (
@@ -44,7 +44,6 @@ const DashboardUserListModal = ({ isOpen, onClose, type, userId }: DashboardUser
 
   const followersQuery = useGetFollowersQuery({ userId: userId || '', page }, { skip: shouldSkip || type !== 'followers' });
   const followingQuery = useGetFollowingQuery({ userId: userId || '', page }, { skip: shouldSkip || type !== 'following' });
-
   const activeQuery = type === 'followers' ? followersQuery : followingQuery;
   const latestUsers = getUserList(type, followersQuery.data?.followers, followingQuery.data?.following);
 
@@ -66,45 +65,39 @@ const DashboardUserListModal = ({ isOpen, onClose, type, userId }: DashboardUser
 
   return createPortal(
     <div className="modal-backdrop report-modal-backdrop" role="dialog" aria-modal="true" onMouseDown={onClose}>
-      <section className="modal-card dashboard-modal" onMouseDown={(event) => event.stopPropagation()}>
+      <section className="modal-card dashboard-modal dashboard-user-list-v1" onMouseDown={(event) => event.stopPropagation()}>
+        <Button variant="ghost" className="button--icon dashboard-user-list-v1__close" onClick={onClose} aria-label={`Close ${copy.title.toLowerCase()} modal`}>
+          <X size={18} aria-hidden="true" />
+        </Button>
+
         <header className="modal-card__header report-modal__header">
-          <span className="report-modal__icon">
-            <UsersRound size={22} aria-hidden="true" />
-          </span>
+          <span className="report-modal__icon"><UsersRound size={22} aria-hidden="true" /></span>
           <div>
-            <p className="state-panel__eyebrow">{copy.eyebrow}</p>
-            <h1>{copy.title}</h1>
+            <p className="state-panel__eyebrow">Community</p>
+            <h1>{copy.title}: {Number(activeQuery.data?.count || users.length)}</h1>
           </div>
-          <Button variant="ghost" className="button--icon" onClick={onClose} aria-label={`Close ${copy.title.toLowerCase()} modal`}>
-            <X size={18} aria-hidden="true" />
-          </Button>
         </header>
 
         <div className="dashboard-modal__list">
-          {activeQuery.isFetching && users.length === 0 && <p className="empty-copy">Loading people...</p>}
+          {activeQuery.isFetching && users.length === 0 && <p className="empty-copy">Loading {copy.title.toLowerCase()}...</p>}
           {!activeQuery.isFetching && users.length === 0 && <p className="empty-copy">{copy.empty}</p>}
           {users.map((profile) => (
             <Link to={`/profile/${profile._id}`} className="dashboard-modal__row" key={profile._id} onClick={onClose}>
               <span className="user-row__avatar">
                 {getAvatarUrl(profile.profilePicture?.url) ? <img src={profile.profilePicture?.url} alt="" /> : <UserRound size={18} aria-hidden="true" />}
               </span>
-              <span>
-                <strong>{profile.userName}</strong>
-                <small>{profile.headline || 'DevLoopFeed member'}</small>
-              </span>
+              <span><strong>{profile.userName}</strong><small>{profile.headline || 'DevLoopFeed member'}</small></span>
             </Link>
           ))}
-        </div>
 
-        <footer className="report-modal__footer">
-          <Button variant="secondary" onClick={onClose}>Close</Button>
           {activeQuery.data?.hasMore && (
-            <Button onClick={() => setPage((current) => current + 1)} disabled={activeQuery.isFetching}>
-              {activeQuery.isFetching ? <Loader2 className="spin" size={17} aria-hidden="true" /> : <UsersRound size={17} aria-hidden="true" />}
-              Load more
-            </Button>
+            <div className="dashboard-modal__load-more">
+              <button type="button" onClick={() => setPage((current) => current + 1)} disabled={activeQuery.isFetching} aria-label={`Load more ${copy.title.toLowerCase()}`}>
+                {activeQuery.isFetching ? <Loader2 className="spin" size={16} aria-hidden="true" /> : <RotateCw size={16} aria-hidden="true" />}
+              </button>
+            </div>
           )}
-        </footer>
+        </div>
       </section>
     </div>,
     document.body,
