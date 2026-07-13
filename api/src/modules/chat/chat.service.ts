@@ -34,6 +34,10 @@ class ChatService {
     return participants.find((participant) => participant.toString() !== userId.toString());
   }
 
+  private isParticipant(participants: Array<string | Types.ObjectId>, userId: string) {
+    return participants.some((participant) => participant.toString() === userId.toString());
+  }
+
   async saveMessage(input: SaveMessageInput) {
     const message = typeof input.message === 'string' ? input.message.trim() : '';
 
@@ -52,6 +56,10 @@ class ChatService {
     let conversation = input.conversationId ? await this.chats.findConversationById(input.conversationId) : null;
     let receiverId = input.receiverId;
     let feedbackOwnerId: string | Types.ObjectId | null = null;
+
+    if (conversation && !this.isParticipant(conversation.participants, input.senderId)) {
+      throw new ForbiddenError('You can only send messages in your conversations!');
+    }
 
     if (!conversation) {
       if (!receiverId) {
@@ -178,6 +186,7 @@ class ChatService {
     return {
       messages: enrichedMessages,
       page,
+      currentPage: page,
       hasMore: messages.length === limit,
     };
   }

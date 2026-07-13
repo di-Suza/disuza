@@ -1,4 +1,5 @@
-import { BadRequestError, ConflictError, NotFoundError } from '../../shared/errors/index.js';
+import { BadRequestError, ConflictError, ForbiddenError, NotFoundError } from '../../shared/errors/index.js';
+import chatRepository, { type ChatRepository } from '../chat/chat.repository.js';
 import postRepository, { type PostRepository } from '../posts/post.repository.js';
 import blockService, { type BlockService } from '../users/block/block.service.js';
 import userRepository, { type UserRepository } from '../users/user.repository.js';
@@ -23,6 +24,7 @@ class ReportService {
     private readonly posts: PostRepository = postRepository,
     private readonly users: UserRepository = userRepository,
     private readonly blockRules: BlockService = blockService,
+    private readonly chats: ChatRepository = chatRepository,
   ) {}
 
   private normalizePage(pageInput: unknown): number {
@@ -49,7 +51,7 @@ class ReportService {
     }
   }
 
-  private async resolveTarget(input: CreateReportInput): Promise<ReportTarget> {
+  private async resolveTarget(userId: string, input: CreateReportInput): Promise<ReportTarget> {
     if (input.onModel === 'Post') {
       const post = await this.posts.findVisibleActionTarget(input.targetId);
 
@@ -76,13 +78,28 @@ class ReportService {
       };
     }
 
-    throw new BadRequestError('Message reports will be available when the messaging module is ready.');
+    const message = await this.chats.findMessageById(input.targetId);
+
+    if (!message) {
+      throw new NotFoundError('Message not found!');
+    }
+
+    const conversation = await this.chats.findConversationByParticipant(message.conversationId, userId);
+
+    if (!conversation) {
+      throw new ForbiddenError('You can only report messages from your chats!');
+    }
+
+    return {
+      ownerId: message.sender.toString(),
+      selfReportName: 'message',
+    };
   }
 
   async createReport(userId: string, input: CreateReportInput) {
     this.assertSupportedInput(input);
 
-    const target = await this.resolveTarget(input);
+    const target = await this.resolveTarget(userId, input);
 
     if (target.ownerId === userId.toString()) {
       throw new BadRequestError(`You can't report your own ${target.selfReportName}!`);

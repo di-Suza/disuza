@@ -1692,3 +1692,39 @@ git diff --check
 ```
 
 Conflict-marker scan was also clean.
+
+## Step 33: Backend Messaging And Chat HTTP Parity
+
+Built the backend messaging/chat HTTP parity pass on `feature/api-messaging-chat-module`.
+
+Completed:
+
+- tightened conversation send authorization so a user can only send through conversations they participate in
+- preserved v1 conversation resume behavior for visible/hidden conversations through the existing chat repository flow
+- added `currentPage` to the messages response for frontend pagination parity with the v1 RTK Query merge behavior
+- enabled message reports through the generic reports module
+- message reports now verify that the reported message exists and belongs to one of the reporter's conversations
+- self-reporting and block-aware report restrictions remain enforced for message targets
+
+Preserved:
+
+- normal messages and feedback messages share the same conversation/message persistence
+- feedback messages keep post/profile context and contribution links
+- feedback deletion reverses contribution state and post feedback count where applicable
+- conversation hiding remains per participant instead of deleting the other user's history
+
+Deferred:
+
+- realtime Socket.IO message delivery, reconnect handling, and notification fan-out
+- collab request/room creation from chat
+- BullMQ conversation cleanup when both participants hide a conversation
+
+Why:
+
+The existing v2 chat module already covered most v1 HTTP behavior, but message reports and a stricter conversation membership guard were needed before the full v1-style messages UI could safely rely on these APIs.
+
+Verification used:
+
+```bash
+npm run check:api
+```
