@@ -131,6 +131,7 @@ devloopfeed/
   docs.md                           Chronological development journal
   DevLoopFeed-Architecture-Guide.md System architecture and product rules
   ARCHITECTURE-DECISIONS.md         Architecture decision register
+  DEBUGGING-GUIDE.md                Operational troubleshooting playbook
   package.json                      Root development commands
 ```
 
@@ -669,6 +670,10 @@ CI should run type checking, tests, builds, linting, and contract checks on pull
 
 ## 16. Debugging Checklist
 
+The complete operational playbook is maintained in `DEBUGGING-GUIDE.md`. It covers evidence capture, symptom triage, layer-by-layer request tracing, auth/session failures, RTK Query cache behavior, domain-specific invariants, data consistency, external providers, security-safe logging, verification gates, and planned realtime/worker diagnostics.
+
+Use the short path below to locate the owning layer, then continue with the detailed guide before closing a defect.
+
 ### Frontend
 
 1. Confirm the route and layout are correct.
@@ -702,6 +707,7 @@ For every meaningful feature or architecture change:
 - update `docs.md` with what changed, why, and verification;
 - update this guide when system boundaries or flows change;
 - update `ARCHITECTURE-DECISIONS.md` when a durable choice is accepted, changed, or superseded;
+- update `DEBUGGING-GUIDE.md` when a runtime, provider, verification gate, or recurring failure mode changes;
 - keep current, partial, planned, and deferred status accurate;
 - never document an intended feature as implemented before code and verification exist.
 
