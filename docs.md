@@ -247,6 +247,60 @@ npm run check:web
 npm run build:web
 ```
 
+## Step 35: Realtime Socket And Collab Room Module
+
+Built the realtime socket and collaborative room flow across `feature/api-realtime-collab-module` and `feature/web-realtime-collab-module`.
+
+API completed:
+
+- added an authenticated Socket.IO infrastructure boundary under `api/src/infrastructure/realtime`
+- sockets now connect only with a valid access token and join the authenticated user's private room
+- logout/no-token web state can disconnect the socket cleanly from the client side
+- configured socket CORS, credentials, reconnect transport support, ping interval, and ping timeout through validated env values
+- added realtime chat fan-out for received messages and unsent messages while preserving the existing HTTP chat persistence flow
+- added collab room/request APIs for personal rooms, conversation-based requests, accepts, room status, room lists, and room details
+- added problem/room-problem APIs for adding, selecting, unselecting, language updates, code persistence, and code execution
+- added room presence, code sync, Yjs update relay, audio-call signaling, and debounced room-code persistence through the socket layer
+
+Web completed:
+
+- added a socket client service with token-based auth, reconnect settings, and a login/logout-aware lifecycle provider
+- added heartbeat pings while authenticated so idle browser sessions can keep the realtime connection alive
+- wired message RTK Query caches to socket events for live received messages, unsent messages, conversation ordering, unread state, and cache invalidation
+- added collab and problem RTK Query APIs for room requests, room loading, problem selection, language changes, and code runs
+- added the messages Start Collab flow with a permission/request modal and room navigation
+- added notification handling for collab requests and accepted-room navigation
+- rebuilt the v1-style collab room workspace with a left problems panel, center problem/editor/results area, and right users/audio/chat panel
+- added local hooks for room socket joins, room-sync handling, code changes, execution updates, user presence, and audio-call signaling
+
+Preserved:
+
+- collab starts from the messaging/conversation flow instead of being a detached new product path
+- chat message creation still goes through the existing HTTP API before realtime fan-out
+- room access is validated on both HTTP APIs and socket room joins
+- selected room problem, code, language, execution result, users panel, room chat, and audio-call interaction follow the v1 product flow
+
+Deferred:
+
+- TURN/STUN production hardening beyond browser defaults and basic peer signaling
+- Redis-backed socket presence, multi-node room state, and distributed code execution locks
+- admin-managed problem catalog and GenAI problem assistance
+- deeper E2E coverage for multiple browsers in the same room
+
+Why:
+
+Messaging and collaborative rooms depend on realtime infrastructure, so this step establishes the socket boundary before continuing with room-heavy product modules. The implementation keeps the v1 interaction model while moving socket auth, room authorization, cache updates, and UI state into typed services, RTK Query cache hooks, and feature-local React hooks.
+
+Verification used:
+
+```bash
+npm --prefix api run typecheck
+npm --prefix api run build
+npm --prefix web run typecheck
+npm --prefix web run build
+git diff --check
+```
+
 ## Step 5: Backend User Profile and Social Module
 
 Built the first backend user/profile module on `feature/api-user-profile-module`.

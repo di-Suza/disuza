@@ -26,6 +26,10 @@ export const api = createApi({
     'Issues',
     'Conversations',
     'Messages',
+    'CollabStatus',
+    'CollabRooms',
+    'CollabRoom',
+    'Problems',
   ],
   endpoints: () => ({}),
 });

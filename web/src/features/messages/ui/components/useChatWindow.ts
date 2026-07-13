@@ -22,13 +22,13 @@ type UseChatWindowArgs = {
 export const useChatWindow = ({ allMessages, handleChatSelect, isFetchingMessages, selectedChat }: UseChatWindowArgs) => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const { showError, showInfo } = useToast();
+  const { showError } = useToast();
   const messagesContainerRef = useRef<HTMLDivElement | null>(null);
   const prevMessageCountRef = useRef(0);
   const prevChatIdRef = useRef<string | null>(null);
   const firstMessageIdRef = useRef<string | null>(null);
   const [messageInput, setMessageInput] = useState('');
-  const [isCollabNoticeOpen, setIsCollabNoticeOpen] = useState(false);
+  const [isCollabPermissionModalOpen, setIsCollabPermissionModalOpen] = useState(false);
   const [sendMessage] = useSendMessageMutation();
   const { selectedChatId } = useAppSelector((state) => state.chat);
 
@@ -78,9 +78,8 @@ export const useChatWindow = ({ allMessages, handleChatSelect, isFetchingMessage
   }, [handleSendMessage]);
 
   const handleCollabClick = useCallback(() => {
-    setIsCollabNoticeOpen(true);
-    showInfo('Collab rooms will be wired after the messaging module.');
-  }, [showInfo]);
+    setIsCollabPermissionModalOpen(true);
+  }, []);
 
   useEffect(() => {
     const container = messagesContainerRef.current;
@@ -127,9 +126,9 @@ export const useChatWindow = ({ allMessages, handleChatSelect, isFetchingMessage
     handleMessageInputKeyDown,
     handleSendMessage,
     handleUserProfileClick,
-    isCollabNoticeOpen,
+    isCollabPermissionModalOpen,
     messageInput,
     messagesContainerRef,
-    setIsCollabNoticeOpen,
+    setIsCollabPermissionModalOpen,
   };
 };

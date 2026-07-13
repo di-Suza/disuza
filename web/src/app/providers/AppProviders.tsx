@@ -8,6 +8,7 @@ import { store } from '@/app/store/store';
 import ErrorBoundary from '@/shared/components/ErrorBoundary/ErrorBoundary';
 import env from '@/shared/config/env';
 import { ToastProvider } from './toast/ToastProvider';
+import SocketLifecycle from './socket/SocketLifecycle';
 
 const AppProviders = () => (
   <ErrorBoundary>
@@ -15,6 +16,7 @@ const AppProviders = () => (
       <GoogleOAuthProvider clientId={env.googleClientId || 'missing-google-client-id'}>
         <ToastProvider>
           <AuthInitializer>
+            <SocketLifecycle />
             <RouterProvider router={router} />
           </AuthInitializer>
         </ToastProvider>

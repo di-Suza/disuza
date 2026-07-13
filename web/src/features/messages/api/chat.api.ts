@@ -1,4 +1,5 @@
 import { api } from '@/shared/api/api';
+import { getSocket } from '@/shared/services/socket';
 import type {
   ChatMessage,
   DeleteConversationRequest,
@@ -30,6 +31,20 @@ const applyUnsentConversationUpdate = (draft: GetConversationsResponse, payload:
     draft.conversations[conversationIndex].updatedAt = payload.updatedAt || payload.lastMessage?.createdAt || new Date().toISOString();
   }
 };
+
+const isChatMessage = (payload: unknown): payload is ChatMessage => (
+  typeof payload === 'object'
+  && payload !== null
+  && typeof (payload as ChatMessage)._id === 'string'
+  && typeof (payload as ChatMessage).conversationId === 'string'
+);
+
+const isUnsendPayload = (payload: unknown): payload is UnsendMessageResponse => (
+  typeof payload === 'object'
+  && payload !== null
+  && typeof (payload as UnsendMessageResponse).messageId === 'string'
+  && typeof (payload as UnsendMessageResponse).conversationId === 'string'
+);
 
 export const chatApi = api.injectEndpoints({
   endpoints: (builder) => ({
@@ -66,10 +81,87 @@ export const chatApi = api.injectEndpoints({
       forceRefetch({ currentArg, previousArg }) {
         return currentArg?.page !== previousArg?.page || currentArg?.conversationId !== previousArg?.conversationId;
       },
+      async onCacheEntryAdded({ conversationId }, { updateCachedData, cacheDataLoaded, cacheEntryRemoved }) {
+        const socket = getSocket();
+        const handleReceiveMessage = (payload: unknown) => {
+          if (!isChatMessage(payload) || payload.conversationId !== conversationId) return;
+
+          updateCachedData((draft) => {
+            const exists = draft.messages.some((message) => message._id === payload._id);
+            if (!exists) draft.messages.push(payload);
+          });
+        };
+        const handleMessageUnsent = (payload: unknown) => {
+          if (!isUnsendPayload(payload) || payload.conversationId !== conversationId) return;
+
+          updateCachedData((draft) => {
+            removeUnsentMessageFromDraft(draft, payload.messageId);
+          });
+        };
+
+        try {
+          await cacheDataLoaded;
+          socket.on('receive-message', handleReceiveMessage);
+          socket.on('message-unsent', handleMessageUnsent);
+        } catch {
+          // Cache was removed before it loaded.
+        }
+
+        await cacheEntryRemoved;
+        socket.off('receive-message', handleReceiveMessage);
+        socket.off('message-unsent', handleMessageUnsent);
+      },
     }),
     getConversations: builder.query<GetConversationsResponse, void>({
       query: () => '/chat/getConversations',
       providesTags: ['Conversations'],
+      async onCacheEntryAdded(_arg, { dispatch, getState, updateCachedData, cacheDataLoaded, cacheEntryRemoved }) {
+        const socket = getSocket();
+        const handleReceiveMessage = (payload: unknown) => {
+          if (!isChatMessage(payload)) return;
+
+          const currentUserId = (getState() as { auth?: { user?: { _id?: string } } }).auth?.user?._id;
+          let conversationWasPresent = false;
+
+          updateCachedData((draft) => {
+            const conversationIndex = draft.conversations.findIndex((conversation) => conversation._id === payload.conversationId);
+            conversationWasPresent = conversationIndex !== -1;
+
+            if (conversationIndex === -1) return;
+
+            draft.conversations[conversationIndex].lastMessage = {
+              _id: payload._id,
+              text: payload.text,
+              sender: payload.sender,
+              createdAt: payload.createdAt,
+            };
+            draft.conversations[conversationIndex].updatedAt = payload.createdAt || new Date().toISOString();
+            draft.conversations[conversationIndex].isUnread = payload.sender !== currentUserId;
+            const [updatedConversation] = draft.conversations.splice(conversationIndex, 1);
+            draft.conversations.unshift(updatedConversation);
+          });
+
+          if (!conversationWasPresent) {
+            dispatch(chatApi.util.invalidateTags(['Conversations']));
+          }
+        };
+        const handleMessageUnsent = (payload: unknown) => {
+          if (!isUnsendPayload(payload)) return;
+          updateCachedData((draft) => applyUnsentConversationUpdate(draft, payload));
+        };
+
+        try {
+          await cacheDataLoaded;
+          socket.on('receive-message', handleReceiveMessage);
+          socket.on('message-unsent', handleMessageUnsent);
+        } catch {
+          // Cache was removed before it loaded.
+        }
+
+        await cacheEntryRemoved;
+        socket.off('receive-message', handleReceiveMessage);
+        socket.off('message-unsent', handleMessageUnsent);
+      },
     }),
     sendMessage: builder.mutation<SendMessageResponse, SendMessageRequest>({
       query: (body) => ({

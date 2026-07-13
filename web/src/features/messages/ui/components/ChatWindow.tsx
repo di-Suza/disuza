@@ -7,6 +7,7 @@ import {
   getConversationTitle,
 } from '@/features/messages/model/chat.helpers';
 import type { ChatConversation, ChatMessage } from '@/features/messages/model/chat.types';
+import CollabPermissionModal from '@/features/collab/ui/components/CollabPermissionModal';
 import { cn } from '@/shared/utils/cn';
 import ChatAvatar from './ChatAvatar';
 import MessageItem from './MessageItem';
@@ -50,8 +51,10 @@ const ChatWindow = ({
     handleMessageInputKeyDown,
     handleSendMessage,
     handleUserProfileClick,
+    isCollabPermissionModalOpen,
     messageInput,
     messagesContainerRef,
+    setIsCollabPermissionModalOpen,
   } = useChatWindow({
     allMessages,
     handleChatSelect,
@@ -74,11 +77,12 @@ const ChatWindow = ({
   };
 
   return (
-    <section
-      className={cn('messages-v1-window', selectedChat ? 'is-selected' : 'is-empty')}
-      onClick={() => setContextMenu(null)}
-      onContextMenu={handleChatContextMenu}
-    >
+    <>
+      <section
+        className={cn('messages-v1-window', selectedChat ? 'is-selected' : 'is-empty')}
+        onClick={() => setContextMenu(null)}
+        onContextMenu={handleChatContextMenu}
+      >
       {selectedChat ? (
         <>
           <header className="messages-v1-window__header">
@@ -210,7 +214,17 @@ const ChatWindow = ({
           </button>
         </div>
       )}
-    </section>
+      </section>
+
+      {isCollabPermissionModalOpen && canSendMessages && selectedChat && (
+        <CollabPermissionModal
+          isOpen={isCollabPermissionModalOpen}
+          onClose={() => setIsCollabPermissionModalOpen(false)}
+          otherUser={selectedChat.otherUser?.userName}
+          conversationId={selectedChat._id}
+        />
+      )}
+    </>
   );
 };
 
