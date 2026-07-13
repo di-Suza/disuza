@@ -8,6 +8,7 @@ import FullPageLoader from '@/shared/components/FullPageLoader/FullPageLoader';
 import NotFound from '@/shared/components/NotFound/NotFound';
 
 const DashboardPage = lazy(() => import('@/pages/dashboard'));
+const CollabRoomPage = lazy(() => import('@/pages/collab'));
 const FeedPage = lazy(() => import('@/pages/feed'));
 const LandingPage = lazy(() => import('@/pages/landing'));
 const MessagesPage = lazy(() => import('@/pages/messages'));
@@ -45,6 +46,10 @@ export const router = createBrowserRouter([
   {
     element: <ProtectedLayout />,
     children: [
+      {
+        path: '/collab/:roomId',
+        element: withSuspense(<CollabRoomPage />),
+      },
       {
         element: <SidebarLayout />,
         children: [
