@@ -2,6 +2,12 @@
 
 DevLoopFeed v2 is a TypeScript-first rewrite with a modular Express API and React web app.
 
+## Documentation
+
+- [Architecture guide](./DevLoopFeed-Architecture-Guide.md)
+- [Architecture decision register](./ARCHITECTURE-DECISIONS.md)
+- [Development journey](./docs.md)
+
 ## Structure
 
 ```txt
