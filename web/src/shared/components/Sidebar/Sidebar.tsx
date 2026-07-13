@@ -2,6 +2,7 @@ import { Bell, Earth, Home, SendHorizonal, User } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 
 import { useGetNotificationsQuery } from '@/features/notifications/api/notification.api';
+import useUnreadMessagesCount from '@/shared/hooks/useUnreadMessagesCount';
 
 const sidebarItems = [
   { id: 'home', label: 'Home', icon: Home, path: '/home' },
@@ -15,6 +16,7 @@ const Sidebar = () => {
   const { pathname } = useLocation();
   const { data: notificationsData } = useGetNotificationsQuery({ page: 1, limit: 1 });
   const notificationCount = notificationsData?.unreadCount ?? 0;
+  const messageCount = useUnreadMessagesCount();
 
   const isItemActive = (itemPath: string) => pathname === itemPath || pathname.startsWith(`${itemPath}/`);
 
@@ -25,7 +27,7 @@ const Sidebar = () => {
           {sidebarItems.map((item) => {
             const Icon = item.icon;
             const isActive = isItemActive(item.path);
-            const badgeCount = item.id === 'notifications' ? notificationCount : 0;
+            const badgeCount = item.id === 'messages' ? messageCount : item.id === 'notifications' ? notificationCount : 0;
 
             return (
               <Link key={item.id} title={item.label} to={item.path} className={isActive ? 'app-sidebar__link is-active' : 'app-sidebar__link'}>
@@ -44,7 +46,7 @@ const Sidebar = () => {
         {sidebarItems.map((item) => {
           const Icon = item.icon;
           const isActive = isItemActive(item.path);
-          const badgeCount = item.id === 'notifications' ? notificationCount : 0;
+          const badgeCount = item.id === 'messages' ? messageCount : item.id === 'notifications' ? notificationCount : 0;
 
           return (
             <Link key={item.id} to={item.path} className={isActive ? 'app-bottom-nav__link is-active' : 'app-bottom-nav__link'} aria-label={item.label}>

@@ -5,6 +5,8 @@ import env from '@/shared/config/env';
 type ServerToClientEvents = {
   socket_ready: (payload: { userId: string }) => void;
   session_disconnected: (payload: { reason?: string }) => void;
+  new_notification: (payload: unknown) => void;
+  delete_notification: (payload: { notificationId?: string }) => void;
   'receive-message': (payload: unknown) => void;
   'message-unsent': (payload: unknown) => void;
   presence_state: (payload: unknown) => void;

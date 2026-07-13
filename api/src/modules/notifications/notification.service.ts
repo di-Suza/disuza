@@ -1,5 +1,6 @@
 import type { Types } from 'mongoose';
 
+import realtimeService, { type RealtimeService } from '../../infrastructure/realtime/realtime.service.js';
 import blockService, { type BlockService } from '../users/block/block.service.js';
 import notificationRepository, { type NotificationFilter, type NotificationRepository } from './notification.repository.js';
 import { type NotificationTargetModel, type NotificationType } from './notification.model.js';
@@ -26,6 +27,7 @@ class NotificationService {
   constructor(
     private readonly notifications: NotificationRepository = notificationRepository,
     private readonly blockRules: BlockService = blockService,
+    private readonly realtime: RealtimeService = realtimeService,
   ) {}
 
   private normalizePage(pageInput: unknown): number {
@@ -81,7 +83,13 @@ class NotificationService {
   }
 
   async deleteNotification(userId: string, notificationId: string) {
-    await this.notifications.deleteOwnedById(notificationId, userId);
+    const deletedNotification = await this.notifications.deleteOwnedById(notificationId, userId);
+
+    if (deletedNotification) {
+      this.realtime.emitToUser(userId, 'delete_notification', {
+        notificationId: deletedNotification._id.toString(),
+      });
+    }
   }
 
   async deleteAllNotifications(userId: string) {
@@ -109,17 +117,28 @@ class NotificationService {
     });
 
     const populatedNotification = await this.notifications.findPopulatedById(notification._id);
+    const emittedNotification = populatedNotification ? this.sanitizeNotification(populatedNotification) : notification;
 
-    return populatedNotification ? this.sanitizeNotification(populatedNotification) : notification;
+    this.realtime.emitToUser(input.recipientId.toString(), 'new_notification', emittedNotification);
+
+    return emittedNotification;
   }
 
   async remove(input: RemoveNotificationInput) {
-    return this.notifications.deleteByFilter({
+    const deletedNotification = await this.notifications.deleteByFilter({
       sender: input.senderId,
       recipient: input.recipientId,
       type: input.type,
       contentId: input.contentId,
     });
+
+    if (deletedNotification) {
+      this.realtime.emitToUser(input.recipientId.toString(), 'delete_notification', {
+        notificationId: deletedNotification._id.toString(),
+      });
+    }
+
+    return deletedNotification;
   }
 
   async removeManyForContent(contentIds: Array<string | Types.ObjectId>, types?: NotificationType[]) {

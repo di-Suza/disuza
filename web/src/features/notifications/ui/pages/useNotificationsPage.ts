@@ -34,6 +34,7 @@ export const useNotificationsPage = () => {
   const navigate = useNavigate();
   const { showError, showSuccess } = useToast();
   const [page, setPage] = useState(1);
+  const [activeActionId, setActiveActionId] = useState<string | null>(null);
   const {
     data,
     error,
@@ -110,6 +111,61 @@ export const useNotificationsPage = () => {
     navigate(`/profile/${senderId}`);
   }, [navigate]);
 
+  const handleAcceptCollabFromNotification = useCallback(async (event: MouseEvent, notification: NotificationItem) => {
+    event.stopPropagation();
+
+    const content = getRecord(notification.contentId);
+    const conversationId = typeof content?.conversationId === 'string'
+      ? content.conversationId
+      : typeof (content?.conversationId as { _id?: string } | undefined)?._id === 'string'
+        ? (content?.conversationId as { _id?: string })._id
+        : null;
+
+    if (!conversationId) {
+      showError('Collab request is expired or invalid');
+      return;
+    }
+
+    try {
+      setActiveActionId(notification._id);
+      const response = await acceptCollabRequest(conversationId).unwrap();
+      const roomId = response?.data?._id;
+
+      if (!roomId) {
+        showError('Room not found after accepting request');
+        return;
+      }
+
+      navigate(`/collab/${roomId}`);
+    } catch (apiError) {
+      showError(getErrorMessage(apiError, 'Something went wrong while accepting collab request'));
+    } finally {
+      setActiveActionId(null);
+    }
+  }, [acceptCollabRequest, navigate, showError]);
+
+  const handleEnterRoomFromNotification = useCallback(async (event: MouseEvent, notification: NotificationItem) => {
+    event.stopPropagation();
+
+    const content = getRecord(notification.contentId);
+    const roomId = typeof content?._id === 'string' ? content._id : null;
+
+    if (!roomId) {
+      showError('Collab room is not available');
+      return;
+    }
+
+    try {
+      setActiveActionId(notification._id);
+      await deleteNotification(notification._id).unwrap();
+      navigate(`/collab/${roomId}`);
+    } catch (apiError) {
+      showError(getErrorMessage(apiError, 'Failed to open collab room'));
+    } finally {
+      setActiveActionId(null);
+    }
+  }, [deleteNotification, navigate, showError]);
+
   const handleDeleteNotification = useCallback(async (event: MouseEvent, notificationId: string) => {
     event.stopPropagation();
 
@@ -135,9 +191,12 @@ export const useNotificationsPage = () => {
   }, [data?.hasMore, isFetching]);
 
   return {
+    activeActionId,
     error,
+    handleAcceptCollabFromNotification,
     handleDeleteAllNotifications,
     handleDeleteNotification,
+    handleEnterRoomFromNotification,
     handleLoadMore,
     handleNotificationClick,
     handleSenderClick,
