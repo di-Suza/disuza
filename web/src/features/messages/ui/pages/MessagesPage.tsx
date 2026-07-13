@@ -1,25 +1,66 @@
-import { MessageCircle } from 'lucide-react';
+import { RefreshCw } from 'lucide-react';
 
-const MessagesPage = () => (
-  <main className="messages-shell">
-    <section className="messages-panel">
-      <aside className="messages-conversations">
-        <header>
-          <p className="state-panel__eyebrow">Messages</p>
-          <h1>Conversations</h1>
-        </header>
-        <div className="messages-empty-list">
-          <MessageCircle size={24} aria-hidden="true" />
-          <p>Your conversations will appear here.</p>
-        </div>
-      </aside>
-      <section className="messages-window">
-        <MessageCircle size={42} aria-hidden="true" />
-        <h2>Select a conversation</h2>
-        <p>Full realtime messaging UI will be wired in the messaging module.</p>
-      </section>
-    </section>
-  </main>
-);
+import ChatWindow from '@/features/messages/ui/components/ChatWindow';
+import Conversations from '@/features/messages/ui/components/Conversations';
+import Button from '@/shared/ui/Button';
+import { getErrorMessage } from '@/shared/utils/getErrorMessage';
+import { useMessagesPage } from './useMessagesPage';
+
+const MessagesPage = () => {
+  const {
+    allConversations,
+    allMessages,
+    error,
+    getConversationsLoading,
+    getMessagesLoading,
+    handleChatSelect,
+    hasMoreMessages,
+    isError,
+    isFetching,
+    isMessagesError,
+    loadMore,
+    messagesErrorMessage,
+    refetch,
+    refetchMessages,
+    selectedChat,
+  } = useMessagesPage();
+
+  if (isError) {
+    return (
+      <main className="messages-v1-page messages-v1-page--center">
+        <section className="messages-v1-error">
+          <RefreshCw size={24} aria-hidden="true" />
+          <h1>Conversations could not be loaded</h1>
+          <p>{getErrorMessage(error, 'Please try again in a moment.')}</p>
+          <Button variant="secondary" onClick={() => refetch()}>Retry</Button>
+        </section>
+      </main>
+    );
+  }
+
+  return (
+    <main className="messages-v1-page">
+      <Conversations
+        conversations={allConversations}
+        getConversationsLoading={getConversationsLoading}
+        handleChatSelect={handleChatSelect}
+        selectedChat={selectedChat}
+      />
+
+      <ChatWindow
+        allMessages={allMessages}
+        getMessagesLoading={getMessagesLoading}
+        handleChatSelect={handleChatSelect}
+        hasMoreMessages={hasMoreMessages}
+        isFetchingMessages={isFetching}
+        isMessagesError={isMessagesError}
+        loadMore={loadMore}
+        messagesErrorMessage={messagesErrorMessage}
+        refetchMessages={refetchMessages}
+        selectedChat={selectedChat}
+      />
+    </main>
+  );
+};
 
 export default MessagesPage;
