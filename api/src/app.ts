@@ -17,7 +17,6 @@ import notificationRoutes from './modules/notifications/notification.route.js';
 import postRoutes from './modules/posts/post.route.js';
 import reportRoutes from './modules/reports/report.route.js';
 import searchRoutes from './modules/search/search.route.js';
-import commentRoutes from './modules/comments/comment.route.js';
 import userRoutes from './modules/users/user.route.js';
 
 class App {
@@ -68,7 +67,6 @@ class App {
     this.app.use('/api/post', postRoutes);
     this.app.use('/api/report', reportRoutes);
     this.app.use('/api/search', searchRoutes);
-    this.app.use('/api/comment', commentRoutes);
     this.app.use('/api/user', userRoutes);
   }
 
