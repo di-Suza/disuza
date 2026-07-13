@@ -7,16 +7,16 @@ import SidebarLayout from '@/app/layouts/SidebarLayout';
 import FullPageLoader from '@/shared/components/FullPageLoader/FullPageLoader';
 import NotFound from '@/shared/components/NotFound/NotFound';
 
-const DashboardPage = lazy(() => import('@/features/dashboard/ui/pages/DashboardPage'));
-const FeedPage = lazy(() => import('@/features/posts/ui/pages/FeedPage'));
-const LandingPage = lazy(() => import('@/features/landing/ui/pages/LandingPage'));
-const MessagesPage = lazy(() => import('@/features/messages/ui/pages/MessagesPage'));
-const NotificationsPage = lazy(() => import('@/features/notifications/ui/pages/NotificationsPage'));
-const PostDetailPage = lazy(() => import('@/features/posts/ui/pages/PostDetailPage/PostDetailPage'));
-const ProfilePage = lazy(() => import('@/features/profile/ui/pages/ProfilePage'));
-const SearchPage = lazy(() => import('@/features/search/ui/pages/SearchPage'));
-const SignInPage = lazy(() => import('@/features/auth/ui/pages/SignIn/SignIn'));
-const SignUpPage = lazy(() => import('@/features/auth/ui/pages/SignUp/SignUp'));
+const DashboardPage = lazy(() => import('@/pages/dashboard'));
+const FeedPage = lazy(() => import('@/pages/feed'));
+const LandingPage = lazy(() => import('@/pages/landing'));
+const MessagesPage = lazy(() => import('@/pages/messages'));
+const NotificationsPage = lazy(() => import('@/pages/notifications'));
+const PostDetailPage = lazy(() => import('@/pages/post-detail'));
+const ProfilePage = lazy(() => import('@/pages/profile'));
+const SearchPage = lazy(() => import('@/pages/search'));
+const SignInPage = lazy(() => import('@/pages/sign-in'));
+const SignUpPage = lazy(() => import('@/pages/sign-up'));
 
 const withSuspense = (element: ReactElement) => (
   <Suspense fallback={<FullPageLoader />}>
