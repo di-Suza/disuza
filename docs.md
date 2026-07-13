@@ -1728,3 +1728,44 @@ Verification used:
 ```bash
 npm run check:api
 ```
+
+## Step 34: Frontend Messaging And Chat UI Parity
+
+Built the frontend messaging/chat parity pass on `feature/web-messaging-chat-module`.
+
+Completed:
+
+- added typed chat RTK Query endpoints for conversations, messages, send, unsend, mark-as-read, and delete conversation
+- restored v1-style message pagination cache merging with older messages prepended by page
+- added optimistic send, unsend, mark-as-read, and delete-conversation cache updates
+- added the chat slice for selected conversation, active window state, and future realtime notification handoff
+- rebuilt the messages page as the v1 two-pane inbox/chat layout
+- restored conversation search, unread indicators, active chat highlighting, delete-chat menu, and mobile back behavior
+- restored chat header profile navigation, right-click close-chat menu, blocked/deleted user states, message composer, and load-older control
+- restored message menus with sender unsend and receiver report behavior through the generic report modal
+- restored feedback preview cards for post/profile feedback messages
+- translated the v1 visual system into CSS classes for the inbox, chat window, bubbles, menus, feedback cards, date dividers, composer, and responsive states
+
+Preserved:
+
+- message data still comes from the v2 HTTP chat module
+- message reports use the generic reports module with `onModel: "Message"`
+- blocked and deleted-user conversations remain visible but unavailable for new messages
+- chat route state can open a conversation/user from notifications, search, profile, or future entry points
+
+Deferred:
+
+- realtime Socket.IO cache listeners and reconnect resync
+- live message notifications and unread fan-out
+- collab permission modal and room creation from the Start Collab button
+
+Why:
+
+Messaging is a core v1 flow and should not remain as a placeholder while the rest of the product modules migrate. This step keeps the UI and interaction model aligned with v1 while moving the implementation to typed hooks, RTK Query cache boundaries, feature-local helpers, and the current v2 route/store structure.
+
+Verification used:
+
+```bash
+npm run check:web
+npm run build:web
+```
