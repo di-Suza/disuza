@@ -52,7 +52,7 @@ Delivery is tracked separately:
 | DLF-029 | Lazy-load routes and define explicit cache update ownership | Accepted | Partial |
 | DLF-030 | Apply defense-in-depth security and abuse limits | Accepted | Partial |
 | DLF-031 | Use structured observability across HTTP, sockets, and jobs | Accepted | Partial |
-| DLF-032 | Add layered automated tests and CI before production claims | Accepted | Planned |
+| DLF-032 | Add layered automated tests and CI before production claims | Accepted | Partial |
 | DLF-033 | Add Docker without coupling application design to containers | Accepted | Planned |
 | DLF-034 | Extract services only after measured modular-monolith limits | Accepted | Planned |
 | DLF-035 | Keep admin moderation as a separate future product surface | Accepted | Deferred |
@@ -167,6 +167,8 @@ Decision:
 
 Consequence: existing RTK Query integration remains appropriate while API drift becomes detectable once OpenAPI is added.
 
+Current delivery note: a draft OpenAPI baseline exists under `contracts/openapi`, but full endpoint coverage and automated contract validation are still planned.
+
 ## Frontend Decisions
 
 ### DLF-010: Evolutionary frontend layering
@@ -181,6 +183,8 @@ Decision:
 - Add public `index.ts` APIs and boundary linting before module count becomes difficult to control.
 
 Consequence: the frontend gains Feature-Sliced discipline without a disruptive folder-only rewrite.
+
+Current delivery note: route-level `pages` wrappers, reserved `widgets` and `entities` folders, shared contracts, and feature public APIs now exist. Domain model movement and lint-enforced boundaries remain gradual.
 
 ### DLF-011: State ownership
 
@@ -415,6 +419,8 @@ Decision:
 - Auth, block rules, cache rollback, cleanup, and room access receive priority.
 
 Consequence: architecture boundaries become enforceable rather than documentation-only preferences.
+
+Current delivery note: CI now installs API/web dependencies, typechecks, and builds on pull requests and protected branch pushes. Real unit, integration, component, E2E, socket, worker, visual, lint, and contract gates remain planned.
 
 ### DLF-033: Docker as packaging
 

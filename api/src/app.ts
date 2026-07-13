@@ -4,20 +4,10 @@ import express, { type Express } from 'express';
 import helmet from 'helmet';
 
 import env from './config/env.js';
+import { httpRouteRegistry } from './modules/index.js';
 import requestLogger from './shared/middleware/requestLogger.js';
 import errorHandler from './shared/middleware/errorHandler.js';
 import notFoundHandler from './shared/middleware/notFoundHandler.js';
-import healthRoutes from './modules/health/health.route.js';
-import chatRoutes from './modules/chat/chat.route.js';
-import commentRoutes from './modules/comments/comment.route.js';
-import issueRoutes from './modules/issues/issue.route.js';
-import authRoutes from './modules/auth/auth.route.js';
-import mediaRoutes from './modules/media/media.route.js';
-import notificationRoutes from './modules/notifications/notification.route.js';
-import postRoutes from './modules/posts/post.route.js';
-import reportRoutes from './modules/reports/report.route.js';
-import searchRoutes from './modules/search/search.route.js';
-import userRoutes from './modules/users/user.route.js';
 
 class App {
   private readonly app: Express;
@@ -57,17 +47,9 @@ class App {
   }
 
   private registerRoutes(): void {
-    this.app.use('/api/health', healthRoutes);
-    this.app.use('/api/issue', issueRoutes);
-    this.app.use('/api/auth', authRoutes);
-    this.app.use('/api/chat', chatRoutes);
-    this.app.use('/api/comment', commentRoutes);
-    this.app.use('/api/media', mediaRoutes);
-    this.app.use('/api/notification', notificationRoutes);
-    this.app.use('/api/post', postRoutes);
-    this.app.use('/api/report', reportRoutes);
-    this.app.use('/api/search', searchRoutes);
-    this.app.use('/api/user', userRoutes);
+    httpRouteRegistry.forEach((route) => {
+      this.app.use(route.path, route.router);
+    });
   }
 
   private registerErrorMiddleware(): void {
