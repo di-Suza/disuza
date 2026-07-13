@@ -1545,6 +1545,7 @@ Verification used:
 npm run build:web
 git diff --check
 ```
+
 ### Dashboard completion pass
 
 Completed the remaining dashboard parity work on the same `feature/web-v1-ui-parity` branch by treating the v1 dashboard JSX and CSS as the visual source of truth.
@@ -1570,6 +1571,15 @@ Dashboard modals -> existing RTK Query hooks -> existing v2 API endpoints
 ```
 
 No backend endpoint, repository, service, request payload, or authentication behavior was changed during this UI parity pass.
+
+Verification used:
+
+```bash
+npm run build:web
+git diff --check
+```
+
+Desktop and mobile dashboard/portfolio smoke screenshots were also inspected for clipping, overflow, and breakpoint parity.
 
 ## Step 30: Product Architecture Documentation Foundation
 
@@ -1607,12 +1617,44 @@ V2 already had good feature-level implementation history, but it did not yet hav
 
 No runtime behavior or product flow changed in this step.
 
+Verification used:
+
+```bash
+git diff --check
+```
+
+The documented repository maps, module statuses, product rules, and source-of-truth hierarchy were also cross-checked against the live v2 code and the v1 product documentation.
+
+## Step 31: Architecture Foundation Integrity And Debugging Playbook
+
+Completed the architecture-documentation foundation on `fix/architecture-foundation-integrity` and repaired merge artifacts discovered while verifying the latest `develop` branch.
+
+Added:
+
+- `DEBUGGING-GUIDE.md` as the repository-wide troubleshooting source of truth
+- a first-response workflow and safe evidence-record template
+- symptom-to-layer triage and complete frontend, backend, auth/session, persistence, and provider checklists
+- product-specific checks for profiles, social relationships, posts, ordered media, comments, replies, contributions, saves, reports, issues, notifications, search, and contextual feedback
+- clearly labelled future checklists for Socket.IO, Redis, BullMQ, Yjs, rooms, code execution, and calls
+- a verification matrix and reusable bug/incident note template
+- README, architecture map, and documentation-governance links for the debugging guide
+
+Corrected:
+
+- restored the missing `incrementFeedbacksCount` repository method closure left by conflict resolution
+- removed duplicate comment route registration and duplicate post repository comment methods left by the same merge chain
+- moved dashboard build and screenshot verification back under the Step 29 dashboard completion pass
+- restored Step 30 to documentation-only architecture verification
+
+Why:
+
+Debugging discipline belongs in the architecture foundation because it defines how engineers trace ownership boundaries, gather safe evidence, and prove a fix across the product. The guide starts now with the current HTTP application and grows alongside future realtime and worker runtimes without claiming those planned systems already exist.
 
 Verification used:
 
 ```bash
+npm run check
+npm run build:api
 npm run build:web
 git diff --check
 ```
-
-Desktop and mobile dashboard/portfolio smoke screenshots were also inspected for clipping, overflow, and breakpoint parity.
