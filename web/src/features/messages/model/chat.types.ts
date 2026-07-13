@@ -1,31 +1,34 @@
 export type FeedbackTargetType = 'Post' | 'User';
 
+export type ChatImage = {
+  url?: string;
+  fileId?: string;
+};
+
 export type FeedbackDetails = {
   _id: string;
   type?: FeedbackTargetType;
   userName?: string;
-  profilePicture?: {
-    url?: string;
-    fileId?: string;
-  };
+  profilePicture?: ChatImage;
   caption?: string;
   media?: Array<{ url?: string; mediaType?: string }>;
   images?: Array<{ url?: string; mediaType?: string }>;
+};
+
+export type ChatUser = {
+  _id: string;
+  userName?: string;
+  profilePicture?: ChatImage;
+  headline?: string;
+  active?: boolean;
+  isDeletedUser?: boolean;
 };
 
 export type ChatMessage = {
   _id: string;
   conversationId: string;
   sender: string;
-  senderInfo?: {
-    _id: string;
-    userName?: string;
-    profilePicture?: {
-      url?: string;
-      fileId?: string;
-    };
-    headline?: string;
-  };
+  senderInfo?: ChatUser;
   text: string;
   isFeedback?: boolean;
   feedbackOn?: {
@@ -37,6 +40,40 @@ export type ChatMessage = {
   conversationIsUnread?: boolean;
   createdAt?: string;
   updatedAt?: string;
+};
+
+export type ChatLastMessage = Pick<ChatMessage, '_id' | 'text' | 'sender' | 'createdAt'>;
+
+export type ChatConversation = {
+  _id: string;
+  otherUser?: ChatUser;
+  lastMessage?: ChatLastMessage | null;
+  isUnread?: boolean;
+  updatedAt?: string;
+  isBlocked?: boolean;
+  hasBlockedMe?: boolean;
+  isUnavailable?: boolean;
+};
+
+export type GetConversationsResponse = {
+  success: boolean;
+  message: string;
+  conversations: ChatConversation[];
+};
+
+export type GetMessagesQueryArgs = {
+  conversationId: string;
+  page?: number;
+  limit?: number;
+};
+
+export type GetMessagesResponse = {
+  success: boolean;
+  message: string;
+  messages: ChatMessage[];
+  page: number;
+  currentPage?: number;
+  hasMore: boolean;
 };
 
 export type SendMessageRequest = {
@@ -68,4 +105,20 @@ export type UnsendMessageResponse = {
   lastMessage?: ChatMessage | null;
   wasLastMessage?: boolean;
   updatedAt?: string;
+};
+
+export type DeleteConversationRequest = {
+  conversationId: string;
+};
+
+export type DeleteConversationResponse = {
+  success: boolean;
+  message: string;
+  conversationId: string;
+  hiddenForEveryone?: boolean;
+};
+
+export type MarkAsReadResponse = {
+  success: boolean;
+  message: string;
 };
