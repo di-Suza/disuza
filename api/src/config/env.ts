@@ -16,6 +16,9 @@ const rawEnvSchema = z.object({
   PORT: z.coerce.number().int().min(1).max(65535).default(8080),
   MONGODB_URI: z.string().trim().min(1).default('mongodb://localhost:27017/devloopfeed'),
   CORS_ORIGIN: z.string().trim().min(1).default('http://localhost:5173'),
+  SOCKET_CORS_ORIGIN: optionalString,
+  SOCKET_PING_TIMEOUT_MS: z.coerce.number().int().min(10_000).default(60_000),
+  SOCKET_PING_INTERVAL_MS: z.coerce.number().int().min(5_000).default(25_000),
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']).default('info'),
   JWT_ACCESS_SECRET: z.string().trim().min(32).default('devloopfeed_access_secret_change_me_32_chars'),
   JWT_REFRESH_SECRET: z.string().trim().min(32).default('devloopfeed_refresh_secret_change_me_32_chars'),
@@ -40,6 +43,9 @@ const rawEnvSchema = z.object({
   MEDIA_MAX_VIDEO_FILE_SIZE_BYTES: z.coerce.number().int().min(1024).max(100 * 1024 * 1024).default(50 * 1024 * 1024),
   MEDIA_POST_IMAGE_MAX_COUNT: z.coerce.number().int().min(1).max(10).default(5),
   MEDIA_POST_MEDIA_MAX_COUNT: z.coerce.number().int().min(1).max(10).default(5),
+  JUDGE0_API_URL: z.string().trim().min(1).default('https://judge029.p.rapidapi.com'),
+  RAPIDAPI_JUDGE0_HOST: z.string().trim().min(1).default('judge029.p.rapidapi.com'),
+  RAPIDAPI_JUDGE0_KEY: optionalString,
 });
 
 const result = rawEnvSchema.safeParse(process.env);
@@ -56,6 +62,7 @@ const parsedEnv = result.data;
 const derivedEnv = {
   ...parsedEnv,
   COOKIE_SECURE: parsedEnv.COOKIE_SECURE ?? (parsedEnv.NODE_ENV === 'production'),
+  SOCKET_CORS_ORIGIN: parsedEnv.SOCKET_CORS_ORIGIN ?? parsedEnv.CORS_ORIGIN,
   IMAGEKIT_PUBLIC_KEY: parsedEnv.IMAGEKIT_PUBLIC_KEY ?? parsedEnv.IMAGE_KIT_PUBLIC,
   IMAGEKIT_PRIVATE_KEY: parsedEnv.IMAGEKIT_PRIVATE_KEY ?? parsedEnv.IMAGE_KIT_PRIVATE,
   IMAGEKIT_URL_ENDPOINT: parsedEnv.IMAGEKIT_URL_ENDPOINT ?? parsedEnv.IMAGE_KIT_URL_ENDPOINT,
