@@ -32,8 +32,7 @@ jobs:
         run: npm ci --prefix api
 
       - name: Install web dependencies
-        run: npm ci --prefix web
-
+        run: npm ci --include=optional --prefix web
       - name: Typecheck
         run: npm run check
 
