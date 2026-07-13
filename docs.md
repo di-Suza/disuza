@@ -247,6 +247,45 @@ npm run check:web
 npm run build:web
 ```
 
+## Step 35: V1 UI And Realtime Parity Cleanup
+
+Completed the v1 parity cleanup pass on `fix/v1-parity-ui-realtime-cleanup`.
+
+Fixed:
+
+- restored realtime notification fan-out from the API notification service for `new_notification` and `delete_notification`
+- wired notification RTK Query cache listeners for live insert/delete updates and reconnect invalidation
+- added chat conversation/message reconnect invalidation so stale socket state resyncs through HTTP
+- warmed authenticated conversation and notification caches from the protected layout so sidebar badges stay available outside those pages
+- split sidebar unread counts so Messages uses unread conversations and Notifications keeps unread notifications
+- restored dashboard Rooms from a placeholder to real room data with personal-room entry and retry/loading/empty states
+- reshaped the dashboard Add Post/Edit Post modal to the v1 modal flow while preserving v2 ordered image/video media support
+- fixed dashboard/profile heatmap layout so the six-month grid uses its full row without the narrow profile scrollbar issue
+- restored the landing page to the v1 product-section structure using v2 CSS instead of Tailwind classes
+- tightened public profile parity by adding Posts to stats, hiding empty sections, restoring experience/education sections, and showing post/project sections only when content exists
+- added notification action buttons for accepting collaboration requests and entering accepted rooms
+
+Preserved:
+
+- v2 typed RTK Query and feature-based folder boundaries
+- existing REST request/response contracts
+- existing auth/session flow and protected layout behavior
+- existing post composer validation and the v2 media ordering upgrade
+- existing collab room route and HTTP room endpoints
+
+Why:
+
+The previous migration branches had the right core modules, but several visible surfaces still felt like generic v2 placeholders instead of the v1 product flow. This pass brings the dashboard, landing, profile, notifications, realtime cache behavior, unread badges, and composer modal closer to v1 while keeping the newer TypeScript, RTK Query, and module boundaries.
+
+Verification used:
+
+```bash
+npm run check:web
+npm run check:api
+npm run build:web
+npm run build:api
+```
+
 ## Step 35: Realtime Socket And Collab Room Module
 
 Built the realtime socket and collaborative room flow across `feature/api-realtime-collab-module` and `feature/web-realtime-collab-module`.
