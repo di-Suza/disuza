@@ -1,9 +1,10 @@
-import { Loader2, MessageSquare, Send, X } from 'lucide-react';
-import { useCallback, useEffect, useState, type FormEvent } from 'react';
+import { Loader2, Send, X } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useState, type FormEvent, type KeyboardEvent } from 'react';
 import { createPortal } from 'react-dom';
+import { useNavigate } from 'react-router-dom';
 
 import { useSendMessageMutation } from '@/features/messages/api/chat.api';
-import type { FeedbackTargetType } from '@/features/messages/model/chat.types';
+import type { FeedbackTargetType, SendMessageRequest } from '@/features/messages/model/chat.types';
 import { useLockBodyScroll } from '@/shared/hooks/useLockBodyScroll';
 import { useToast } from '@/shared/hooks/useToast';
 import Button from '@/shared/ui/Button';
@@ -15,23 +16,38 @@ type SendFeedbackModalProps = {
   onClose: () => void;
   postId?: string;
   receiverId?: string;
+  receiverName?: string;
   userId?: string;
 };
 
-const getTitle = (feedbackOn: FeedbackTargetType) => (
-  feedbackOn === 'Post' ? 'Send post feedback' : 'Send profile feedback'
-);
-
-const SendFeedbackModal = ({ feedbackOn, isOpen, onClose, postId, receiverId, userId }: SendFeedbackModalProps) => {
+const SendFeedbackModal = ({ feedbackOn, isOpen, onClose, postId, receiverId, receiverName, userId }: SendFeedbackModalProps) => {
+  const navigate = useNavigate();
   const { showError, showSuccess } = useToast();
   const [message, setMessage] = useState('');
+  const [sendAsFeedback, setSendAsFeedback] = useState(true);
   const [sendMessage, { isLoading }] = useSendMessageMutation();
 
   useLockBodyScroll(isOpen);
 
   useEffect(() => {
-    if (!isOpen) setMessage('');
+    if (!isOpen) {
+      setMessage('');
+      setSendAsFeedback(true);
+    }
   }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) return undefined;
+
+    const handleEscape = (event: globalThis.KeyboardEvent) => {
+      if (event.key === 'Escape') onClose();
+    };
+
+    window.addEventListener('keydown', handleEscape);
+    return () => window.removeEventListener('keydown', handleEscape);
+  }, [isOpen, onClose]);
+
+  const receiverLabel = useMemo(() => receiverName?.trim() || 'this user', [receiverName]);
 
   const handleSubmit = useCallback(async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -48,61 +64,91 @@ const SendFeedbackModal = ({ feedbackOn, isOpen, onClose, postId, receiverId, us
       return;
     }
 
+    if (sendAsFeedback && feedbackOn === 'Post' && !postId) {
+      showError('Post feedback target is missing.');
+      return;
+    }
+
+    if (sendAsFeedback && feedbackOn === 'User' && !userId) {
+      showError('Profile feedback target is missing.');
+      return;
+    }
+
+    const payload: SendMessageRequest = {
+      receiverId,
+      message: trimmedMessage,
+      ...(sendAsFeedback
+        ? {
+            isFeedback: true,
+            feedbackOn,
+            ...(feedbackOn === 'Post' ? { postId } : { userId }),
+          }
+        : {}),
+    };
+
     try {
-      const result = await sendMessage({
-        receiverId,
-        message: trimmedMessage,
-        isFeedback: true,
-        feedbackOn,
-        ...(feedbackOn === 'Post' ? { postId } : { userId }),
-      }).unwrap();
+      const result = await sendMessage(payload).unwrap();
       showSuccess(result.message || 'Feedback sent successfully!');
       onClose();
+      navigate('/messages', {
+        state: {
+          openConversationId: result.newMessage?.conversationId,
+          openChatUserId: receiverId,
+        },
+      });
     } catch (error) {
       showError(getErrorMessage(error, 'Feedback could not be sent.'));
     }
-  }, [feedbackOn, message, onClose, postId, receiverId, sendMessage, showError, showSuccess, userId]);
+  }, [feedbackOn, message, navigate, onClose, postId, receiverId, sendAsFeedback, sendMessage, showError, showSuccess, userId]);
+
+  const handleTextareaKeyDown = useCallback((event: KeyboardEvent<HTMLTextAreaElement>) => {
+    if (event.key !== 'Enter' || event.shiftKey) return;
+    event.preventDefault();
+    event.currentTarget.form?.requestSubmit();
+  }, []);
 
   if (!isOpen) return null;
 
   return createPortal(
-    <div className="modal-backdrop report-modal-backdrop" role="dialog" aria-modal="true" onMouseDown={onClose}>
-      <form className="modal-card report-modal" onSubmit={handleSubmit} onMouseDown={(event) => event.stopPropagation()}>
-        <header className="modal-card__header report-modal__header">
-          <span className="report-modal__icon">
-            <MessageSquare size={22} aria-hidden="true" />
-          </span>
-          <div>
-            <p className="state-panel__eyebrow">Feedback</p>
-            <h1>{getTitle(feedbackOn)}</h1>
-          </div>
-          <Button variant="ghost" className="button--icon" type="button" onClick={onClose} aria-label="Close feedback modal">
-            <X size={18} aria-hidden="true" />
-          </Button>
+    <div className="modal-backdrop feedback-modal-v1-backdrop" role="dialog" aria-modal="true" onMouseDown={onClose}>
+      <form className="feedback-modal-v1" onSubmit={handleSubmit} onMouseDown={(event) => event.stopPropagation()}>
+        <button type="button" onClick={onClose} aria-label="Close feedback modal" className="feedback-modal-v1__close">
+          <X size={20} aria-hidden="true" />
+        </button>
+
+        <header className="feedback-modal-v1__header">
+          <h1>Send Your Feedback to {receiverLabel}</h1>
+          <label className="feedback-modal-v1__toggle">
+            <span>As feedback</span>
+            <input type="checkbox" checked={sendAsFeedback} onChange={(event) => setSendAsFeedback(event.target.checked)} />
+            <span className={`feedback-modal-v1__switch ${sendAsFeedback ? 'is-on' : ''}`} aria-hidden="true">
+              <span />
+            </span>
+          </label>
         </header>
 
-        <div className="report-modal__body">
-          <label className="field">
-            <span>Message</span>
+        <div className="feedback-modal-v1__body">
+          <label className="feedback-modal-v1__field">
+            <span className="visually-hidden">Message</span>
             <textarea
-              className="input textarea report-modal__textarea"
+              className="feedback-modal-v1__textarea"
               value={message}
               onChange={(event) => setMessage(event.target.value)}
-              placeholder="Share your feedback"
+              onKeyDown={handleTextareaKeyDown}
+              placeholder="Type here..."
               maxLength={2000}
               required
+              autoFocus
             />
           </label>
-          <small className="report-modal__count">{message.length}/2000</small>
-        </div>
-
-        <footer className="report-modal__footer">
-          <Button variant="secondary" type="button" onClick={onClose}>Cancel</Button>
-          <Button type="submit" disabled={isLoading}>
+          <div className="feedback-modal-v1__footer">
+            <small>{message.length}/2000</small>
+            <Button type="submit" variant="secondary" disabled={isLoading}>
             {isLoading ? <Loader2 className="spin" size={17} aria-hidden="true" /> : <Send size={17} aria-hidden="true" />}
             Send
-          </Button>
-        </footer>
+            </Button>
+          </div>
+        </div>
       </form>
     </div>,
     document.body,

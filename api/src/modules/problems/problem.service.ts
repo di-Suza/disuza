@@ -1,5 +1,7 @@
 import type { Types } from 'mongoose';
 
+import env from '../../config/env.js';
+import redisCache, { type RedisCache } from '../../infrastructure/cache/redis.js';
 import { BadRequestError, ConflictError, NotFoundError } from '../../shared/errors/index.js';
 import collabRoomAccessService, { type CollabRoomAccessService } from '../collab/collabRoomAccess.service.js';
 import { type Problem, type ProblemLanguage } from './problem.model.js';
@@ -36,6 +38,7 @@ class ProblemService {
     private readonly problems: ProblemRepository = problemRepository,
     private readonly roomAccess: CollabRoomAccessService = collabRoomAccessService,
     private readonly codeRunner: CodeExecutionService = codeExecutionService,
+    private readonly cache: RedisCache = redisCache,
   ) {}
 
   private normalizePage(pageInput: unknown): number {
@@ -201,13 +204,22 @@ class ProblemService {
 
   async runProblem(input: RunProblemInput) {
     const access = await this.roomAccess.getRoomAccess(input.userId, input.roomId);
-    const lockKey = input.roomProblemId;
+    const lockKey = `run:${input.roomProblemId}`;
+    const lockAcquired = this.cache.isEnabled()
+      ? await this.cache.acquireLock(
+        lockKey,
+        input.userId.toString(),
+        env.PROBLEM_RUN_LOCK_TTL_SECONDS,
+      )
+      : !runLocks.has(lockKey);
 
-    if (runLocks.has(lockKey)) {
+    if (!lockAcquired) {
       throw new ConflictError('Code is already running. Please wait.');
     }
 
-    runLocks.set(lockKey, input.userId);
+    if (!this.cache.isEnabled()) {
+      runLocks.set(lockKey, input.userId);
+    }
 
     try {
       const roomProblem = await this.problems.findRoomProblemById(input.roomId, input.roomProblemId)
@@ -252,7 +264,11 @@ class ProblemService {
         canUseRealtime: access.canUseRealtime,
       };
     } finally {
-      runLocks.delete(lockKey);
+      if (this.cache.isEnabled()) {
+        await this.cache.releaseLock(lockKey);
+      } else {
+        runLocks.delete(lockKey);
+      }
     }
   }
 }

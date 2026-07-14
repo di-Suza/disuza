@@ -1,5 +1,6 @@
 import { Types } from 'mongoose';
 
+import cleanupQueue, { type CleanupQueue } from '../../infrastructure/jobs/cleanup.queue.js';
 import realtimeService, { type RealtimeService } from '../../infrastructure/realtime/realtime.service.js';
 import { BadRequestError, ForbiddenError, NotFoundError } from '../../shared/errors/index.js';
 import heatmapService, { type HeatmapService } from '../contributions/heatmap.service.js';
@@ -20,6 +21,7 @@ class ChatService {
     private readonly posts: PostRepository = postRepository,
     private readonly heatmap: HeatmapService = heatmapService,
     private readonly realtime: RealtimeService = realtimeService,
+    private readonly cleanupJobs: CleanupQueue = cleanupQueue,
   ) {}
 
   private normalizePage(pageInput: unknown): number {
@@ -294,6 +296,12 @@ class ChatService {
       ? await UserModel.findById(otherParticipantId).select('active').lean()
       : null;
     const hiddenForEveryone = !otherParticipant || otherParticipant.active === false || participantIds.every((id) => hiddenSet.has(id));
+
+    if (hiddenForEveryone) {
+      await this.cleanupJobs.enqueueConversationCleanup({
+        conversationId: conversation._id.toString(),
+      });
+    }
 
     return {
       conversationId: conversation._id,

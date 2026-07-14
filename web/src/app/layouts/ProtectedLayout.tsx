@@ -2,7 +2,9 @@ import { Navigate, Outlet, useLocation } from 'react-router-dom';
 
 import { useGetConversationsQuery } from '@/features/messages/api/chat.api';
 import { useGetNotificationsQuery } from '@/features/notifications/api/notification.api';
+import DocumentTitleManager from '@/shared/components/DocumentTitleManager/DocumentTitleManager';
 import FullPageLoader from '@/shared/components/FullPageLoader/FullPageLoader';
+import MessageObserver from '@/shared/utils/MessageObserver';
 import { useAppSelector } from '../store/hooks';
 
 const ProtectedLayout = () => {
@@ -21,7 +23,13 @@ const ProtectedLayout = () => {
     return <Navigate to="/auth/signin" replace state={{ from: location }} />;
   }
 
-  return <Outlet />;
+  return (
+    <>
+      <DocumentTitleManager />
+      <MessageObserver />
+      <Outlet />
+    </>
+  );
 };
 
 export default ProtectedLayout;

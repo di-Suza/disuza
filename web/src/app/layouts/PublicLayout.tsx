@@ -1,5 +1,6 @@
 import { Navigate, Outlet } from 'react-router-dom';
 
+import DocumentTitleManager from '@/shared/components/DocumentTitleManager/DocumentTitleManager';
 import FullPageLoader from '@/shared/components/FullPageLoader/FullPageLoader';
 import { useAppSelector } from '../store/hooks';
 
@@ -14,7 +15,12 @@ const PublicLayout = () => {
     return <Navigate to="/dashboard" replace />;
   }
 
-  return <Outlet />;
+  return (
+    <>
+      <DocumentTitleManager />
+      <Outlet />
+    </>
+  );
 };
 
 export default PublicLayout;

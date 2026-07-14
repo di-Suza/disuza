@@ -1,6 +1,7 @@
 import Peer, { type MediaConnection } from 'peerjs';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import callingAudio from '@/shared/assets/audio/calling.mp3?url';
 import type { CollabParticipant } from '@/features/collab/model/collab.types';
 import { useToast } from '@/shared/hooks/useToast';
 import { getSocket } from '@/shared/services/socket';
@@ -113,6 +114,7 @@ const useAudioCall = ({ roomId, usersData, currentUserId }: UseAudioCallArgs) =>
   const activeCallRef = useRef<MediaConnection | null>(null);
   const localStreamRef = useRef<MediaStream | null>(null);
   const remoteAudioRef = useRef<HTMLAudioElement | null>(null);
+  const callToneRef = useRef<HTMLAudioElement | null>(null);
   const statusRef = useRef<AudioCallStatus>('idle');
   const canStartAudioCallRef = useRef(false);
   const remoteUserRef = useRef<CollabParticipant | null>(null);
@@ -124,9 +126,32 @@ const useAudioCall = ({ roomId, usersData, currentUserId }: UseAudioCallArgs) =>
   const otherUser = useMemo(() => usersData.find((user) => user._id !== currentUserId) || null, [currentUserId, usersData]);
   const canStartAudioCall = useMemo(() => Boolean(otherUser && usersData.length >= 2 && usersData.every((user) => user.roomPresence === 'in_room')), [otherUser, usersData]);
 
+  const playCallTone = useCallback(() => {
+    if (callToneRef.current) {
+      callToneRef.current.currentTime = 0;
+      callToneRef.current.play().catch(() => {});
+      return;
+    }
+
+    const audio = new Audio(callingAudio);
+    audio.loop = true;
+    audio.volume = 0.45;
+    callToneRef.current = audio;
+    audio.play().catch(() => {
+      // Browser can block sound until user interaction.
+    });
+  }, []);
+
+  const stopCallTone = useCallback(() => {
+    if (!callToneRef.current) return;
+    callToneRef.current.pause();
+    callToneRef.current.currentTime = 0;
+  }, []);
+
   const cleanupCall = useCallback(({ stopTracks = true } = {}) => {
     if (callTimeoutRef.current) window.clearTimeout(callTimeoutRef.current);
     callTimeoutRef.current = null;
+    stopCallTone();
     activeCallRef.current?.close();
     peerRef.current?.destroy();
     if (stopTracks) localStreamRef.current?.getTracks().forEach((track) => track.stop());
@@ -141,7 +166,7 @@ const useAudioCall = ({ roomId, usersData, currentUserId }: UseAudioCallArgs) =>
     setRemoteMicEnabled(true);
     setStatus('idle');
     statusRef.current = 'idle';
-  }, []);
+  }, [stopCallTone]);
 
   const startTimeout = useCallback((handler: () => void, timeout = CALL_RING_TIMEOUT_MS) => {
     if (callTimeoutRef.current) window.clearTimeout(callTimeoutRef.current);
@@ -183,6 +208,7 @@ const useAudioCall = ({ roomId, usersData, currentUserId }: UseAudioCallArgs) =>
       setStatus('calling');
       statusRef.current = 'calling';
       setRemoteUser(otherUser);
+      playCallTone();
       const stream = await getMicStream();
       const { peer, peerId } = await createPeer();
       const callId = createCallId();
@@ -216,12 +242,13 @@ const useAudioCall = ({ roomId, usersData, currentUserId }: UseAudioCallArgs) =>
       showError(getMediaErrorMessage(error));
       cleanupCall();
     }
-  }, [attachCallHandlers, canStartAudioCall, cleanupCall, getMicStream, otherUser, roomId, showError, showInfo, startTimeout]);
+  }, [attachCallHandlers, canStartAudioCall, cleanupCall, getMicStream, otherUser, playCallTone, roomId, showError, showInfo, startTimeout]);
 
   const acceptAudioCall = useCallback(async () => {
     if (!roomId || !incomingCall || statusRef.current !== 'ringing' || !incomingCall.peerId) return;
 
     try {
+      stopCallTone();
       setStatus('connecting');
       statusRef.current = 'connecting';
       const stream = await getMicStream();
@@ -255,7 +282,7 @@ const useAudioCall = ({ roomId, usersData, currentUserId }: UseAudioCallArgs) =>
       showError(getMediaErrorMessage(error));
       cleanupCall();
     }
-  }, [attachCallHandlers, cleanupCall, getMicStream, incomingCall, roomId, showError, startTimeout]);
+  }, [attachCallHandlers, cleanupCall, getMicStream, incomingCall, roomId, showError, startTimeout, stopCallTone]);
 
   const rejectAudioCall = useCallback(() => {
     if (!roomId || !incomingCall) return;
@@ -356,6 +383,7 @@ const useAudioCall = ({ roomId, usersData, currentUserId }: UseAudioCallArgs) =>
         setRemoteMicEnabled(data.micEnabled ?? true);
         setStatus('ringing');
         statusRef.current = 'ringing';
+        playCallTone();
         startTimeout(() => {
           socket.emit('call_signal', {
             roomId,
@@ -414,7 +442,7 @@ const useAudioCall = ({ roomId, usersData, currentUserId }: UseAudioCallArgs) =>
       socket.off('call_signal', handleCallSignal);
       cleanupCall();
     };
-  }, [cleanupCall, currentUserId, roomId, showError, showInfo, startTimeout]);
+  }, [cleanupCall, currentUserId, playCallTone, roomId, showError, showInfo, startTimeout]);
 
   return {
     acceptAudioCall,

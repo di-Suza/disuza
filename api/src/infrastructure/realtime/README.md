@@ -1,5 +1,5 @@
 # Realtime Adapter
 
-Socket.IO is planned but not active in v2 yet.
+Socket.IO is active in v2.
 
-Future socket startup, handshake auth, room membership checks, event schemas, Redis adapter setup, and presence/call state should live behind this boundary.
+Socket startup, handshake auth, room membership checks, event schemas, presence, collab room events, chat fan-out, and audio-call signaling live behind this boundary. A Redis adapter can be added here later for multi-node socket scaling.

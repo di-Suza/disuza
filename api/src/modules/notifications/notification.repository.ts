@@ -90,6 +90,15 @@ class NotificationRepository {
     return NotificationModel.findOne(filter).select('_id').lean();
   }
 
+  findManyByContent(filter: { contentIds: Array<string | Types.ObjectId>; types?: NotificationType[] }) {
+    return NotificationModel.find({
+      contentId: { $in: filter.contentIds },
+      ...(filter.types?.length ? { type: { $in: filter.types } } : {}),
+    })
+      .select('_id recipient')
+      .lean();
+  }
+
   deleteManyByIds(notificationIds: Array<string | Types.ObjectId>) {
     return NotificationModel.deleteMany({ _id: { $in: notificationIds } });
   }

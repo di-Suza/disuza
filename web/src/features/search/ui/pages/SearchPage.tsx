@@ -1,7 +1,7 @@
-import { Crown, Loader2, RefreshCw, Search, TrendingUp, X } from 'lucide-react';
+import { Crown, Loader2, RefreshCw, Search, Sparkles, TrendingUp, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
-import PostList from '@/features/posts/ui/components/PostList';
+import SearchPostCard from '@/features/search/ui/components/SearchPostCard';
 import SearchUserCard from '@/features/search/ui/components/SearchUserCard';
 import Button from '@/shared/ui/Button';
 import Input from '@/shared/ui/Input';
@@ -120,7 +120,11 @@ const SearchPage = () => {
                       <TrendingUp size={19} aria-hidden="true" />
                       <h2>Posts</h2>
                     </div>
-                    <PostList posts={matchedPosts} viewerId={currentUserId} compact emptyText="No posts found." />
+                    <div className="search-post-grid">
+                      {matchedPosts.map((post) => (
+                        <SearchPostCard key={post._id} post={post} />
+                      ))}
+                    </div>
                     {hasMoreSearchPosts && (
                       <div className="search-load-more">
                         <Button variant="secondary" onClick={handleLoadMoreSearchPosts} disabled={isFetching}>
@@ -153,7 +157,18 @@ const SearchPage = () => {
                 <TrendingUp size={19} aria-hidden="true" />
                 <h2>Trending Posts</h2>
               </div>
-              <PostList posts={trendingPosts} viewerId={currentUserId} compact emptyText="No trending posts yet." />
+              {trendingPosts.length > 0 ? (
+                <div className="search-post-grid">
+                  {trendingPosts.map((post) => (
+                    <SearchPostCard key={post._id} post={post} />
+                  ))}
+                </div>
+              ) : (
+                <section className="post-empty-state search-state">
+                  <Sparkles size={24} aria-hidden="true" />
+                  <p>No trending posts yet.</p>
+                </section>
+              )}
               {hasMoreTrendingPosts && (
                 <div className="search-load-more">
                   <Button variant="secondary" onClick={handleLoadMoreTrendingPosts} disabled={isDiscoverFetching}>

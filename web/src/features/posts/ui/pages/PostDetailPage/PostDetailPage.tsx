@@ -1,9 +1,10 @@
 import { Loader2, RefreshCw } from 'lucide-react';
-import { Link, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 
 import { useAppSelector } from '@/app/store/hooks';
 import { useGetPostQuery } from '@/features/posts/api/post.api';
 import PostCard from '@/features/posts/ui/components/PostCard';
+import BackButton from '@/shared/components/BackButton/BackButton';
 import Button from '@/shared/ui/Button';
 import { getErrorMessage } from '@/shared/utils/getErrorMessage';
 
@@ -25,12 +26,12 @@ const PostDetailPage = () => {
     return (
       <main className="dashboard-shell dashboard-shell--wide">
         <section className="state-panel">
+          <BackButton />
           <p className="state-panel__eyebrow">Post</p>
           <h1>Post could not be loaded.</h1>
           <p>{getErrorMessage(error, "Post doesn't exist or is unavailable.")}</p>
           <div className="dashboard-actions dashboard-actions--top">
             <Button onClick={() => refetch()}><RefreshCw size={18} aria-hidden="true" />Retry</Button>
-            <Link to="/home" className="button button--secondary">Feed</Link>
           </div>
         </section>
       </main>
@@ -40,13 +41,9 @@ const PostDetailPage = () => {
   return (
     <main className="dashboard-shell dashboard-shell--wide post-detail-shell">
       <section className="dashboard-panel dashboard-panel--wide post-detail-panel">
-        <header className="feed-header">
-          <div>
-            <p className="state-panel__eyebrow">Post</p>
-            <h1>Post Detail</h1>
-            <p>{isFetching ? 'Refreshing post...' : 'Comments open from the post actions.'}</p>
-          </div>
-          <Link to="/home" className="button button--secondary">Feed</Link>
+        <header className="post-detail-header">
+          <BackButton />
+          {isFetching ? <span>Refreshing post...</span> : null}
         </header>
         <PostCard post={post} viewerId={viewerId} />
       </section>

@@ -8,8 +8,20 @@ const emptyStringToUndefined = (value: unknown) => {
   return value;
 };
 
+const stringToBoolean = (value: unknown) => {
+  if (typeof value !== 'string') return value;
+
+  const normalized = value.trim().toLowerCase();
+  if (normalized === '') return undefined;
+  if (['true', '1', 'yes', 'on'].includes(normalized)) return true;
+  if (['false', '0', 'no', 'off'].includes(normalized)) return false;
+
+  return value;
+};
+
 const optionalString = z.preprocess(emptyStringToUndefined, z.string().trim().optional());
 const optionalEmail = z.preprocess(emptyStringToUndefined, z.string().trim().email().optional());
+const optionalBoolean = z.preprocess(stringToBoolean, z.boolean().optional());
 
 const rawEnvSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
@@ -19,6 +31,14 @@ const rawEnvSchema = z.object({
   SOCKET_CORS_ORIGIN: optionalString,
   SOCKET_PING_TIMEOUT_MS: z.coerce.number().int().min(10_000).default(60_000),
   SOCKET_PING_INTERVAL_MS: z.coerce.number().int().min(5_000).default(25_000),
+  REDIS_URL: optionalString,
+  REDIS_HOST: z.string().trim().min(1).default('127.0.0.1'),
+  REDIS_PORT: z.coerce.number().int().min(1).max(65535).default(6379),
+  REDIS_USERNAME: optionalString,
+  REDIS_PASSWORD: optionalString,
+  REDIS_DB: z.coerce.number().int().min(0).default(0),
+  REDIS_ENABLED: optionalBoolean,
+  JOB_WORKERS_ENABLED: optionalBoolean,
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']).default('info'),
   JWT_ACCESS_SECRET: z.string().trim().min(32).default('devloopfeed_access_secret_change_me_32_chars'),
   JWT_REFRESH_SECRET: z.string().trim().min(32).default('devloopfeed_refresh_secret_change_me_32_chars'),
@@ -46,6 +66,7 @@ const rawEnvSchema = z.object({
   JUDGE0_API_URL: z.string().trim().min(1).default('https://judge029.p.rapidapi.com'),
   RAPIDAPI_JUDGE0_HOST: z.string().trim().min(1).default('judge029.p.rapidapi.com'),
   RAPIDAPI_JUDGE0_KEY: optionalString,
+  PROBLEM_RUN_LOCK_TTL_SECONDS: z.coerce.number().int().min(5).max(300).default(60),
 });
 
 const result = rawEnvSchema.safeParse(process.env);
@@ -59,8 +80,11 @@ if (!result.success) {
 }
 
 const parsedEnv = result.data;
+const redisEnabled = parsedEnv.REDIS_ENABLED ?? parsedEnv.NODE_ENV === 'production';
 const derivedEnv = {
   ...parsedEnv,
+  REDIS_ENABLED: redisEnabled,
+  JOB_WORKERS_ENABLED: parsedEnv.JOB_WORKERS_ENABLED ?? redisEnabled,
   COOKIE_SECURE: parsedEnv.COOKIE_SECURE ?? (parsedEnv.NODE_ENV === 'production'),
   SOCKET_CORS_ORIGIN: parsedEnv.SOCKET_CORS_ORIGIN ?? parsedEnv.CORS_ORIGIN,
   IMAGEKIT_PUBLIC_KEY: parsedEnv.IMAGEKIT_PUBLIC_KEY ?? parsedEnv.IMAGE_KIT_PUBLIC,

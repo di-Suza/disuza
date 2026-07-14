@@ -247,99 +247,6 @@ npm run check:web
 npm run build:web
 ```
 
-## Step 35: V1 UI And Realtime Parity Cleanup
-
-Completed the v1 parity cleanup pass on `fix/v1-parity-ui-realtime-cleanup`.
-
-Fixed:
-
-- restored realtime notification fan-out from the API notification service for `new_notification` and `delete_notification`
-- wired notification RTK Query cache listeners for live insert/delete updates and reconnect invalidation
-- added chat conversation/message reconnect invalidation so stale socket state resyncs through HTTP
-- warmed authenticated conversation and notification caches from the protected layout so sidebar badges stay available outside those pages
-- split sidebar unread counts so Messages uses unread conversations and Notifications keeps unread notifications
-- restored dashboard Rooms from a placeholder to real room data with personal-room entry and retry/loading/empty states
-- reshaped the dashboard Add Post/Edit Post modal to the v1 modal flow while preserving v2 ordered image/video media support
-- fixed dashboard/profile heatmap layout so the six-month grid uses its full row without the narrow profile scrollbar issue
-- restored the landing page to the v1 product-section structure using v2 CSS instead of Tailwind classes
-- tightened public profile parity by adding Posts to stats, hiding empty sections, restoring experience/education sections, and showing post/project sections only when content exists
-- added notification action buttons for accepting collaboration requests and entering accepted rooms
-
-Preserved:
-
-- v2 typed RTK Query and feature-based folder boundaries
-- existing REST request/response contracts
-- existing auth/session flow and protected layout behavior
-- existing post composer validation and the v2 media ordering upgrade
-- existing collab room route and HTTP room endpoints
-
-Why:
-
-The previous migration branches had the right core modules, but several visible surfaces still felt like generic v2 placeholders instead of the v1 product flow. This pass brings the dashboard, landing, profile, notifications, realtime cache behavior, unread badges, and composer modal closer to v1 while keeping the newer TypeScript, RTK Query, and module boundaries.
-
-Verification used:
-
-```bash
-npm run check:web
-npm run check:api
-npm run build:web
-npm run build:api
-```
-
-## Step 35: Realtime Socket And Collab Room Module
-
-Built the realtime socket and collaborative room flow across `feature/api-realtime-collab-module` and `feature/web-realtime-collab-module`.
-
-API completed:
-
-- added an authenticated Socket.IO infrastructure boundary under `api/src/infrastructure/realtime`
-- sockets now connect only with a valid access token and join the authenticated user's private room
-- logout/no-token web state can disconnect the socket cleanly from the client side
-- configured socket CORS, credentials, reconnect transport support, ping interval, and ping timeout through validated env values
-- added realtime chat fan-out for received messages and unsent messages while preserving the existing HTTP chat persistence flow
-- added collab room/request APIs for personal rooms, conversation-based requests, accepts, room status, room lists, and room details
-- added problem/room-problem APIs for adding, selecting, unselecting, language updates, code persistence, and code execution
-- added room presence, code sync, Yjs update relay, audio-call signaling, and debounced room-code persistence through the socket layer
-
-Web completed:
-
-- added a socket client service with token-based auth, reconnect settings, and a login/logout-aware lifecycle provider
-- added heartbeat pings while authenticated so idle browser sessions can keep the realtime connection alive
-- wired message RTK Query caches to socket events for live received messages, unsent messages, conversation ordering, unread state, and cache invalidation
-- added collab and problem RTK Query APIs for room requests, room loading, problem selection, language changes, and code runs
-- added the messages Start Collab flow with a permission/request modal and room navigation
-- added notification handling for collab requests and accepted-room navigation
-- rebuilt the v1-style collab room workspace with a left problems panel, center problem/editor/results area, and right users/audio/chat panel
-- added local hooks for room socket joins, room-sync handling, code changes, execution updates, user presence, and audio-call signaling
-
-Preserved:
-
-- collab starts from the messaging/conversation flow instead of being a detached new product path
-- chat message creation still goes through the existing HTTP API before realtime fan-out
-- room access is validated on both HTTP APIs and socket room joins
-- selected room problem, code, language, execution result, users panel, room chat, and audio-call interaction follow the v1 product flow
-
-Deferred:
-
-- TURN/STUN production hardening beyond browser defaults and basic peer signaling
-- Redis-backed socket presence, multi-node room state, and distributed code execution locks
-- admin-managed problem catalog and GenAI problem assistance
-- deeper E2E coverage for multiple browsers in the same room
-
-Why:
-
-Messaging and collaborative rooms depend on realtime infrastructure, so this step establishes the socket boundary before continuing with room-heavy product modules. The implementation keeps the v1 interaction model while moving socket auth, room authorization, cache updates, and UI state into typed services, RTK Query cache hooks, and feature-local React hooks.
-
-Verification used:
-
-```bash
-npm --prefix api run typecheck
-npm --prefix api run build
-npm --prefix web run typecheck
-npm --prefix web run build
-git diff --check
-```
-
 ## Step 5: Backend User Profile and Social Module
 
 Built the first backend user/profile module on `feature/api-user-profile-module`.
@@ -1861,4 +1768,135 @@ Verification used:
 ```bash
 npm run check:web
 npm run build:web
+```
+
+## Step 35: Realtime Socket And Collab Room Module
+
+Built the realtime socket and collaborative room flow across `feature/api-realtime-collab-module` and `feature/web-realtime-collab-module`.
+
+API completed:
+
+- added an authenticated Socket.IO infrastructure boundary under `api/src/infrastructure/realtime`
+- sockets now connect only with a valid access token and join the authenticated user's private room
+- logout/no-token web state can disconnect the socket cleanly from the client side
+- configured socket CORS, credentials, reconnect transport support, ping interval, and ping timeout through validated env values
+- added realtime chat fan-out for received messages and unsent messages while preserving the existing HTTP chat persistence flow
+- added collab room/request APIs for personal rooms, conversation-based requests, accepts, room status, room lists, and room details
+- added problem/room-problem APIs for adding, selecting, unselecting, language updates, code persistence, and code execution
+- added room presence, code sync, Yjs update relay, audio-call signaling, and debounced room-code persistence through the socket layer
+
+Web completed:
+
+- added a socket client service with token-based auth, reconnect settings, and a login/logout-aware lifecycle provider
+- added heartbeat pings while authenticated so idle browser sessions can keep the realtime connection alive
+- wired message RTK Query caches to socket events for live received messages, unsent messages, conversation ordering, unread state, and cache invalidation
+- added collab and problem RTK Query APIs for room requests, room loading, problem selection, language changes, and code runs
+- added the messages Start Collab flow with a permission/request modal and room navigation
+- added notification handling for collab requests and accepted-room navigation
+- rebuilt the v1-style collab room workspace with a left problems panel, center problem/editor/results area, and right users/audio/chat panel
+- added local hooks for room socket joins, room-sync handling, code changes, execution updates, user presence, and audio-call signaling
+
+Preserved:
+
+- collab starts from the messaging/conversation flow instead of being a detached new product path
+- chat message creation still goes through the existing HTTP API before realtime fan-out
+- room access is validated on both HTTP APIs and socket room joins
+- selected room problem, code, language, execution result, users panel, room chat, and audio-call interaction follow the v1 product flow
+
+Deferred:
+
+- TURN/STUN production hardening beyond browser defaults and basic peer signaling
+- Redis-backed socket presence, multi-node room state, and distributed code execution locks
+- admin-managed problem catalog and GenAI problem assistance
+- deeper E2E coverage for multiple browsers in the same room
+
+Why:
+
+Messaging and collaborative rooms depend on realtime infrastructure, so this step establishes the socket boundary before continuing with room-heavy product modules. The implementation keeps the v1 interaction model while moving socket auth, room authorization, cache updates, and UI state into typed services, RTK Query cache hooks, and feature-local React hooks.
+
+Verification used:
+
+```bash
+npm --prefix api run typecheck
+npm --prefix api run build
+npm --prefix web run typecheck
+npm --prefix web run build
+git diff --check
+```
+
+## Step 36: V1 UI And Realtime Parity Cleanup
+
+Completed the v1 parity cleanup pass on `fix/v1-parity-ui-realtime-cleanup`.
+
+Fixed:
+
+- restored realtime notification fan-out from the API notification service for `new_notification` and `delete_notification`
+- wired notification RTK Query cache listeners for live insert/delete updates and reconnect invalidation
+- added chat conversation/message reconnect invalidation so stale socket state resyncs through HTTP
+- warmed authenticated conversation and notification caches from the protected layout so sidebar badges stay available outside those pages
+- split sidebar unread counts so Messages uses unread conversations and Notifications keeps unread notifications
+- restored dashboard Rooms from a placeholder to real room data with personal-room entry and retry/loading/empty states
+- reshaped the dashboard Add Post/Edit Post modal to the v1 modal flow while preserving v2 ordered image/video media support
+- fixed dashboard/profile heatmap layout so the six-month grid uses its full row without the narrow profile scrollbar issue
+- restored the landing page to the v1 product-section structure using v2 CSS instead of Tailwind classes
+- tightened public profile parity by adding Posts to stats, hiding empty sections, restoring experience/education sections, and showing post/project sections only when content exists
+- added notification action buttons for accepting collaboration requests and entering accepted rooms
+
+Preserved:
+
+- v2 typed RTK Query and feature-based folder boundaries
+- existing REST request/response contracts
+- existing auth/session flow and protected layout behavior
+- existing post composer validation and the v2 media ordering upgrade
+- existing collab room route and HTTP room endpoints
+
+Why:
+
+The previous migration branches had the right core modules, but several visible surfaces still felt like generic v2 placeholders instead of the v1 product flow. This pass brings the dashboard, landing, profile, notifications, realtime cache behavior, unread badges, and composer modal closer to v1 while keeping the newer TypeScript, RTK Query, and module boundaries.
+
+Verification used:
+
+```bash
+npm run check:web
+npm run check:api
+npm run build:web
+npm run build:api
+```
+
+## Step 37: Complete V1 Flow Parity Cleanup
+
+Completed the final v1 parity cleanup pass on `fix/v1-complete-parity-cleanup`.
+
+Fixed:
+
+- restored Redis as an active infrastructure adapter for distributed locks and job runtime support
+- restored BullMQ cleanup queues/workers for post, user, and hidden-for-everyone conversation cleanup
+- moved post deletion back to the v1 mark-and-queue flow instead of doing partial inline cleanup in the request
+- moved account deletion back to the v1 deactivation, session revoke, mark-posts-deleting, and queued cleanup flow
+- queued conversation cleanup when both participants hide a conversation or the other participant is already deleted
+- restored Redis-backed room-problem run locks so code execution is safe across multiple API processes
+- restored notification delete fan-out for bulk content cleanup so clients remove stale notification rows live
+- restored v1 problem seed data under the v2 scripts boundary
+- restored v1 message notification observer, unread title manager, notification audio, and call ringtone behavior
+- restored v1 compact search post cards instead of full feed cards inside Search
+- restored the post detail back-button flow and richer saved-post tooltip presentation
+- aligned collab problem suggestion chips with v1 constants
+
+Preserved:
+
+- v2 TypeScript feature/module folder structure
+- RTK Query cache boundaries and existing REST contracts
+- existing socket auth/session lifecycle
+- v2 ordered mixed image/video media support
+
+Why:
+
+The app modules were mostly migrated, but several v1 operational behaviors and small UI states were still missing. This pass focuses on exact product feel and lifecycle parity without changing the agreed v2 architecture boundaries.
+
+Verification used:
+
+```bash
+npm --prefix api run build
+npm --prefix web run build
+git diff --check
 ```

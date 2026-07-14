@@ -1,5 +1,6 @@
 import type { Types } from 'mongoose';
 
+import cleanupQueue, { type CleanupQueue } from '../../infrastructure/jobs/cleanup.queue.js';
 import {
   BadRequestError,
   ForbiddenError,
@@ -58,6 +59,7 @@ class UserService {
     private readonly otpRecords: OtpRepository = otpRepository,
     private readonly sessions: AuthSessionService = authSessionService,
     private readonly accountDeletionVerifications: AccountDeletionVerificationRepository = accountDeletionVerificationRepository,
+    private readonly cleanupJobs: CleanupQueue = cleanupQueue,
   ) {}
 
   private normalizePage(pageInput: unknown): number {
@@ -652,6 +654,12 @@ class UserService {
       this.posts.markUserPostsDeleting(user._id),
       this.sessions.revokeAllUserSessions(userId, 'LOGOUT_ALL'),
     ]);
+
+    await this.cleanupJobs.enqueueUserCleanup({
+      userId: user._id.toString(),
+      email: user.email,
+      profilePicture: user.profilePicture,
+    });
   }
 }
 
