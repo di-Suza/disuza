@@ -127,8 +127,8 @@ const mediaOrderRules = [
   body('mediaOrder')
     .optional()
     .customSanitizer(parseJsonField)
-    .isArray({ min: 1 })
-    .withMessage('mediaOrder must be a non-empty array'),
+    .isArray({ max: 10 })
+    .withMessage('mediaOrder must be an array with up to 10 items'),
   body('mediaOrder.*.source')
     .optional()
     .isIn(['existing', 'upload', 'new'])

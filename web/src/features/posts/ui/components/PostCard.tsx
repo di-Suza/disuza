@@ -123,8 +123,7 @@ const PostCard = ({ className, fallbackAuthor, post, viewerId }: PostCardProps) 
   const commentsDisabled = Boolean(post.settings?.commentsDisabled);
   const hideLikesCount = Boolean(post.settings?.hideLikesCount);
   const caption = post.caption || '';
-  const shouldTruncate = caption.length > 280;
-  const visibleCaption = showFullCaption || !shouldTruncate ? caption : `${caption.slice(0, 280)}...`;
+  const shouldCollapseCaption = caption.length > 120 || caption.split(/\r?\n/).length > 2;
   const editablePost = fullPostData?.post || null;
   const userName = author?.userName || 'User';
   const extraLinks = useMemo<PostLink[]>(() => {
@@ -235,8 +234,10 @@ const PostCard = ({ className, fallbackAuthor, post, viewerId }: PostCardProps) 
 
         {caption && (
           <p className="v1-post-card__caption rich-post-card__caption">
-            <span>{renderCaption(visibleCaption)}</span>
-            {shouldTruncate && <button type="button" className="rich-post-card__more" onClick={() => setShowFullCaption((current) => !current)}>{showFullCaption ? 'less' : 'more'}</button>}
+            <span className={cn('rich-post-card__caption-text', shouldCollapseCaption && !showFullCaption && 'is-collapsed')}>
+              {renderCaption(caption)}
+            </span>
+            {shouldCollapseCaption && <button type="button" className="rich-post-card__more" onClick={() => setShowFullCaption((current) => !current)}>{showFullCaption ? 'less' : 'more'}</button>}
           </p>
         )}
 

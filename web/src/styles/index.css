@@ -7462,6 +7462,7 @@ svg {
 }
 
 .inline-post-composer {
+  position: relative;
   display: grid;
   width: min(100%, 640px);
   max-width: 640px;
@@ -7500,11 +7501,13 @@ svg {
 
 .inline-post-composer__main textarea {
   width: 100%;
-  min-height: 58px;
+  height: 72px;
+  min-height: 72px;
+  max-height: 72px;
   border: 0;
   background: transparent;
   color: var(--text-primary);
-  resize: vertical;
+  resize: none;
   outline: 0;
   padding: 8px 0;
   font-size: 16px;
@@ -7562,6 +7565,35 @@ svg {
   right: 8px;
 }
 
+.inline-post-composer__attachments {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-left: 62px;
+}
+
+.inline-post-composer__attachments button {
+  display: inline-flex;
+  max-width: 180px;
+  align-items: center;
+  gap: 6px;
+  overflow: hidden;
+  border: 1px solid var(--border-secondary);
+  border-radius: 999px;
+  background: var(--bg-main);
+  color: var(--text-soft);
+  padding: 6px 10px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.inline-post-composer__attachments button:hover {
+  border-color: rgba(16, 185, 129, 0.45);
+  color: var(--accent);
+}
+
 .inline-post-composer__panel {
   display: grid;
   gap: 10px;
@@ -7608,6 +7640,101 @@ svg {
   align-items: center;
 }
 
+.inline-post-composer__tool-modal {
+  position: absolute;
+  right: 18px;
+  bottom: 72px;
+  z-index: 25;
+  display: grid;
+  width: min(430px, calc(100% - 36px));
+  max-height: min(440px, 72vh);
+  gap: 12px;
+  overflow-y: auto;
+  border: 1px solid var(--border-secondary);
+  border-radius: 16px;
+  background: var(--surface);
+  padding: 14px;
+  box-shadow: var(--shadow-media);
+}
+
+.inline-post-composer__tool-modal header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-right: 34px;
+  color: var(--text-primary);
+  font-size: 14px;
+  font-weight: 950;
+}
+
+.inline-post-composer__tool-modal header .button {
+  margin-left: auto;
+  min-height: 32px;
+  padding: 6px 10px;
+  font-size: 12px;
+}
+
+.inline-post-composer__tool-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: grid;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  border: 0;
+  border-radius: 999px;
+  background: var(--bg-main);
+  color: var(--text-secondary);
+}
+
+.inline-post-composer__tool-close:hover {
+  color: var(--text-primary);
+}
+
+.inline-post-composer__link-list,
+.inline-post-composer__project-fields {
+  display: grid;
+  gap: 10px;
+}
+
+.inline-post-composer__project-fields {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.inline-post-composer__toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  border: 1px solid var(--border-secondary);
+  border-radius: 12px;
+  background: var(--bg-main);
+  padding: 10px;
+}
+
+.inline-post-composer__toggle-row > span:first-child {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.inline-post-composer__toggle-row strong,
+.inline-post-composer__toggle-row small {
+  display: block;
+}
+
+.inline-post-composer__toggle-row strong {
+  color: var(--text-primary);
+  font-size: 13px;
+}
+
+.inline-post-composer__toggle-row small {
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 700;
+}
+
 .inline-post-composer__tags {
   align-items: center;
   margin-left: 62px;
@@ -7644,13 +7771,16 @@ svg {
 .inline-post-composer__tools button,
 .inline-post-composer__tools span {
   display: inline-flex;
+  width: 36px;
+  height: 36px;
   align-items: center;
+  justify-content: center;
   gap: 7px;
   border: 0;
   border-radius: 999px;
   background: transparent;
   color: var(--text-soft);
-  padding: 8px 10px;
+  padding: 0;
   font-size: 13px;
   font-weight: 850;
   transition: background 160ms ease, color 160ms ease;
@@ -7664,7 +7794,9 @@ svg {
 }
 
 .inline-post-composer__tools span {
+  width: auto;
   color: var(--accent);
+  padding: 0 10px;
 }
 
 .rich-post-card {
@@ -7681,8 +7813,16 @@ svg {
   line-height: 1.65;
 }
 
-.rich-post-card__caption span {
+.rich-post-card__caption-text {
+  display: block;
   white-space: pre-line;
+}
+
+.rich-post-card__caption-text.is-collapsed {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
 
 .v1-post-card__caption .rich-post-card__caption-tag {
@@ -8105,6 +8245,7 @@ svg {
   }
 
   .inline-post-composer__media,
+  .inline-post-composer__attachments,
   .inline-post-composer__panel,
   .inline-post-composer__tags {
     margin-left: 0;
@@ -8112,8 +8253,15 @@ svg {
   }
 
   .inline-post-composer__link-row,
+  .inline-post-composer__project-fields,
   .post-composer-v1__extra-link-row {
     grid-template-columns: 1fr;
+  }
+
+  .inline-post-composer__tool-modal {
+    right: 12px;
+    bottom: 84px;
+    width: calc(100% - 24px);
   }
 
   .inline-post-composer__footer {

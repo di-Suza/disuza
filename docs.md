@@ -1847,6 +1847,9 @@ Web completed:
 - added a share-post modal with copy-link support and conversation selection
 - rendered shared post messages inside chat with a clickable post preview and conversation preview text
 - added RTK Query optimistic repost cache updates and post-message chat cache metadata
+- refined the feed composer into icon-only tools with code/link/more popovers, fixed-height text input, and project/settings controls under More
+- fixed create validation so text-only, code-only, link-only, and image-only posts are accepted while project posts still require both project links
+- clamped post captions to two lines by default with more/less expansion, including newline-heavy text
 
 Preserved:
 
