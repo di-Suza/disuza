@@ -19,10 +19,23 @@ class RedisCache {
   }
 
   getConnectionOptions(): RedisOptions {
+    this.assertEnabled();
     return this.buildOptions();
   }
 
+  isEnabled(): boolean {
+    return env.REDIS_ENABLED;
+  }
+
+  private assertEnabled(): void {
+    if (!this.isEnabled()) {
+      throw new Error('Redis is disabled. Set REDIS_ENABLED=true to enable Redis-backed jobs and locks.');
+    }
+  }
+
   getConnection(): Redis {
+    this.assertEnabled();
+
     if (!this.client) {
       this.client = env.REDIS_URL
         ? new Redis(env.REDIS_URL, this.buildOptions())

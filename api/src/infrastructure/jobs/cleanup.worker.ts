@@ -405,6 +405,11 @@ const createWorker = <T>(
 const startCleanupWorkers = () => {
   if (!env.JOB_WORKERS_ENABLED || workersStarted) return workers;
 
+  if (!redisCache.isEnabled()) {
+    logger.warn('Cleanup workers skipped because Redis is disabled');
+    return workers;
+  }
+
   workers.push(
     createWorker<{ postId: string; userId: string }>(
       'post-cleanup',

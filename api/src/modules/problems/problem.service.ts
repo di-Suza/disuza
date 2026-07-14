@@ -8,6 +8,8 @@ import { type Problem, type ProblemLanguage } from './problem.model.js';
 import problemRepository, { type ProblemRepository, type SearchProblemFilter } from './problem.repository.js';
 import codeExecutionService, { type CodeExecutionService } from './codeExecution.service.js';
 
+const runLocks = new Map<string, string>();
+
 type RunProblemInput = {
   userId: string;
   roomId: string;
@@ -203,14 +205,20 @@ class ProblemService {
   async runProblem(input: RunProblemInput) {
     const access = await this.roomAccess.getRoomAccess(input.userId, input.roomId);
     const lockKey = `run:${input.roomProblemId}`;
-    const lockAcquired = await this.cache.acquireLock(
-      lockKey,
-      input.userId.toString(),
-      env.PROBLEM_RUN_LOCK_TTL_SECONDS,
-    );
+    const lockAcquired = this.cache.isEnabled()
+      ? await this.cache.acquireLock(
+        lockKey,
+        input.userId.toString(),
+        env.PROBLEM_RUN_LOCK_TTL_SECONDS,
+      )
+      : !runLocks.has(lockKey);
 
     if (!lockAcquired) {
       throw new ConflictError('Code is already running. Please wait.');
+    }
+
+    if (!this.cache.isEnabled()) {
+      runLocks.set(lockKey, input.userId);
     }
 
     try {
@@ -256,7 +264,11 @@ class ProblemService {
         canUseRealtime: access.canUseRealtime,
       };
     } finally {
-      await this.cache.releaseLock(lockKey);
+      if (this.cache.isEnabled()) {
+        await this.cache.releaseLock(lockKey);
+      } else {
+        runLocks.delete(lockKey);
+      }
     }
   }
 }
