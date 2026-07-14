@@ -19,6 +19,13 @@ const rawEnvSchema = z.object({
   SOCKET_CORS_ORIGIN: optionalString,
   SOCKET_PING_TIMEOUT_MS: z.coerce.number().int().min(10_000).default(60_000),
   SOCKET_PING_INTERVAL_MS: z.coerce.number().int().min(5_000).default(25_000),
+  REDIS_URL: optionalString,
+  REDIS_HOST: z.string().trim().min(1).default('127.0.0.1'),
+  REDIS_PORT: z.coerce.number().int().min(1).max(65535).default(6379),
+  REDIS_USERNAME: optionalString,
+  REDIS_PASSWORD: optionalString,
+  REDIS_DB: z.coerce.number().int().min(0).default(0),
+  JOB_WORKERS_ENABLED: z.coerce.boolean().default(true),
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']).default('info'),
   JWT_ACCESS_SECRET: z.string().trim().min(32).default('devloopfeed_access_secret_change_me_32_chars'),
   JWT_REFRESH_SECRET: z.string().trim().min(32).default('devloopfeed_refresh_secret_change_me_32_chars'),
@@ -46,6 +53,7 @@ const rawEnvSchema = z.object({
   JUDGE0_API_URL: z.string().trim().min(1).default('https://judge029.p.rapidapi.com'),
   RAPIDAPI_JUDGE0_HOST: z.string().trim().min(1).default('judge029.p.rapidapi.com'),
   RAPIDAPI_JUDGE0_KEY: optionalString,
+  PROBLEM_RUN_LOCK_TTL_SECONDS: z.coerce.number().int().min(5).max(300).default(60),
 });
 
 const result = rawEnvSchema.safeParse(process.env);

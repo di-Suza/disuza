@@ -116,6 +116,13 @@ class PostRepository {
     );
   }
 
+  restoreDeleting(postId: string | Types.ObjectId, userId: string | Types.ObjectId) {
+    return PostModel.updateOne(
+      { _id: postId, user: userId, isDeleting: true },
+      { $set: { isDeleting: false, deletedAt: null } },
+    );
+  }
+
   findFeedPosts(filter: FilterQuery<Post>, page: number, limit: number) {
     return PostModel.find({ ...filter, ...visiblePostQuery })
       .sort({ createdAt: -1 })

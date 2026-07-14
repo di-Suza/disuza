@@ -5,6 +5,7 @@ import app from './app.js';
 import database from './config/db.js';
 import env from './config/env.js';
 import logger from './config/logger.js';
+import { startCleanupWorkers } from './infrastructure/jobs/cleanup.worker.js';
 import realtimeService from './infrastructure/realtime/realtime.service.js';
 
 class HttpServer {
@@ -18,6 +19,7 @@ class HttpServer {
     try {
       await database.connect();
       realtimeService.attach(this.server);
+      startCleanupWorkers();
 
       this.server.listen(env.PORT, () => {
         logger.info({ port: env.PORT }, 'DevLoopFeed API started');

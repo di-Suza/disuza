@@ -143,7 +143,19 @@ class NotificationService {
 
   async removeManyForContent(contentIds: Array<string | Types.ObjectId>, types?: NotificationType[]) {
     if (contentIds.length === 0) return null;
-    return this.notifications.deleteManyByContent({ contentIds, types });
+    const notifications = await this.notifications.findManyByContent({ contentIds, types });
+
+    if (notifications.length === 0) return null;
+
+    const result = await this.notifications.deleteManyByIds(notifications.map((notification) => notification._id));
+
+    notifications.forEach((notification) => {
+      this.realtime.emitToUser(notification.recipient.toString(), 'delete_notification', {
+        notificationId: notification._id.toString(),
+      });
+    });
+
+    return result;
   }
 
   findOne(filter: NotificationFilter) {

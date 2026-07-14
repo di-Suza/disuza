@@ -1,5 +1,6 @@
 import mongoose, { type FilterQuery } from 'mongoose';
 
+import cleanupQueue, { type CleanupQueue } from '../../infrastructure/jobs/cleanup.queue.js';
 import { BadRequestError, NotFoundError } from '../../shared/errors/index.js';
 import heatmapService, { type HeatmapService } from '../contributions/heatmap.service.js';
 import mediaService, { type MediaService } from '../media/media.service.js';
@@ -55,6 +56,7 @@ class PostService {
     private readonly blockRules: BlockService = blockService,
     private readonly media: MediaService = mediaService,
     private readonly heatmap: HeatmapService = heatmapService,
+    private readonly cleanupJobs: CleanupQueue = cleanupQueue,
   ) {}
 
   private normalizePage(pageInput: unknown): number {
@@ -387,12 +389,15 @@ class PostService {
       throw new NotFoundError("Post not found or you're not authorized to delete this post!");
     }
 
-    await Promise.all([
-      this.users.incrementCounter(userId, 'postsCount', -1),
-      this.heatmap.removeContribution(userId, post._id, 'POST'),
-      ...(post.isProjectPost ? [this.users.incrementCounter(userId, 'projectsCount', -1)] : []),
-      ...post.media.map((mediaItem) => this.media.tryDeleteFile(mediaItem.fileId)),
-    ]);
+    try {
+      await this.cleanupJobs.enqueuePostCleanup({
+        postId: post._id.toString(),
+        userId: userId.toString(),
+      });
+    } catch (error) {
+      await this.posts.restoreDeleting(postId, userId);
+      throw error;
+    }
 
     return { deleted: true, alreadyDeleting: false };
   }
