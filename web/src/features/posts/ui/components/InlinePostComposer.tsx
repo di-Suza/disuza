@@ -157,22 +157,24 @@ const InlinePostComposer = () => {
                 <MoreHorizontal size={17} aria-hidden="true" />
                 <span>More options</span>
               </header>
-              <label className="inline-post-composer__toggle-row">
-                <span>
-                  <strong>Project post</strong>
-                  <small>Live demo and GitHub links required</small>
-                </span>
-                <span className={isProjectPost ? 'post-composer-v1__switch is-active' : 'post-composer-v1__switch'}>
-                  <input type="checkbox" checked={isProjectPost} onChange={(event) => setIsProjectPost(event.target.checked)} />
-                  <i />
-                </span>
-              </label>
-              {isProjectPost && (
-                <div className="inline-post-composer__project-fields">
-                  <Input type="url" value={projectLinks.liveDemoUrl} onChange={updateProjectLink('liveDemoUrl')} placeholder="Live demo URL" aria-label="Live demo URL" />
-                  <Input type="url" value={projectLinks.repositoryUrl} onChange={updateProjectLink('repositoryUrl')} placeholder="GitHub repository URL" aria-label="GitHub repository URL" />
-                </div>
-              )}
+              <section className="inline-post-composer__project-block">
+                <label className="inline-post-composer__toggle-row">
+                  <span>
+                    <strong>Project post</strong>
+                    <small>Live demo and GitHub links required</small>
+                  </span>
+                  <span className={isProjectPost ? 'post-composer-v1__switch is-active' : 'post-composer-v1__switch'}>
+                    <input type="checkbox" checked={isProjectPost} onChange={(event) => setIsProjectPost(event.target.checked)} />
+                    <i />
+                  </span>
+                </label>
+                {isProjectPost && (
+                  <div className="inline-post-composer__project-fields">
+                    <Input type="url" value={projectLinks.liveDemoUrl} onChange={updateProjectLink('liveDemoUrl')} placeholder="Live demo URL" aria-label="Live demo URL" />
+                    <Input type="url" value={projectLinks.repositoryUrl} onChange={updateProjectLink('repositoryUrl')} placeholder="GitHub repository URL" aria-label="GitHub repository URL" />
+                  </div>
+                )}
+              </section>
               <label className="inline-post-composer__toggle-row">
                 <span>
                   <strong>Hide like count</strong>

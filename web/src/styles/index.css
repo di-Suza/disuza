@@ -7643,8 +7643,8 @@ svg {
 .inline-post-composer__tool-modal {
   position: absolute;
   right: 18px;
-  bottom: 72px;
-  z-index: 25;
+  top: calc(100% + 8px);
+  z-index: 120;
   display: grid;
   width: min(430px, calc(100% - 36px));
   max-height: min(440px, 72vh);
@@ -7693,9 +7693,15 @@ svg {
 }
 
 .inline-post-composer__link-list,
+.inline-post-composer__project-block,
 .inline-post-composer__project-fields {
   display: grid;
   gap: 10px;
+}
+
+.inline-post-composer__project-block {
+  border-bottom: 1px solid var(--border-secondary);
+  padding-bottom: 12px;
 }
 
 .inline-post-composer__project-fields {
@@ -8260,7 +8266,7 @@ svg {
 
   .inline-post-composer__tool-modal {
     right: 12px;
-    bottom: 84px;
+    top: calc(100% + 8px);
     width: calc(100% - 24px);
   }
 
