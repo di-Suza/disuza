@@ -1824,6 +1824,49 @@ npm --prefix web run build
 git diff --check
 ```
 
+## Step 38: Rich Post Content And Sharing Upgrade
+
+Upgraded the post module on `feature/post-rich-content-sharing`.
+
+API completed:
+
+- allowed text-only posts instead of requiring image/video media
+- added structured extra links with label and URL
+- kept project posts stricter by requiring live demo and GitHub repository links
+- added code snippet and hashtag fields to the post model, validators, service normalization, and search indexing
+- added repost persistence with optimistic-safe repost/unrepost endpoints and post count updates
+- extended chat messages with a `post` message type so shared posts can be sent inside conversations
+- updated post cleanup so repost records and shared-post chat references are handled with post deletion
+
+Web completed:
+
+- added an inline feed composer with Image, Code, Project, and Link tools while removing Poll/Everyone from the new post flow
+- updated the post modal composer to support optional media, code snippets, extra links, hashtags, and project links
+- rebuilt post cards for text-first rich content with code blocks, link chips, hashtags, mixed media, repost, feedback, save, and share actions
+- added hashtag navigation to `/search?q=#tag` so explore/search opens with the selected hashtag already applied
+- added a share-post modal with copy-link support and conversation selection
+- rendered shared post messages inside chat with a clickable post preview and conversation preview text
+- added RTK Query optimistic repost cache updates and post-message chat cache metadata
+
+Preserved:
+
+- existing comments, feedback, report, save collection, edit, and delete flows
+- v2 TypeScript module boundaries, RTK Query API slices, and feature-local hooks
+- existing media carousel ordering for image/video posts
+- existing project post live/GitHub link rules, now alongside optional extra links
+
+Why:
+
+The old post flow forced every post to include media, which blocked LinkedIn/Twitter-style text posts, code snippets, link sharing, hashtags, reposts, and chat sharing. This step turns posts into a richer product surface while keeping the existing module architecture and interaction contracts stable.
+
+Verification used:
+
+```bash
+npm --prefix api run typecheck
+npm --prefix web run build
+git diff --check
+```
+
 ## Step 36: V1 UI And Realtime Parity Cleanup
 
 Completed the v1 parity cleanup pass on `fix/v1-parity-ui-realtime-cleanup`.
