@@ -7641,13 +7641,13 @@ svg {
 }
 
 .inline-post-composer__tool-modal {
-  position: absolute;
-  right: 18px;
-  top: calc(100% + 8px);
-  z-index: 120;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  z-index: 1400;
   display: grid;
-  width: min(430px, calc(100% - 36px));
-  max-height: min(440px, 72vh);
+  width: min(430px, calc(100vw - 32px));
+  max-height: min(520px, calc(100vh - 32px));
   gap: 12px;
   overflow-y: auto;
   border: 1px solid var(--border-secondary);
@@ -7655,6 +7655,7 @@ svg {
   background: var(--surface);
   padding: 14px;
   box-shadow: var(--shadow-media);
+  transform: translate(-50%, -50%);
 }
 
 .inline-post-composer__tool-modal header {
@@ -8265,9 +8266,8 @@ svg {
   }
 
   .inline-post-composer__tool-modal {
-    right: 12px;
-    top: calc(100% + 8px);
-    width: calc(100% - 24px);
+    width: calc(100vw - 24px);
+    max-height: calc(100vh - 24px);
   }
 
   .inline-post-composer__footer {
