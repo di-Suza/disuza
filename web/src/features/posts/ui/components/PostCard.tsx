@@ -243,7 +243,16 @@ const PostCard = ({ className, fallbackAuthor, post, viewerId }: PostCardProps) 
       {isCommentsOpen && <CommentModal isOpen={isCommentsOpen} onClose={() => setCommentsOpen(false)} post={post} />}
       {isCollectionsOpen && <ManageSaveCollectionsModal isOpen={isCollectionsOpen} onClose={() => setCollectionsOpen(false)} postId={post._id} onSaved={markSaved} />}
       {isReportOpen && <ReportModal isOpen={isReportOpen} onClose={() => setReportOpen(false)} targetId={post._id} onModel="Post" />}
-      {isFeedbackOpen && ownerId && <SendFeedbackModal isOpen={isFeedbackOpen} onClose={() => setFeedbackOpen(false)} feedbackOn="Post" receiverId={ownerId} postId={post._id} />}
+      {isFeedbackOpen && ownerId && (
+        <SendFeedbackModal
+          isOpen={isFeedbackOpen}
+          onClose={() => setFeedbackOpen(false)}
+          feedbackOn="Post"
+          receiverId={ownerId}
+          receiverName={userName}
+          postId={post._id}
+        />
+      )}
     </article>
   );
 };
