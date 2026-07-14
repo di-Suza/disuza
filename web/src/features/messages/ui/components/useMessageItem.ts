@@ -29,6 +29,11 @@ export const useMessageItem = ({ message }: UseMessageItemArgs) => {
     if (profileId) navigate(`/profile/${profileId}`);
   }, [message.feedbackDetails?._id, navigate]);
 
+  const goToSharedPost = useCallback(() => {
+    const postId = message.sharedPostDetails?._id || message.sharedPost;
+    if (postId) navigate(`/post/${postId}`);
+  }, [message.sharedPost, message.sharedPostDetails?._id, navigate]);
+
   const handleUnsendMessage = useCallback(async () => {
     if (!senderIsMe || !message._id || !message.conversationId) return;
 
@@ -45,6 +50,7 @@ export const useMessageItem = ({ message }: UseMessageItemArgs) => {
   return {
     goToFeedbackPost,
     goToFeedbackProfile,
+    goToSharedPost,
     handleUnsendMessage,
     isUnsendLoading,
     senderIsMe,

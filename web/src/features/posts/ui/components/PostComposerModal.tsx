@@ -1,4 +1,22 @@
-import { ArrowLeft, ArrowRight, ChevronDown, ChevronUp, Code2, GitFork, ImagePlus, Link2, Loader2, Send, Settings, Trash2, Video, X } from 'lucide-react';
+import {
+  ArrowLeft,
+  ArrowRight,
+  Braces,
+  ChevronDown,
+  ChevronUp,
+  Code2,
+  GitFork,
+  Hash,
+  ImagePlus,
+  Link2,
+  Loader2,
+  Plus,
+  Send,
+  Settings,
+  Trash2,
+  Video,
+  X,
+} from 'lucide-react';
 import { memo, useId, useState } from 'react';
 
 import type { Post } from '@/features/posts/model/post.types';
@@ -19,32 +37,44 @@ const PostComposerModal = ({ isOpen, isPostLoading = false, mode, onClose, post 
   const fileInputId = useId();
   const [showAdvancedSettings, setShowAdvancedSettings] = useState(false);
   const {
+    addHashtag,
+    addLink,
     canEditProjectLinks,
     caption,
     closeComposer,
+    codeSnippet,
     handleFilesChange,
     handleSubmit,
+    hasComposerContent,
+    hashtagDraft,
+    hashtags,
     isEditMode,
     isEditingProjectPost,
     isProjectPost,
     isSubmitting,
+    links,
     mediaItems,
     mediaSummary,
     moveMedia,
     projectLinks,
+    removeHashtag,
+    removeLink,
     removeMedia,
     setCaption,
+    setHashtagDraft,
     setIsProjectPost,
     settings,
+    updateCodeSnippet,
+    updateLink,
     updateProjectLink,
     updateSetting,
   } = usePostComposer({ isOpen, mode, onClose, post });
 
   if (!isOpen) return null;
 
-  const submitLabel = isSubmitting ? 'Saving...' : isEditMode ? 'Save changes' : 'Create post';
+  const submitLabel = isSubmitting ? 'Saving...' : isEditMode ? 'Save changes' : 'Post';
   const showProjectLinks = canEditProjectLinks && (isProjectPost || isEditingProjectPost);
-  const isPostEnabled = !isSubmitting && (isEditMode || mediaItems.length > 0);
+  const isPostEnabled = !isSubmitting && (isEditMode || hasComposerContent);
 
   return (
     <div className="modal-backdrop post-composer-v1-backdrop" role="dialog" aria-modal="true" aria-label={isEditMode ? 'Edit post' : 'Create post'}>
@@ -73,39 +103,39 @@ const PostComposerModal = ({ isOpen, isPostLoading = false, mode, onClose, post 
             <div className="post-composer-v1__body">
               <section className="post-composer-v1__caption-card">
                 <div>
-                  <label htmlFor={`${fileInputId}-caption`}>Caption</label>
-                  <span>{caption.length} chars</span>
+                  <label htmlFor={`${fileInputId}-caption`}>What are you building?</label>
+                  <span>{caption.length}/2200</span>
                 </div>
-              <textarea
+                <textarea
                   id={`${fileInputId}-caption`}
                   className="post-composer-v1__caption"
-                value={caption}
-                onChange={(event) => setCaption(event.target.value)}
-                maxLength={2200}
+                  value={caption}
+                  onChange={(event) => setCaption(event.target.value)}
+                  maxLength={2200}
                   rows={4}
-                  placeholder="Share what you built, learned, or shipped..."
-              />
+                  placeholder="Share text, code, links, media, or project updates..."
+                />
               </section>
 
               <section>
                 <div className="post-composer-v1__section-heading">
-                  <label>Media <span>*</span></label>
+                  <label>Media</label>
                   <small>{mediaSummary} selected</small>
                 </div>
                 <label className={cn('post-composer-v1__upload-zone', mediaItems.length >= 10 && 'is-disabled')} htmlFor={fileInputId}>
                   <span><ImagePlus size={20} aria-hidden="true" /></span>
-                  <strong>{mediaItems.length >= 10 ? 'Maximum media reached' : 'Upload post media'}</strong>
-                  <small>Images or videos. Up to 10 items.</small>
+                  <strong>{mediaItems.length >= 10 ? 'Maximum media reached' : 'Upload image or video'}</strong>
+                  <small>Optional. Up to 10 items, editable order.</small>
                 </label>
-              <input
-                id={fileInputId}
-                className="visually-hidden"
-                type="file"
-                accept="image/*,video/*"
-                multiple
+                <input
+                  id={fileInputId}
+                  className="visually-hidden"
+                  type="file"
+                  accept="image/*,video/*"
+                  multiple
                   disabled={mediaItems.length >= 10}
-                onChange={handleFilesChange}
-              />
+                  onChange={handleFilesChange}
+                />
 
                 {mediaItems.length > 0 && (
                   <div className="post-composer-v1__media-grid">
@@ -137,12 +167,94 @@ const PostComposerModal = ({ isOpen, isPostLoading = false, mode, onClose, post 
                 )}
               </section>
 
+              <section className="post-composer-v1__rich-block">
+                <div className="post-composer-v1__section-heading">
+                  <label><Braces size={16} aria-hidden="true" /> Code</label>
+                  <small>Optional snippet</small>
+                </div>
+                <div className="post-composer-v1__code-grid">
+                  <Input
+                    value={codeSnippet.language}
+                    onChange={(event) => updateCodeSnippet('language', event.target.value)}
+                    placeholder="Language, e.g. tsx"
+                    aria-label="Code language"
+                  />
+                  <textarea
+                    value={codeSnippet.code}
+                    onChange={(event) => updateCodeSnippet('code', event.target.value)}
+                    placeholder="Paste code here..."
+                    aria-label="Code snippet"
+                    rows={7}
+                  />
+                </div>
+              </section>
+
+              <section className="post-composer-v1__rich-block">
+                <div className="post-composer-v1__section-heading">
+                  <label><Link2 size={16} aria-hidden="true" /> Links</label>
+                  <Button variant="ghost" className="post-composer-v1__mini-action" onClick={addLink}>
+                    <Plus size={15} aria-hidden="true" />
+                    Add link
+                  </Button>
+                </div>
+                {links.length > 0 ? (
+                  <div className="post-composer-v1__extra-links">
+                    {links.map((link) => (
+                      <div className="post-composer-v1__extra-link-row" key={link.id}>
+                        <Input value={link.label} onChange={(event) => updateLink(link.id, 'label', event.target.value)} placeholder="Label" aria-label="Link label" />
+                        <Input type="url" value={link.url} onChange={(event) => updateLink(link.id, 'url', event.target.value)} placeholder="https://example.com" aria-label="Link URL" />
+                        <Button variant="ghost" className="button--icon" onClick={() => removeLink(link.id)} aria-label="Remove link">
+                          <Trash2 size={15} aria-hidden="true" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="post-composer-v1__hint">Add a label and URL when you want to attach a resource.</p>
+                )}
+              </section>
+
+              <section className="post-composer-v1__rich-block">
+                <div className="post-composer-v1__section-heading">
+                  <label><Hash size={16} aria-hidden="true" /> Hashtags</label>
+                  <small>{hashtags.length}/12</small>
+                </div>
+                <div className="post-composer-v1__tag-input">
+                  <Input
+                    value={hashtagDraft}
+                    onChange={(event) => setHashtagDraft(event.target.value)}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter') {
+                        event.preventDefault();
+                        addHashtag();
+                      }
+                    }}
+                    placeholder="react, typescript, opensource"
+                    aria-label="Hashtag"
+                  />
+                  <Button variant="secondary" onClick={() => addHashtag()}>
+                    <Plus size={15} aria-hidden="true" />
+                    Add
+                  </Button>
+                </div>
+                {hashtags.length > 0 && (
+                  <div className="post-composer-v1__tags">
+                    {hashtags.map((tag) => (
+                      <button type="button" key={tag} onClick={() => removeHashtag(tag)}>
+                        #{tag}
+                        <X size={13} aria-hidden="true" />
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </section>
+
               {(!isEditMode || showProjectLinks) && (
                 <section className="post-composer-v1__project">
                   <label>
                     <span className="post-composer-v1__project-main">
                       <span><Code2 size={17} aria-hidden="true" /></span>
-                      <span><strong>Project post</strong><small>Add repository and live demo links</small></span>
+                      <span><strong>Project post</strong><small>Requires live demo and GitHub repository</small></span>
                     </span>
                     {!isEditMode && (
                       <span className={isProjectPost ? 'post-composer-v1__switch is-active' : 'post-composer-v1__switch'}>
@@ -152,7 +264,7 @@ const PostComposerModal = ({ isOpen, isPostLoading = false, mode, onClose, post 
                     )}
                   </label>
 
-            {showProjectLinks && (
+                  {showProjectLinks && (
                     <div className="post-composer-v1__links">
                       <label>
                         <span>Live Demo Link</span>
@@ -165,9 +277,9 @@ const PostComposerModal = ({ isOpen, isPostLoading = false, mode, onClose, post 
                         <Input type="url" value={projectLinks.repositoryUrl} onChange={updateProjectLink('repositoryUrl')} placeholder="https://github.com/username/repo" />
                       </label>
                     </div>
-            )}
+                  )}
                 </section>
-            )}
+              )}
             </div>
 
             <footer className="post-composer-v1__footer">

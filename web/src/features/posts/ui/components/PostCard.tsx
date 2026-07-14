@@ -3,6 +3,8 @@ import {
   ChevronLeft,
   ChevronRight,
   CircleCheckBig,
+  Code2,
+  Copy,
   Edit3,
   ExternalLink,
   GitFork,
@@ -11,7 +13,9 @@ import {
   MessageCircle,
   MessageSquareWarning,
   MoreHorizontal,
+  Repeat2,
   SendHorizontal,
+  Share2,
   Sparkles,
   Trash2,
   UserRound,
@@ -23,9 +27,10 @@ import { useNavigate } from 'react-router-dom';
 import CommentModal from '@/features/comments/ui/components/CommentModal';
 import SendFeedbackModal from '@/features/messages/ui/components/SendFeedbackModal';
 import { useDeletePostMutation, useGetPostQuery } from '@/features/posts/api/post.api';
-import { getPostAuthor, getPostImageUrl, getPostOwnerId, getPostMedia, isVideoMedia } from '@/features/posts/model/post.helpers';
-import type { Post, PostAuthor } from '@/features/posts/model/post.types';
+import { getPostAuthor, getPostImageUrl, getPostMedia, getPostOwnerId, isVideoMedia } from '@/features/posts/model/post.helpers';
+import type { Post, PostAuthor, PostLink } from '@/features/posts/model/post.types';
 import { usePostLike } from '@/features/posts/ui/hooks/usePostLike';
+import { usePostRepost } from '@/features/posts/ui/hooks/usePostRepost';
 import ReportModal from '@/features/reports/ui/components/ReportModal';
 import ManageSaveCollectionsModal from '@/features/saves/ui/components/ManageSaveCollectionsModal';
 import { usePostSave } from '@/features/saves/ui/hooks/usePostSave';
@@ -33,6 +38,7 @@ import { useToast } from '@/shared/hooks/useToast';
 import { cn } from '@/shared/utils/cn';
 import { getErrorMessage } from '@/shared/utils/getErrorMessage';
 import PostComposerModal from './PostComposerModal';
+import SharePostModal from './SharePostModal';
 
 type PostCardProps = {
   post: Post;
@@ -71,9 +77,9 @@ const ActionItem = ({
   disabled?: boolean;
   icon: ReactNode;
   label: string;
-  onClick: () => void | Promise<void>;
+  onClick: () => unknown | Promise<unknown>;
 }) => (
-  <button type="button" onClick={onClick} disabled={disabled} className="v1-post-action">
+  <button type="button" onClick={onClick} disabled={disabled} className="v1-post-action" aria-label={label}>
     <span className={active ? 'is-active' : ''}>
       {icon}
       {count !== undefined && Number(count) > 0 && <small>{count}</small>}
@@ -81,6 +87,14 @@ const ActionItem = ({
     <em>{label}</em>
   </button>
 );
+
+const normalizeLink = (url?: string) => {
+  const trimmedUrl = url?.trim();
+  if (!trimmedUrl) return '';
+  return /^https?:\/\//i.test(trimmedUrl) ? trimmedUrl : `https://${trimmedUrl}`;
+};
+
+const truncateUrl = (url: string) => url.replace(/^https?:\/\//i, '').replace(/\/$/, '');
 
 const PostCard = ({ className, fallbackAuthor, post, viewerId }: PostCardProps) => {
   const navigate = useNavigate();
@@ -90,6 +104,7 @@ const PostCard = ({ className, fallbackAuthor, post, viewerId }: PostCardProps) 
   const [isCollectionsOpen, setCollectionsOpen] = useState(false);
   const [isReportOpen, setReportOpen] = useState(false);
   const [isFeedbackOpen, setFeedbackOpen] = useState(false);
+  const [isShareOpen, setShareOpen] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
   const [showFullCaption, setShowFullCaption] = useState(false);
   const [showSaveTooltip, setShowSaveTooltip] = useState(false);
@@ -97,6 +112,7 @@ const PostCard = ({ className, fallbackAuthor, post, viewerId }: PostCardProps) 
   const [deletePost, { isLoading: isDeleting }] = useDeletePostMutation();
   const { data: fullPostData, isFetching: isPostFetching } = useGetPostQuery(post._id, { skip: !isEditOpen });
   const { isLiked, isLikeUpdating, likesCount, toggleLike } = usePostLike(post);
+  const { isReposted, isRepostUpdating, repostsCount, toggleRepost } = usePostRepost(post);
   const { isSaved, isSaveUpdating, markSaved, toggleSave } = usePostSave(post);
 
   const author = getPostAuthor(post, fallbackAuthor);
@@ -109,10 +125,15 @@ const PostCard = ({ className, fallbackAuthor, post, viewerId }: PostCardProps) 
   const commentsDisabled = Boolean(post.settings?.commentsDisabled);
   const hideLikesCount = Boolean(post.settings?.hideLikesCount);
   const caption = post.caption || '';
-  const shouldTruncate = caption.length > 100;
-  const visibleCaption = showFullCaption || !shouldTruncate ? caption : `${caption.slice(0, 100)}...`;
+  const shouldTruncate = caption.length > 280;
+  const visibleCaption = showFullCaption || !shouldTruncate ? caption : `${caption.slice(0, 280)}...`;
   const editablePost = fullPostData?.post || null;
-  const userName = author?.userName || 'User Name';
+  const userName = author?.userName || 'User';
+  const extraLinks = useMemo<PostLink[]>(() => {
+    const links = Array.isArray(post.links) ? post.links : [];
+    return links.filter((link) => link.label?.trim() && link.url?.trim());
+  }, [post.links]);
+  const hashtags = Array.isArray(post.hashtags) ? post.hashtags : [];
 
   const goToPrevious = useCallback(() => {
     setCurrentIndex((current) => (current === 0 ? media.length - 1 : current - 1));
@@ -143,9 +164,25 @@ const PostCard = ({ className, fallbackAuthor, post, viewerId }: PostCardProps) 
     }
   }, [isSaved, toggleSave]);
 
+  const copyCode = useCallback(async () => {
+    const code = post.codeSnippet?.code;
+    if (!code) return;
+
+    try {
+      await navigator.clipboard.writeText(code);
+      showSuccess('Code copied.');
+    } catch {
+      showError('Code copy nahi ho paya.');
+    }
+  }, [post.codeSnippet?.code, showError, showSuccess]);
+
+  const openHashtag = useCallback((tag: string) => {
+    navigate(`/search?q=${encodeURIComponent(`#${tag}`)}`);
+  }, [navigate]);
+
   return (
     <article className={cn('v1-post-card-outer', className)}>
-      <div className="v1-post-card">
+      <div className="v1-post-card rich-post-card">
         <header className="v1-post-card__header">
           <button type="button" onClick={() => navigate(author?._id ? `/profile/${author._id}` : '/dashboard')} className="v1-post-card__author">
             <span className="v1-post-card__avatar">
@@ -178,6 +215,41 @@ const PostCard = ({ className, fallbackAuthor, post, viewerId }: PostCardProps) 
           </div>
         </header>
 
+        {caption && (
+          <p className="v1-post-card__caption rich-post-card__caption">
+            <span>{visibleCaption}</span>
+            {shouldTruncate && <button type="button" onClick={() => setShowFullCaption((current) => !current)}>{showFullCaption ? 'less' : 'more'}</button>}
+          </p>
+        )}
+
+        {extraLinks.length > 0 && (
+          <div className="rich-post-card__inline-links">
+            {extraLinks.map((link) => {
+              const href = normalizeLink(link.url);
+              return (
+                <a key={`${link.label}-${link.url}`} href={href} target="_blank" rel="noopener noreferrer">
+                  <ExternalLink size={14} aria-hidden="true" />
+                  <span>{link.label}</span>
+                  <small>{truncateUrl(href)}</small>
+                </a>
+              );
+            })}
+          </div>
+        )}
+
+        {post.codeSnippet?.code && (
+          <section className="rich-post-card__code">
+            <header>
+              <span>{post.codeSnippet.language || 'text'}</span>
+              <button type="button" onClick={copyCode}>
+                <Copy size={14} aria-hidden="true" />
+                Copy
+              </button>
+            </header>
+            <pre><code>{post.codeSnippet.code}</code></pre>
+          </section>
+        )}
+
         {activeMedia && (
           <section className="v1-post-card__media-shell">
             <div className="v1-post-card__media-stage">
@@ -189,21 +261,38 @@ const PostCard = ({ className, fallbackAuthor, post, viewerId }: PostCardProps) 
                 <img className="v1-post-card__media-main" src={activeMedia.url} alt={`Post content ${currentIndex + 1}`} loading="lazy" />
               )}
 
-              {media.length > 1 && currentIndex > 0 && <button type="button" className="v1-post-card__media-nav v1-post-card__media-nav--left" onClick={goToPrevious} aria-label="Previous image"><ChevronLeft size={20} /></button>}
-              {media.length > 1 && currentIndex < media.length - 1 && <button type="button" className="v1-post-card__media-nav v1-post-card__media-nav--right" onClick={goToNext} aria-label="Next image"><ChevronRight size={20} /></button>}
+              {media.length > 1 && currentIndex > 0 && <button type="button" className="v1-post-card__media-nav v1-post-card__media-nav--left" onClick={goToPrevious} aria-label="Previous media"><ChevronLeft size={20} /></button>}
+              {media.length > 1 && currentIndex < media.length - 1 && <button type="button" className="v1-post-card__media-nav v1-post-card__media-nav--right" onClick={goToNext} aria-label="Next media"><ChevronRight size={20} /></button>}
               {media.length > 1 && (
                 <div className="v1-post-card__dots">
-                  {media.map((item, index) => <button key={`${item.fileId}-${index}`} type="button" className={index === currentIndex ? 'is-active' : ''} onClick={() => setCurrentIndex(index)} aria-label={`Go to image ${index + 1}`} />)}
+                  {media.map((item, index) => <button key={`${item.fileId}-${index}`} type="button" className={index === currentIndex ? 'is-active' : ''} onClick={() => setCurrentIndex(index)} aria-label={`Go to media ${index + 1}`} />)}
                 </div>
               )}
             </div>
           </section>
         )}
 
-        <section className="v1-post-card__actions">
+        {post.isProjectPost && (
+          <div className="v1-post-card__links rich-post-card__project-links">
+            {post.projectLinks?.liveDemoUrl && <a href={normalizeLink(post.projectLinks.liveDemoUrl)} target="_blank" rel="noopener noreferrer"><ExternalLink size={14} />Live Demo</a>}
+            {post.projectLinks?.repositoryUrl && <a href={normalizeLink(post.projectLinks.repositoryUrl)} target="_blank" rel="noopener noreferrer"><GitFork size={14} />Github</a>}
+          </div>
+        )}
+
+        {hashtags.length > 0 && (
+          <div className="rich-post-card__hashtags">
+            {hashtags.map((tag) => (
+              <button type="button" key={tag} onClick={() => openHashtag(tag)}>
+                #{tag}
+              </button>
+            ))}
+          </div>
+        )}
+
+        <section className="v1-post-card__actions rich-post-card__actions">
           <ActionItem label="Like" count={hideLikesCount ? undefined : Number(likesCount || 0)} active={isLiked} disabled={isLikeUpdating} onClick={toggleLike} icon={<Heart size={20} className={isLiked ? 'is-filled' : ''} />} />
           <ActionItem label="Comment" count={commentsDisabled ? undefined : Number(counts.comments || 0)} disabled={commentsDisabled} onClick={() => setCommentsOpen(true)} icon={<MessageCircle size={20} />} />
-          <ActionItem label="Feedback" disabled={isOwner || !ownerId} onClick={() => setFeedbackOpen(true)} icon={<SendHorizontal size={20} />} />
+          <ActionItem label="Repost" count={Number(repostsCount || 0)} active={isReposted} disabled={isRepostUpdating} onClick={toggleRepost} icon={<Repeat2 size={20} />} />
           <div className="v1-post-card__save-action">
             <ActionItem label="Save" active={isSaved} disabled={isSaveUpdating} onClick={handleSaveClick} icon={<Bookmark size={20} className={isSaved ? 'is-filled' : ''} />} />
             {showSaveTooltip && (
@@ -221,28 +310,16 @@ const PostCard = ({ className, fallbackAuthor, post, viewerId }: PostCardProps) 
               </div>
             )}
           </div>
+          <ActionItem label="Feedback" count={Number(counts.feedbacks || 0)} disabled={isOwner || !ownerId} onClick={() => setFeedbackOpen(true)} icon={<SendHorizontal size={20} />} />
+          <ActionItem label="Share" onClick={() => setShareOpen(true)} icon={<Share2 size={20} />} />
         </section>
-
-        {post.isProjectPost && (
-          <div className="v1-post-card__links">
-            {post.projectLinks?.liveDemoUrl && <a href={post.projectLinks.liveDemoUrl} target="_blank" rel="noopener noreferrer"><ExternalLink size={14} />Live Demo</a>}
-            {post.projectLinks?.repositoryUrl && <a href={post.projectLinks.repositoryUrl} target="_blank" rel="noopener noreferrer"><GitFork size={14} />Github</a>}
-          </div>
-        )}
-
-        {caption && (
-          <p className="v1-post-card__caption">
-            <button type="button" onClick={() => navigate(author?._id ? `/profile/${author._id}` : '/dashboard')}>{userName}&nbsp;</button>
-            <span>{visibleCaption}</span>
-            {shouldTruncate && <button type="button" onClick={() => setShowFullCaption((current) => !current)}>{showFullCaption ? 'less' : 'more'}</button>}
-          </p>
-        )}
       </div>
 
       {isEditOpen && <PostComposerModal isOpen={isEditOpen} mode="edit" onClose={() => setEditOpen(false)} post={editablePost || post} isPostLoading={isPostFetching && !editablePost} />}
       {isCommentsOpen && <CommentModal isOpen={isCommentsOpen} onClose={() => setCommentsOpen(false)} post={post} />}
       {isCollectionsOpen && <ManageSaveCollectionsModal isOpen={isCollectionsOpen} onClose={() => setCollectionsOpen(false)} postId={post._id} onSaved={markSaved} />}
       {isReportOpen && <ReportModal isOpen={isReportOpen} onClose={() => setReportOpen(false)} targetId={post._id} onModel="Post" />}
+      {isShareOpen && <SharePostModal isOpen={isShareOpen} onClose={() => setShareOpen(false)} post={post} />}
       {isFeedbackOpen && ownerId && (
         <SendFeedbackModal
           isOpen={isFeedbackOpen}

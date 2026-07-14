@@ -149,6 +149,8 @@ export const chatApi = api.injectEndpoints({
               text: payload.text,
               sender: payload.sender,
               createdAt: payload.createdAt,
+              messageType: payload.messageType,
+              sharedPost: payload.sharedPost,
             };
             draft.conversations[conversationIndex].updatedAt = payload.createdAt || new Date().toISOString();
             draft.conversations[conversationIndex].isUnread = payload.sender !== currentUserId && !isActiveConversation;
@@ -195,9 +197,10 @@ export const chatApi = api.injectEndpoints({
         method: 'POST',
         body,
       }),
-      async onQueryStarted({ conversationId, message }, { dispatch, getState, queryFulfilled }) {
+      async onQueryStarted({ conversationId, message, messageType, sharedPostId }, { dispatch, getState, queryFulfilled }) {
         const tempMessageId = `temp-${Date.now()}`;
         const userId = (getState() as { auth?: { user?: { _id?: string } } }).auth?.user?._id || '';
+        const previewText = message.trim() || (messageType === 'post' ? 'Shared a post' : message);
         let messagePatch: { undo: () => void } | undefined;
 
         if (conversationId) {
@@ -206,8 +209,10 @@ export const chatApi = api.injectEndpoints({
               const tempMessage: ChatMessage = {
                 _id: tempMessageId,
                 sender: userId,
-                text: message,
+                text: previewText,
                 conversationId,
+                messageType,
+                sharedPost: sharedPostId,
                 createdAt: new Date().toISOString(),
               };
               draft.messages.push(tempMessage);
@@ -228,9 +233,11 @@ export const chatApi = api.injectEndpoints({
             draft.conversations[conversationIndex].updatedAt = new Date().toISOString();
             draft.conversations[conversationIndex].lastMessage = {
               _id: tempMessageId,
-              text: message,
+              text: previewText,
               createdAt: new Date().toISOString(),
               sender: userId,
+              messageType,
+              sharedPost: sharedPostId,
             };
             const [updatedConversation] = draft.conversations.splice(conversationIndex, 1);
             draft.conversations.unshift(updatedConversation);

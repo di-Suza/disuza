@@ -3,7 +3,7 @@ import { memo, useEffect, useMemo, useState, type KeyboardEvent, type MouseEvent
 
 import { useAppDispatch } from '@/app/store/hooks';
 import { useDeleteConversationMutation } from '@/features/messages/api/chat.api';
-import { formatChatMessageTime, getConversationTitle } from '@/features/messages/model/chat.helpers';
+import { formatChatMessageTime, getConversationPreview, getConversationTitle } from '@/features/messages/model/chat.helpers';
 import type { ChatConversation } from '@/features/messages/model/chat.types';
 import { clearSelectedChatFromState, setChatWindowClosed } from '@/features/messages/state/chatSlice';
 import { useToast } from '@/shared/hooks/useToast';
@@ -163,7 +163,7 @@ const Conversations = ({ conversations, getConversationsLoading, handleChatSelec
 
                     <div className="messages-v1-conversation__preview">
                       <p className={hasUnread ? 'is-unread' : ''}>
-                        {chat.isBlocked || chat.hasBlockedMe ? 'Chat unavailable' : chat.lastMessage?.text || 'Start a conversation'}
+                        {chat.isBlocked || chat.hasBlockedMe ? 'Chat unavailable' : getConversationPreview(chat.lastMessage)}
                       </p>
                       {hasUnread && <span aria-label="Unread conversation" />}
                     </div>

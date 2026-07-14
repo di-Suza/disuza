@@ -1,4 +1,4 @@
-import type { ChatConversation, ChatMessage, ChatUser, FeedbackDetails } from './chat.types';
+import type { ChatConversation, ChatLastMessage, ChatMessage, ChatUser, FeedbackDetails, SharedPostDetails } from './chat.types';
 
 export const formatChatMessageTime = (createdAt?: string) => {
   if (!createdAt) return '';
@@ -64,6 +64,19 @@ export const getConversationTitle = (conversation?: ChatConversation | null) => 
 export const getFeedbackMediaUrl = (details?: FeedbackDetails | null) => {
   const media = details?.images?.[0] || details?.media?.[0];
   return typeof media?.url === 'string' && media.url.trim() ? media.url : null;
+};
+
+export const getSharedPostMediaUrl = (details?: SharedPostDetails | null) => {
+  const media = details?.media?.[0] || details?.images?.[0];
+  const thumbnailUrl = typeof media?.thumbnailUrl === 'string' && media.thumbnailUrl.trim() ? media.thumbnailUrl : '';
+  const mediaUrl = typeof media?.url === 'string' && media.url.trim() ? media.url : '';
+  return thumbnailUrl || mediaUrl || null;
+};
+
+export const getConversationPreview = (lastMessage?: ChatLastMessage | null) => {
+  if (!lastMessage) return 'Start a conversation';
+  if (lastMessage.messageType === 'post' || lastMessage.sharedPost) return 'Shared a post';
+  return lastMessage.text || 'Start a conversation';
 };
 
 export const isMessageFromUser = (message: ChatMessage, userId?: string | null) => (

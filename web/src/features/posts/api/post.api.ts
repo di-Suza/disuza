@@ -7,6 +7,7 @@ import type {
   FeedQueryArgs,
   Post,
   PostLikeResponse,
+  PostRepostResponse,
   PostsListResponse,
   PostsQueryArgs,
   SavePostRequest,
@@ -108,6 +109,36 @@ export const postApi = api.injectEndpoints({
         try {
           await queryFulfilled;
           dispatch(api.util.invalidateTags(['ProfileUser', 'UserAccountHistory']));
+        } catch {
+          undoPatches(patches);
+        }
+      },
+    }),
+    repostPost: builder.mutation<PostRepostResponse, string>({
+      query: (postId) => ({
+        url: `/post/repostPost/${postId}`,
+        method: 'POST',
+      }),
+      async onQueryStarted(postId, { dispatch, getState, queryFulfilled }) {
+        const patches = collectPostRepostPatches(dispatch, getState(), postId, true);
+
+        try {
+          await queryFulfilled;
+        } catch {
+          undoPatches(patches);
+        }
+      },
+    }),
+    unrepostPost: builder.mutation<PostRepostResponse, string>({
+      query: (postId) => ({
+        url: `/post/unrepostPost/${postId}`,
+        method: 'DELETE',
+      }),
+      async onQueryStarted(postId, { dispatch, getState, queryFulfilled }) {
+        const patches = collectPostRepostPatches(dispatch, getState(), postId, false);
+
+        try {
+          await queryFulfilled;
         } catch {
           undoPatches(patches);
         }
@@ -341,6 +372,50 @@ const collectPostSavePatches = (dispatch: AppDispatch, state: unknown, postId: s
   return patches;
 };
 
+const collectPostRepostPatches = (dispatch: AppDispatch, state: unknown, postId: string, reposted: boolean): UndoablePatch[] => {
+  const patches: UndoablePatch[] = [
+    dispatch(
+      postApi.util.updateQueryData('getPost', postId, (draft) => {
+        updateSinglePostRepostState(draft, postId, reposted);
+      }),
+    ),
+  ];
+
+  getFulfilledQueryEntries(state, ['getFeed', 'getAllPosts', 'getSavedCollectionPosts']).forEach((entry) => {
+    if (entry.endpointName === 'getFeed') {
+      patches.push(
+        dispatch(
+          postApi.util.updateQueryData('getFeed', entry.originalArgs as FeedQueryArgs | void, (draft) => {
+            updatePostsListRepostState(draft, postId, reposted);
+          }),
+        ),
+      );
+    }
+
+    if (entry.endpointName === 'getAllPosts') {
+      patches.push(
+        dispatch(
+          postApi.util.updateQueryData('getAllPosts', entry.originalArgs as PostsQueryArgs | void, (draft) => {
+            updatePostsListRepostState(draft, postId, reposted);
+          }),
+        ),
+      );
+    }
+
+    if (entry.endpointName === 'getSavedCollectionPosts') {
+      patches.push(
+        dispatch(
+          postApi.util.updateQueryData('getSavedCollectionPosts', entry.originalArgs as SavedCollectionPostsQueryArgs, (draft) => {
+            updateSavedCollectionPostsRepostState(draft, postId, reposted);
+          }),
+        ),
+      );
+    }
+  });
+
+  return patches;
+};
+
 const getFulfilledQueryEntries = (state: unknown, endpointNames: string[]): ApiQueryEntry[] => {
   const queries = (state as ApiCacheState).api?.queries;
   if (!queries) return [];
@@ -360,6 +435,11 @@ const updatePostsListSaveState = (draft: PostsListResponse | undefined, postId: 
   updatePostSaveState(post, saved);
 };
 
+const updatePostsListRepostState = (draft: PostsListResponse | undefined, postId: string, reposted: boolean) => {
+  const post = draft?.posts?.find((item) => item._id === postId);
+  updatePostRepostState(post, reposted);
+};
+
 const updateSinglePostLikeState = (draft: SinglePostResponse | undefined, postId: string, liked: boolean) => {
   if (draft?.post?._id !== postId) return;
   updatePostLikeState(draft.post, liked);
@@ -368,6 +448,11 @@ const updateSinglePostLikeState = (draft: SinglePostResponse | undefined, postId
 const updateSinglePostSaveState = (draft: SinglePostResponse | undefined, postId: string, saved: boolean) => {
   if (draft?.post?._id !== postId) return;
   updatePostSaveState(draft.post, saved);
+};
+
+const updateSinglePostRepostState = (draft: SinglePostResponse | undefined, postId: string, reposted: boolean) => {
+  if (draft?.post?._id !== postId) return;
+  updatePostRepostState(draft.post, reposted);
 };
 
 const updateSavedCollectionPostsLikeState = (draft: SavedCollectionPostsResponse | undefined, postId: string, liked: boolean) => {
@@ -392,6 +477,11 @@ const updateSavedCollectionPostsSaveState = (draft: SavedCollectionPostsResponse
   }
 };
 
+const updateSavedCollectionPostsRepostState = (draft: SavedCollectionPostsResponse | undefined, postId: string, reposted: boolean) => {
+  const post = draft?.posts?.find((item) => item._id === postId);
+  updatePostRepostState(post, reposted);
+};
+
 const updatePostLikeState = (post: Post | undefined, liked: boolean) => {
   if (!post) return;
 
@@ -411,6 +501,20 @@ const updatePostSaveState = (post: Post | undefined, saved: boolean) => {
   post.isSaved = saved;
 };
 
+const updatePostRepostState = (post: Post | undefined, reposted: boolean) => {
+  if (!post) return;
+
+  const currentReposts = Number(post.counts?.reposts || 0);
+  const wasReposted = Boolean(post.isReposted);
+  const delta = reposted ? (wasReposted ? 0 : 1) : wasReposted ? -1 : 0;
+
+  post.isReposted = reposted;
+  post.counts = {
+    ...post.counts,
+    reposts: Math.max(0, currentReposts + delta),
+  };
+};
+
 const undoPatches = (patches: UndoablePatch[]) => {
   patches.forEach((patch) => patch.undo());
 };
@@ -427,8 +531,10 @@ export const {
   useGetSavedCollectionPostsQuery,
   useGetSavedPostsCollectionsQuery,
   useLikePostMutation,
+  useRepostPostMutation,
   useSavePostMutation,
   useUnlikePostMutation,
+  useUnrepostPostMutation,
   useUnsavePostMutation,
   useUpdateCollectionMutation,
   useUpdatePostMutation,

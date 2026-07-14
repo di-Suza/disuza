@@ -24,10 +24,21 @@ export type ProjectLinks = {
   repositoryUrl?: string;
 };
 
+export type PostLink = {
+  label: string;
+  url: string;
+};
+
+export type CodeSnippet = {
+  language: string;
+  code: string;
+};
+
 export type PostCounts = {
   comments: number;
   likes: number;
   feedbacks: number;
+  reposts: number;
 };
 
 export type PostAuthor = {
@@ -51,8 +62,12 @@ export type Post = {
   settings?: Partial<PostSettings>;
   isProjectPost?: boolean;
   projectLinks?: ProjectLinks;
+  links?: PostLink[];
+  codeSnippet?: CodeSnippet;
+  hashtags?: string[];
   isLiked?: boolean;
   isSaved?: boolean;
+  isReposted?: boolean;
   createdAt?: string;
   updatedAt?: string;
 };
@@ -82,6 +97,13 @@ export type PostLikeResponse = {
   liked: boolean;
   alreadyLiked?: boolean;
   alreadyUnliked?: boolean;
+};
+
+export type PostRepostResponse = {
+  success: boolean;
+  message: string;
+  reposted: boolean;
+  alreadyUnreposted?: boolean;
 };
 
 export type SavedCollection = {

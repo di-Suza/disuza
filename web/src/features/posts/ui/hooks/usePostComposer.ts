@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent, ty
 
 import { useCreatePostMutation, useUpdatePostMutation } from '@/features/posts/api/post.api';
 import { getPostMedia } from '@/features/posts/model/post.helpers';
-import type { MediaKind, MediaOrderItem, Post } from '@/features/posts/model/post.types';
+import type { CodeSnippet, MediaKind, MediaOrderItem, Post, PostLink } from '@/features/posts/model/post.types';
 import { useToast } from '@/shared/hooks/useToast';
 import { getErrorMessage } from '@/shared/utils/getErrorMessage';
 
@@ -17,6 +17,10 @@ export type ComposerMediaItem = {
   fileId?: string;
 };
 
+export type ComposerLinkItem = PostLink & {
+  id: string;
+};
+
 type UsePostComposerOptions = {
   mode: PostComposerMode;
   post?: Post | null;
@@ -26,6 +30,8 @@ type UsePostComposerOptions = {
 
 const MAX_MEDIA_ITEMS = 10;
 const MAX_CAPTION_LENGTH = 2200;
+const MAX_LINKS = 8;
+const MAX_HASHTAGS = 12;
 
 const createItemId = () => `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
@@ -54,6 +60,10 @@ export const usePostComposer = ({ isOpen, mode, onClose, post }: UsePostComposer
   const [isProjectPost, setIsProjectPost] = useState(false);
   const [settings, setSettings] = useState({ hideLikesCount: false, commentsDisabled: false });
   const [projectLinks, setProjectLinks] = useState({ liveDemoUrl: '', repositoryUrl: '' });
+  const [links, setLinks] = useState<ComposerLinkItem[]>([]);
+  const [codeSnippet, setCodeSnippet] = useState<CodeSnippet>({ language: 'tsx', code: '' });
+  const [hashtags, setHashtags] = useState<string[]>([]);
+  const [hashtagDraft, setHashtagDraft] = useState('');
 
   const isSubmitting = isCreating || isUpdating;
   const isEditMode = mode === 'edit';
@@ -79,6 +89,13 @@ export const usePostComposer = ({ isOpen, mode, onClose, post }: UsePostComposer
       liveDemoUrl: post?.projectLinks?.liveDemoUrl || '',
       repositoryUrl: post?.projectLinks?.repositoryUrl || '',
     });
+    setLinks((post?.links || []).map((link) => ({ ...link, id: createItemId() })));
+    setCodeSnippet({
+      language: post?.codeSnippet?.language || 'tsx',
+      code: post?.codeSnippet?.code || '',
+    });
+    setHashtags(post?.hashtags || []);
+    setHashtagDraft('');
   }, [mode, post, revokeUploadUrls]);
 
   useEffect(() => {
@@ -90,8 +107,9 @@ export const usePostComposer = ({ isOpen, mode, onClose, post }: UsePostComposer
 
   const closeComposer = useCallback(() => {
     revokeUploadUrls();
+    resetFromPost();
     onClose();
-  }, [onClose, revokeUploadUrls]);
+  }, [onClose, resetFromPost, revokeUploadUrls]);
 
   const handleFilesChange = useCallback((event: ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files || []);
@@ -163,6 +181,56 @@ export const usePostComposer = ({ isOpen, mode, onClose, post }: UsePostComposer
     setProjectLinks((currentLinks) => ({ ...currentLinks, [key]: event.target.value }));
   }, []);
 
+  const addLink = useCallback(() => {
+    setLinks((currentLinks) => {
+      if (currentLinks.length >= MAX_LINKS) {
+        showError(`A post can contain up to ${MAX_LINKS} extra links.`);
+        return currentLinks;
+      }
+
+      return [...currentLinks, { id: createItemId(), label: '', url: '' }];
+    });
+  }, [showError]);
+
+  const updateLink = useCallback((id: string, key: keyof PostLink, value: string) => {
+    setLinks((currentLinks) => currentLinks.map((link) => (
+      link.id === id ? { ...link, [key]: value } : link
+    )));
+  }, []);
+
+  const removeLink = useCallback((id: string) => {
+    setLinks((currentLinks) => currentLinks.filter((link) => link.id !== id));
+  }, []);
+
+  const updateCodeSnippet = useCallback((key: keyof CodeSnippet, value: string) => {
+    setCodeSnippet((currentSnippet) => ({ ...currentSnippet, [key]: value }));
+  }, []);
+
+  const addHashtag = useCallback((rawTag?: string) => {
+    const tag = (rawTag ?? hashtagDraft).replace(/^#/, '').trim().toLowerCase();
+
+    if (!tag) return;
+
+    if (!/^[a-z0-9_]+$/i.test(tag)) {
+      showError('Hashtags can contain letters, numbers, and underscores only.');
+      return;
+    }
+
+    setHashtags((currentTags) => {
+      if (currentTags.includes(tag)) return currentTags;
+      if (currentTags.length >= MAX_HASHTAGS) {
+        showError(`A post can contain up to ${MAX_HASHTAGS} hashtags.`);
+        return currentTags;
+      }
+      return [...currentTags, tag];
+    });
+    setHashtagDraft('');
+  }, [hashtagDraft, showError]);
+
+  const removeHashtag = useCallback((tag: string) => {
+    setHashtags((currentTags) => currentTags.filter((item) => item !== tag));
+  }, []);
+
   const buildMediaOrder = useCallback((): MediaOrderItem[] => {
     const uploadItems = mediaItems.filter((item) => item.source === 'upload');
     const uploadIndexById = new Map(uploadItems.map((item, index) => [item.id, index]));
@@ -183,6 +251,17 @@ export const usePostComposer = ({ isOpen, mode, onClose, post }: UsePostComposer
     formData.append('caption', caption.trim());
     formData.append('settings', JSON.stringify(settings));
     formData.append('mediaOrder', JSON.stringify(buildMediaOrder()));
+    formData.append('links', JSON.stringify(links
+      .map(({ label, url }) => ({ label: label.trim(), url: url.trim() }))
+      .filter((link) => link.label || link.url)));
+    formData.append('hashtags', JSON.stringify(hashtags));
+
+    if (codeSnippet.code.trim()) {
+      formData.append('codeSnippet', JSON.stringify({
+        language: codeSnippet.language.trim() || 'text',
+        code: codeSnippet.code.trim(),
+      }));
+    }
 
     uploadItems.forEach((item) => {
       if (item.file) formData.append('media', item.file);
@@ -200,16 +279,11 @@ export const usePostComposer = ({ isOpen, mode, onClose, post }: UsePostComposer
     }
 
     return formData;
-  }, [buildMediaOrder, caption, isEditingProjectPost, isProjectPost, mediaItems, mode, projectLinks, settings]);
+  }, [buildMediaOrder, caption, codeSnippet, hashtags, isEditingProjectPost, isProjectPost, links, mediaItems, mode, projectLinks, settings]);
 
   const validateForm = useCallback(() => {
     if (caption.length > MAX_CAPTION_LENGTH) {
       showError(`Caption cannot exceed ${MAX_CAPTION_LENGTH} characters.`);
-      return false;
-    }
-
-    if (mediaItems.length === 0) {
-      showError('Post cannot be saved without media.');
       return false;
     }
 
@@ -225,8 +299,30 @@ export const usePostComposer = ({ isOpen, mode, onClose, post }: UsePostComposer
       return false;
     }
 
+    const hasLinks = links.some((link) => link.label.trim() || link.url.trim());
+    const hasInvalidLink = links.some((link) => (link.label.trim() && !link.url.trim()) || (!link.label.trim() && link.url.trim()));
+
+    if (hasInvalidLink) {
+      showError('Link label and URL are required together.');
+      return false;
+    }
+
+    const hasContent = Boolean(
+      caption.trim()
+      || mediaItems.length > 0
+      || codeSnippet.code.trim()
+      || hasLinks
+      || hashtags.length > 0
+      || needsProjectLinks,
+    );
+
+    if (!hasContent) {
+      showError('Add text, media, code, a link, hashtag, or project links before posting.');
+      return false;
+    }
+
     return true;
-  }, [caption.length, isEditingProjectPost, isProjectPost, mediaItems.length, mode, projectLinks, showError]);
+  }, [caption, codeSnippet.code, hashtags.length, isEditingProjectPost, isProjectPost, links, mediaItems.length, mode, projectLinks, showError]);
 
   const handleSubmit = useCallback(async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -247,25 +343,45 @@ export const usePostComposer = ({ isOpen, mode, onClose, post }: UsePostComposer
   }, [buildFormData, closeComposer, createPost, isEditMode, isSubmitting, post?._id, showError, showSuccess, updatePost, validateForm]);
 
   const mediaSummary = useMemo(() => `${mediaItems.length}/${MAX_MEDIA_ITEMS}`, [mediaItems.length]);
+  const hasComposerContent = Boolean(
+    caption.trim()
+    || mediaItems.length > 0
+    || codeSnippet.code.trim()
+    || links.some((link) => link.label.trim() || link.url.trim())
+    || hashtags.length > 0
+    || ((mode === 'create' && isProjectPost) || isEditingProjectPost),
+  );
 
   return {
+    addHashtag,
+    addLink,
     canEditProjectLinks,
     caption,
+    codeSnippet,
     closeComposer,
+    hashtagDraft,
+    hashtags,
     handleFilesChange,
     handleSubmit,
+    hasComposerContent,
     isEditMode,
     isEditingProjectPost,
     isProjectPost,
     isSubmitting,
+    links,
     mediaItems,
     mediaSummary,
     moveMedia,
     projectLinks,
     removeMedia,
+    removeHashtag,
+    removeLink,
     setCaption,
+    setHashtagDraft,
     setIsProjectPost,
     settings,
+    updateCodeSnippet,
+    updateLink,
     updateProjectLink,
     updateSetting,
   };
