@@ -1,5 +1,6 @@
 import { api } from '@/shared/api/api';
 import { getSocket } from '@/shared/services/socket';
+import { setLastReceivedMessage } from '../state/chatSlice';
 import type {
   ChatMessage,
   DeleteConversationRequest,
@@ -128,6 +129,13 @@ export const chatApi = api.injectEndpoints({
           if (!isChatMessage(payload)) return;
 
           const currentUserId = (getState() as { auth?: { user?: { _id?: string } } }).auth?.user?._id;
+          const chatState = (getState() as {
+            chat?: {
+              isChatWindowActive?: boolean;
+              selectedChatId?: string | null;
+            };
+          }).chat;
+          const isActiveConversation = chatState?.isChatWindowActive && chatState.selectedChatId === payload.conversationId;
           let conversationWasPresent = false;
 
           updateCachedData((draft) => {
@@ -143,13 +151,17 @@ export const chatApi = api.injectEndpoints({
               createdAt: payload.createdAt,
             };
             draft.conversations[conversationIndex].updatedAt = payload.createdAt || new Date().toISOString();
-            draft.conversations[conversationIndex].isUnread = payload.sender !== currentUserId;
+            draft.conversations[conversationIndex].isUnread = payload.sender !== currentUserId && !isActiveConversation;
             const [updatedConversation] = draft.conversations.splice(conversationIndex, 1);
             draft.conversations.unshift(updatedConversation);
           });
 
           if (!conversationWasPresent) {
             dispatch(chatApi.util.invalidateTags(['Conversations']));
+          }
+
+          if (payload.sender !== currentUserId && !isActiveConversation) {
+            dispatch(setLastReceivedMessage(payload));
           }
         };
         const handleMessageUnsent = (payload: unknown) => {

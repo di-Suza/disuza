@@ -2,6 +2,7 @@ import {
   Bookmark,
   ChevronLeft,
   ChevronRight,
+  CircleCheckBig,
   Edit3,
   ExternalLink,
   GitFork,
@@ -207,8 +208,16 @@ const PostCard = ({ className, fallbackAuthor, post, viewerId }: PostCardProps) 
             <ActionItem label="Save" active={isSaved} disabled={isSaveUpdating} onClick={handleSaveClick} icon={<Bookmark size={20} className={isSaved ? 'is-filled' : ''} />} />
             {showSaveTooltip && (
               <div className="v1-post-card__save-tooltip">
-                <span>Saved</span>
-                <button type="button" onClick={() => { setShowSaveTooltip(false); setCollectionsOpen(true); }}>Manage</button>
+                <div className="v1-post-card__save-tooltip-card">
+                  <div className="v1-post-card__save-tooltip-head">
+                    <span>Saved</span>
+                    <CircleCheckBig size={18} aria-hidden="true" />
+                  </div>
+                  <button type="button" onClick={() => { setShowSaveTooltip(false); setCollectionsOpen(true); }}>
+                    Manage collections
+                  </button>
+                  <i aria-hidden="true" />
+                </div>
               </div>
             )}
           </div>
