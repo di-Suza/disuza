@@ -31,7 +31,6 @@ type UsePostComposerOptions = {
 const MAX_MEDIA_ITEMS = 10;
 const MAX_CAPTION_LENGTH = 2200;
 const MAX_LINKS = 8;
-const MAX_HASHTAGS = 12;
 
 const createItemId = () => `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
@@ -62,8 +61,6 @@ export const usePostComposer = ({ isOpen, mode, onClose, post }: UsePostComposer
   const [projectLinks, setProjectLinks] = useState({ liveDemoUrl: '', repositoryUrl: '' });
   const [links, setLinks] = useState<ComposerLinkItem[]>([]);
   const [codeSnippet, setCodeSnippet] = useState<CodeSnippet>({ language: 'tsx', code: '' });
-  const [hashtags, setHashtags] = useState<string[]>([]);
-  const [hashtagDraft, setHashtagDraft] = useState('');
 
   const isSubmitting = isCreating || isUpdating;
   const isEditMode = mode === 'edit';
@@ -94,8 +91,6 @@ export const usePostComposer = ({ isOpen, mode, onClose, post }: UsePostComposer
       language: post?.codeSnippet?.language || 'tsx',
       code: post?.codeSnippet?.code || '',
     });
-    setHashtags(post?.hashtags || []);
-    setHashtagDraft('');
   }, [mode, post, revokeUploadUrls]);
 
   useEffect(() => {
@@ -206,31 +201,6 @@ export const usePostComposer = ({ isOpen, mode, onClose, post }: UsePostComposer
     setCodeSnippet((currentSnippet) => ({ ...currentSnippet, [key]: value }));
   }, []);
 
-  const addHashtag = useCallback((rawTag?: string) => {
-    const tag = (rawTag ?? hashtagDraft).replace(/^#/, '').trim().toLowerCase();
-
-    if (!tag) return;
-
-    if (!/^[a-z0-9_]+$/i.test(tag)) {
-      showError('Hashtags can contain letters, numbers, and underscores only.');
-      return;
-    }
-
-    setHashtags((currentTags) => {
-      if (currentTags.includes(tag)) return currentTags;
-      if (currentTags.length >= MAX_HASHTAGS) {
-        showError(`A post can contain up to ${MAX_HASHTAGS} hashtags.`);
-        return currentTags;
-      }
-      return [...currentTags, tag];
-    });
-    setHashtagDraft('');
-  }, [hashtagDraft, showError]);
-
-  const removeHashtag = useCallback((tag: string) => {
-    setHashtags((currentTags) => currentTags.filter((item) => item !== tag));
-  }, []);
-
   const buildMediaOrder = useCallback((): MediaOrderItem[] => {
     const uploadItems = mediaItems.filter((item) => item.source === 'upload');
     const uploadIndexById = new Map(uploadItems.map((item, index) => [item.id, index]));
@@ -254,7 +224,6 @@ export const usePostComposer = ({ isOpen, mode, onClose, post }: UsePostComposer
     formData.append('links', JSON.stringify(links
       .map(({ label, url }) => ({ label: label.trim(), url: url.trim() }))
       .filter((link) => link.label || link.url)));
-    formData.append('hashtags', JSON.stringify(hashtags));
 
     if (codeSnippet.code.trim()) {
       formData.append('codeSnippet', JSON.stringify({
@@ -279,7 +248,7 @@ export const usePostComposer = ({ isOpen, mode, onClose, post }: UsePostComposer
     }
 
     return formData;
-  }, [buildMediaOrder, caption, codeSnippet, hashtags, isEditingProjectPost, isProjectPost, links, mediaItems, mode, projectLinks, settings]);
+  }, [buildMediaOrder, caption, codeSnippet, isEditingProjectPost, isProjectPost, links, mediaItems, mode, projectLinks, settings]);
 
   const validateForm = useCallback(() => {
     if (caption.length > MAX_CAPTION_LENGTH) {
@@ -312,17 +281,16 @@ export const usePostComposer = ({ isOpen, mode, onClose, post }: UsePostComposer
       || mediaItems.length > 0
       || codeSnippet.code.trim()
       || hasLinks
-      || hashtags.length > 0
       || needsProjectLinks,
     );
 
     if (!hasContent) {
-      showError('Add text, media, code, a link, hashtag, or project links before posting.');
+      showError('Add text, media, code, a link, or project links before posting.');
       return false;
     }
 
     return true;
-  }, [caption, codeSnippet.code, hashtags.length, isEditingProjectPost, isProjectPost, links, mediaItems.length, mode, projectLinks, showError]);
+  }, [caption, codeSnippet.code, isEditingProjectPost, isProjectPost, links, mediaItems.length, mode, projectLinks, showError]);
 
   const handleSubmit = useCallback(async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -348,19 +316,15 @@ export const usePostComposer = ({ isOpen, mode, onClose, post }: UsePostComposer
     || mediaItems.length > 0
     || codeSnippet.code.trim()
     || links.some((link) => link.label.trim() || link.url.trim())
-    || hashtags.length > 0
     || ((mode === 'create' && isProjectPost) || isEditingProjectPost),
   );
 
   return {
-    addHashtag,
     addLink,
     canEditProjectLinks,
     caption,
     codeSnippet,
     closeComposer,
-    hashtagDraft,
-    hashtags,
     handleFilesChange,
     handleSubmit,
     hasComposerContent,
@@ -374,10 +338,8 @@ export const usePostComposer = ({ isOpen, mode, onClose, post }: UsePostComposer
     moveMedia,
     projectLinks,
     removeMedia,
-    removeHashtag,
     removeLink,
     setCaption,
-    setHashtagDraft,
     setIsProjectPost,
     settings,
     updateCodeSnippet,

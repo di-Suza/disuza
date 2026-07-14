@@ -475,7 +475,7 @@ class PostService {
       if (input.hashtags) {
         updateData.hashtags = this.normalizeHashtags(input.hashtags, updateData.caption ?? post.caption);
       } else if (typeof updateData.caption === 'string') {
-        updateData.hashtags = this.normalizeHashtags(post.hashtags, updateData.caption);
+        updateData.hashtags = this.normalizeHashtags(undefined, updateData.caption);
       }
 
       if (Object.keys(updateData).length === 0) {

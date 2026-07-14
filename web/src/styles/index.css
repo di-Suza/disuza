@@ -7685,6 +7685,28 @@ svg {
   white-space: pre-line;
 }
 
+.v1-post-card__caption .rich-post-card__caption-tag {
+  display: inline;
+  border: 0;
+  background: transparent;
+  color: #60a5fa;
+  padding: 0;
+  font: inherit;
+  font-weight: 850;
+  text-decoration: none;
+}
+
+.v1-post-card__caption .rich-post-card__caption-tag:hover {
+  color: #93c5fd;
+  text-decoration: underline;
+}
+
+.v1-post-card__caption .rich-post-card__more {
+  margin-left: 4px;
+  color: var(--text-secondary);
+  font-weight: 800;
+}
+
 .rich-post-card__inline-links {
   display: grid;
   gap: 8px;
@@ -7776,18 +7798,59 @@ svg {
 }
 
 .rich-post-card__actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
   margin-top: 6px;
   border-top: 1px solid var(--border-secondary);
+  padding: 12px 0 0;
+}
+
+.rich-post-card__action-left {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 24px;
 }
 
 .rich-post-card__actions .v1-post-action {
+  width: auto;
+  flex: 0 0 auto;
   flex-direction: row;
   justify-content: center;
-  padding: 8px 6px;
+  gap: 8px;
+  border-radius: 999px;
+  padding: 6px 0;
 }
 
-.rich-post-card__actions .v1-post-action em {
+.rich-post-card__actions .v1-post-action > span {
   width: auto;
+  height: auto;
+}
+
+.rich-post-card__actions .v1-post-action small {
+  position: static;
+  border: 0;
+  background: transparent;
+  color: var(--text-secondary);
+  padding: 0;
+  font-size: 13px;
+  font-weight: 750;
+  line-height: 1;
+}
+
+.rich-post-card__actions .v1-post-action:hover:not(:disabled) small {
+  color: var(--text-primary);
+}
+
+.rich-post-card__save-right {
+  min-width: auto;
+  flex: 0 0 auto;
+}
+
+.rich-post-card__save-right .v1-post-action {
+  padding-right: 0;
 }
 
 .share-post-modal-backdrop {
@@ -8063,12 +8126,17 @@ svg {
   }
 
   .rich-post-card__actions {
-    flex-wrap: wrap;
+    align-items: center;
   }
 
-  .rich-post-card__actions .v1-post-action,
-  .rich-post-card__actions .v1-post-card__save-action {
-    flex: 1 1 30%;
+  .rich-post-card__action-left {
+    gap: 16px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .rich-post-card__action-left::-webkit-scrollbar {
+    display: none;
   }
 
   .share-post-modal__copy {

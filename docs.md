@@ -1833,7 +1833,7 @@ API completed:
 - allowed text-only posts instead of requiring image/video media
 - added structured extra links with label and URL
 - kept project posts stricter by requiring live demo and GitHub repository links
-- added code snippet and hashtag fields to the post model, validators, service normalization, and search indexing
+- added code snippet and caption-derived hashtag fields to the post model, validators, service normalization, and search indexing
 - added repost persistence with optimistic-safe repost/unrepost endpoints and post count updates
 - extended chat messages with a `post` message type so shared posts can be sent inside conversations
 - updated post cleanup so repost records and shared-post chat references are handled with post deletion
@@ -1841,8 +1841,8 @@ API completed:
 Web completed:
 
 - added an inline feed composer with Image, Code, Project, and Link tools while removing Poll/Everyone from the new post flow
-- updated the post modal composer to support optional media, code snippets, extra links, hashtags, and project links
-- rebuilt post cards for text-first rich content with code blocks, link chips, hashtags, mixed media, repost, feedback, save, and share actions
+- updated the post modal composer to support optional media, code snippets, extra links, and project links
+- rebuilt post cards for text-first rich content with code blocks, link chips, inline highlighted hashtags, mixed media, repost, feedback, save, and share actions
 - added hashtag navigation to `/search?q=#tag` so explore/search opens with the selected hashtag already applied
 - added a share-post modal with copy-link support and conversation selection
 - rendered shared post messages inside chat with a clickable post preview and conversation preview text

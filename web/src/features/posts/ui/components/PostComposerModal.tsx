@@ -6,7 +6,6 @@ import {
   ChevronUp,
   Code2,
   GitFork,
-  Hash,
   ImagePlus,
   Link2,
   Loader2,
@@ -37,7 +36,6 @@ const PostComposerModal = ({ isOpen, isPostLoading = false, mode, onClose, post 
   const fileInputId = useId();
   const [showAdvancedSettings, setShowAdvancedSettings] = useState(false);
   const {
-    addHashtag,
     addLink,
     canEditProjectLinks,
     caption,
@@ -46,8 +44,6 @@ const PostComposerModal = ({ isOpen, isPostLoading = false, mode, onClose, post 
     handleFilesChange,
     handleSubmit,
     hasComposerContent,
-    hashtagDraft,
-    hashtags,
     isEditMode,
     isEditingProjectPost,
     isProjectPost,
@@ -57,11 +53,9 @@ const PostComposerModal = ({ isOpen, isPostLoading = false, mode, onClose, post 
     mediaSummary,
     moveMedia,
     projectLinks,
-    removeHashtag,
     removeLink,
     removeMedia,
     setCaption,
-    setHashtagDraft,
     setIsProjectPost,
     settings,
     updateCodeSnippet,
@@ -211,41 +205,6 @@ const PostComposerModal = ({ isOpen, isPostLoading = false, mode, onClose, post 
                   </div>
                 ) : (
                   <p className="post-composer-v1__hint">Add a label and URL when you want to attach a resource.</p>
-                )}
-              </section>
-
-              <section className="post-composer-v1__rich-block">
-                <div className="post-composer-v1__section-heading">
-                  <label><Hash size={16} aria-hidden="true" /> Hashtags</label>
-                  <small>{hashtags.length}/12</small>
-                </div>
-                <div className="post-composer-v1__tag-input">
-                  <Input
-                    value={hashtagDraft}
-                    onChange={(event) => setHashtagDraft(event.target.value)}
-                    onKeyDown={(event) => {
-                      if (event.key === 'Enter') {
-                        event.preventDefault();
-                        addHashtag();
-                      }
-                    }}
-                    placeholder="react, typescript, opensource"
-                    aria-label="Hashtag"
-                  />
-                  <Button variant="secondary" onClick={() => addHashtag()}>
-                    <Plus size={15} aria-hidden="true" />
-                    Add
-                  </Button>
-                </div>
-                {hashtags.length > 0 && (
-                  <div className="post-composer-v1__tags">
-                    {hashtags.map((tag) => (
-                      <button type="button" key={tag} onClick={() => removeHashtag(tag)}>
-                        #{tag}
-                        <X size={13} aria-hidden="true" />
-                      </button>
-                    ))}
-                  </div>
                 )}
               </section>
 

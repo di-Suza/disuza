@@ -1,4 +1,4 @@
-import { Braces, Code2, GitFork, Hash, ImagePlus, Link2, Loader2, Plus, Send, Trash2, UserRound, Video, X } from 'lucide-react';
+import { Braces, Code2, GitFork, ImagePlus, Link2, Loader2, Plus, Send, Trash2, UserRound, Video, X } from 'lucide-react';
 import { memo, useId, useState } from 'react';
 
 import { useAppSelector } from '@/app/store/hooks';
@@ -15,25 +15,20 @@ const InlinePostComposer = () => {
   const avatarUrl = user?.profilePicture?.url;
   const [activePanel, setActivePanel] = useState<ComposerPanel>(null);
   const {
-    addHashtag,
     addLink,
     caption,
     codeSnippet,
     handleFilesChange,
     handleSubmit,
     hasComposerContent,
-    hashtagDraft,
-    hashtags,
     isProjectPost,
     isSubmitting,
     links,
     mediaItems,
     projectLinks,
-    removeHashtag,
     removeLink,
     removeMedia,
     setCaption,
-    setHashtagDraft,
     setIsProjectPost,
     updateCodeSnippet,
     updateLink,
@@ -129,31 +124,6 @@ const InlinePostComposer = () => {
           </div>
         </section>
       )}
-
-      <section className="inline-post-composer__tags">
-        <Hash size={15} aria-hidden="true" />
-        <Input
-          value={hashtagDraft}
-          onChange={(event) => setHashtagDraft(event.target.value)}
-          onKeyDown={(event) => {
-            if (event.key === 'Enter') {
-              event.preventDefault();
-              addHashtag();
-            }
-          }}
-          placeholder="Add hashtag"
-          aria-label="Add hashtag"
-        />
-        <Button variant="ghost" className="button--icon" onClick={() => addHashtag()} aria-label="Add hashtag">
-          <Plus size={15} aria-hidden="true" />
-        </Button>
-        {hashtags.map((tag) => (
-          <button type="button" key={tag} onClick={() => removeHashtag(tag)}>
-            #{tag}
-            <X size={12} aria-hidden="true" />
-          </button>
-        ))}
-      </section>
 
       <footer className="inline-post-composer__footer">
         <div className="inline-post-composer__tools">

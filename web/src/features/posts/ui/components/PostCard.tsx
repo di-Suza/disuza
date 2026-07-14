@@ -3,7 +3,6 @@ import {
   ChevronLeft,
   ChevronRight,
   CircleCheckBig,
-  Code2,
   Copy,
   Edit3,
   ExternalLink,
@@ -82,9 +81,8 @@ const ActionItem = ({
   <button type="button" onClick={onClick} disabled={disabled} className="v1-post-action" aria-label={label}>
     <span className={active ? 'is-active' : ''}>
       {icon}
-      {count !== undefined && Number(count) > 0 && <small>{count}</small>}
     </span>
-    <em>{label}</em>
+    {count !== undefined && <small>{count}</small>}
   </button>
 );
 
@@ -133,7 +131,6 @@ const PostCard = ({ className, fallbackAuthor, post, viewerId }: PostCardProps) 
     const links = Array.isArray(post.links) ? post.links : [];
     return links.filter((link) => link.label?.trim() && link.url?.trim());
   }, [post.links]);
-  const hashtags = Array.isArray(post.hashtags) ? post.hashtags : [];
 
   const goToPrevious = useCallback(() => {
     setCurrentIndex((current) => (current === 0 ? media.length - 1 : current - 1));
@@ -180,6 +177,26 @@ const PostCard = ({ className, fallbackAuthor, post, viewerId }: PostCardProps) 
     navigate(`/search?q=${encodeURIComponent(`#${tag}`)}`);
   }, [navigate]);
 
+  const renderCaption = useCallback((text: string) => {
+    const parts = text.split(/(#[a-zA-Z0-9_]+)/g);
+
+    return parts.map((part, index) => {
+      if (!part.startsWith('#') || part.length === 1) return <span key={`${part}-${index}`}>{part}</span>;
+
+      const tag = part.slice(1);
+      return (
+        <button
+          type="button"
+          className="rich-post-card__caption-tag"
+          key={`${part}-${index}`}
+          onClick={() => openHashtag(tag)}
+        >
+          {part}
+        </button>
+      );
+    });
+  }, [openHashtag]);
+
   return (
     <article className={cn('v1-post-card-outer', className)}>
       <div className="v1-post-card rich-post-card">
@@ -204,6 +221,7 @@ const PostCard = ({ className, fallbackAuthor, post, viewerId }: PostCardProps) 
                 <>
                   <button type="button" className="v1-post-card__scrim" onClick={() => setShowDropdown(false)} aria-label="Close post options" />
                   <div className="v1-post-card__dropdown">
+                    <button type="button" onClick={() => { setShowDropdown(false); setShareOpen(true); }}><Share2 size={16} />Share</button>
                     {isOwner && <button type="button" onClick={() => { setShowDropdown(false); setEditOpen(true); }}><Edit3 size={16} />Edit</button>}
                     {isOwner && <button type="button" className="is-danger" onClick={() => { setShowDropdown(false); void handleDelete(); }} disabled={isDeleting}>{isDeleting ? <Loader2 className="spin" size={16} /> : <Trash2 size={16} />}Delete</button>}
                     {!isOwner && <button type="button" className="is-danger" onClick={() => { setShowDropdown(false); setReportOpen(true); }}><MessageSquareWarning size={16} />Report</button>}
@@ -217,8 +235,8 @@ const PostCard = ({ className, fallbackAuthor, post, viewerId }: PostCardProps) 
 
         {caption && (
           <p className="v1-post-card__caption rich-post-card__caption">
-            <span>{visibleCaption}</span>
-            {shouldTruncate && <button type="button" onClick={() => setShowFullCaption((current) => !current)}>{showFullCaption ? 'less' : 'more'}</button>}
+            <span>{renderCaption(visibleCaption)}</span>
+            {shouldTruncate && <button type="button" className="rich-post-card__more" onClick={() => setShowFullCaption((current) => !current)}>{showFullCaption ? 'less' : 'more'}</button>}
           </p>
         )}
 
@@ -279,21 +297,14 @@ const PostCard = ({ className, fallbackAuthor, post, viewerId }: PostCardProps) 
           </div>
         )}
 
-        {hashtags.length > 0 && (
-          <div className="rich-post-card__hashtags">
-            {hashtags.map((tag) => (
-              <button type="button" key={tag} onClick={() => openHashtag(tag)}>
-                #{tag}
-              </button>
-            ))}
-          </div>
-        )}
-
         <section className="v1-post-card__actions rich-post-card__actions">
-          <ActionItem label="Like" count={hideLikesCount ? undefined : Number(likesCount || 0)} active={isLiked} disabled={isLikeUpdating} onClick={toggleLike} icon={<Heart size={20} className={isLiked ? 'is-filled' : ''} />} />
-          <ActionItem label="Comment" count={commentsDisabled ? undefined : Number(counts.comments || 0)} disabled={commentsDisabled} onClick={() => setCommentsOpen(true)} icon={<MessageCircle size={20} />} />
-          <ActionItem label="Repost" count={Number(repostsCount || 0)} active={isReposted} disabled={isRepostUpdating} onClick={toggleRepost} icon={<Repeat2 size={20} />} />
-          <div className="v1-post-card__save-action">
+          <div className="rich-post-card__action-left">
+            <ActionItem label="Like" count={hideLikesCount ? undefined : Number(likesCount || 0)} active={isLiked} disabled={isLikeUpdating} onClick={toggleLike} icon={<Heart size={20} className={isLiked ? 'is-filled' : ''} />} />
+            {!commentsDisabled && <ActionItem label="Comment" count={Number(counts.comments || 0)} onClick={() => setCommentsOpen(true)} icon={<MessageCircle size={20} />} />}
+            <ActionItem label="Repost" count={Number(repostsCount || 0)} active={isReposted} disabled={isRepostUpdating} onClick={toggleRepost} icon={<Repeat2 size={20} />} />
+            {!isOwner && ownerId && <ActionItem label="Feedback" count={Number(counts.feedbacks || 0)} onClick={() => setFeedbackOpen(true)} icon={<SendHorizontal size={20} />} />}
+          </div>
+          <div className="v1-post-card__save-action rich-post-card__save-right">
             <ActionItem label="Save" active={isSaved} disabled={isSaveUpdating} onClick={handleSaveClick} icon={<Bookmark size={20} className={isSaved ? 'is-filled' : ''} />} />
             {showSaveTooltip && (
               <div className="v1-post-card__save-tooltip">
@@ -310,8 +321,6 @@ const PostCard = ({ className, fallbackAuthor, post, viewerId }: PostCardProps) 
               </div>
             )}
           </div>
-          <ActionItem label="Feedback" count={Number(counts.feedbacks || 0)} disabled={isOwner || !ownerId} onClick={() => setFeedbackOpen(true)} icon={<SendHorizontal size={20} />} />
-          <ActionItem label="Share" onClick={() => setShareOpen(true)} icon={<Share2 size={20} />} />
         </section>
       </div>
 
