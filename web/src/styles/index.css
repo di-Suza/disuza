@@ -7087,7 +7087,8 @@ svg {
 .v1-post-card__media-stage {
   position: relative;
   display: flex;
-  height: clamp(280px, 62vw, 470px);
+  height: clamp(240px, 52vw, 420px);
+  max-height: 420px;
   align-items: center;
   justify-content: center;
   overflow: hidden;
@@ -7115,6 +7116,11 @@ svg {
   z-index: 1;
   width: 100%;
   height: 100%;
+  object-fit: cover;
+}
+
+.v1-post-card__media-main:is(video) {
+  background: #020617;
   object-fit: contain;
 }
 

@@ -1,5 +1,6 @@
 import mongoose, { type FilterQuery } from 'mongoose';
 
+import logger from '../../config/logger.js';
 import cleanupQueue, { type CleanupQueue } from '../../infrastructure/jobs/cleanup.queue.js';
 import { BadRequestError, NotFoundError } from '../../shared/errors/index.js';
 import heatmapService, { type HeatmapService } from '../contributions/heatmap.service.js';
@@ -538,8 +539,7 @@ class PostService {
         userId: userId.toString(),
       });
     } catch (error) {
-      await this.posts.restoreDeleting(postId, userId);
-      throw error;
+      logger.warn({ error, postId: post._id.toString(), userId: userId.toString() }, 'Post cleanup job enqueue failed');
     }
 
     return { deleted: true, alreadyDeleting: false };
