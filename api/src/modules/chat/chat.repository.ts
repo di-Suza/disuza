@@ -3,16 +3,18 @@ import mongoose, { type Types } from 'mongoose';
 import PostModel from '../posts/post.model.js';
 import UserModel from '../users/user.model.js';
 import ConversationModel, { type ConversationDocument } from './conversation.model.js';
-import MessageModel, { type FeedbackTargetModel, type MessageDocument } from './message.model.js';
+import MessageModel, { type FeedbackTargetModel, type MessageDocument, type MessageType } from './message.model.js';
 
 type SaveMessageInput = {
   conversationId?: string;
   receiverId?: string;
   senderId: string;
   message: string;
+  messageType?: MessageType;
   isFeedback?: boolean;
   feedbackOn?: FeedbackTargetModel;
   postId?: string;
+  sharedPostId?: string;
   userId?: string;
 };
 
@@ -47,11 +49,13 @@ class ChatRepository {
       conversationId: conversation._id,
       sender: input.senderId,
       text: input.message,
+      messageType: input.messageType || (input.isFeedback ? 'feedback' : input.sharedPostId ? 'post' : 'text'),
       isFeedback: Boolean(input.isFeedback),
       feedbackOn: input.isFeedback ? {
         type: input.feedbackOn,
         _id: input.feedbackOn === 'Post' ? input.postId : input.userId,
       } : undefined,
+      sharedPost: input.sharedPostId,
     });
 
     conversation.lastMessage = message._id;
@@ -96,7 +100,7 @@ class ChatRepository {
           localField: 'lastMessage',
           foreignField: '_id',
           as: 'lastMessage',
-          pipeline: [{ $project: { text: 1, createdAt: 1, sender: 1 } }],
+          pipeline: [{ $project: { text: 1, createdAt: 1, sender: 1, messageType: 1 } }],
         },
       },
       { $unwind: { path: '$lastMessage', preserveNullAndEmptyArrays: true } },
@@ -162,6 +166,15 @@ class ChatRepository {
       }
     }
 
+    if (message.messageType === 'post' && message.sharedPost) {
+      const sharedPostDetails = await PostModel.findOne({ _id: message.sharedPost, isDeleting: { $ne: true } })
+        .select({ caption: 1, media: { $slice: 1 }, user: 1, createdAt: 1, isProjectPost: 1 })
+        .populate('user', 'userName profilePicture headline')
+        .lean();
+
+      output.sharedPostDetails = sharedPostDetails ? { ...sharedPostDetails, images: sharedPostDetails.media } : null;
+    }
+
     return {
       ...output,
       receiverId,
@@ -171,6 +184,20 @@ class ChatRepository {
   async enrichFeedbackMessages(messages: Array<Record<string, unknown>>) {
     return Promise.all(messages.map(async (message) => {
       const feedbackOn = message.feedbackOn as { type?: FeedbackTargetModel; _id?: Types.ObjectId } | undefined;
+      const sharedPostId = message.sharedPost as Types.ObjectId | undefined;
+
+      if (message.messageType === 'post' && sharedPostId) {
+        const sharedPostDetails = await PostModel.findOne({ _id: sharedPostId, isDeleting: { $ne: true } })
+          .select({ caption: 1, media: { $slice: 1 }, user: 1, createdAt: 1, isProjectPost: 1 })
+          .populate('user', 'userName profilePicture headline')
+          .lean();
+
+        return {
+          ...message,
+          sharedPostDetails: sharedPostDetails ? { ...sharedPostDetails, images: (sharedPostDetails as { media?: unknown }).media } : null,
+        };
+      }
+
       if (!message.isFeedback || !feedbackOn?.type || !feedbackOn._id) return message;
 
       const details = feedbackOn.type === 'Post'

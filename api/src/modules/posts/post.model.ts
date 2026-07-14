@@ -26,10 +26,21 @@ type ProjectLinks = {
   repositoryUrl?: string;
 };
 
+type PostLink = {
+  label: string;
+  url: string;
+};
+
+type CodeSnippet = {
+  language: string;
+  code: string;
+};
+
 type PostCounts = {
   comments: number;
   likes: number;
   feedbacks: number;
+  reposts: number;
 };
 
 type Post = {
@@ -40,6 +51,9 @@ type Post = {
   settings: PostSettings;
   isProjectPost: boolean;
   projectLinks?: ProjectLinks;
+  links: PostLink[];
+  codeSnippet?: CodeSnippet;
+  hashtags: string[];
   isDeleting: boolean;
   deletedAt: Date | null;
   cleanupState: {
@@ -69,6 +83,22 @@ const postMediaSchema = new mongoose.Schema<PostMedia>(
   { _id: false },
 );
 
+const postLinkSchema = new mongoose.Schema<PostLink>(
+  {
+    label: { type: String, required: true, trim: true, maxlength: 80 },
+    url: { type: String, required: true, trim: true, maxlength: 500 },
+  },
+  { _id: false },
+);
+
+const codeSnippetSchema = new mongoose.Schema<CodeSnippet>(
+  {
+    language: { type: String, required: true, trim: true, maxlength: 40 },
+    code: { type: String, required: true, maxlength: 8000 },
+  },
+  { _id: false },
+);
+
 const postSchema = new mongoose.Schema<Post, PostModel>(
   {
     user: {
@@ -85,18 +115,19 @@ const postSchema = new mongoose.Schema<Post, PostModel>(
     },
     media: {
       type: [postMediaSchema],
-      required: true,
+      default: [],
       validate: {
         validator(media: PostMedia[]) {
-          return Array.isArray(media) && media.length > 0 && media.length <= 10;
+          return Array.isArray(media) && media.length <= 10;
         },
-        message: 'A post must contain between 1 and 10 media items.',
+        message: 'A post can contain up to 10 media items.',
       },
     },
     counts: {
       comments: { type: Number, default: 0, min: 0 },
       likes: { type: Number, default: 0, min: 0 },
       feedbacks: { type: Number, default: 0, min: 0 },
+      reposts: { type: Number, default: 0, min: 0 },
     },
     settings: {
       hideLikesCount: { type: Boolean, default: false },
@@ -110,6 +141,30 @@ const postSchema = new mongoose.Schema<Post, PostModel>(
     projectLinks: {
       liveDemoUrl: { type: String, trim: true },
       repositoryUrl: { type: String, trim: true },
+    },
+    links: {
+      type: [postLinkSchema],
+      default: [],
+      validate: {
+        validator(links: PostLink[]) {
+          return Array.isArray(links) && links.length <= 8;
+        },
+        message: 'A post can contain up to 8 links.',
+      },
+    },
+    codeSnippet: {
+      type: codeSnippetSchema,
+      default: undefined,
+    },
+    hashtags: {
+      type: [String],
+      default: [],
+      validate: {
+        validator(hashtags: string[]) {
+          return Array.isArray(hashtags) && hashtags.length <= 12;
+        },
+        message: 'A post can contain up to 12 hashtags.',
+      },
     },
     isDeleting: {
       type: Boolean,
@@ -147,12 +202,32 @@ const postSchema = new mongoose.Schema<Post, PostModel>(
 
 postSchema.index({ user: 1, createdAt: -1 });
 postSchema.index({ isDeleting: 1, createdAt: -1 });
+postSchema.index({ hashtags: 1, createdAt: -1 });
 
 postSchema.pre('validate', function normalizePost(next) {
   if (Array.isArray(this.media)) {
     this.media = this.media
       .sort((first, second) => first.order - second.order)
       .map((item, index) => ({ ...item, order: index }));
+  }
+
+  if (Array.isArray(this.links)) {
+    this.links = this.links.filter((link) => Boolean(link.label?.trim() && link.url?.trim()));
+  }
+
+  if (Array.isArray(this.hashtags)) {
+    const seenHashtags = new Set<string>();
+    this.hashtags = this.hashtags
+      .map((hashtag) => hashtag.replace(/^#/, '').trim().toLowerCase())
+      .filter((hashtag) => {
+        if (!hashtag || seenHashtags.has(hashtag)) return false;
+        seenHashtags.add(hashtag);
+        return true;
+      });
+  }
+
+  if (this.codeSnippet && (!this.codeSnippet.code?.trim() || !this.codeSnippet.language?.trim())) {
+    this.codeSnippet = undefined;
   }
 
   if (this.isProjectPost) {
@@ -163,10 +238,21 @@ postSchema.pre('validate', function normalizePost(next) {
     this.projectLinks = undefined;
   }
 
+  const hasText = Boolean(this.caption?.trim());
+  const hasMedia = Array.isArray(this.media) && this.media.length > 0;
+  const hasCode = Boolean(this.codeSnippet?.code?.trim());
+  const hasLinks = Array.isArray(this.links) && this.links.length > 0;
+  const hasTags = Array.isArray(this.hashtags) && this.hashtags.length > 0;
+  const hasProjectLinks = Boolean(this.projectLinks?.liveDemoUrl || this.projectLinks?.repositoryUrl);
+
+  if (!hasText && !hasMedia && !hasCode && !hasLinks && !hasTags && !hasProjectLinks) {
+    this.invalidate('caption', 'Post must include text, media, code, links, hashtags, or project links.');
+  }
+
   next();
 });
 
 const PostModel = mongoose.models.Post as PostModel || mongoose.model<Post, PostModel>('Post', postSchema, 'posts');
 
-export { type Post, type PostCounts, type PostDocument, type PostMedia, type PostSettings, type ProjectLinks };
+export { type CodeSnippet, type Post, type PostCounts, type PostDocument, type PostLink, type PostMedia, type PostSettings, type ProjectLinks };
 export default PostModel;

@@ -17,15 +17,19 @@ const sendMessageRules = [
   mongoIdBody('receiverId'),
   mongoIdBody('conversationId'),
   mongoIdBody('postId'),
+  mongoIdBody('sharedPostId'),
   mongoIdBody('userId'),
   body('message')
+    .optional({ nullable: true })
     .isString()
-    .withMessage('Message is required!')
+    .withMessage('Message must be a string')
     .trim()
-    .notEmpty()
-    .withMessage('Message is required!')
     .isLength({ max: 2000 })
     .withMessage('Message cannot exceed 2000 characters'),
+  body('messageType')
+    .optional()
+    .isIn(['text', 'feedback', 'post'])
+    .withMessage('messageType must be text, feedback, or post'),
   body('isFeedback')
     .optional()
     .customSanitizer((value) => value === true || value === 'true')
@@ -38,7 +42,8 @@ const sendMessageRules = [
   body()
     .custom((value) => {
       if (!value.receiverId && !value.conversationId) return false;
-      if (!value.isFeedback) return true;
+      if (value.messageType === 'post') return Boolean(value.postId || value.sharedPostId);
+      if (!value.isFeedback && value.messageType !== 'feedback') return Boolean(value.message);
       if (!value.feedbackOn) return false;
       if (value.feedbackOn === 'Post') return Boolean(value.postId);
       if (value.feedbackOn === 'User') return Boolean(value.userId);

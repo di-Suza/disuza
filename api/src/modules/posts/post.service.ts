@@ -10,7 +10,8 @@ import likeRepository, { type LikeRepository } from '../likes/like.repository.js
 import saveRepository, { type SaveRepository } from '../saves/save.repository.js';
 import followRepository, { type FollowRepository } from '../users/follow/follow.repository.js';
 import userRepository, { type UserRepository } from '../users/user.repository.js';
-import type { Post, PostMedia, PostSettings, ProjectLinks } from './post.model.js';
+import repostRepository, { type RepostRepository } from '../reposts/repost.repository.js';
+import type { CodeSnippet, Post, PostLink, PostMedia, PostSettings, ProjectLinks } from './post.model.js';
 import postRepository, { type PostRepository } from './post.repository.js';
 
 type MediaOrderItem = {
@@ -29,6 +30,9 @@ type CreatePostInput = {
   settings?: Partial<PostSettings>;
   isProjectPost?: boolean;
   projectLinks?: ProjectLinks;
+  links?: Partial<PostLink>[];
+  codeSnippet?: Partial<CodeSnippet>;
+  hashtags?: string[];
   mediaOrder?: MediaOrderItem[];
 };
 
@@ -36,6 +40,9 @@ type UpdatePostInput = {
   caption?: string;
   settings?: Partial<PostSettings>;
   projectLinks?: ProjectLinks;
+  links?: Partial<PostLink>[];
+  codeSnippet?: Partial<CodeSnippet>;
+  hashtags?: string[];
   mediaOrder?: MediaOrderItem[];
   media?: ExistingMediaInput[];
   images?: ExistingMediaInput[];
@@ -52,6 +59,7 @@ class PostService {
     private readonly users: UserRepository = userRepository,
     private readonly likes: LikeRepository = likeRepository,
     private readonly saves: SaveRepository = saveRepository,
+    private readonly reposts: RepostRepository = repostRepository,
     private readonly follows: FollowRepository = followRepository,
     private readonly blockRules: BlockService = blockService,
     private readonly media: MediaService = mediaService,
@@ -73,6 +81,18 @@ class PostService {
     return typeof caption === 'string' ? caption.trim() : '';
   }
 
+  private ensureHttpUrl(url: string, field: string): string {
+    try {
+      const parsedUrl = new URL(url);
+      if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
+        throw new Error('Unsupported protocol');
+      }
+      return parsedUrl.toString();
+    } catch {
+      throw new BadRequestError(`${field} must be a valid http(s) URL.`);
+    }
+  }
+
   private normalizeSettings(settings?: Partial<PostSettings>): PostSettings {
     return {
       hideLikesCount: Boolean(settings?.hideLikesCount),
@@ -90,7 +110,86 @@ class PostService {
       throw new BadRequestError('Project post cannot be created without URLs!');
     }
 
-    return { liveDemoUrl, repositoryUrl };
+    return {
+      liveDemoUrl: this.ensureHttpUrl(liveDemoUrl, 'Live demo URL'),
+      repositoryUrl: this.ensureHttpUrl(repositoryUrl, 'Repository URL'),
+    };
+  }
+
+  private normalizeLinks(links?: Partial<PostLink>[]): PostLink[] {
+    if (!Array.isArray(links)) return [];
+
+    return links
+      .map((link) => ({
+        label: typeof link.label === 'string' ? link.label.trim() : '',
+        url: typeof link.url === 'string' ? link.url.trim() : '',
+      }))
+      .filter((link) => link.label || link.url)
+      .map((link) => {
+        if (!link.label || !link.url) {
+          throw new BadRequestError('Link label and URL are required together.');
+        }
+
+        return {
+          label: link.label.slice(0, 80),
+          url: this.ensureHttpUrl(link.url, 'Link URL'),
+        };
+      })
+      .slice(0, 8);
+  }
+
+  private normalizeCodeSnippet(codeSnippet?: Partial<CodeSnippet>): CodeSnippet | undefined {
+    const code = typeof codeSnippet?.code === 'string' ? codeSnippet.code.trim() : '';
+    if (!code) return undefined;
+
+    const language = typeof codeSnippet?.language === 'string' && codeSnippet.language.trim()
+      ? codeSnippet.language.trim().slice(0, 40)
+      : 'text';
+
+    return {
+      language,
+      code: code.slice(0, 8000),
+    };
+  }
+
+  private extractCaptionHashtags(caption: string): string[] {
+    return Array.from(caption.matchAll(/#([a-zA-Z0-9_]{1,40})/g)).map((match) => match[1]);
+  }
+
+  private normalizeHashtags(hashtags?: string[], caption = ''): string[] {
+    const seenTags = new Set<string>();
+    const rawTags = [
+      ...(Array.isArray(hashtags) ? hashtags : []),
+      ...this.extractCaptionHashtags(caption),
+    ];
+
+    return rawTags
+      .map((tag) => (typeof tag === 'string' ? tag.replace(/^#/, '').trim().toLowerCase() : ''))
+      .filter((tag) => {
+        if (!tag || seenTags.has(tag)) return false;
+        seenTags.add(tag);
+        return true;
+      })
+      .slice(0, 12);
+  }
+
+  private hasPostContent(input: {
+    caption?: string;
+    media?: PostMedia[];
+    links?: PostLink[];
+    codeSnippet?: CodeSnippet;
+    hashtags?: string[];
+    projectLinks?: ProjectLinks;
+  }): boolean {
+    return Boolean(
+      input.caption?.trim()
+      || input.media?.length
+      || input.links?.length
+      || input.codeSnippet?.code?.trim()
+      || input.hashtags?.length
+      || input.projectLinks?.liveDemoUrl
+      || input.projectLinks?.repositoryUrl,
+    );
   }
 
   private toPostMedia(media: StoredMedia, order: number): PostMedia {
@@ -110,16 +209,16 @@ class PostService {
   }
 
   private normalizeMediaOrder(media: PostMedia[]): PostMedia[] {
-    if (media.length === 0) {
-      throw new BadRequestError('Post cannot be saved without media!');
-    }
-
     return media.map((item, index) => ({ ...item, order: index }));
   }
 
   private buildCreateMedia(uploadedMedia: StoredMedia[], mediaOrder?: MediaOrderItem[]): PostMedia[] {
     if (uploadedMedia.length === 0) {
-      throw new BadRequestError('Post cannot be created without media!');
+      if (mediaOrder?.length) {
+        throw new BadRequestError('Media order cannot be provided without uploaded media.');
+      }
+
+      return [];
     }
 
     if (!mediaOrder?.length) {
@@ -249,18 +348,30 @@ class PostService {
     const postId = new mongoose.Types.ObjectId();
     const isProjectPost = Boolean(input.isProjectPost);
     const projectLinks = this.normalizeProjectLinks(isProjectPost, input.projectLinks);
+    const caption = this.normalizeCaption(input.caption);
+    const links = this.normalizeLinks(input.links);
+    const codeSnippet = this.normalizeCodeSnippet(input.codeSnippet);
+    const hashtags = this.normalizeHashtags(input.hashtags, caption);
     const uploadedMedia = await this.media.uploadPostMedia(files, userId, postId.toString());
 
     try {
       const media = this.buildCreateMedia(uploadedMedia, input.mediaOrder);
+
+      if (!this.hasPostContent({ caption, media, links, codeSnippet, hashtags, projectLinks })) {
+        throw new BadRequestError('Post must include text, media, code, links, hashtags, or project links.');
+      }
+
       const post = await this.posts.create({
         _id: postId,
         user: userId,
-        caption: this.normalizeCaption(input.caption),
+        caption,
         media,
         settings: this.normalizeSettings(input.settings),
         isProjectPost,
         projectLinks,
+        links,
+        codeSnippet,
+        hashtags,
       });
 
       await Promise.all([
@@ -289,10 +400,11 @@ class PostService {
   }
 
   async getPost(currentUserId: string, postId: string) {
-    const [post, isLiked, isSaved] = await Promise.all([
+    const [post, isLiked, isSaved, isReposted] = await Promise.all([
       this.posts.findVisibleById(postId),
       this.likes.exists(currentUserId, postId),
       this.saves.exists(currentUserId, postId),
+      this.reposts.exists(currentUserId, postId),
     ]);
 
     if (!post) {
@@ -306,6 +418,7 @@ class PostService {
       ...post.toObject(),
       isLiked: Boolean(isLiked),
       isSaved: Boolean(isSaved),
+      isReposted: Boolean(isReposted),
     };
   }
 
@@ -323,6 +436,9 @@ class PostService {
       media?: PostMedia[];
       settings?: PostSettings;
       projectLinks?: ProjectLinks;
+      links?: PostLink[];
+      codeSnippet?: CodeSnippet;
+      hashtags?: string[];
     } = {};
 
     let updatedPost;
@@ -348,8 +464,35 @@ class PostService {
         updateData.media = this.buildUpdateMedia(previousMedia, uploadedMedia, input);
       }
 
+      if (input.links) {
+        updateData.links = this.normalizeLinks(input.links);
+      }
+
+      if (Object.prototype.hasOwnProperty.call(input, 'codeSnippet')) {
+        updateData.codeSnippet = this.normalizeCodeSnippet(input.codeSnippet);
+      }
+
+      if (input.hashtags) {
+        updateData.hashtags = this.normalizeHashtags(input.hashtags, updateData.caption ?? post.caption);
+      } else if (typeof updateData.caption === 'string') {
+        updateData.hashtags = this.normalizeHashtags(post.hashtags, updateData.caption);
+      }
+
       if (Object.keys(updateData).length === 0) {
         throw new BadRequestError('Please provide post data to update.');
+      }
+
+      const nextContent = {
+        caption: updateData.caption ?? post.caption,
+        media: updateData.media ?? previousMedia,
+        links: updateData.links ?? post.links,
+        codeSnippet: updateData.codeSnippet ?? post.codeSnippet,
+        hashtags: updateData.hashtags ?? post.hashtags,
+        projectLinks: updateData.projectLinks ?? post.projectLinks,
+      };
+
+      if (!this.hasPostContent(nextContent)) {
+        throw new BadRequestError('Post must include text, media, code, links, hashtags, or project links.');
       }
 
       updatedPost = await this.posts.updateById(postId, updateData);
@@ -427,9 +570,10 @@ class PostService {
 
     const posts = await this.posts.findFeedPosts(filter, page, limit);
     const postIds = posts.map((post) => post._id);
-    const [likedPostIds, savedPostIds] = await Promise.all([
+    const [likedPostIds, savedPostIds, repostedPostIds] = await Promise.all([
       this.likes.findLikedPostIds(userId, postIds),
       this.saves.findSavedPostIds(userId, postIds),
+      this.reposts.findRepostedPostIds(userId, postIds),
     ]);
 
     return {
@@ -437,6 +581,7 @@ class PostService {
         ...post,
         isLiked: likedPostIds.has(post._id.toString()),
         isSaved: savedPostIds.has(post._id.toString()),
+        isReposted: repostedPostIds.has(post._id.toString()),
       })),
       page,
       hasMore: posts.length === limit,

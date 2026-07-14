@@ -43,7 +43,12 @@ class ChatService {
   }
 
   async saveMessage(input: SaveMessageInput) {
-    const message = typeof input.message === 'string' ? input.message.trim() : '';
+    const messageType = input.messageType || (input.isFeedback ? 'feedback' : input.sharedPostId || (input.postId && !input.feedbackOn) ? 'post' : 'text');
+    const message = typeof input.message === 'string' && input.message.trim()
+      ? input.message.trim()
+      : messageType === 'post'
+        ? 'Shared a post'
+        : '';
 
     if (!message) {
       throw new BadRequestError('Message is required!');
@@ -96,6 +101,17 @@ class ChatService {
       throw new BadRequestError('Conversation could not be created.');
     }
 
+    if (messageType === 'post') {
+      const sharedPostId = input.sharedPostId || input.postId;
+      if (!sharedPostId) throw new BadRequestError('postId is required for post messages');
+
+      const sharedPost = await this.posts.findVisibleActionTarget(sharedPostId);
+      if (!sharedPost) throw new NotFoundError("Post doesn't exist!");
+      await this.blockRules.ensureUsersCanInteract(input.senderId, sharedPost.user, 'share posts from');
+      input.sharedPostId = sharedPostId;
+      input.isFeedback = false;
+    }
+
     if (input.isFeedback) {
       if (!input.feedbackOn) {
         throw new BadRequestError('feedbackOn is required when isFeedback is true');
@@ -118,7 +134,7 @@ class ChatService {
       }
     }
 
-    const newMessage = await this.chats.createMessage(conversation, { ...input, message }, receiverId!);
+    const newMessage = await this.chats.createMessage(conversation, { ...input, message, messageType }, receiverId!);
 
     if (input.isFeedback) {
       const messageId = String((newMessage as unknown as { _id: unknown })._id);

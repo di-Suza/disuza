@@ -14,6 +14,11 @@ class SearchRepository {
       $or: [
         { userName: { $regex: searchRegex } },
         { email: { $regex: searchRegex } },
+        { headline: { $regex: searchRegex } },
+        { about: { $regex: searchRegex } },
+        { skills: { $regex: searchRegex } },
+        { interests: { $regex: searchRegex } },
+        { languages: { $regex: searchRegex } },
       ],
     })
       .select('userName profilePicture headline profileContributions followersCount')
@@ -30,6 +35,11 @@ class SearchRepository {
       $or: [
         { userName: { $regex: searchRegex } },
         { email: { $regex: searchRegex } },
+        { headline: { $regex: searchRegex } },
+        { about: { $regex: searchRegex } },
+        { skills: { $regex: searchRegex } },
+        { interests: { $regex: searchRegex } },
+        { languages: { $regex: searchRegex } },
       ],
     });
   }
@@ -38,7 +48,14 @@ class SearchRepository {
     return PostModel.find({
       ...visiblePostQuery,
       user: { $nin: blockedUserIds },
-      caption: { $regex: searchRegex },
+      $or: [
+        { caption: { $regex: searchRegex } },
+        { hashtags: { $regex: searchRegex } },
+        { 'links.label': { $regex: searchRegex } },
+        { 'links.url': { $regex: searchRegex } },
+        { 'codeSnippet.language': { $regex: searchRegex } },
+        { 'codeSnippet.code': { $regex: searchRegex } },
+      ],
     })
       .populate('user', 'userName profilePicture headline')
       .sort({ createdAt: -1 })
@@ -52,7 +69,14 @@ class SearchRepository {
     return PostModel.countDocuments({
       ...visiblePostQuery,
       user: { $nin: blockedUserIds },
-      caption: { $regex: searchRegex },
+      $or: [
+        { caption: { $regex: searchRegex } },
+        { hashtags: { $regex: searchRegex } },
+        { 'links.label': { $regex: searchRegex } },
+        { 'links.url': { $regex: searchRegex } },
+        { 'codeSnippet.language': { $regex: searchRegex } },
+        { 'codeSnippet.code': { $regex: searchRegex } },
+      ],
     });
   }
 
