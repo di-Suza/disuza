@@ -6,21 +6,21 @@
   font-family:
     Roboto, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
     sans-serif;
-  --primary: #253247;
-  --secondary: #30415c;
-  --accent: #10b981;
-  --bg-main: #0f141b;
-  --surface: #171c23;
-  --surface-deep: #11161d;
-  --surface-muted: #253247;
-  --surface-muted-hover: #30415c;
-  --border-primary: #28313d;
-  --border-secondary: #2b3441;
-  --text-primary: #f2f4f8;
-  --text-secondary: #a7b0bf;
-  --text-soft: #d7dde8;
+  --primary: #1d4ed8;
+  --secondary: #2563eb;
+  --accent: #3b63ff;
+  --bg-main: #05070b;
+  --surface: #090d14;
+  --surface-deep: #070a10;
+  --surface-muted: #101827;
+  --surface-muted-hover: #17233a;
+  --border-primary: #1c2635;
+  --border-secondary: #263144;
+  --text-primary: #f8fafc;
+  --text-secondary: #a8b0bf;
+  --text-soft: #dce4f2;
   --danger: #ef4444;
-  --warning: #f59e0b;
+  --warning: #5b8cff;
   --shadow-elevated: 0 18px 50px rgba(0, 0, 0, 0.32);
   --shadow-media: 0 18px 34px rgba(0, 0, 0, 0.35);
 }
@@ -67,7 +67,7 @@ svg {
   width: 100%;
   min-width: 0;
   border: 1px solid var(--border-secondary);
-  border-radius: 16px;
+  border-radius: 10px;
   background: var(--surface-deep);
   color: var(--text-primary);
   outline: none;
@@ -79,8 +79,8 @@ svg {
 }
 
 .input:focus {
-  border-color: rgba(16, 185, 129, 0.78);
-  box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.12);
+  border-color: rgba(59, 99, 255, 0.78);
+  box-shadow: 0 0 0 4px rgba(59, 99, 255, 0.12);
 }
 
 .button {
@@ -90,7 +90,7 @@ svg {
   justify-content: center;
   gap: 8px;
   border: 1px solid transparent;
-  border-radius: 16px;
+  border-radius: 10px;
   padding: 0 18px;
   font-weight: 800;
   transition: transform 160ms ease, border-color 160ms ease, filter 160ms ease, background 160ms ease;
@@ -103,7 +103,7 @@ svg {
 .button--primary {
   background: var(--accent);
   color: white;
-  box-shadow: 0 14px 30px rgba(16, 185, 129, 0.24);
+  box-shadow: 0 14px 30px rgba(59, 99, 255, 0.24);
 }
 
 .button--secondary {
@@ -157,7 +157,7 @@ svg {
   position: relative;
   width: min(92vw, 360px);
   border: 1px solid var(--border-primary);
-  border-radius: 24px;
+  border-radius: 12px;
   background: var(--surface);
   padding: 28px;
   text-align: center;
@@ -233,8 +233,8 @@ svg {
   align-items: center;
   gap: 10px;
   border: 1px solid var(--border-primary);
-  border-radius: 18px;
-  background: rgba(23, 28, 35, 0.96);
+  border-radius: 10px;
+  background: rgba(9, 13, 20, 0.96);
   padding: 12px;
   box-shadow: 0 16px 42px rgba(0, 0, 0, 0.34);
   pointer-events: auto;
@@ -301,7 +301,7 @@ svg {
 }
 
 .toast--notify {
-  border-color: rgba(16, 185, 129, 0.34);
+  border-color: rgba(59, 99, 255, 0.34);
 }
 
 @keyframes loading-bar {
@@ -369,7 +369,7 @@ svg {
 
 .landing-preview {
   border: 1px solid var(--border-primary);
-  border-radius: 28px;
+  border-radius: 12px;
   background: var(--surface);
   padding: 22px;
   box-shadow: var(--shadow-elevated);
@@ -393,7 +393,7 @@ svg {
   grid-template-columns: 54px 1fr;
   gap: 14px;
   border: 1px solid var(--border-secondary);
-  border-radius: 20px;
+  border-radius: 12px;
   background: var(--surface-deep);
   padding: 16px;
 }
@@ -411,7 +411,7 @@ svg {
 .landing-preview__avatar {
   width: 54px;
   height: 54px;
-  border-radius: 18px;
+  border-radius: 10px;
   background: linear-gradient(135deg, var(--accent), var(--secondary));
 }
 
@@ -428,8 +428,8 @@ svg {
   min-height: 96px;
   align-content: center;
   border: 1px solid var(--border-secondary);
-  border-radius: 18px;
-  background: rgba(16, 185, 129, 0.08);
+  border-radius: 10px;
+  background: rgba(59, 99, 255, 0.08);
   padding: 12px;
 }
 
@@ -459,7 +459,7 @@ svg {
   top: 0;
   z-index: 50;
   border-bottom: 1px solid var(--border-primary);
-  background: rgba(15, 20, 27, 0.9);
+  background: rgba(5, 7, 11, 0.9);
   backdrop-filter: blur(18px);
 }
 
@@ -521,7 +521,7 @@ svg {
   font-size: 14px;
   font-weight: 950;
   text-decoration: none;
-  box-shadow: 0 12px 26px rgba(16, 185, 129, 0.22);
+  box-shadow: 0 12px 26px rgba(59, 99, 255, 0.22);
   transition: filter 160ms ease, transform 160ms ease;
 }
 
@@ -621,12 +621,12 @@ svg {
 }
 
 .landing-v1-actions a:last-child:hover {
-  border-color: rgba(16, 185, 129, 0.45);
+  border-color: rgba(59, 99, 255, 0.45);
 }
 
 .landing-v1-code-card {
   border: 1px solid var(--border-primary);
-  border-radius: 28px;
+  border-radius: 12px;
   background: var(--surface);
   padding: 16px;
   box-shadow: var(--shadow-elevated);
@@ -634,7 +634,7 @@ svg {
 
 .landing-v1-code-card__inner {
   border: 1px solid var(--border-secondary);
-  border-radius: 22px;
+  border-radius: 12px;
   background: var(--surface-deep);
   color: var(--text-secondary);
   padding: 16px;
@@ -694,7 +694,7 @@ svg {
 .landing-v1-card,
 .landing-v1-cta {
   border: 1px solid var(--border-primary);
-  border-radius: 24px;
+  border-radius: 12px;
   background: var(--surface);
   padding: 24px;
   box-shadow: var(--shadow-media);
@@ -705,8 +705,8 @@ svg {
   width: 44px;
   height: 44px;
   place-items: center;
-  border-radius: 16px;
-  background: rgba(16, 185, 129, 0.12);
+  border-radius: 10px;
+  background: rgba(59, 99, 255, 0.12);
   color: var(--accent);
 }
 
@@ -759,7 +759,7 @@ svg {
   display: flex;
   align-items: center;
   gap: 12px;
-  border-radius: 16px;
+  border-radius: 10px;
   background: var(--surface);
   padding: 16px;
 }
@@ -819,7 +819,7 @@ svg {
 .dashboard-panel {
   width: min(100%, 720px);
   border: 1px solid var(--border-primary);
-  border-radius: 28px;
+  border-radius: 12px;
   background: var(--surface);
   padding: 28px;
   box-shadow: var(--shadow-elevated);
@@ -837,8 +837,8 @@ svg {
   width: 76px;
   height: 76px;
   flex: 0 0 auto;
-  border-radius: 24px;
-  background: rgba(16, 185, 129, 0.12);
+  border-radius: 12px;
+  background: rgba(59, 99, 255, 0.12);
   color: var(--accent);
 }
 
@@ -977,7 +977,7 @@ svg {
 .profile-stats button {
   min-height: 86px;
   border: 1px solid var(--border-secondary);
-  border-radius: 20px;
+  border-radius: 12px;
   background: var(--surface-deep);
   color: var(--text-primary);
   padding: 16px;
@@ -985,7 +985,7 @@ svg {
 }
 
 .profile-stats button:hover {
-  border-color: rgba(16, 185, 129, 0.55);
+  border-color: rgba(59, 99, 255, 0.55);
 }
 
 .profile-stats strong {
@@ -1014,7 +1014,7 @@ svg {
   display: grid;
   gap: 14px;
   border: 1px solid var(--border-primary);
-  border-radius: 22px;
+  border-radius: 12px;
   background: var(--surface-deep);
   padding: 18px;
 }
@@ -1057,7 +1057,7 @@ svg {
 .user-row {
   justify-content: space-between;
   border: 1px solid var(--border-secondary);
-  border-radius: 18px;
+  border-radius: 10px;
   background: rgba(255, 255, 255, 0.02);
   padding: 10px;
 }
@@ -1092,7 +1092,7 @@ svg {
   flex: 0 0 auto;
   overflow: hidden;
   border-radius: 14px;
-  background: rgba(16, 185, 129, 0.12);
+  background: rgba(59, 99, 255, 0.12);
   color: var(--accent);
 }
 
@@ -1194,7 +1194,7 @@ svg {
   width: 190px;
   gap: 4px;
   border: 1px solid var(--border-secondary);
-  border-radius: 18px;
+  border-radius: 10px;
   background: var(--surface);
   padding: 6px;
   box-shadow: var(--shadow-media);
@@ -1235,7 +1235,7 @@ svg {
   gap: 8px;
   margin-top: 14px;
   border: 1px solid rgba(245, 158, 11, 0.24);
-  border-radius: 16px;
+  border-radius: 10px;
   background: rgba(245, 158, 11, 0.1);
   color: #fde68a;
   padding: 10px 12px;
@@ -1307,7 +1307,7 @@ svg {
   width: 44px;
   height: 44px;
   place-items: center;
-  border-radius: 16px;
+  border-radius: 10px;
   background: rgba(239, 68, 68, 0.1);
   color: #fca5a5;
 }
@@ -1337,7 +1337,7 @@ svg {
   height: 300px;
   overflow: hidden;
   border: 1px solid var(--border-primary);
-  border-radius: 28px;
+  border-radius: 12px;
   background: var(--surface);
   box-shadow: var(--shadow-elevated);
 }
@@ -1450,7 +1450,7 @@ svg {
   resize: none;
   overflow-y: auto;
   border: 1px solid var(--border-secondary);
-  border-radius: 16px;
+  border-radius: 10px;
   background: var(--surface-deep);
   color: var(--text-primary);
   outline: none;
@@ -1493,7 +1493,7 @@ svg {
 .chip-list span {
   border: 1px solid var(--border-secondary);
   border-radius: 999px;
-  background: rgba(16, 185, 129, 0.1);
+  background: rgba(59, 99, 255, 0.1);
   color: var(--text-soft);
   padding: 7px 11px;
   font-size: 13px;
@@ -1509,7 +1509,7 @@ svg {
   display: grid;
   gap: 4px;
   border: 1px solid var(--border-secondary);
-  border-radius: 16px;
+  border-radius: 10px;
   background: rgba(255, 255, 255, 0.025);
   padding: 14px;
 }
@@ -1647,7 +1647,7 @@ svg {
 .modal-card {
   width: min(100%, 620px);
   border: 1px solid var(--border-primary);
-  border-radius: 24px;
+  border-radius: 12px;
   background: var(--surface);
   padding: 22px;
   box-shadow: var(--shadow-elevated);
@@ -1677,7 +1677,7 @@ svg {
   width: min(100%, 420px);
   gap: 16px;
   border: 1px solid var(--border-secondary);
-  border-radius: 18px;
+  border-radius: 10px;
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.035), transparent 42%),
     var(--surface);
@@ -1710,7 +1710,7 @@ svg {
   height: 48px;
   place-items: center;
   border: 1px solid rgba(239, 68, 68, 0.3);
-  border-radius: 16px;
+  border-radius: 10px;
   background: rgba(239, 68, 68, 0.1);
   color: #f87171;
 }
@@ -1767,7 +1767,7 @@ svg {
   flex: 0 0 auto;
   place-items: center;
   border: 1px solid rgba(239, 68, 68, 0.32);
-  border-radius: 16px;
+  border-radius: 10px;
   background: rgba(239, 68, 68, 0.1);
   color: #f87171;
 }
@@ -1811,7 +1811,7 @@ svg {
   gap: 16px;
   margin-top: 24px;
   border: 1px solid var(--border-primary);
-  border-radius: 22px;
+  border-radius: 12px;
   background: var(--surface-deep);
   padding: 18px;
 }
@@ -1854,7 +1854,7 @@ svg {
   display: inline-flex;
   overflow: hidden;
   border: 1px solid var(--border-secondary);
-  border-radius: 16px;
+  border-radius: 10px;
   background: var(--surface-deep);
   padding: 4px;
 }
@@ -1870,7 +1870,7 @@ svg {
 }
 
 .segmented-control button.is-active {
-  background: rgba(16, 185, 129, 0.16);
+  background: rgba(59, 99, 255, 0.16);
   color: var(--text-primary);
 }
 
@@ -1889,7 +1889,7 @@ svg {
   place-items: center;
   gap: 10px;
   border: 1px dashed var(--border-secondary);
-  border-radius: 20px;
+  border-radius: 12px;
   background: rgba(255, 255, 255, 0.02);
   color: var(--text-secondary);
   padding: 24px;
@@ -1906,7 +1906,7 @@ svg {
   gap: 14px;
   min-width: 0;
   border: 1px solid var(--border-secondary);
-  border-radius: 22px;
+  border-radius: 12px;
   background: rgba(255, 255, 255, 0.025);
   padding: 14px;
 }
@@ -1956,7 +1956,7 @@ svg {
   flex: 0 0 auto;
   overflow: hidden;
   border-radius: 14px;
-  background: rgba(16, 185, 129, 0.12);
+  background: rgba(59, 99, 255, 0.12);
   color: var(--accent);
 }
 
@@ -1972,9 +1972,9 @@ svg {
 }
 
 .post-card__badge {
-  border: 1px solid rgba(16, 185, 129, 0.32);
+  border: 1px solid rgba(59, 99, 255, 0.32);
   border-radius: 999px;
-  background: rgba(16, 185, 129, 0.1);
+  background: rgba(59, 99, 255, 0.1);
   color: var(--text-soft);
   padding: 6px 10px;
   font-size: 12px;
@@ -2039,7 +2039,7 @@ svg {
   position: relative;
   overflow: hidden;
   border: 1px solid var(--border-secondary);
-  border-radius: 18px;
+  border-radius: 10px;
   background: var(--surface-deep);
   aspect-ratio: 16 / 11;
 }
@@ -2160,7 +2160,7 @@ svg {
   min-height: 110px;
   place-items: center;
   border: 1px dashed var(--border-secondary);
-  border-radius: 18px;
+  border-radius: 10px;
   background: rgba(255, 255, 255, 0.02);
 }
 
@@ -2169,7 +2169,7 @@ svg {
   min-width: 0;
   overflow: hidden;
   border: 1px solid var(--border-secondary);
-  border-radius: 18px;
+  border-radius: 10px;
   background: var(--surface-deep);
   aspect-ratio: 1 / 1;
 }
@@ -2243,7 +2243,7 @@ svg {
   gap: 10px;
   min-height: 44px;
   border: 1px solid var(--border-secondary);
-  border-radius: 16px;
+  border-radius: 10px;
   background: var(--surface-deep);
   padding: 0 12px;
 }
@@ -2270,7 +2270,7 @@ svg {
   max-height: min(86vh, 820px);
   overflow: hidden;
   border: 1px solid var(--border-secondary);
-  border-radius: 26px;
+  border-radius: 12px;
   background: var(--surface);
   box-shadow: var(--shadow-media);
 }
@@ -2320,8 +2320,8 @@ svg {
   height: 40px;
   flex: 0 0 auto;
   place-items: center;
-  border-radius: 16px;
-  background: rgba(16, 185, 129, 0.12);
+  border-radius: 10px;
+  background: rgba(59, 99, 255, 0.12);
   color: var(--accent);
 }
 
@@ -2354,7 +2354,7 @@ svg {
 .post-composer-v1__caption-card,
 .post-composer-v1__project {
   border: 1px solid var(--border-secondary);
-  border-radius: 16px;
+  border-radius: 10px;
   background: var(--bg-main);
 }
 
@@ -2423,7 +2423,7 @@ svg {
   justify-content: center;
   gap: 12px;
   border: 1px dashed var(--border-secondary);
-  border-radius: 22px;
+  border-radius: 12px;
   background: var(--bg-main);
   padding: 28px 16px;
   text-align: center;
@@ -2457,7 +2457,7 @@ svg {
   min-width: 0;
   overflow: hidden;
   border: 1px solid var(--border-secondary);
-  border-radius: 16px;
+  border-radius: 10px;
   background: var(--bg-main);
   aspect-ratio: 1 / 1;
 }
@@ -2646,7 +2646,7 @@ svg {
   min-width: 290px;
   gap: 4px;
   border: 1px solid var(--border-secondary);
-  border-radius: 16px;
+  border-radius: 10px;
   background: var(--surface);
   padding: 12px;
   box-shadow: var(--shadow-media);
@@ -2728,12 +2728,12 @@ svg {
 
   .modal-card,
   .post-composer {
-    border-radius: 20px;
+    border-radius: 12px;
     padding: 18px;
   }
 
   .post-composer-v1 {
-    border-radius: 20px;
+    border-radius: 12px;
   }
 
   .post-list--compact {
@@ -2782,7 +2782,7 @@ svg {
 
 .post-card__footer-button:hover:not(:disabled),
 .post-card__footer-button:focus-visible {
-  background: rgba(16, 185, 129, 0.08);
+  background: rgba(59, 99, 255, 0.08);
   color: var(--accent);
   outline: none;
 }
@@ -2853,15 +2853,15 @@ svg {
   align-items: start;
   gap: 10px;
   border: 1px solid var(--border-secondary);
-  border-radius: 18px;
+  border-radius: 10px;
   background: rgba(255, 255, 255, 0.025);
   padding: 12px;
   transition: background 180ms ease, border-color 180ms ease;
 }
 
 .comment-item--mine {
-  border-color: rgba(16, 185, 129, 0.42);
-  background: rgba(16, 185, 129, 0.08);
+  border-color: rgba(59, 99, 255, 0.42);
+  background: rgba(59, 99, 255, 0.08);
 }
 
 .comment-item--reply {
@@ -2877,7 +2877,7 @@ svg {
   overflow: hidden;
   border: 1px solid var(--border-secondary);
   border-radius: 14px;
-  background: rgba(16, 185, 129, 0.12);
+  background: rgba(59, 99, 255, 0.12);
   color: var(--accent);
 }
 
@@ -2968,7 +2968,7 @@ svg {
   display: grid;
   gap: 8px;
   border: 1px solid rgba(239, 68, 68, 0.25);
-  border-radius: 16px;
+  border-radius: 10px;
   background: rgba(239, 68, 68, 0.08);
   padding: 12px;
 }
@@ -3042,7 +3042,7 @@ svg {
 @media (max-width: 520px) {
   .comments-modal {
     height: calc(100vh - 24px);
-    border-radius: 20px;
+    border-radius: 12px;
   }
 
   .comments-modal__header,
@@ -3119,7 +3119,7 @@ svg {
   gap: 12px;
   min-width: 0;
   border: 1px solid var(--border-secondary);
-  border-radius: 18px;
+  border-radius: 10px;
   background: var(--surface-deep);
   color: var(--text-primary);
   padding: 10px;
@@ -3129,8 +3129,8 @@ svg {
 
 .saves-collection-card:hover,
 .saves-collection-card.is-selected {
-  border-color: rgba(16, 185, 129, 0.62);
-  background: rgba(16, 185, 129, 0.08);
+  border-color: rgba(59, 99, 255, 0.62);
+  background: rgba(59, 99, 255, 0.08);
 }
 
 .saves-collection-card > svg {
@@ -3231,14 +3231,14 @@ svg {
   display: grid;
   gap: 10px;
   border: 1px solid var(--border-secondary);
-  border-radius: 18px;
+  border-radius: 10px;
   background: rgba(255, 255, 255, 0.02);
   padding: 10px;
 }
 
 .saved-panel__collection.is-selected {
-  border-color: rgba(16, 185, 129, 0.62);
-  background: rgba(16, 185, 129, 0.08);
+  border-color: rgba(59, 99, 255, 0.62);
+  background: rgba(59, 99, 255, 0.08);
 }
 
 .saved-panel__collection-main {
@@ -3307,7 +3307,7 @@ svg {
 .saved-panel__posts-header {
   min-height: 44px;
   border: 1px solid var(--border-secondary);
-  border-radius: 16px;
+  border-radius: 10px;
   background: rgba(255, 255, 255, 0.02);
   padding: 8px 10px;
 }
@@ -3388,9 +3388,9 @@ svg {
   height: 58px;
   flex: 0 0 auto;
   place-items: center;
-  border: 1px solid rgba(16, 185, 129, 0.32);
-  border-radius: 20px;
-  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(59, 99, 255, 0.32);
+  border-radius: 12px;
+  background: rgba(59, 99, 255, 0.1);
   color: var(--accent);
 }
 
@@ -3428,21 +3428,21 @@ svg {
   gap: 12px;
   min-width: 0;
   border: 1px solid var(--border-secondary);
-  border-radius: 20px;
+  border-radius: 12px;
   background: rgba(255, 255, 255, 0.025);
   padding: 12px;
   transition: border-color 160ms ease, background 160ms ease, transform 160ms ease;
 }
 
 .notification-card:hover {
-  border-color: rgba(16, 185, 129, 0.42);
-  background: rgba(16, 185, 129, 0.055);
+  border-color: rgba(59, 99, 255, 0.42);
+  background: rgba(59, 99, 255, 0.055);
   transform: translateY(-1px);
 }
 
 .notification-card.is-unread {
-  border-color: rgba(16, 185, 129, 0.55);
-  background: rgba(16, 185, 129, 0.08);
+  border-color: rgba(59, 99, 255, 0.55);
+  background: rgba(59, 99, 255, 0.08);
 }
 
 .notification-card__type,
@@ -3465,7 +3465,7 @@ svg {
 .notification-card__avatar {
   width: 46px;
   height: 46px;
-  border-radius: 16px;
+  border-radius: 10px;
   color: var(--accent);
   padding: 0;
 }
@@ -3505,9 +3505,9 @@ svg {
   align-items: center;
   justify-content: center;
   gap: 6px;
-  border: 1px solid rgba(16, 185, 129, 0.28);
+  border: 1px solid rgba(59, 99, 255, 0.28);
   border-radius: 999px;
-  background: rgba(16, 185, 129, 0.12);
+  background: rgba(59, 99, 255, 0.12);
   color: var(--text-primary);
   padding: 7px 12px;
   font-size: 12px;
@@ -3516,8 +3516,8 @@ svg {
 }
 
 .notification-card__action:hover:not(:disabled) {
-  border-color: rgba(16, 185, 129, 0.58);
-  background: rgba(16, 185, 129, 0.18);
+  border-color: rgba(59, 99, 255, 0.58);
+  background: rgba(59, 99, 255, 0.18);
   transform: translateY(-1px);
 }
 
@@ -3528,7 +3528,7 @@ svg {
 .notification-card__thumbnail {
   width: 54px;
   height: 54px;
-  border-radius: 16px;
+  border-radius: 10px;
 }
 
 .notification-card__delete {
@@ -3631,8 +3631,8 @@ svg {
 }
 
 .search-box.is-focused {
-  border-color: rgba(16, 185, 129, 0.52);
-  background: rgba(16, 185, 129, 0.06);
+  border-color: rgba(59, 99, 255, 0.52);
+  background: rgba(59, 99, 255, 0.06);
 }
 
 .search-box .input {
@@ -3684,7 +3684,7 @@ svg {
 .search-post-card {
   overflow: hidden;
   border: 1px solid var(--border-primary);
-  border-radius: 20px;
+  border-radius: 12px;
   background: var(--surface);
   color: inherit;
   text-align: left;
@@ -3694,7 +3694,7 @@ svg {
 
 .search-post-card:hover {
   transform: translateY(-1px);
-  border-color: rgba(16, 185, 129, 0.45);
+  border-color: rgba(59, 99, 255, 0.45);
   background: var(--surface-deep);
 }
 
@@ -3864,8 +3864,8 @@ svg {
 
 .search-user-card:hover {
   transform: translateY(-1px);
-  border-color: rgba(16, 185, 129, 0.42);
-  background: rgba(16, 185, 129, 0.055);
+  border-color: rgba(59, 99, 255, 0.42);
+  background: rgba(59, 99, 255, 0.055);
 }
 
 .search-user-card__rank {
@@ -4071,7 +4071,7 @@ svg {
 
 .dashboard-modal__row {
   border: 1px solid var(--border-secondary);
-  border-radius: 18px;
+  border-radius: 10px;
   background: rgba(255, 255, 255, 0.02);
   padding: 12px;
 }
@@ -4107,7 +4107,7 @@ svg {
   height: 38px;
   flex: 0 0 auto;
   border-radius: 14px;
-  background: rgba(16, 185, 129, 0.12);
+  background: rgba(59, 99, 255, 0.12);
   color: var(--accent-primary);
 }
 
@@ -4173,9 +4173,9 @@ svg {
 }
 
 .color-empty { background: var(--surface-muted); }
-.color-scale-1 { background: rgba(16, 185, 129, 0.25); }
-.color-scale-2 { background: rgba(16, 185, 129, 0.48); }
-.color-scale-3 { background: rgba(16, 185, 129, 0.72); }
+.color-scale-1 { background: rgba(59, 99, 255, 0.25); }
+.color-scale-2 { background: rgba(59, 99, 255, 0.48); }
+.color-scale-3 { background: rgba(59, 99, 255, 0.72); }
 .color-scale-4 { background: var(--accent); }
 
 .contribution-legend {
@@ -4205,7 +4205,7 @@ svg {
   display: none;
   width: 64px;
   border-right: 1px solid var(--secondary);
-  background: linear-gradient(180deg, rgba(15, 20, 27, 0.92), rgba(23, 28, 35, 0.86), rgba(15, 20, 27, 0.92));
+  background: linear-gradient(180deg, rgba(5, 7, 11, 0.92), rgba(9, 13, 20, 0.86), rgba(5, 7, 11, 0.92));
   backdrop-filter: blur(14px);
 }
 
@@ -4232,7 +4232,7 @@ svg {
 .app-sidebar__link {
   width: 48px;
   height: 48px;
-  border-radius: 16px;
+  border-radius: 10px;
 }
 
 .app-sidebar__link:hover,
@@ -4286,7 +4286,7 @@ svg {
   align-items: center;
   justify-content: space-around;
   border-top: 1px solid var(--secondary);
-  background: rgba(23, 28, 35, 0.95);
+  background: rgba(9, 13, 20, 0.95);
   padding: 8px 8px calc(8px + env(safe-area-inset-bottom));
   backdrop-filter: blur(16px);
 }
@@ -4324,7 +4324,7 @@ svg {
   justify-items: center;
   gap: 12px;
   border: 1px solid var(--border-primary);
-  border-radius: 24px;
+  border-radius: 12px;
   background: var(--surface);
   padding: 28px;
   text-align: center;
@@ -4355,7 +4355,7 @@ svg {
 .messages-v1-sidebar__header {
   flex: 0 0 auto;
   border-bottom: 1px solid var(--border-secondary);
-  background: rgba(17, 22, 29, 0.45);
+  background: rgba(7, 10, 16, 0.45);
   padding: 16px;
 }
 
@@ -4390,8 +4390,8 @@ svg {
   height: 40px;
   flex: 0 0 auto;
   place-items: center;
-  border-radius: 16px;
-  background: rgba(16, 185, 129, 0.12);
+  border-radius: 10px;
+  background: rgba(59, 99, 255, 0.12);
   color: var(--accent);
 }
 
@@ -4400,7 +4400,7 @@ svg {
   align-items: center;
   gap: 8px;
   border: 1px solid var(--border-secondary);
-  border-radius: 16px;
+  border-radius: 10px;
   background: var(--bg-main);
   color: var(--text-secondary);
   padding: 8px 12px;
@@ -4453,8 +4453,8 @@ svg {
   width: 100%;
   min-width: 0;
   border: 1px solid transparent;
-  border-radius: 20px;
-  background: rgba(17, 22, 29, 0.55);
+  border-radius: 12px;
+  background: rgba(7, 10, 16, 0.55);
   padding: 12px;
   text-align: left;
   transition: background 220ms ease, border-color 220ms ease, box-shadow 220ms ease;
@@ -4471,7 +4471,7 @@ svg {
 
 .messages-v1-conversation.is-active {
   border-color: transparent;
-  background: rgba(16, 185, 129, 0.1);
+  background: rgba(59, 99, 255, 0.1);
   box-shadow: var(--shadow-media);
 }
 
@@ -4576,7 +4576,7 @@ svg {
   z-index: 30;
   min-width: 144px;
   border: 1px solid var(--border-secondary);
-  border-radius: 16px;
+  border-radius: 10px;
   background: var(--surface);
   padding: 8px;
   box-shadow: var(--shadow-elevated);
@@ -4654,7 +4654,7 @@ svg {
 .messages-v1-empty-list {
   min-height: 100%;
   border: 1px dashed var(--border-secondary);
-  border-radius: 16px;
+  border-radius: 10px;
   padding: 32px;
   font-size: 14px;
 }
@@ -4677,7 +4677,7 @@ svg {
 }
 
 .messages-v1-conversation-load-more button:hover {
-  border-color: rgba(16, 185, 129, 0.45);
+  border-color: rgba(59, 99, 255, 0.45);
   color: var(--accent);
 }
 
@@ -4717,7 +4717,7 @@ svg {
 .messages-v1-window__header {
   flex: 0 0 auto;
   border-bottom: 1px solid var(--border-secondary);
-  background: rgba(23, 28, 35, 0.9);
+  background: rgba(9, 13, 20, 0.9);
   padding: 12px;
   backdrop-filter: blur(16px);
 }
@@ -4793,9 +4793,9 @@ svg {
   flex: 0 0 auto;
   align-items: center;
   gap: 8px;
-  border: 1px solid rgba(16, 185, 129, 0.24);
+  border: 1px solid rgba(59, 99, 255, 0.24);
   border-radius: 999px;
-  background: rgba(16, 185, 129, 0.12);
+  background: rgba(59, 99, 255, 0.12);
   color: var(--accent);
   padding: 0 12px;
   font-size: 14px;
@@ -4803,7 +4803,7 @@ svg {
 }
 
 .messages-v1-collab-button:hover {
-  background: rgba(16, 185, 129, 0.18);
+  background: rgba(59, 99, 255, 0.18);
 }
 
 .messages-v1-collab-button span {
@@ -4832,7 +4832,7 @@ svg {
 .messages-v1-blocked-state article {
   width: min(100%, 360px);
   border: 1px solid var(--border-secondary);
-  border-radius: 24px;
+  border-radius: 12px;
   background: var(--surface);
   padding: 24px;
   text-align: center;
@@ -4845,7 +4845,7 @@ svg {
   height: 56px;
   place-items: center;
   margin: 0 auto 16px;
-  border-radius: 16px;
+  border-radius: 10px;
   background: rgba(239, 68, 68, 0.1);
   color: #fca5a5;
 }
@@ -4877,7 +4877,7 @@ svg {
   place-items: center;
   margin-bottom: 24px;
   border: 1px solid var(--border-secondary);
-  border-radius: 28px;
+  border-radius: 12px;
   background: var(--surface);
   color: var(--accent);
   box-shadow: var(--shadow-media);
@@ -4886,7 +4886,7 @@ svg {
 .messages-v1-deleted-banner {
   flex: 0 0 auto;
   border-bottom: 1px solid var(--border-secondary);
-  background: rgba(17, 22, 29, 0.45);
+  background: rgba(7, 10, 16, 0.45);
   color: var(--text-secondary);
   padding: 8px 16px;
   text-align: center;
@@ -4923,7 +4923,7 @@ svg {
 }
 
 .messages-v1-load-more button:hover {
-  border-color: rgba(16, 185, 129, 0.45);
+  border-color: rgba(59, 99, 255, 0.45);
   color: var(--text-primary);
 }
 
@@ -4939,7 +4939,7 @@ svg {
 .messages-v1-date-divider span {
   border: 1px solid var(--border-secondary);
   border-radius: 999px;
-  background: rgba(23, 28, 35, 0.9);
+  background: rgba(9, 13, 20, 0.9);
   color: var(--text-secondary);
   padding: 4px 12px;
   font-size: 11px;
@@ -5016,7 +5016,7 @@ svg {
 .messages-v1-feedback-card {
   width: 100%;
   border: 1px solid var(--border-secondary);
-  border-radius: 16px;
+  border-radius: 10px;
   background: var(--surface-deep);
   padding: 8px;
 }
@@ -5088,7 +5088,7 @@ svg {
 
 .messages-v1-bubble {
   max-width: 100%;
-  border-radius: 16px;
+  border-radius: 10px;
   padding: 10px 16px;
   box-shadow: var(--shadow-media);
 }
@@ -5133,7 +5133,7 @@ svg {
 .messages-v1-composer {
   flex: 0 0 auto;
   border-top: 1px solid var(--border-secondary);
-  background: rgba(23, 28, 35, 0.9);
+  background: rgba(9, 13, 20, 0.9);
   padding: 12px 12px calc(12px + env(safe-area-inset-bottom));
   backdrop-filter: blur(16px);
 }
@@ -5150,7 +5150,7 @@ svg {
   min-height: 44px;
   resize: none;
   border: 1px solid var(--border-secondary);
-  border-radius: 16px;
+  border-radius: 10px;
   background: var(--bg-main);
   color: var(--text-primary);
   padding: 12px 16px;
@@ -5328,7 +5328,7 @@ svg {
 
 .dashboard-v1-header {
   overflow: hidden;
-  border-radius: 28px;
+  border-radius: 12px;
 }
 
 .dashboard-v1-header__top {
@@ -5337,7 +5337,7 @@ svg {
   justify-content: space-between;
   gap: 20px;
   border-bottom: 1px solid var(--border-secondary);
-  background: rgba(17, 22, 29, 0.45);
+  background: rgba(7, 10, 16, 0.45);
   padding: 22px 24px;
 }
 
@@ -5367,7 +5367,7 @@ svg {
   inset: -5px;
   z-index: -1;
   border-radius: inherit;
-  background: rgba(16, 185, 129, 0.12);
+  background: rgba(59, 99, 255, 0.12);
   filter: blur(5px);
   content: "";
 }
@@ -5407,7 +5407,7 @@ svg {
   align-items: center;
   gap: 7px;
   border-radius: 999px;
-  background: rgba(16, 185, 129, 0.1);
+  background: rgba(59, 99, 255, 0.1);
   color: var(--accent);
   padding: 5px 12px;
   font-style: normal;
@@ -5424,7 +5424,7 @@ svg {
 .dashboard-v1-stats button {
   min-width: 0;
   border: 1px solid var(--border-secondary);
-  border-radius: 18px;
+  border-radius: 10px;
   background: var(--surface);
   color: var(--text-primary);
   padding: 12px;
@@ -5433,7 +5433,7 @@ svg {
 }
 
 .dashboard-v1-stats button:hover {
-  border-color: rgba(16, 185, 129, 0.45);
+  border-color: rgba(59, 99, 255, 0.45);
   background: var(--bg-main);
 }
 
@@ -5468,7 +5468,7 @@ svg {
 
 .dashboard-v1-tabs {
   overflow: visible;
-  border-radius: 24px;
+  border-radius: 12px;
   padding: 8px;
 }
 
@@ -5486,7 +5486,7 @@ svg {
   justify-content: center;
   gap: 7px;
   border: 1px solid transparent;
-  border-radius: 16px;
+  border-radius: 10px;
   background: transparent;
   color: var(--text-secondary);
   padding: 8px;
@@ -5511,7 +5511,7 @@ svg {
 
 .dashboard-v1-content {
   overflow: hidden;
-  border-radius: 28px;
+  border-radius: 12px;
 }
 
 .dashboard-v1-content > .contribution-card,
@@ -5559,7 +5559,7 @@ svg {
 
 .portfolio-v1-info-card {
   border: 1px solid var(--border-secondary);
-  border-radius: 24px;
+  border-radius: 12px;
   background: var(--surface-deep);
   padding: 20px;
   box-shadow: var(--shadow-media);
@@ -5600,7 +5600,7 @@ svg {
   flex-direction: column;
   gap: 8px;
   border: 1px solid var(--border-secondary);
-  border-radius: 24px;
+  border-radius: 12px;
   background: var(--surface-deep);
   padding: 8px;
   box-shadow: var(--shadow-media);
@@ -5612,7 +5612,7 @@ svg {
   align-items: center;
   gap: 12px;
   border: 0;
-  border-radius: 16px;
+  border-radius: 10px;
   background: transparent;
   color: var(--text-secondary);
   padding: 12px;
@@ -5626,7 +5626,7 @@ svg {
 }
 
 .more-v1-menu__item.is-active {
-  background: rgba(16, 185, 129, 0.12);
+  background: rgba(59, 99, 255, 0.12);
   color: var(--accent);
 }
 
@@ -5651,7 +5651,7 @@ svg {
 .more-v1-panel {
   min-width: 0;
   border: 1px solid var(--border-secondary);
-  border-radius: 24px;
+  border-radius: 12px;
   background: var(--surface-deep);
   padding: 20px;
   box-shadow: var(--shadow-media);
@@ -5678,7 +5678,7 @@ svg {
   justify-content: space-between;
   gap: 16px;
   border: 1px solid var(--border-secondary);
-  border-radius: 18px;
+  border-radius: 10px;
   background: var(--bg-main);
   color: var(--text-primary);
   padding: 14px;
@@ -5688,7 +5688,7 @@ svg {
 
 .settings-row:hover {
   background: var(--surface);
-  border-color: rgba(16, 185, 129, 0.35);
+  border-color: rgba(59, 99, 255, 0.35);
 }
 
 .settings-row--danger {
@@ -5732,8 +5732,8 @@ svg {
   height: 44px;
   flex: 0 0 auto;
   place-items: center;
-  border-radius: 16px;
-  background: rgba(16, 185, 129, 0.12);
+  border-radius: 10px;
+  background: rgba(59, 99, 255, 0.12);
   color: var(--accent);
 }
 
@@ -5785,7 +5785,7 @@ svg {
   align-content: start;
   gap: 10px;
   border: 1px solid var(--border-secondary);
-  border-radius: 18px;
+  border-radius: 10px;
   background: var(--bg-main);
   color: var(--text-primary);
   padding: 16px;
@@ -5794,7 +5794,7 @@ svg {
 }
 
 .activity-card:hover {
-  border-color: rgba(16, 185, 129, 0.36);
+  border-color: rgba(59, 99, 255, 0.36);
   background: var(--surface);
 }
 
@@ -5812,7 +5812,7 @@ svg {
   display: grid;
   gap: 12px;
   border: 1px solid var(--border-secondary);
-  border-radius: 18px;
+  border-radius: 10px;
   background: var(--bg-main);
   padding: 16px;
 }
@@ -5912,7 +5912,7 @@ svg {
   gap: 10px;
   border: 1px solid var(--border-primary);
   border-radius: 999px;
-  background: rgba(23, 28, 35, 0.92);
+  background: rgba(9, 13, 20, 0.92);
   padding: 8px;
   box-shadow: var(--shadow-media);
   backdrop-filter: blur(16px);
@@ -5939,7 +5939,7 @@ svg {
 }
 
 .feed-navbar-v1__tabs button.is-active {
-  background: rgba(16, 185, 129, 0.16);
+  background: rgba(59, 99, 255, 0.16);
   color: var(--accent);
 }
 
@@ -5966,7 +5966,7 @@ svg {
 .feed-v1-list .post-card {
   width: min(100%, 640px);
   margin-inline: auto;
-  border-radius: 28px;
+  border-radius: 12px;
   background: var(--surface);
   padding: 20px;
   box-shadow: var(--shadow-elevated);
@@ -5980,7 +5980,7 @@ svg {
   position: sticky;
   top: 92px;
   border: 1px solid var(--border-primary);
-  border-radius: 26px;
+  border-radius: 12px;
   background: var(--surface);
   padding: 16px;
   box-shadow: var(--shadow-media);
@@ -6001,7 +6001,7 @@ svg {
   flex: 0 0 auto;
   place-items: center;
   border-radius: 999px;
-  background: rgba(16, 185, 129, 0.12);
+  background: rgba(59, 99, 255, 0.12);
   color: var(--accent);
 }
 
@@ -6050,7 +6050,7 @@ svg {
   overflow: hidden;
   border: 1px solid var(--border-secondary);
   border-radius: 999px;
-  background: rgba(16, 185, 129, 0.12);
+  background: rgba(59, 99, 255, 0.12);
   color: var(--accent);
 }
 
@@ -6092,7 +6092,7 @@ svg {
   margin: 0 auto;
   overflow: hidden;
   border: 1px solid var(--border-primary);
-  border-radius: 26px;
+  border-radius: 12px;
   background: var(--surface);
   padding: 16px;
   box-shadow: var(--shadow-media);
@@ -6119,7 +6119,7 @@ svg {
   align-items: center;
   justify-content: space-between;
   border: 1px solid var(--border-secondary);
-  border-radius: 22px;
+  border-radius: 12px;
   background: var(--surface-deep);
   color: var(--text-primary);
   padding: 12px;
@@ -6127,7 +6127,7 @@ svg {
 }
 
 .recommendation-slider-card:hover {
-  border-color: rgba(16, 185, 129, 0.45);
+  border-color: rgba(59, 99, 255, 0.45);
   background: var(--surface-muted);
 }
 
@@ -6141,7 +6141,7 @@ svg {
   align-items: center;
   gap: 4px;
   border-radius: 999px;
-  background: rgba(16, 185, 129, 0.12);
+  background: rgba(59, 99, 255, 0.12);
   color: var(--accent);
   padding: 6px 12px;
   font-size: 11px;
@@ -6162,7 +6162,7 @@ svg {
   width: min(100%, 640px);
   margin: 0 auto;
   border: 1px solid var(--border-primary);
-  border-radius: 28px;
+  border-radius: 12px;
   background: var(--surface);
   padding: 24px;
   box-shadow: var(--shadow-elevated);
@@ -6216,7 +6216,7 @@ svg {
 .feed-post-skeleton__media {
   height: clamp(280px, 62vw, 470px);
   margin-top: 28px;
-  border-radius: 18px;
+  border-radius: 10px;
   background: var(--bg-main);
 }
 
@@ -6276,7 +6276,7 @@ svg {
   .feed-navbar-v1 {
     top: 10px;
     width: calc(100vw - 20px);
-    border-radius: 20px;
+    border-radius: 12px;
   }
 
   .feed-navbar-v1 .button:not(.button--icon) {
@@ -6292,7 +6292,7 @@ svg {
 .post-card {
   gap: 0;
   border-color: var(--border-primary);
-  border-radius: 28px;
+  border-radius: 12px;
   background: var(--surface);
   padding: 22px;
   box-shadow: var(--shadow-elevated);
@@ -6403,7 +6403,7 @@ svg {
 .post-media-carousel__stage {
   height: clamp(280px, 62vw, 470px);
   border-color: var(--border-primary);
-  border-radius: 18px;
+  border-radius: 10px;
   background: var(--bg-main);
   box-shadow: var(--shadow-media);
 }
@@ -6593,7 +6593,7 @@ svg {
   right: 0;
   z-index: 50;
   border-color: rgba(167, 176, 191, 0.1);
-  background: rgba(15, 20, 27, 0.95);
+  background: rgba(5, 7, 11, 0.95);
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
   backdrop-filter: blur(24px);
   transition: transform 300ms ease;
@@ -6653,7 +6653,7 @@ svg {
 }
 
 .feed-navbar-exact__trigger:hover {
-  border-color: rgba(16, 185, 129, 0.45);
+  border-color: rgba(59, 99, 255, 0.45);
   background: var(--surface-deep);
 }
 
@@ -6676,7 +6676,7 @@ svg {
   margin-top: 8px;
   overflow: hidden;
   border: 1px solid var(--border-secondary);
-  border-radius: 16px;
+  border-radius: 10px;
   background: var(--surface);
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.34), 0 8px 10px -6px rgba(0, 0, 0, 0.34);
   backdrop-filter: blur(24px);
@@ -6696,7 +6696,7 @@ svg {
 
 .feed-navbar-exact__menu button:hover,
 .feed-navbar-exact__menu button.is-active {
-  background: rgba(16, 185, 129, 0.12);
+  background: rgba(59, 99, 255, 0.12);
   color: var(--accent);
 }
 
@@ -6777,7 +6777,7 @@ svg {
   position: sticky;
   top: 96px;
   border: 1px solid var(--border-primary);
-  border-radius: 26px;
+  border-radius: 12px;
   background: var(--surface);
   padding: 16px;
   box-shadow: var(--shadow-media);
@@ -6799,7 +6799,7 @@ svg {
   align-items: center;
   justify-content: center;
   border-radius: 999px;
-  background: rgba(16, 185, 129, 0.12);
+  background: rgba(59, 99, 255, 0.12);
   color: var(--accent);
 }
 
@@ -6846,7 +6846,7 @@ svg {
   overflow: hidden;
   border: 1px solid var(--border-secondary);
   border-radius: 999px;
-  background: rgba(16, 185, 129, 0.12);
+  background: rgba(59, 99, 255, 0.12);
   color: var(--accent);
 }
 
@@ -6907,7 +6907,7 @@ svg {
   padding: 16px 16px 0;
   border: 1px solid var(--border-primary);
   border-bottom: 0;
-  border-radius: 26px 26px 0 0;
+  border-radius: 12px 12px 0 0;
   background: var(--surface);
   box-shadow: var(--shadow-media);
 }
@@ -6918,7 +6918,7 @@ svg {
   overflow-x: auto;
   border: 1px solid var(--border-primary);
   border-top: 0;
-  border-radius: 0 0 26px 26px;
+  border-radius: 0 0 12px 12px;
   background: var(--surface);
   padding: 12px 16px 16px;
   box-shadow: var(--shadow-media);
@@ -6936,7 +6936,7 @@ svg {
   align-items: center;
   justify-content: space-between;
   border: 1px solid var(--border-secondary);
-  border-radius: 22px;
+  border-radius: 12px;
   background: var(--surface-deep);
   color: var(--text-primary);
   padding: 12px;
@@ -6945,7 +6945,7 @@ svg {
 }
 
 .recommendation-slider-card:hover {
-  border-color: rgba(16, 185, 129, 0.45);
+  border-color: rgba(59, 99, 255, 0.45);
   background: var(--surface-muted);
 }
 
@@ -6959,7 +6959,7 @@ svg {
   align-items: center;
   gap: 4px;
   border-radius: 999px;
-  background: rgba(16, 185, 129, 0.12);
+  background: rgba(59, 99, 255, 0.12);
   color: var(--accent);
   padding: 6px 12px;
   font-size: 11px;
@@ -6990,7 +6990,7 @@ svg {
 }
 
 .feed-post-skeleton {
-  border-radius: 28px;
+  border-radius: 12px;
   background: var(--surface);
   padding: 24px 20px;
   box-shadow: var(--shadow-elevated);
@@ -7006,7 +7006,7 @@ svg {
 
 .v1-post-card {
   border: 1px solid var(--border-primary);
-  border-radius: 28px;
+  border-radius: 12px;
   background: var(--surface);
   padding: 24px 20px;
   box-shadow: var(--shadow-elevated);
@@ -7171,7 +7171,7 @@ svg {
   overflow: hidden;
   margin-top: 32px;
   border: 1px solid var(--border-primary);
-  border-radius: 18px;
+  border-radius: 10px;
   background: var(--bg-main);
   box-shadow: var(--shadow-media);
 }
@@ -7202,7 +7202,7 @@ svg {
 .v1-post-card__media-overlay {
   position: absolute;
   inset: 0;
-  background: rgba(15, 20, 27, 0.35);
+  background: rgba(5, 7, 11, 0.35);
 }
 
 .v1-post-card__media-main {
@@ -7435,7 +7435,7 @@ svg {
   overflow: hidden;
   width: 220px;
   border: 1px solid var(--border-secondary);
-  border-radius: 16px;
+  border-radius: 10px;
   background: var(--bg-main);
   box-shadow: 0 22px 48px rgba(0, 0, 0, 0.45);
 }
@@ -7543,7 +7543,7 @@ svg {
   display: grid;
   gap: 10px;
   border: 1px solid var(--border-secondary);
-  border-radius: 16px;
+  border-radius: 10px;
   background: var(--bg-main);
   padding: 16px;
 }
@@ -7632,7 +7632,7 @@ svg {
 .post-composer-v1__tags button:hover,
 .inline-post-composer__tags > button:not(.button):hover,
 .rich-post-card__hashtags button:hover {
-  border-color: rgba(16, 185, 129, 0.45);
+  border-color: rgba(59, 99, 255, 0.45);
   color: var(--accent);
 }
 
@@ -7644,7 +7644,7 @@ svg {
   gap: 12px;
   margin: 16px auto;
   border: 1px solid var(--border-primary);
-  border-radius: 16px;
+  border-radius: 10px;
   background: var(--surface);
   padding: 16px 18px;
   box-shadow: var(--shadow-media);
@@ -7765,7 +7765,7 @@ svg {
 }
 
 .inline-post-composer__attachments button:hover {
-  border-color: rgba(16, 185, 129, 0.45);
+  border-color: rgba(59, 99, 255, 0.45);
   color: var(--accent);
 }
 
@@ -7837,7 +7837,7 @@ svg {
   gap: 12px;
   overflow-y: auto;
   border: 1px solid var(--border-secondary);
-  border-radius: 16px;
+  border-radius: 10px;
   background: var(--surface);
   padding: 14px;
   box-shadow: var(--shadow-media);
@@ -7982,7 +7982,7 @@ svg {
 .inline-post-composer__tools label:hover,
 .inline-post-composer__tools button:hover,
 .inline-post-composer__tools button.is-active {
-  background: rgba(16, 185, 129, 0.1);
+  background: rgba(59, 99, 255, 0.1);
   color: var(--accent);
 }
 
@@ -7993,7 +7993,7 @@ svg {
 }
 
 .rich-post-card {
-  border-radius: 16px;
+  border-radius: 10px;
   box-shadow: var(--shadow-media);
 }
 
@@ -8069,7 +8069,7 @@ svg {
 }
 
 .rich-post-card__attachment-switcher button.is-active {
-  background: linear-gradient(135deg, rgba(16, 185, 129, 0.95), rgba(59, 130, 246, 0.9));
+  background: linear-gradient(135deg, rgba(59, 99, 255, 0.95), rgba(59, 130, 246, 0.9));
   color: white;
   box-shadow: 0 10px 24px rgba(14, 165, 233, 0.2);
 }
@@ -8247,7 +8247,7 @@ svg {
   overflow: hidden auto;
   gap: 14px;
   border: 1px solid var(--border-secondary);
-  border-radius: 18px;
+  border-radius: 10px;
   background: var(--surface);
   padding: 18px;
   box-shadow: var(--shadow-media);
@@ -8280,7 +8280,7 @@ svg {
   height: 42px;
   place-items: center;
   border-radius: 14px;
-  background: rgba(16, 185, 129, 0.12);
+  background: rgba(59, 99, 255, 0.12);
   color: var(--accent);
 }
 
@@ -8372,8 +8372,8 @@ svg {
 }
 
 .share-post-modal__list button.is-selected {
-  border-color: rgba(16, 185, 129, 0.5);
-  background: rgba(16, 185, 129, 0.1);
+  border-color: rgba(59, 99, 255, 0.5);
+  background: rgba(59, 99, 255, 0.1);
 }
 
 .share-post-modal__list button:disabled {
@@ -8434,7 +8434,7 @@ svg {
 }
 
 .messages-v1-shared-post:hover {
-  border-color: rgba(16, 185, 129, 0.45);
+  border-color: rgba(59, 99, 255, 0.45);
 }
 
 .messages-v1-shared-post img {
@@ -8551,7 +8551,7 @@ svg {
 .dashboard-v1-header {
   overflow: hidden;
   border: 1px solid var(--border-primary);
-  border-radius: 28px;
+  border-radius: 12px;
   background: var(--surface);
   box-shadow: var(--shadow-elevated);
 }
@@ -8561,7 +8561,7 @@ svg {
   flex-direction: column;
   gap: 20px;
   border-bottom: 1px solid var(--border-secondary);
-  background: rgba(17, 22, 29, 0.45);
+  background: rgba(7, 10, 16, 0.45);
   padding: 20px 16px;
 }
 
@@ -8592,7 +8592,7 @@ svg {
   inset: -4px;
   z-index: -1;
   border-radius: 999px;
-  background: rgba(16, 185, 129, 0.1);
+  background: rgba(59, 99, 255, 0.1);
   filter: blur(4px);
 }
 
@@ -8634,7 +8634,7 @@ svg {
   gap: 8px;
   margin-top: 12px;
   border-radius: 999px;
-  background: rgba(16, 185, 129, 0.1);
+  background: rgba(59, 99, 255, 0.1);
   color: var(--accent);
   padding: 4px 12px;
   font-size: 14px;
@@ -8650,7 +8650,7 @@ svg {
 
 .dashboard-v1-stats button {
   border: 1px solid var(--border-secondary);
-  border-radius: 16px;
+  border-radius: 10px;
   background: var(--surface);
   color: var(--text-primary);
   padding: 12px;
@@ -8659,7 +8659,7 @@ svg {
 }
 
 .dashboard-v1-stats button:hover {
-  border-color: rgba(16, 185, 129, 0.45);
+  border-color: rgba(59, 99, 255, 0.45);
   background: var(--bg-main);
 }
 
@@ -8709,14 +8709,14 @@ svg {
   color: var(--accent);
 }
 
-.dashboard-v1-header__actions .button--primary:hover { background: #10b981; }
+.dashboard-v1-header__actions .button--primary:hover { background: #3b63ff; }
 
 .dashboard-v1-tabs {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 8px;
   border: 1px solid var(--border-primary);
-  border-radius: 24px;
+  border-radius: 12px;
   background: var(--surface);
   padding: 8px;
   box-shadow: var(--shadow-media);
@@ -8730,7 +8730,7 @@ svg {
   justify-content: center;
   gap: 6px;
   border: 1px solid transparent;
-  border-radius: 16px;
+  border-radius: 10px;
   background: transparent;
   color: var(--text-secondary);
   padding: 12px 8px;
@@ -8747,7 +8747,7 @@ svg {
 .dashboard-v1-content {
   overflow: hidden;
   border: 1px solid var(--border-primary);
-  border-radius: 28px;
+  border-radius: 12px;
   background: var(--surface);
   box-shadow: var(--shadow-elevated);
 }
@@ -8815,7 +8815,7 @@ svg {
 }
 
 .dashboard-posts-v1__switcher button.is-active {
-  background: rgba(16, 185, 129, 0.18);
+  background: rgba(59, 99, 255, 0.18);
   color: var(--text-primary);
 }
 
@@ -8831,7 +8831,7 @@ svg {
   min-width: 0;
   overflow: hidden;
   border: 1px solid var(--border-primary);
-  border-radius: 20px;
+  border-radius: 12px;
   background: var(--surface);
   color: inherit;
   padding: 0;
@@ -8841,7 +8841,7 @@ svg {
 }
 
 .dashboard-post-preview-card:hover {
-  border-color: rgba(16, 185, 129, 0.45);
+  border-color: rgba(59, 99, 255, 0.45);
   background: var(--surface-deep);
 }
 
@@ -8906,7 +8906,7 @@ svg {
   width: 28px;
   height: 28px;
   border-radius: 999px;
-  background: rgba(16, 185, 129, 0.65);
+  background: rgba(59, 99, 255, 0.65);
 }
 
 .dashboard-post-preview-card__body {
@@ -8959,7 +8959,7 @@ svg {
   height: 100%;
   place-items: center;
   background:
-    radial-gradient(circle at top left, rgba(16, 185, 129, 0.18), transparent 44%),
+    radial-gradient(circle at top left, rgba(59, 99, 255, 0.18), transparent 44%),
     var(--bg-main);
   color: var(--accent);
 }
@@ -9017,7 +9017,7 @@ svg {
   justify-content: center;
   gap: 8px;
   border: 1px solid var(--border-secondary);
-  border-radius: 16px;
+  border-radius: 10px;
   background: var(--surface-deep);
   color: var(--text-secondary);
   padding: 24px;
@@ -9035,13 +9035,13 @@ svg {
 
 .more-v1-menu {
   top: 16px;
-  border-radius: 24px;
+  border-radius: 12px;
   background: var(--surface-deep);
   padding: 8px;
 }
 
 .more-v1-panel {
-  border-radius: 24px;
+  border-radius: 12px;
   background: var(--surface-deep);
   padding: 16px;
 }
@@ -9114,7 +9114,7 @@ svg {
   min-width: 0;
   overflow: hidden;
   border: 1px solid var(--border-primary);
-  border-radius: 28px;
+  border-radius: 12px;
   background: var(--surface);
   box-shadow: var(--shadow-elevated);
 }
@@ -9308,7 +9308,7 @@ svg {
   align-items: flex-start;
   gap: 12px;
   border: 1px solid var(--border-secondary);
-  border-radius: 16px;
+  border-radius: 10px;
   background: var(--surface-deep);
   color: var(--text-primary);
   padding: 12px;
@@ -9317,14 +9317,14 @@ svg {
 }
 
 .collab-problem-card:hover {
-  border-color: rgba(16, 185, 129, 0.5);
+  border-color: rgba(59, 99, 255, 0.5);
   background: var(--bg-main);
 }
 
 .collab-problem-card.is-selected {
   border-color: var(--accent);
-  background: rgba(16, 185, 129, 0.1);
-  box-shadow: 0 10px 24px rgba(16, 185, 129, 0.1);
+  background: rgba(59, 99, 255, 0.1);
+  box-shadow: 0 10px 24px rgba(59, 99, 255, 0.1);
 }
 
 .collab-problem-card > svg {
@@ -9435,9 +9435,9 @@ svg {
 }
 
 .collab-problem-statement header > span {
-  border: 1px solid rgba(16, 185, 129, 0.3);
+  border: 1px solid rgba(59, 99, 255, 0.3);
   border-radius: 999px;
-  background: rgba(16, 185, 129, 0.1);
+  background: rgba(59, 99, 255, 0.1);
   color: var(--accent);
   padding: 5px 12px;
   font-size: 14px;
@@ -9451,7 +9451,7 @@ svg {
 .collab-empty-box,
 .collab-testcase-card {
   border: 1px solid var(--border-secondary);
-  border-radius: 16px;
+  border-radius: 10px;
   background: var(--surface-deep);
   padding: 16px;
 }
@@ -9538,7 +9538,7 @@ svg {
   min-height: 0;
   flex: 1;
   overflow: hidden;
-  background: #0f141b;
+  background: var(--bg-main);
 }
 
 .collab-results-panel {
@@ -9567,8 +9567,8 @@ svg {
 }
 
 .collab-results-panel header span.is-pass {
-  border-color: rgba(16, 185, 129, 0.25);
-  background: rgba(16, 185, 129, 0.1);
+  border-color: rgba(59, 99, 255, 0.25);
+  background: rgba(59, 99, 255, 0.1);
   color: var(--accent);
 }
 
@@ -9597,14 +9597,14 @@ svg {
 
 .collab-results-list article {
   border: 1px solid rgba(239, 68, 68, 0.25);
-  border-radius: 16px;
+  border-radius: 10px;
   background: rgba(239, 68, 68, 0.1);
   padding: 12px;
 }
 
 .collab-results-list article.is-pass {
-  border-color: rgba(16, 185, 129, 0.25);
-  background: rgba(16, 185, 129, 0.1);
+  border-color: rgba(59, 99, 255, 0.25);
+  background: rgba(59, 99, 255, 0.1);
 }
 
 .collab-results-list h4 {
@@ -9645,7 +9645,7 @@ svg {
   align-items: center;
   gap: 12px;
   border: 1px solid var(--border-secondary);
-  border-radius: 16px;
+  border-radius: 10px;
   background: var(--surface-deep);
   padding: 10px;
 }
@@ -9690,8 +9690,8 @@ svg {
 .collab-call-box {
   display: grid;
   gap: 8px;
-  border: 1px solid rgba(16, 185, 129, 0.3);
-  border-radius: 16px;
+  border: 1px solid rgba(59, 99, 255, 0.3);
+  border-radius: 10px;
   background: var(--surface-deep);
   padding: 12px;
 }
@@ -9719,7 +9719,7 @@ svg {
   flex-direction: column;
   gap: 12px;
   overflow-y: auto;
-  background: rgba(17, 22, 29, 0.45);
+  background: rgba(7, 10, 16, 0.45);
   padding: 12px;
 }
 
@@ -9800,7 +9800,7 @@ svg {
   max-height: 86vh;
   overflow: hidden;
   border: 1px solid var(--border-primary);
-  border-radius: 28px;
+  border-radius: 12px;
   background: var(--surface);
   box-shadow: var(--shadow-elevated);
 }
@@ -9841,7 +9841,7 @@ svg {
   min-height: 190px;
   place-items: center;
   gap: 16px;
-  background: rgba(17, 22, 29, 0.45);
+  background: rgba(7, 10, 16, 0.45);
   padding: 24px;
   text-align: center;
 }
@@ -9873,7 +9873,7 @@ svg {
   min-height: 0;
   flex: 1;
   overflow-y: auto;
-  background: rgba(17, 22, 29, 0.45);
+  background: rgba(7, 10, 16, 0.45);
   padding: 24px;
 }
 
@@ -9882,7 +9882,7 @@ svg {
   align-items: center;
   gap: 12px;
   border: 1px solid var(--border-secondary);
-  border-radius: 16px;
+  border-radius: 10px;
   background: var(--surface);
   padding: 12px 16px;
 }
@@ -9938,7 +9938,7 @@ svg {
 
 .collab-suggestions button:hover {
   border-color: var(--accent);
-  background: rgba(16, 185, 129, 0.1);
+  background: rgba(59, 99, 255, 0.1);
 }
 
 .collab-dsa-list {
@@ -9954,7 +9954,7 @@ svg {
 .collab-dsa-card {
   overflow: hidden;
   border: 1px solid var(--border-secondary);
-  border-radius: 18px;
+  border-radius: 10px;
   background: var(--surface);
 }
 
@@ -10004,7 +10004,7 @@ svg {
   display: grid;
   gap: 20px;
   border-top: 1px solid var(--border-secondary);
-  background: rgba(17, 22, 29, 0.45);
+  background: rgba(7, 10, 16, 0.45);
   padding: 18px;
 }
 
@@ -10053,7 +10053,7 @@ svg {
 .collab-error-page section {
   width: min(100%, 460px);
   border: 1px solid var(--border-primary);
-  border-radius: 24px;
+  border-radius: 12px;
   background: var(--surface);
   box-shadow: var(--shadow-elevated);
   padding: 28px;
@@ -10082,7 +10082,7 @@ svg {
 
   .collab-room-shell {
     min-height: calc(100vh - 16px);
-    border-radius: 20px;
+    border-radius: 12px;
   }
 
   .collab-right-panel { min-width: min(82vw, 320px); }
@@ -10161,7 +10161,7 @@ svg {
   gap: 14px;
   margin: 0 auto 12px;
   border: 1px solid var(--border-secondary);
-  border-radius: 20px;
+  border-radius: 12px;
   background: rgba(15, 23, 42, 0.48);
   padding: 12px 14px;
 }
@@ -10228,7 +10228,7 @@ svg {
 }
 
 .repost-detail-card__original:hover {
-  border-color: rgba(16, 185, 129, 0.44);
+  border-color: rgba(59, 99, 255, 0.44);
   color: var(--text-primary);
 }
 
