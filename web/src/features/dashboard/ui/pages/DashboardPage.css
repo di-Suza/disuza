@@ -209,11 +209,16 @@
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 8px;
+  overflow: visible;
   border: 1px solid var(--border-primary);
   border-radius: 24px;
   background: var(--surface);
   padding: 8px;
   box-shadow: var(--shadow-media);
+}
+
+.dashboard-v1-shell .dashboard-v1-tabs {
+  overflow: visible;
 }
 
 .dashboard-v1-tab {
@@ -256,6 +261,10 @@
 .heatmap-rules-v1 {
   position: relative;
   display: inline-flex;
+  overflow: visible;
+  max-width: none;
+  text-overflow: clip;
+  white-space: normal;
 }
 
 .heatmap-rules-v1__trigger {
@@ -275,6 +284,13 @@
   color: var(--accent);
 }
 
+.dashboard-v1-tab .heatmap-rules-v1 {
+  overflow: visible;
+  max-width: none;
+  text-overflow: clip;
+  white-space: normal;
+}
+
 .heatmap-rules-v1__popover {
   visibility: hidden;
   position: absolute;
@@ -283,8 +299,10 @@
   z-index: 80;
   display: grid;
   width: 288px;
+  max-width: min(288px, calc(100vw - 32px));
   transform: translateX(-50%);
   gap: 8px;
+  overflow: visible;
   border: 1px solid var(--border-primary);
   border-radius: 16px;
   background: var(--surface);
@@ -295,7 +313,16 @@
   text-align: left;
   font-size: 12px;
   font-weight: 500;
+  text-overflow: clip;
+  white-space: normal;
   transition: opacity 160ms ease, visibility 160ms ease;
+}
+
+.dashboard-v1-tab .heatmap-rules-v1__popover {
+  overflow: visible;
+  max-width: min(288px, calc(100vw - 32px));
+  text-overflow: clip;
+  white-space: normal;
 }
 
 .heatmap-rules-v1:hover .heatmap-rules-v1__popover {
@@ -313,7 +340,18 @@
   display: flex;
   align-items: flex-start;
   gap: 8px;
+  overflow: visible;
+  max-width: none;
   line-height: 1.45;
+  text-overflow: clip;
+  white-space: normal;
+}
+
+.dashboard-v1-tab .heatmap-rules-v1__popover > span {
+  overflow: visible;
+  max-width: none;
+  text-overflow: clip;
+  white-space: normal;
 }
 
 .heatmap-rules-v1__popover i {
