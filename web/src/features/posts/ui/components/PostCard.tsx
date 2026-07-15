@@ -20,7 +20,7 @@ import {
   UserRound,
   X,
 } from 'lucide-react';
-import { memo, useCallback, useMemo, useState, type CSSProperties, type ReactNode } from 'react';
+import { memo, useCallback, useEffect, useMemo, useState, type CSSProperties, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import CommentModal from '@/features/comments/ui/components/CommentModal';
@@ -33,6 +33,7 @@ import { usePostRepost } from '@/features/posts/ui/hooks/usePostRepost';
 import ReportModal from '@/features/reports/ui/components/ReportModal';
 import ManageSaveCollectionsModal from '@/features/saves/ui/components/ManageSaveCollectionsModal';
 import { usePostSave } from '@/features/saves/ui/hooks/usePostSave';
+import { useLockBodyScroll } from '@/shared/hooks/useLockBodyScroll';
 import { useToast } from '@/shared/hooks/useToast';
 import { cn } from '@/shared/utils/cn';
 import { getErrorMessage } from '@/shared/utils/getErrorMessage';
@@ -105,6 +106,7 @@ const PostCard = ({ className, fallbackAuthor, post, viewerId }: PostCardProps) 
   const [isShareOpen, setShareOpen] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
   const [showFullCaption, setShowFullCaption] = useState(false);
+  const [isMediaPreviewOpen, setMediaPreviewOpen] = useState(false);
   const [showSaveTooltip, setShowSaveTooltip] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [deletePost, { isLoading: isDeleting }] = useDeletePostMutation();
@@ -143,6 +145,19 @@ const PostCard = ({ className, fallbackAuthor, post, viewerId }: PostCardProps) 
   const goToNext = useCallback(() => {
     setCurrentIndex((current) => (current + 1) % media.length);
   }, [media.length]);
+
+  useLockBodyScroll(isMediaPreviewOpen);
+
+  useEffect(() => {
+    if (!isMediaPreviewOpen) return;
+
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setMediaPreviewOpen(false);
+    };
+
+    window.addEventListener('keydown', handleEscape);
+    return () => window.removeEventListener('keydown', handleEscape);
+  }, [isMediaPreviewOpen]);
 
   const handleDelete = useCallback(async () => {
     if (!window.confirm('Delete this post?')) return;
@@ -284,6 +299,7 @@ const PostCard = ({ className, fallbackAuthor, post, viewerId }: PostCardProps) 
               ) : (
                 <img className="v1-post-card__media-main" src={activeMedia.url} alt={`Post content ${currentIndex + 1}`} loading="lazy" />
               )}
+              <button type="button" className="v1-post-card__media-open" onClick={() => setMediaPreviewOpen(true)} aria-label="Open media preview" />
 
               {media.length > 1 && currentIndex > 0 && <button type="button" className="v1-post-card__media-nav v1-post-card__media-nav--left" onClick={goToPrevious} aria-label="Previous media"><ChevronLeft size={20} /></button>}
               {media.length > 1 && currentIndex < media.length - 1 && <button type="button" className="v1-post-card__media-nav v1-post-card__media-nav--right" onClick={goToNext} aria-label="Next media"><ChevronRight size={20} /></button>}
@@ -335,6 +351,21 @@ const PostCard = ({ className, fallbackAuthor, post, viewerId }: PostCardProps) 
       {isCollectionsOpen && <ManageSaveCollectionsModal isOpen={isCollectionsOpen} onClose={() => setCollectionsOpen(false)} postId={post._id} onSaved={markSaved} />}
       {isReportOpen && <ReportModal isOpen={isReportOpen} onClose={() => setReportOpen(false)} targetId={post._id} onModel="Post" />}
       {isShareOpen && <SharePostModal isOpen={isShareOpen} onClose={() => setShareOpen(false)} post={post} />}
+      {isMediaPreviewOpen && activeMedia && (
+        <div className="v1-post-card__media-preview" role="dialog" aria-modal="true" aria-label="Media preview">
+          <button type="button" className="v1-post-card__media-preview-backdrop" onClick={() => setMediaPreviewOpen(false)} aria-label="Close media preview" />
+          <div className="v1-post-card__media-preview-stage">
+            {isVideoMedia(activeMedia) ? (
+              <video className="v1-post-card__media-preview-media" src={activeMedia.url} controls autoPlay playsInline />
+            ) : (
+              <img className="v1-post-card__media-preview-media" src={activeMedia.url} alt={`Post content ${currentIndex + 1}`} />
+            )}
+          </div>
+          <button type="button" className="v1-post-card__media-preview-close" onClick={() => setMediaPreviewOpen(false)} aria-label="Close media preview">
+            <X size={22} aria-hidden="true" />
+          </button>
+        </div>
+      )}
       {isFeedbackOpen && ownerId && (
         <SendFeedbackModal
           isOpen={isFeedbackOpen}
