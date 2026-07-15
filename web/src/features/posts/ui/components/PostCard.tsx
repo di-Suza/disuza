@@ -48,6 +48,8 @@ type PostCardProps = {
   compact?: boolean;
 };
 
+type PostAttachmentPanel = 'code' | 'media';
+
 const formatTime = (value?: string) => {
   if (!value) return '';
   const date = new Date(value);
@@ -107,6 +109,8 @@ const PostCard = ({ className, fallbackAuthor, post, viewerId }: PostCardProps) 
   const [showDropdown, setShowDropdown] = useState(false);
   const [showFullCaption, setShowFullCaption] = useState(false);
   const [showFullCode, setShowFullCode] = useState(false);
+  const [activeAttachmentPanel, setActiveAttachmentPanel] = useState<PostAttachmentPanel>('code');
+  const [hasManuallySelectedAttachmentPanel, setHasManuallySelectedAttachmentPanel] = useState(false);
   const [isMediaPreviewOpen, setMediaPreviewOpen] = useState(false);
   const [showSaveTooltip, setShowSaveTooltip] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -132,6 +136,11 @@ const PostCard = ({ className, fallbackAuthor, post, viewerId }: PostCardProps) 
   const hideLikesCount = Boolean(post.settings?.hideLikesCount);
   const caption = post.caption || '';
   const code = post.codeSnippet?.code || '';
+  const hasCode = Boolean(code);
+  const hasMedia = media.length > 0;
+  const hasAttachmentSwitcher = hasCode && hasMedia;
+  const shouldShowCode = hasCode && (!hasAttachmentSwitcher || activeAttachmentPanel === 'code');
+  const shouldShowMedia = Boolean(activeMedia) && (!hasAttachmentSwitcher || activeAttachmentPanel === 'media');
   const shouldCollapseCaption = caption.length > 120 || caption.split(/\r?\n/).length > 2;
   const shouldCollapseCode = code.length > 600 || code.split(/\r?\n/).length > 10;
   const editablePost = fullPostData?.post || null;
@@ -149,7 +158,29 @@ const PostCard = ({ className, fallbackAuthor, post, viewerId }: PostCardProps) 
     setCurrentIndex((current) => (current + 1) % media.length);
   }, [media.length]);
 
+  const selectAttachmentPanel = useCallback((panel: PostAttachmentPanel) => {
+    setActiveAttachmentPanel(panel);
+    setHasManuallySelectedAttachmentPanel(true);
+  }, []);
+
   useLockBodyScroll(isMediaPreviewOpen);
+
+  useEffect(() => {
+    setActiveAttachmentPanel('code');
+    setHasManuallySelectedAttachmentPanel(false);
+    setShowFullCode(false);
+    setCurrentIndex(0);
+  }, [post._id]);
+
+  useEffect(() => {
+    if (!hasAttachmentSwitcher || hasManuallySelectedAttachmentPanel) return;
+
+    const intervalId = window.setInterval(() => {
+      setActiveAttachmentPanel((current) => (current === 'code' ? 'media' : 'code'));
+    }, 4000);
+
+    return () => window.clearInterval(intervalId);
+  }, [hasAttachmentSwitcher, hasManuallySelectedAttachmentPanel]);
 
   useEffect(() => {
     if (!isMediaPreviewOpen) return;
@@ -263,6 +294,29 @@ const PostCard = ({ className, fallbackAuthor, post, viewerId }: PostCardProps) 
           </p>
         )}
 
+        {hasAttachmentSwitcher && (
+          <div className="rich-post-card__attachment-switcher" role="tablist" aria-label="Post attachment view">
+            <button
+              type="button"
+              className={activeAttachmentPanel === 'code' ? 'is-active' : ''}
+              onClick={() => selectAttachmentPanel('code')}
+              role="tab"
+              aria-selected={activeAttachmentPanel === 'code'}
+            >
+              Code
+            </button>
+            <button
+              type="button"
+              className={activeAttachmentPanel === 'media' ? 'is-active' : ''}
+              onClick={() => selectAttachmentPanel('media')}
+              role="tab"
+              aria-selected={activeAttachmentPanel === 'media'}
+            >
+              Media
+            </button>
+          </div>
+        )}
+
         {extraLinks.length > 0 && (
           <div className="rich-post-card__inline-links">
             {extraLinks.map((link) => {
@@ -278,7 +332,7 @@ const PostCard = ({ className, fallbackAuthor, post, viewerId }: PostCardProps) 
           </div>
         )}
 
-        {code && (
+        {shouldShowCode && (
           <section className="rich-post-card__code">
             <header>
               <span>{post.codeSnippet?.language || 'text'}</span>
@@ -296,7 +350,7 @@ const PostCard = ({ className, fallbackAuthor, post, viewerId }: PostCardProps) 
           </section>
         )}
 
-        {activeMedia && (
+        {shouldShowMedia && activeMedia && (
           <section className="v1-post-card__media-shell">
             <div className="v1-post-card__media-stage" style={mediaStageStyle}>
               {!isVideoMedia(activeMedia) && <img className="v1-post-card__media-bg" src={activeMedia.url} alt="" aria-hidden="true" />}

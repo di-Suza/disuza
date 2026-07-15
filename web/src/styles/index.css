@@ -7948,6 +7948,40 @@ svg {
   font-weight: 800;
 }
 
+.rich-post-card__attachment-switcher {
+  display: grid;
+  width: min(190px, 100%);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 3px;
+  margin: 12px 0 0 auto;
+  border: 1px solid var(--border-secondary);
+  border-radius: 999px;
+  background: rgba(2, 6, 23, 0.6);
+  padding: 3px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.rich-post-card__attachment-switcher button {
+  min-height: 30px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 900;
+  transition: background 160ms ease, color 160ms ease, box-shadow 160ms ease;
+}
+
+.rich-post-card__attachment-switcher button:hover {
+  color: var(--text-primary);
+}
+
+.rich-post-card__attachment-switcher button.is-active {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.95), rgba(59, 130, 246, 0.9));
+  color: white;
+  box-shadow: 0 10px 24px rgba(14, 165, 233, 0.2);
+}
+
 .rich-post-card__inline-links {
   display: grid;
   gap: 8px;
