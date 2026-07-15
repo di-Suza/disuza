@@ -35,6 +35,7 @@ import ManageSaveCollectionsModal from '@/features/saves/ui/components/ManageSav
 import { usePostSave } from '@/features/saves/ui/hooks/usePostSave';
 import { useLockBodyScroll } from '@/shared/hooks/useLockBodyScroll';
 import { useToast } from '@/shared/hooks/useToast';
+import ConfirmDialog from '@/shared/ui/ConfirmDialog';
 import { cn } from '@/shared/utils/cn';
 import { getErrorMessage } from '@/shared/utils/getErrorMessage';
 import PostComposerModal from './PostComposerModal';
@@ -107,6 +108,7 @@ const PostCard = ({ className, fallbackAuthor, hideFeedbackAction = false, post,
   const [isReportOpen, setReportOpen] = useState(false);
   const [isFeedbackOpen, setFeedbackOpen] = useState(false);
   const [isShareOpen, setShareOpen] = useState(false);
+  const [isDeleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
   const [showFullCaption, setShowFullCaption] = useState(false);
   const [showFullCode, setShowFullCode] = useState(false);
@@ -195,10 +197,9 @@ const PostCard = ({ className, fallbackAuthor, hideFeedbackAction = false, post,
   }, [isMediaPreviewOpen]);
 
   const handleDelete = useCallback(async () => {
-    if (!window.confirm('Delete this post?')) return;
-
     try {
       const result = await deletePost(post._id).unwrap();
+      setDeleteConfirmOpen(false);
       showSuccess(result.message);
     } catch (error) {
       showError(getErrorMessage(error));
@@ -276,7 +277,7 @@ const PostCard = ({ className, fallbackAuthor, hideFeedbackAction = false, post,
                   <div className="v1-post-card__dropdown">
                     <button type="button" onClick={() => { setShowDropdown(false); setShareOpen(true); }}><Share2 size={16} />Share</button>
                     {isOwner && <button type="button" onClick={() => { setShowDropdown(false); setEditOpen(true); }}><Edit3 size={16} />Edit</button>}
-                    {isOwner && <button type="button" className="is-danger" onClick={() => { setShowDropdown(false); void handleDelete(); }} disabled={isDeleting}>{isDeleting ? <Loader2 className="spin" size={16} /> : <Trash2 size={16} />}Delete</button>}
+                    {isOwner && <button type="button" className="is-danger" onClick={() => { setShowDropdown(false); setDeleteConfirmOpen(true); }} disabled={isDeleting}>{isDeleting ? <Loader2 className="spin" size={16} /> : <Trash2 size={16} />}Delete</button>}
                     {!isOwner && <button type="button" className="is-danger" onClick={() => { setShowDropdown(false); setReportOpen(true); }}><MessageSquareWarning size={16} />Report</button>}
                     <button type="button" className="is-muted" onClick={() => setShowDropdown(false)}><X size={16} />Cancel</button>
                   </div>
@@ -413,6 +414,15 @@ const PostCard = ({ className, fallbackAuthor, hideFeedbackAction = false, post,
       {isCollectionsOpen && <ManageSaveCollectionsModal isOpen={isCollectionsOpen} onClose={() => setCollectionsOpen(false)} postId={post._id} onSaved={markSaved} />}
       {isReportOpen && <ReportModal isOpen={isReportOpen} onClose={() => setReportOpen(false)} targetId={post._id} onModel="Post" />}
       {isShareOpen && <SharePostModal isOpen={isShareOpen} onClose={() => setShareOpen(false)} post={post} />}
+      <ConfirmDialog
+        isOpen={isDeleteConfirmOpen}
+        isBusy={isDeleting}
+        title="Delete post?"
+        description="This post will be permanently removed from your profile, feed, saves, and related activity."
+        confirmLabel="Delete"
+        onCancel={() => setDeleteConfirmOpen(false)}
+        onConfirm={handleDelete}
+      />
       {isMediaPreviewOpen && activeMedia && (
         <div className="v1-post-card__media-preview" role="dialog" aria-modal="true" aria-label="Media preview">
           <button type="button" className="v1-post-card__media-preview-backdrop" onClick={() => setMediaPreviewOpen(false)} aria-label="Close media preview" />

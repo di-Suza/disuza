@@ -12,6 +12,7 @@ import type { SavedCollection } from '@/features/posts/model/post.types';
 import PostList from '@/features/posts/ui/components/PostList';
 import { useToast } from '@/shared/hooks/useToast';
 import Button from '@/shared/ui/Button';
+import ConfirmDialog from '@/shared/ui/ConfirmDialog';
 import Input from '@/shared/ui/Input';
 import { cn } from '@/shared/utils/cn';
 import { getErrorMessage } from '@/shared/utils/getErrorMessage';
@@ -35,6 +36,7 @@ const SavedCollectionsPanel = ({ viewerId }: SavedCollectionsPanelProps) => {
   const [selectedCollectionId, setSelectedCollectionId] = useState('');
   const [newCollectionName, setNewCollectionName] = useState('');
   const [editingCollection, setEditingCollection] = useState<EditingState>(null);
+  const [collectionPendingDelete, setCollectionPendingDelete] = useState<SavedCollection | null>(null);
   const { data, isError, isFetching, isLoading, refetch } = useGetSavedPostsCollectionsQuery();
   const [createCollection, { isLoading: isCreating }] = useCreateCollectionMutation();
   const [updateCollection, { isLoading: isUpdating }] = useUpdateCollectionMutation();
@@ -97,10 +99,10 @@ const SavedCollectionsPanel = ({ viewerId }: SavedCollectionsPanelProps) => {
 
   const handleDeleteCollection = async (collection: SavedCollection) => {
     if (collection.isSystemGenerated) return;
-    if (!window.confirm(`Delete "${collection.name}" collection? Saved posts inside it will be removed from saves.`)) return;
 
     try {
       await deleteCollection(collection._id).unwrap();
+      setCollectionPendingDelete(null);
       showSuccess('Collection deleted');
     } catch (error) {
       showError(getErrorMessage(error, 'Collection not deleted'));
@@ -182,7 +184,7 @@ const SavedCollectionsPanel = ({ viewerId }: SavedCollectionsPanelProps) => {
                         <Button variant="ghost" className="button--icon" onClick={() => setEditingCollection({ id: collection._id, name: collection.name })} aria-label="Rename collection">
                           <Pencil size={15} aria-hidden="true" />
                         </Button>
-                        <Button variant="danger" className="button--icon" onClick={() => handleDeleteCollection(collection)} disabled={isDeleting} aria-label="Delete collection">
+                        <Button variant="danger" className="button--icon" onClick={() => setCollectionPendingDelete(collection)} disabled={isDeleting} aria-label="Delete collection">
                           <Trash2 size={15} aria-hidden="true" />
                         </Button>
                       </div>
@@ -225,6 +227,18 @@ const SavedCollectionsPanel = ({ viewerId }: SavedCollectionsPanelProps) => {
           </div>
         </div>
       )}
+
+      <ConfirmDialog
+        isOpen={Boolean(collectionPendingDelete)}
+        isBusy={isDeleting}
+        title="Delete collection?"
+        description={`"${collectionPendingDelete?.name || 'This collection'}" will be removed and saved posts inside it will be unsaved.`}
+        confirmLabel="Delete"
+        onCancel={() => setCollectionPendingDelete(null)}
+        onConfirm={() => {
+          if (collectionPendingDelete) void handleDeleteCollection(collectionPendingDelete);
+        }}
+      />
     </section>
   );
 };
