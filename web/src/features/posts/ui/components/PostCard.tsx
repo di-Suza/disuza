@@ -106,6 +106,7 @@ const PostCard = ({ className, fallbackAuthor, post, viewerId }: PostCardProps) 
   const [isShareOpen, setShareOpen] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
   const [showFullCaption, setShowFullCaption] = useState(false);
+  const [showFullCode, setShowFullCode] = useState(false);
   const [isMediaPreviewOpen, setMediaPreviewOpen] = useState(false);
   const [showSaveTooltip, setShowSaveTooltip] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -130,7 +131,9 @@ const PostCard = ({ className, fallbackAuthor, post, viewerId }: PostCardProps) 
   const commentsDisabled = Boolean(post.settings?.commentsDisabled);
   const hideLikesCount = Boolean(post.settings?.hideLikesCount);
   const caption = post.caption || '';
+  const code = post.codeSnippet?.code || '';
   const shouldCollapseCaption = caption.length > 120 || caption.split(/\r?\n/).length > 2;
+  const shouldCollapseCode = code.length > 600 || code.split(/\r?\n/).length > 10;
   const editablePost = fullPostData?.post || null;
   const userName = author?.userName || 'User';
   const extraLinks = useMemo<PostLink[]>(() => {
@@ -181,7 +184,6 @@ const PostCard = ({ className, fallbackAuthor, post, viewerId }: PostCardProps) 
   }, [isSaved, toggleSave]);
 
   const copyCode = useCallback(async () => {
-    const code = post.codeSnippet?.code;
     if (!code) return;
 
     try {
@@ -190,7 +192,7 @@ const PostCard = ({ className, fallbackAuthor, post, viewerId }: PostCardProps) 
     } catch {
       showError('Code copy nahi ho paya.');
     }
-  }, [post.codeSnippet?.code, showError, showSuccess]);
+  }, [code, showError, showSuccess]);
 
   const openHashtag = useCallback((tag: string) => {
     navigate(`/search?q=${encodeURIComponent(`#${tag}`)}`);
@@ -276,16 +278,21 @@ const PostCard = ({ className, fallbackAuthor, post, viewerId }: PostCardProps) 
           </div>
         )}
 
-        {post.codeSnippet?.code && (
+        {code && (
           <section className="rich-post-card__code">
             <header>
-              <span>{post.codeSnippet.language || 'text'}</span>
+              <span>{post.codeSnippet?.language || 'text'}</span>
               <button type="button" onClick={copyCode}>
                 <Copy size={14} aria-hidden="true" />
                 Copy
               </button>
             </header>
-            <pre><code>{post.codeSnippet.code}</code></pre>
+            <pre className={cn(shouldCollapseCode && !showFullCode && 'is-collapsed')}><code>{code}</code></pre>
+            {shouldCollapseCode && (
+              <button type="button" className="rich-post-card__code-toggle" onClick={() => setShowFullCode((current) => !current)}>
+                {showFullCode ? 'less' : 'more'}
+              </button>
+            )}
           </section>
         )}
 

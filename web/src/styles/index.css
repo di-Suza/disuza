@@ -8015,9 +8015,17 @@ svg {
 }
 
 .rich-post-card__code pre {
-  overflow-x: auto;
+  overflow: hidden;
   margin: 0;
   padding: 16px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.rich-post-card__code pre.is-collapsed {
+  max-height: 232px;
+  mask-image: linear-gradient(to bottom, #000 72%, transparent);
 }
 
 .rich-post-card__code code {
@@ -8025,7 +8033,13 @@ svg {
   font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
   font-size: 13px;
   line-height: 1.7;
-  white-space: pre;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.rich-post-card__code-toggle {
+  margin: 0 12px 12px;
 }
 
 .rich-post-card__project-links {
