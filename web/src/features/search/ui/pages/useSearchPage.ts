@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState, type ChangeEvent } from 'react';
 import { useSelector } from 'react-redux';
+import { useSearchParams } from 'react-router-dom';
 
 import type { RootState } from '@/app/store/store';
 import type { Post } from '@/features/posts/model/post.types';
@@ -38,6 +39,7 @@ const mergeById = <T extends { _id: string }>(previousItems: T[], nextItems: T[]
 
 export const useSearchPage = () => {
   const currentUserId = useSelector((state: RootState) => state.auth.user?._id);
+  const [searchParams, setSearchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchFocused, setSearchFocused] = useState(false);
   const [discoverPage, setDiscoverPage] = useState(1);
@@ -53,6 +55,13 @@ export const useSearchPage = () => {
   const activeSearchQuery = searchQuery.trim();
   const committedSearchQuery = debouncedSearchQuery.trim();
   const appliedSearchRef = useRef<AppliedSearch>({ query: '', userPage: 0, postPage: 0 });
+  const routeQuery = searchParams.get('q') || '';
+
+  useEffect(() => {
+    if (routeQuery && routeQuery !== searchQuery) {
+      setSearchQuery(routeQuery);
+    }
+  }, [routeQuery, searchQuery]);
 
   const resetSearchResults = useCallback((query = '') => {
     setSearchUserPage(1);
@@ -144,16 +153,18 @@ export const useSearchPage = () => {
   const handleSearchChange = useCallback((event: ChangeEvent<HTMLInputElement>) => {
     const nextQuery = event.target.value;
     setSearchQuery(nextQuery);
+    setSearchParams(nextQuery.trim() ? { q: nextQuery } : {}, { replace: true });
 
     if (nextQuery.trim() !== appliedSearchRef.current.query) {
       resetSearchResults(nextQuery.trim());
     }
-  }, [resetSearchResults]);
+  }, [resetSearchResults, setSearchParams]);
 
   const handleClearSearch = useCallback(() => {
     setSearchQuery('');
+    setSearchParams({}, { replace: true });
     resetSearchResults('');
-  }, [resetSearchResults]);
+  }, [resetSearchResults, setSearchParams]);
 
   const handleLoadMoreTrendingPosts = useCallback(() => {
     if (!isDiscoverFetching && hasMoreTrendingPosts) {

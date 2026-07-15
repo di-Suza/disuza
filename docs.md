@@ -1824,6 +1824,52 @@ npm --prefix web run build
 git diff --check
 ```
 
+## Step 38: Rich Post Content And Sharing Upgrade
+
+Upgraded the post module on `feature/post-rich-content-sharing`.
+
+API completed:
+
+- allowed text-only posts instead of requiring image/video media
+- added structured extra links with label and URL
+- kept project posts stricter by requiring live demo and GitHub repository links
+- added code snippet and caption-derived hashtag fields to the post model, validators, service normalization, and search indexing
+- added repost persistence with optimistic-safe repost/unrepost endpoints and post count updates
+- extended chat messages with a `post` message type so shared posts can be sent inside conversations
+- updated post cleanup so repost records and shared-post chat references are handled with post deletion
+
+Web completed:
+
+- added an inline feed composer with Image, Code, Project, and Link tools while removing Poll/Everyone from the new post flow
+- updated the post modal composer to support optional media, code snippets, extra links, and project links
+- rebuilt post cards for text-first rich content with code blocks, link chips, inline highlighted hashtags, mixed media, repost, feedback, save, and share actions
+- added hashtag navigation to `/search?q=#tag` so explore/search opens with the selected hashtag already applied
+- added a share-post modal with copy-link support and conversation selection
+- rendered shared post messages inside chat with a clickable post preview and conversation preview text
+- added RTK Query optimistic repost cache updates and post-message chat cache metadata
+- refined the feed composer into icon-only tools with code/link/more popovers, fixed-height text input, and project/settings controls under More
+- fixed create validation so text-only, code-only, link-only, and image-only posts are accepted while project posts still require both project links
+- clamped post captions to two lines by default with more/less expansion, including newline-heavy text
+
+Preserved:
+
+- existing comments, feedback, report, save collection, edit, and delete flows
+- v2 TypeScript module boundaries, RTK Query API slices, and feature-local hooks
+- existing media carousel ordering for image/video posts
+- existing project post live/GitHub link rules, now alongside optional extra links
+
+Why:
+
+The old post flow forced every post to include media, which blocked LinkedIn/Twitter-style text posts, code snippets, link sharing, hashtags, reposts, and chat sharing. This step turns posts into a richer product surface while keeping the existing module architecture and interaction contracts stable.
+
+Verification used:
+
+```bash
+npm --prefix api run typecheck
+npm --prefix web run build
+git diff --check
+```
+
 ## Step 36: V1 UI And Realtime Parity Cleanup
 
 Completed the v1 parity cleanup pass on `fix/v1-parity-ui-realtime-cleanup`.
@@ -1898,5 +1944,43 @@ Verification used:
 ```bash
 npm --prefix api run build
 npm --prefix web run build
+git diff --check
+```
+
+## Step 38: Repost Policy And Profile Surfacing
+
+Updated the rich post branch repost behavior on `feature/post-rich-content-sharing`.
+
+API completed:
+
+- enforced the backend domain rule that users cannot repost their own posts
+- added repost list and repost detail endpoints under the post API surface
+- kept reposts as durable user-post relations instead of feed fan-out posts
+- applied block visibility checks to repost list/detail reads
+- enriched reposted original posts with viewer like/save/repost state
+
+Web completed:
+
+- hid the repost action on the viewer's own posts
+- added a Yours/Reposts switcher to the dashboard posts panel
+- added a Reposts section to public profile activity
+- added clickable repost preview cards that route to repost detail
+- added a repost detail layout that shows reposter context, hides feedback, and keeps original post engagement actions on the original post
+- kept original post detail available through a `See original post` action
+
+Policy recorded:
+
+- `DevLoopFeed-Architecture-Guide.md` now records repost ownership, visibility, feed, and engagement rules
+- `ARCHITECTURE-DECISIONS.md` now records DLF-037 for reposts as profile-visible references instead of feed fan-out
+
+Why:
+
+Reposts should help users show activity on their dashboard/profile without creating duplicate posts in follower feeds or letting users artificially repost their own content. Keeping reposts as a relation preserves the original post as the engagement source while giving reposts their own profile/detail presentation.
+
+Verification used:
+
+```bash
+npm run build:api
+npm run build:web
 git diff --check
 ```

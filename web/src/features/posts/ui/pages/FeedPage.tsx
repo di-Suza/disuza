@@ -7,6 +7,7 @@ import { useGetUserRecommendationsQuery } from '@/features/users/api/user.api';
 import type { UserProfile } from '@/features/users/model/user.types';
 import type { PostAuthor } from '@/features/posts/model/post.types';
 import { cn } from '@/shared/utils/cn';
+import InlinePostComposer from '../components/InlinePostComposer';
 import PostCard from '../components/PostCard';
 import { useFeedPage } from './useFeedPage';
 
@@ -166,6 +167,7 @@ const FeedPage = () => {
       <FeedNavbar selectedType={feedType} onSelectType={setFeedType} />
       <div className={hasRecommendations ? 'home-feed-exact has-recommendations' : 'home-feed-exact'}>
         <main className="home-feed-exact__main">
+          <InlinePostComposer />
           {isLoading ? (
             <><PostCardSkeleton /><PostCardSkeleton /></>
           ) : isError ? (

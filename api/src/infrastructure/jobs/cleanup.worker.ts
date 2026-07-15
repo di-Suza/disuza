@@ -19,6 +19,7 @@ import LikeModel from '../../modules/likes/like.model.js';
 import mediaService from '../../modules/media/media.service.js';
 import NotificationModel from '../../modules/notifications/notification.model.js';
 import PostModel, { type PostDocument } from '../../modules/posts/post.model.js';
+import RepostModel from '../../modules/reposts/repost.model.js';
 import ReportModel from '../../modules/reports/report.model.js';
 import SaveModel from '../../modules/saves/save.model.js';
 import SavedCollectionModel from '../../modules/saves/savedCollection.model.js';
@@ -199,7 +200,7 @@ const cleanupPost = async (postId: string, userId: string) => {
   const post = await PostModel.findOne({ _id: postId, user: userId });
   if (!post) return;
 
-  const [comments, affectedSaves, feedbackMessages] = await Promise.all([
+  const [comments, affectedSaves, feedbackMessages, sharedPostMessages] = await Promise.all([
     CommentModel.find({ post: post._id }).select('_id user').lean(),
     SaveModel.find({ post: post._id }).select('user collectionId').lean(),
     MessageModel.find({
@@ -207,10 +208,16 @@ const cleanupPost = async (postId: string, userId: string) => {
       'feedbackOn.type': 'Post',
       'feedbackOn._id': post._id,
     }).select('_id conversationId').lean(),
+    MessageModel.find({
+      messageType: 'post',
+      sharedPost: post._id,
+    }).select('_id conversationId').lean(),
   ]);
 
   const commentIds = comments.map((comment) => comment._id);
   const feedbackMessageIds = feedbackMessages.map((message) => message._id);
+  const sharedPostMessageIds = sharedPostMessages.map((message) => message._id);
+  const removedMessageIds = [...feedbackMessageIds, ...sharedPostMessageIds];
   const contributionTargets = [post._id, ...commentIds, ...feedbackMessageIds];
 
   await Promise.all([
@@ -220,19 +227,20 @@ const cleanupPost = async (postId: string, userId: string) => {
     ReportModel.deleteMany({
       $or: [
         { onModel: 'Post', targetId: post._id },
-        { onModel: 'Message', targetId: { $in: feedbackMessageIds } },
+        { onModel: 'Message', targetId: { $in: removedMessageIds } },
       ],
     }),
   ]);
 
   await Promise.all([
     LikeModel.deleteMany({ post: post._id }),
+    RepostModel.deleteMany({ post: post._id }),
     CommentModel.deleteMany({ post: post._id }),
     SaveModel.deleteMany({ post: post._id }),
-    MessageModel.deleteMany({ _id: { $in: feedbackMessageIds } }),
+    MessageModel.deleteMany({ _id: { $in: removedMessageIds } }),
   ]);
 
-  await refreshConversationsAfterFeedbackCleanup(feedbackMessages);
+  await refreshConversationsAfterFeedbackCleanup([...feedbackMessages, ...sharedPostMessages]);
   await refreshAffectedCollectionCovers(affectedSaves);
   await deletePostMedia(post);
   await PostModel.deleteOne({ _id: post._id });

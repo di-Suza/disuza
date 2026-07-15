@@ -6,8 +6,10 @@ import validateRequest from '../../shared/middleware/validateRequest.js';
 import likeController from '../likes/like.controller.js';
 import reportController from '../reports/report.controller.js';
 import { postReportRules } from '../reports/validators/report.validator.js';
+import repostController from '../reposts/repost.controller.js';
 import saveController from '../saves/save.controller.js';
 import { collectionIdParamRules, collectionNameRules, savePostRules, savedCollectionPostsRules } from '../saves/validators/save.validator.js';
+import { mongoIdParam } from '../../shared/validators/common.js';
 import postController from './post.controller.js';
 import { createPostRules, pageQueryRules, postIdParamRules, updatePostRules } from './validators/post.validator.js';
 
@@ -29,6 +31,10 @@ class PostRoutes {
     this.router.post('/reportPost', postReportRules, validateRequest, reportController.reportPost);
     this.router.post('/likePost/:postId', postIdParamRules, validateRequest, likeController.likePost);
     this.router.post('/unlikePost/:postId', postIdParamRules, validateRequest, likeController.unlikePost);
+    this.router.get('/reposts/user/:userId', mongoIdParam('userId'), pageQueryRules, validateRequest, repostController.getUserReposts);
+    this.router.get('/reposts/:repostId', mongoIdParam('repostId'), validateRequest, repostController.getRepost);
+    this.router.post('/repostPost/:postId', postIdParamRules, validateRequest, repostController.repostPost);
+    this.router.delete('/unrepostPost/:postId', postIdParamRules, validateRequest, repostController.unrepostPost);
     this.router.post('/savePost', savePostRules, validateRequest, saveController.savePost);
     this.router.delete('/unsavePost/:postId', postIdParamRules, validateRequest, saveController.unsavePost);
     this.router.get('/getSavedPostsCollections', saveController.getSavedPostsCollections);

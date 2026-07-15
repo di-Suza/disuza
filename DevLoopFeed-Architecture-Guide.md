@@ -476,6 +476,10 @@ Rules:
 - Provider IDs are retained so cleanup can delete remote media reliably.
 - Feed supports `all` and `following` behavior from v1.
 - Post detail is fetched independently; comments are loaded through the comments flow, not embedded into the post response.
+- A user cannot repost their own post; this is a backend domain rule, not only a hidden frontend action.
+- Reposts are durable user-post references for dashboard/profile activity and repost detail pages.
+- Reposts do not fan out as separate feed posts for followers; feeds continue to show original posts only.
+- Repost detail may wrap the original post with reposter context, but likes/comments/saves/repost count still target the original post.
 
 ### 8.4 Likes, comments, replies, and contributions
 

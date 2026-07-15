@@ -1,7 +1,7 @@
 import { Flag, MoreVertical, Undo2 } from 'lucide-react';
 import { memo, useState } from 'react';
 
-import { formatChatMessageTime, getFeedbackMediaUrl } from '@/features/messages/model/chat.helpers';
+import { formatChatMessageTime, getFeedbackMediaUrl, getSharedPostMediaUrl } from '@/features/messages/model/chat.helpers';
 import type { ChatMessage } from '@/features/messages/model/chat.types';
 import ReportModal from '@/features/reports/ui/components/ReportModal';
 import ChatAvatar from './ChatAvatar';
@@ -17,11 +17,16 @@ const MessageItem = ({ message }: MessageItemProps) => {
   const {
     goToFeedbackPost,
     goToFeedbackProfile,
+    goToSharedPost,
     handleUnsendMessage,
     isUnsendLoading,
     senderIsMe,
   } = useMessageItem({ message });
   const feedbackMediaUrl = getFeedbackMediaUrl(message.feedbackDetails);
+  const sharedPostMediaUrl = getSharedPostMediaUrl(message.sharedPostDetails);
+  const isPostMessage = message.messageType === 'post' || Boolean(message.sharedPost || message.sharedPostDetails);
+  const sharedPostAuthor = message.sharedPostDetails?.user?.userName || 'DevLoopFeed';
+  const sharedPostCaption = message.sharedPostDetails?.caption || 'View shared post';
 
   return (
     <>
@@ -101,6 +106,17 @@ const MessageItem = ({ message }: MessageItemProps) => {
                   </button>
                 )}
               </div>
+            )}
+
+            {isPostMessage && (
+              <button type="button" className="messages-v1-shared-post" onClick={goToSharedPost}>
+                {sharedPostMediaUrl && <img src={sharedPostMediaUrl} alt="" loading="lazy" />}
+                <span>
+                  <small>{message.sharedPostDetails?.isProjectPost ? 'Project post' : 'Shared post'}</small>
+                  <strong>{sharedPostAuthor}</strong>
+                  <em>{sharedPostCaption}</em>
+                </span>
+              </button>
             )}
 
             <div className="messages-v1-bubble">

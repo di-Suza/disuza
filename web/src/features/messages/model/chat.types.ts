@@ -1,4 +1,5 @@
 export type FeedbackTargetType = 'Post' | 'User';
+export type ChatMessageType = 'text' | 'feedback' | 'post';
 
 export type ChatImage = {
   url?: string;
@@ -13,6 +14,16 @@ export type FeedbackDetails = {
   caption?: string;
   media?: Array<{ url?: string; mediaType?: string }>;
   images?: Array<{ url?: string; mediaType?: string }>;
+};
+
+export type SharedPostDetails = {
+  _id: string;
+  caption?: string;
+  media?: Array<{ url?: string; mediaType?: string; thumbnailUrl?: string }>;
+  images?: Array<{ url?: string; mediaType?: string; thumbnailUrl?: string }>;
+  user?: ChatUser;
+  isProjectPost?: boolean;
+  createdAt?: string;
 };
 
 export type ChatUser = {
@@ -30,19 +41,22 @@ export type ChatMessage = {
   sender: string;
   senderInfo?: ChatUser;
   text: string;
+  messageType?: ChatMessageType;
   isFeedback?: boolean;
   feedbackOn?: {
     type?: FeedbackTargetType;
     _id?: string;
   };
   feedbackDetails?: FeedbackDetails | null;
+  sharedPost?: string;
+  sharedPostDetails?: SharedPostDetails | null;
   receiverId?: string;
   conversationIsUnread?: boolean;
   createdAt?: string;
   updatedAt?: string;
 };
 
-export type ChatLastMessage = Pick<ChatMessage, '_id' | 'text' | 'sender' | 'createdAt'>;
+export type ChatLastMessage = Pick<ChatMessage, '_id' | 'text' | 'sender' | 'createdAt' | 'messageType' | 'sharedPost'>;
 
 export type ChatConversation = {
   _id: string;
@@ -80,9 +94,11 @@ export type SendMessageRequest = {
   receiverId?: string;
   conversationId?: string;
   message: string;
+  messageType?: ChatMessageType;
   isFeedback?: boolean;
   feedbackOn?: FeedbackTargetType;
   postId?: string;
+  sharedPostId?: string;
   userId?: string;
 };
 

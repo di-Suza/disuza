@@ -1,6 +1,14 @@
 import type { FilterQuery, Types } from 'mongoose';
 
-import PostModel, { type Post, type PostDocument, type PostMedia, type PostSettings, type ProjectLinks } from './post.model.js';
+import PostModel, {
+  type CodeSnippet,
+  type Post,
+  type PostDocument,
+  type PostLink,
+  type PostMedia,
+  type PostSettings,
+  type ProjectLinks,
+} from './post.model.js';
 
 type CreatePostInput = {
   _id: Types.ObjectId;
@@ -10,9 +18,12 @@ type CreatePostInput = {
   settings: PostSettings;
   isProjectPost: boolean;
   projectLinks?: ProjectLinks;
+  links?: PostLink[];
+  codeSnippet?: CodeSnippet;
+  hashtags?: string[];
 };
 
-type UpdatePostInput = Partial<Pick<Post, 'caption' | 'media' | 'settings' | 'projectLinks'>>;
+type UpdatePostInput = Partial<Pick<Post, 'caption' | 'media' | 'settings' | 'projectLinks' | 'links' | 'codeSnippet' | 'hashtags'>>;
 
 const visiblePostQuery = { isDeleting: { $ne: true } } as const;
 
@@ -77,6 +88,14 @@ class PostRepository {
     );
   }
 
+  incrementRepostsCount(postId: string | Types.ObjectId, delta: number) {
+    return PostModel.findOneAndUpdate(
+      { _id: postId, ...visiblePostQuery, ...(delta < 0 ? { 'counts.reposts': { $gt: 0 } } : {}) },
+      { $inc: { 'counts.reposts': delta } },
+      { new: true },
+    );
+  }
+
   markUserPostsDeleting(userId: string | Types.ObjectId) {
     return PostModel.updateMany(
       { user: userId, isDeleting: { $ne: true } },
@@ -87,7 +106,7 @@ class PostRepository {
   findDashboardPosts(userId: string | Types.ObjectId, page: number, limit: number) {
     return PostModel.find({ user: userId, ...visiblePostQuery })
       .sort({ createdAt: -1 })
-      .select({ settings: 0, user: 0, projectLinks: 0, media: { $slice: 1 } })
+      .select({ settings: 0, user: 0, media: { $slice: 1 } })
       .skip((page - 1) * limit)
       .limit(limit)
       .lean();
@@ -95,7 +114,7 @@ class PostRepository {
 
   findProfilePosts(userId: string | Types.ObjectId) {
     return PostModel.find({ user: userId, ...visiblePostQuery })
-      .select({ settings: 0, user: 0, counts: 0, projectLinks: 0, media: { $slice: 1 } })
+      .select({ settings: 0, user: 0, counts: 0, media: { $slice: 1 } })
       .sort({ createdAt: -1 })
       .lean();
   }

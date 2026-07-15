@@ -66,12 +66,69 @@ const projectLinkRules = [
     .trim(),
 ];
 
+const linkRules = [
+  body('links')
+    .optional()
+    .customSanitizer(parseJsonField)
+    .isArray({ max: 8 })
+    .withMessage('Links must be an array with up to 8 items'),
+  body('links.*.label')
+    .optional()
+    .isString()
+    .withMessage('Link label must be a string')
+    .trim()
+    .isLength({ max: 80 })
+    .withMessage('Link label cannot exceed 80 characters'),
+  body('links.*.url')
+    .optional()
+    .isURL({ protocols: ['http', 'https'], require_protocol: true })
+    .withMessage('Link URL must be a valid http(s) URL')
+    .trim(),
+];
+
+const codeSnippetRules = [
+  body('codeSnippet')
+    .optional({ nullable: true })
+    .customSanitizer(parseJsonField)
+    .custom((value) => value === undefined || value === null || (typeof value === 'object' && !Array.isArray(value)))
+    .withMessage('Code snippet must be a valid object'),
+  body('codeSnippet.language')
+    .optional()
+    .isString()
+    .withMessage('Code language must be a string')
+    .trim()
+    .isLength({ max: 40 })
+    .withMessage('Code language cannot exceed 40 characters'),
+  body('codeSnippet.code')
+    .optional()
+    .isString()
+    .withMessage('Code must be a string')
+    .trim()
+    .isLength({ max: 8000 })
+    .withMessage('Code cannot exceed 8000 characters'),
+];
+
+const hashtagRules = [
+  body('hashtags')
+    .optional()
+    .customSanitizer(parseJsonField)
+    .isArray({ max: 12 })
+    .withMessage('Hashtags must be an array with up to 12 items'),
+  body('hashtags.*')
+    .optional()
+    .isString()
+    .withMessage('Each hashtag must be a string')
+    .trim()
+    .isLength({ max: 40 })
+    .withMessage('Hashtags cannot exceed 40 characters'),
+];
+
 const mediaOrderRules = [
   body('mediaOrder')
     .optional()
     .customSanitizer(parseJsonField)
-    .isArray({ min: 1 })
-    .withMessage('mediaOrder must be a non-empty array'),
+    .isArray({ max: 10 })
+    .withMessage('mediaOrder must be an array with up to 10 items'),
   body('mediaOrder.*.source')
     .optional()
     .isIn(['existing', 'upload', 'new'])
@@ -92,8 +149,8 @@ const existingMediaRules = [
   body('media')
     .optional()
     .customSanitizer(parseJsonField)
-    .isArray({ min: 1 })
-    .withMessage('media must be a non-empty array'),
+    .isArray({ max: 10 })
+    .withMessage('media must be an array with up to 10 items'),
   body('media.*.fileId')
     .optional()
     .isString()
@@ -102,8 +159,8 @@ const existingMediaRules = [
   body('images')
     .optional()
     .customSanitizer(parseJsonField)
-    .isArray({ min: 1 })
-    .withMessage('images must be a non-empty array'),
+    .isArray({ max: 10 })
+    .withMessage('images must be an array with up to 10 items'),
   body('images.*.fileId')
     .optional()
     .isString()
@@ -126,10 +183,20 @@ const createPostRules = [
     .withMessage('isProjectPost must be a boolean'),
   ...settingsRules,
   ...projectLinkRules,
+  ...linkRules,
+  ...codeSnippetRules,
+  ...hashtagRules,
   ...mediaOrderRules,
   body()
-    .custom((_value, { req }) => getUploadedPostMediaFiles(req as Request).length > 0)
-    .withMessage('Post cannot be created without media!'),
+    .custom((value, { req }) => Boolean(
+      value.caption
+      || value.codeSnippet?.code
+      || value.links?.length
+      || value.hashtags?.length
+      || getUploadedPostMediaFiles(req as Request).length > 0
+      || (value.isProjectPost && (value.projectLinks?.liveDemoUrl || value.projectLinks?.repositoryUrl)),
+    ))
+    .withMessage('Post must include text, media, code, links, hashtags, or project links.'),
   body()
     .custom((value) => {
       if (!value.isProjectPost) return true;
@@ -149,6 +216,9 @@ const updatePostRules = [
     .withMessage('Caption cannot exceed 2200 characters'),
   ...settingsRules,
   ...projectLinkRules,
+  ...linkRules,
+  ...codeSnippetRules,
+  ...hashtagRules,
   ...mediaOrderRules,
   ...existingMediaRules,
   body()
@@ -156,6 +226,9 @@ const updatePostRules = [
       Object.prototype.hasOwnProperty.call(value, 'caption')
       || Object.prototype.hasOwnProperty.call(value, 'settings')
       || Object.prototype.hasOwnProperty.call(value, 'projectLinks')
+      || Object.prototype.hasOwnProperty.call(value, 'links')
+      || Object.prototype.hasOwnProperty.call(value, 'codeSnippet')
+      || Object.prototype.hasOwnProperty.call(value, 'hashtags')
       || Object.prototype.hasOwnProperty.call(value, 'mediaOrder')
       || Object.prototype.hasOwnProperty.call(value, 'media')
       || Object.prototype.hasOwnProperty.call(value, 'images')

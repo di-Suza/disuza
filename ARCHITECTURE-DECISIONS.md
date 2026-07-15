@@ -57,6 +57,7 @@ Delivery is tracked separately:
 | DLF-034 | Extract services only after measured modular-monolith limits | Accepted | Planned |
 | DLF-035 | Keep admin moderation as a separate future product surface | Accepted | Deferred |
 | DLF-036 | Add GenAI problem generation only with admin and safety controls | Accepted | Deferred |
+| DLF-037 | Model reposts as profile-visible references, not feed fan-out | Accepted | Implemented |
 
 ## Foundation Decisions
 
@@ -335,6 +336,18 @@ Decision:
 - Apply the same policy in HTTP, sockets, and background jobs.
 
 Consequence: users cannot bypass restrictions through direct API or socket calls.
+
+### DLF-037: Repost visibility and ownership policy
+
+Decision:
+
+- Reposts are stored as a user-post relation and counted on the original post.
+- A user cannot repost their own post.
+- Reposts appear in dashboard/profile repost surfaces and repost detail views.
+- Reposts do not create duplicate feed entries for the reposter's followers.
+- Repost detail wraps the original post with reposter context while engagement actions still target the original post.
+
+Consequence: reposts behave like a profile activity and discovery signal without polluting follower feeds or duplicating post ownership.
 
 ## Realtime And Async Decisions
 

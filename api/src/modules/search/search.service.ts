@@ -32,7 +32,7 @@ class SearchService {
   }
 
   private toSearchRegex(query: unknown): RegExp {
-    const normalizedQuery = typeof query === 'string' ? query.trim() : '';
+    const normalizedQuery = typeof query === 'string' ? query.trim().replace(/^#/, '') : '';
     return new RegExp(this.escapeRegex(normalizedQuery), 'i');
   }
 
