@@ -1,101 +1,13 @@
-import { ChevronDown, Eye, Loader2, RefreshCw, Sparkles, UserRound } from 'lucide-react';
-import { Fragment, useEffect, useMemo, useState } from 'react';
+import { Eye, Loader2, RefreshCw, Sparkles, UserRound } from 'lucide-react';
+import { Fragment, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
-import logo from '@/shared/assets/images/logo.png';
 import { useGetUserRecommendationsQuery } from '@/features/users/api/user.api';
 import type { UserProfile } from '@/features/users/model/user.types';
 import type { PostAuthor } from '@/features/posts/model/post.types';
-import { cn } from '@/shared/utils/cn';
 import InlinePostComposer from '../components/InlinePostComposer';
 import PostCard from '../components/PostCard';
 import { useFeedPage } from './useFeedPage';
-
-const feedOptions = [
-  { label: 'All', value: 'all' as const },
-  { label: 'Following', value: 'following' as const },
-];
-
-const FeedNavbar = ({ selectedType, onSelectType }: { selectedType: 'all' | 'following'; onSelectType: (type: 'all' | 'following') => void }) => {
-  const [isVisible, setIsVisible] = useState(true);
-  const [lastScrollY, setLastScrollY] = useState(0);
-  const [isDropdownOpen, setDropdownOpen] = useState(false);
-  const selectedLabel = feedOptions.find((option) => option.value === selectedType)?.label || 'All';
-
-  useEffect(() => {
-    const handleScroll = () => {
-      const currentScrollY = window.scrollY;
-
-      if (currentScrollY < 10) {
-        setIsVisible(true);
-      } else if (currentScrollY > lastScrollY) {
-        setIsVisible(false);
-        setDropdownOpen(false);
-      } else {
-        setIsVisible(true);
-      }
-
-      setLastScrollY(currentScrollY);
-    };
-
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, [lastScrollY]);
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      const target = event.target as HTMLElement | null;
-      if (isDropdownOpen && target && !target.closest('.dropdown-container')) setDropdownOpen(false);
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [isDropdownOpen]);
-
-  return (
-    <nav className={cn('feed-navbar-exact', isVisible ? 'is-visible' : 'is-hidden')}>
-      <div className="feed-navbar-exact__inner">
-        <div className="feed-navbar-exact__row">
-          <div className="feed-navbar-exact__brand">
-            <Link to="/" className="feed-navbar-exact__logo" aria-label="DevLoop Feed home">
-              <img src={logo} alt="DevLoop Feed Logo" />
-            </Link>
-
-            <div className="feed-navbar-exact__dropdown dropdown-container">
-              <button type="button" onClick={() => setDropdownOpen((current) => !current)} className="feed-navbar-exact__trigger">
-                <span>{selectedLabel}</span>
-                <ChevronDown size={20} className={isDropdownOpen ? 'is-open' : ''} aria-hidden="true" />
-              </button>
-
-              {isDropdownOpen && (
-                <div className="feed-navbar-exact__menu">
-                  {feedOptions.map((option, index) => {
-                    const isActive = selectedType === option.value;
-                    return (
-                      <button
-                        key={option.value}
-                        type="button"
-                        className={isActive ? 'is-active' : ''}
-                        onClick={() => {
-                          onSelectType(option.value);
-                          setDropdownOpen(false);
-                        }}
-                      >
-                        <span className="feed-navbar-exact__dot" />
-                        <span>{option.label}</span>
-                        {index === 0 && <i />}
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-    </nav>
-  );
-};
 
 const PostCardSkeleton = () => (
   <div className="feed-post-skeleton">
@@ -151,7 +63,7 @@ const UserRecommendations = ({ recommendations, variant = 'rail' }: { recommenda
 
 const FeedPage = () => {
   const [recommendationInsertIndex] = useState(() => Math.floor(Math.random() * 3) + 2);
-  const { feedType, isError, isFetching, isLoading, posts, refetch, setFeedType, user } = useFeedPage();
+  const { feedType, isError, isFetching, isLoading, posts, refetch, user } = useFeedPage();
   const { data: recommendationsData } = useGetUserRecommendationsQuery({ limit: 12 });
   const recommendations = recommendationsData?.recommendations || [];
   const hasRecommendations = recommendations.length > 0;
@@ -163,34 +75,31 @@ const FeedPage = () => {
   }, [user]);
 
   return (
-    <>
-      <FeedNavbar selectedType={feedType} onSelectType={setFeedType} />
-      <div className={hasRecommendations ? 'home-feed-exact has-recommendations' : 'home-feed-exact'}>
-        <main className="home-feed-exact__main">
-          <InlinePostComposer />
-          {isLoading ? (
-            <><PostCardSkeleton /><PostCardSkeleton /></>
-          ) : isError ? (
-            <div className="post-empty-state"><RefreshCw size={24} aria-hidden="true" /><p>Feed could not be loaded.</p><button type="button" onClick={() => refetch()}>Retry</button></div>
-          ) : posts.length === 0 ? (
-            <p className="home-feed-exact__empty">{feedType === 'following' ? 'No posts from people you follow yet' : 'No posts yet'}</p>
-          ) : (
-            <>
-              {posts.map((post, index) => (
-                <Fragment key={post._id}>
-                  <PostCard post={post} viewerId={user?._id} fallbackAuthor={fallbackAuthor} />
-                  {hasRecommendations && inlineRecommendationIndex === index + 1 && <UserRecommendations recommendations={recommendations} variant="slider" />}
-                </Fragment>
-              ))}
-              {!isFetching && <p className="home-feed-exact__caught-up">You're all caught up</p>}
-            </>
-          )}
-          {isFetching && !isLoading && <div className="home-feed-exact__loader"><Loader2 className="spin" size={20} />Loading more posts...</div>}
-        </main>
+    <div className={hasRecommendations ? 'home-feed-exact has-recommendations' : 'home-feed-exact'}>
+      <main className="home-feed-exact__main">
+        <InlinePostComposer />
+        {isLoading ? (
+          <><PostCardSkeleton /><PostCardSkeleton /></>
+        ) : isError ? (
+          <div className="post-empty-state"><RefreshCw size={24} aria-hidden="true" /><p>Feed could not be loaded.</p><button type="button" onClick={() => refetch()}>Retry</button></div>
+        ) : posts.length === 0 ? (
+          <p className="home-feed-exact__empty">{feedType === 'following' ? 'No posts from people you follow yet' : 'No posts yet'}</p>
+        ) : (
+          <>
+            {posts.map((post, index) => (
+              <Fragment key={post._id}>
+                <PostCard post={post} viewerId={user?._id} fallbackAuthor={fallbackAuthor} />
+                {hasRecommendations && inlineRecommendationIndex === index + 1 && <UserRecommendations recommendations={recommendations} variant="slider" />}
+              </Fragment>
+            ))}
+            {!isFetching && <p className="home-feed-exact__caught-up">You're all caught up</p>}
+          </>
+        )}
+        {isFetching && !isLoading && <div className="home-feed-exact__loader"><Loader2 className="spin" size={20} />Loading more posts...</div>}
+      </main>
 
-        {hasRecommendations && <div className="home-feed-exact__rail"><UserRecommendations recommendations={recommendations} variant="rail" /></div>}
-      </div>
-    </>
+      {hasRecommendations && <div className="home-feed-exact__rail"><UserRecommendations recommendations={recommendations} variant="rail" /></div>}
+    </div>
   );
 };
 

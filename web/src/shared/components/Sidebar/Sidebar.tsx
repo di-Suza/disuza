@@ -1,7 +1,9 @@
-import { Bell, Earth, Home, SendHorizonal, User } from 'lucide-react';
+import { Bell, Earth, Home, Menu, SendHorizonal, User, X } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
 import { useGetNotificationsQuery } from '@/features/notifications/api/notification.api';
+import logo from '@/shared/assets/images/logo.png';
 import useUnreadMessagesCount from '@/shared/hooks/useUnreadMessagesCount';
 
 const sidebarItems = [
@@ -14,15 +16,49 @@ const sidebarItems = [
 
 const Sidebar = () => {
   const { pathname } = useLocation();
+  const [isExpanded, setExpanded] = useState(false);
   const { data: notificationsData } = useGetNotificationsQuery({ page: 1, limit: 1 });
   const notificationCount = notificationsData?.unreadCount ?? 0;
   const messageCount = useUnreadMessagesCount();
 
   const isItemActive = (itemPath: string) => pathname === itemPath || pathname.startsWith(`${itemPath}/`);
 
+  useEffect(() => {
+    setExpanded(false);
+  }, [pathname]);
+
+  useEffect(() => {
+    if (!isExpanded) return;
+
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setExpanded(false);
+    };
+
+    window.addEventListener('keydown', handleEscape);
+    return () => window.removeEventListener('keydown', handleEscape);
+  }, [isExpanded]);
+
   return (
     <>
-      <aside className="app-sidebar" aria-label="Primary navigation">
+      {isExpanded && <button type="button" className="app-sidebar__backdrop" onClick={() => setExpanded(false)} aria-label="Close sidebar" />}
+
+      <aside className={isExpanded ? 'app-sidebar is-expanded' : 'app-sidebar'} aria-label="Primary navigation">
+        <header className="app-sidebar__header">
+          <button
+            type="button"
+            className="app-sidebar__toggle"
+            onClick={() => setExpanded((current) => !current)}
+            aria-label={isExpanded ? 'Collapse sidebar' : 'Expand sidebar'}
+            aria-expanded={isExpanded}
+          >
+            {isExpanded ? <X size={22} aria-hidden="true" /> : <Menu size={22} aria-hidden="true" />}
+          </button>
+          <Link to="/home" className="app-sidebar__brand" aria-label="DevLoopFeed home">
+            <img src={logo} alt="" />
+            <span>DevFeed</span>
+          </Link>
+        </header>
+
         <div className="app-sidebar__items">
           {sidebarItems.map((item) => {
             const Icon = item.icon;
@@ -35,29 +71,12 @@ const Sidebar = () => {
                   <Icon size={24} aria-hidden="true" />
                   {badgeCount > 0 && <small>{badgeCount > 99 ? '99+' : badgeCount}</small>}
                 </span>
-                <span className="visually-hidden">{item.label}</span>
+                <span className="app-sidebar__label">{item.label}</span>
               </Link>
             );
           })}
         </div>
       </aside>
-
-      <nav className="app-bottom-nav" aria-label="Primary navigation">
-        {sidebarItems.map((item) => {
-          const Icon = item.icon;
-          const isActive = isItemActive(item.path);
-          const badgeCount = item.id === 'messages' ? messageCount : item.id === 'notifications' ? notificationCount : 0;
-
-          return (
-            <Link key={item.id} to={item.path} className={isActive ? 'app-bottom-nav__link is-active' : 'app-bottom-nav__link'} aria-label={item.label}>
-              <span className="app-sidebar__icon-wrap">
-                <Icon size={23} aria-hidden="true" />
-                {badgeCount > 0 && <small>{badgeCount > 99 ? '99+' : badgeCount}</small>}
-              </span>
-            </Link>
-          );
-        })}
-      </nav>
     </>
   );
 };
