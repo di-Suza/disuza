@@ -1596,3 +1596,18 @@
     padding: 8px;
   }
 }
+
+/* Product shell alignment */
+.dashboard-v1-shell {
+  padding-top: 24px;
+}
+
+.dashboard-v1-container {
+  max-width: var(--app-content-max, 1064px);
+}
+
+@media (max-width: 1023px) {
+  .dashboard-v1-shell {
+    padding-top: 16px;
+  }
+}
