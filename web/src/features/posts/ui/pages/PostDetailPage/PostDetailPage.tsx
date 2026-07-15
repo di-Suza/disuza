@@ -1,18 +1,29 @@
 import { Loader2, RefreshCw } from 'lucide-react';
-import { useParams } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router-dom';
 
 import { useAppSelector } from '@/app/store/hooks';
-import { useGetPostQuery } from '@/features/posts/api/post.api';
+import { useGetPostQuery, useGetRepostQuery } from '@/features/posts/api/post.api';
 import PostCard from '@/features/posts/ui/components/PostCard';
+import RepostDetailCard from '@/features/posts/ui/components/RepostDetailCard';
 import BackButton from '@/shared/components/BackButton/BackButton';
 import Button from '@/shared/ui/Button';
 import { getErrorMessage } from '@/shared/utils/getErrorMessage';
 
 const PostDetailPage = () => {
   const { postId } = useParams<{ postId: string }>();
+  const [searchParams] = useSearchParams();
+  const repostId = searchParams.get('repostId') || '';
+  const isRepostDetail = Boolean(repostId);
   const viewerId = useAppSelector((state) => state.auth.user?._id);
-  const { data, error, isError, isFetching, isLoading, refetch } = useGetPostQuery(postId || '', { skip: !postId });
-  const post = data?.post;
+  const postQuery = useGetPostQuery(postId || '', { skip: !postId || isRepostDetail });
+  const repostQuery = useGetRepostQuery(repostId, { skip: !isRepostDetail });
+  const post = postQuery.data?.post;
+  const repost = repostQuery.data?.repost;
+  const error = isRepostDetail ? repostQuery.error : postQuery.error;
+  const isError = isRepostDetail ? repostQuery.isError : postQuery.isError;
+  const isFetching = isRepostDetail ? repostQuery.isFetching : postQuery.isFetching;
+  const isLoading = isRepostDetail ? repostQuery.isLoading : postQuery.isLoading;
+  const refetch = isRepostDetail ? repostQuery.refetch : postQuery.refetch;
 
   if (isLoading) {
     return (
@@ -22,14 +33,14 @@ const PostDetailPage = () => {
     );
   }
 
-  if (isError || !post) {
+  if (isError || (isRepostDetail ? !repost : !post)) {
     return (
       <main className="dashboard-shell dashboard-shell--wide">
         <section className="state-panel">
           <BackButton />
           <p className="state-panel__eyebrow">Post</p>
-          <h1>Post could not be loaded.</h1>
-          <p>{getErrorMessage(error, "Post doesn't exist or is unavailable.")}</p>
+          <h1>{isRepostDetail ? 'Repost could not be loaded.' : 'Post could not be loaded.'}</h1>
+          <p>{getErrorMessage(error, isRepostDetail ? "Repost doesn't exist or is unavailable." : "Post doesn't exist or is unavailable.")}</p>
           <div className="dashboard-actions dashboard-actions--top">
             <Button onClick={() => refetch()}><RefreshCw size={18} aria-hidden="true" />Retry</Button>
           </div>
@@ -43,9 +54,13 @@ const PostDetailPage = () => {
       <section className="dashboard-panel dashboard-panel--wide post-detail-panel">
         <header className="post-detail-header">
           <BackButton />
-          {isFetching ? <span>Refreshing post...</span> : null}
+          {isFetching ? <span>Refreshing {isRepostDetail ? 'repost' : 'post'}...</span> : null}
         </header>
-        <PostCard post={post} viewerId={viewerId} />
+        {isRepostDetail && repost ? (
+          <RepostDetailCard repost={repost} viewerId={viewerId} />
+        ) : post ? (
+          <PostCard post={post} viewerId={viewerId} />
+        ) : null}
       </section>
     </main>
   );

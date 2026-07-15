@@ -46,6 +46,7 @@ type PostCardProps = {
   fallbackAuthor?: PostAuthor;
   className?: string;
   compact?: boolean;
+  hideFeedbackAction?: boolean;
 };
 
 type PostAttachmentPanel = 'code' | 'media';
@@ -97,7 +98,7 @@ const normalizeLink = (url?: string) => {
 
 const truncateUrl = (url: string) => url.replace(/^https?:\/\//i, '').replace(/\/$/, '');
 
-const PostCard = ({ className, fallbackAuthor, post, viewerId }: PostCardProps) => {
+const PostCard = ({ className, fallbackAuthor, hideFeedbackAction = false, post, viewerId }: PostCardProps) => {
   const navigate = useNavigate();
   const { showError, showSuccess } = useToast();
   const [isEditOpen, setEditOpen] = useState(false);
@@ -384,8 +385,8 @@ const PostCard = ({ className, fallbackAuthor, post, viewerId }: PostCardProps) 
           <div className="rich-post-card__action-left">
             <ActionItem label="Like" count={hideLikesCount ? undefined : Number(likesCount || 0)} active={isLiked} disabled={isLikeUpdating} onClick={toggleLike} icon={<Heart size={20} className={isLiked ? 'is-filled' : ''} />} />
             {!commentsDisabled && <ActionItem label="Comment" count={Number(counts.comments || 0)} onClick={() => setCommentsOpen(true)} icon={<MessageCircle size={20} />} />}
-            <ActionItem label="Repost" count={Number(repostsCount || 0)} active={isReposted} disabled={isRepostUpdating} onClick={toggleRepost} icon={<Repeat2 size={20} />} />
-            {!isOwner && ownerId && <ActionItem label="Feedback" count={Number(counts.feedbacks || 0)} onClick={() => setFeedbackOpen(true)} icon={<SendHorizontal size={20} />} />}
+            {!isOwner && <ActionItem label="Repost" count={Number(repostsCount || 0)} active={isReposted} disabled={isRepostUpdating} onClick={toggleRepost} icon={<Repeat2 size={20} />} />}
+            {!hideFeedbackAction && !isOwner && ownerId && <ActionItem label="Feedback" count={Number(counts.feedbacks || 0)} onClick={() => setFeedbackOpen(true)} icon={<SendHorizontal size={20} />} />}
           </div>
           <div className="v1-post-card__save-action rich-post-card__save-right">
             <ActionItem label="Save" active={isSaved} disabled={isSaveUpdating} onClick={handleSaveClick} icon={<Bookmark size={20} className={isSaved ? 'is-filled' : ''} />} />

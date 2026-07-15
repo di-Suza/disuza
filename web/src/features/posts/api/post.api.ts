@@ -10,6 +10,7 @@ import type {
   PostRepostResponse,
   PostsListResponse,
   PostsQueryArgs,
+  RepostListResponse,
   SavePostRequest,
   SavePostResponse,
   SavedCollectionPostsQueryArgs,
@@ -17,8 +18,10 @@ import type {
   SavedCollectionResponse,
   SavedCollectionsResponse,
   SinglePostResponse,
+  SingleRepostResponse,
   UnsavePostResponse,
   UpdatePostResponse,
+  UserRepostsQueryArgs,
 } from '../model/post.types';
 
 const toQueryString = (params: Record<string, string | number | undefined>) => {
@@ -68,6 +71,7 @@ export const postApi = api.injectEndpoints({
         'SavedPostsCollections',
         'SavedCollectionPosts',
         'Auth',
+        'Reposts',
       ],
     }),
     getPost: builder.query<SinglePostResponse, string>({
@@ -77,6 +81,14 @@ export const postApi = api.injectEndpoints({
     getAllPosts: builder.query<PostsListResponse, PostsQueryArgs | void>({
       query: (args) => `/post/getAllPosts?${toQueryString({ page: args?.page || 1, limit: args?.limit })}`,
       providesTags: ['Posts'],
+    }),
+    getUserReposts: builder.query<RepostListResponse, UserRepostsQueryArgs>({
+      query: ({ userId, page = 1, limit }) => `/post/reposts/user/${userId}?${toQueryString({ page, limit })}`,
+      providesTags: (_result, _error, { userId }) => [{ type: 'Reposts', id: userId }, 'Reposts'],
+    }),
+    getRepost: builder.query<SingleRepostResponse, string>({
+      query: (repostId) => `/post/reposts/${repostId}`,
+      providesTags: (_result, _error, repostId) => [{ type: 'Repost', id: repostId }],
     }),
     getFeed: builder.query<PostsListResponse, FeedQueryArgs | void>({
       query: (args) => `/post/feed?${toQueryString({ page: args?.page || 1, limit: args?.limit, type: args?.type || 'all' })}`,
@@ -124,6 +136,7 @@ export const postApi = api.injectEndpoints({
 
         try {
           await queryFulfilled;
+          dispatch(api.util.invalidateTags(['Reposts']));
         } catch {
           undoPatches(patches);
         }
@@ -139,6 +152,7 @@ export const postApi = api.injectEndpoints({
 
         try {
           await queryFulfilled;
+          dispatch(api.util.invalidateTags(['Reposts']));
         } catch {
           undoPatches(patches);
         }
@@ -381,7 +395,7 @@ const collectPostRepostPatches = (dispatch: AppDispatch, state: unknown, postId:
     ),
   ];
 
-  getFulfilledQueryEntries(state, ['getFeed', 'getAllPosts', 'getSavedCollectionPosts']).forEach((entry) => {
+  getFulfilledQueryEntries(state, ['getFeed', 'getAllPosts', 'getSavedCollectionPosts', 'getUserReposts', 'getRepost']).forEach((entry) => {
     if (entry.endpointName === 'getFeed') {
       patches.push(
         dispatch(
@@ -407,6 +421,26 @@ const collectPostRepostPatches = (dispatch: AppDispatch, state: unknown, postId:
         dispatch(
           postApi.util.updateQueryData('getSavedCollectionPosts', entry.originalArgs as SavedCollectionPostsQueryArgs, (draft) => {
             updateSavedCollectionPostsRepostState(draft, postId, reposted);
+          }),
+        ),
+      );
+    }
+
+    if (entry.endpointName === 'getUserReposts') {
+      patches.push(
+        dispatch(
+          postApi.util.updateQueryData('getUserReposts', entry.originalArgs as UserRepostsQueryArgs, (draft) => {
+            updateRepostListPostState(draft, postId, reposted);
+          }),
+        ),
+      );
+    }
+
+    if (entry.endpointName === 'getRepost') {
+      patches.push(
+        dispatch(
+          postApi.util.updateQueryData('getRepost', entry.originalArgs as string, (draft) => {
+            updateSingleRepostPostState(draft, postId, reposted);
           }),
         ),
       );
@@ -482,6 +516,17 @@ const updateSavedCollectionPostsRepostState = (draft: SavedCollectionPostsRespon
   updatePostRepostState(post, reposted);
 };
 
+const updateRepostListPostState = (draft: RepostListResponse | undefined, postId: string, reposted: boolean) => {
+  draft?.reposts?.forEach((repost) => {
+    if (repost.post?._id === postId) updatePostRepostState(repost.post, reposted);
+  });
+};
+
+const updateSingleRepostPostState = (draft: SingleRepostResponse | undefined, postId: string, reposted: boolean) => {
+  if (draft?.repost?.post?._id !== postId) return;
+  updatePostRepostState(draft.repost.post, reposted);
+};
+
 const updatePostLikeState = (post: Post | undefined, liked: boolean) => {
   if (!post) return;
 
@@ -528,8 +573,10 @@ export const {
   useGetAllPostsQuery,
   useGetFeedQuery,
   useGetPostQuery,
+  useGetRepostQuery,
   useGetSavedCollectionPostsQuery,
   useGetSavedPostsCollectionsQuery,
+  useGetUserRepostsQuery,
   useLikePostMutation,
   useRepostPostMutation,
   useSavePostMutation,

@@ -72,6 +72,15 @@ export type Post = {
   updatedAt?: string;
 };
 
+export type Repost = {
+  _id: string;
+  id?: string;
+  user: PostAuthor;
+  post: Post;
+  createdAt?: string;
+  updatedAt?: string;
+};
+
 export type MediaOrderItem =
   | { source: 'existing'; fileId: string }
   | { source: 'upload' | 'new'; uploadIndex: number };
@@ -189,6 +198,20 @@ export type SinglePostResponse = {
   post: Post;
 };
 
+export type RepostListResponse = {
+  success: boolean;
+  message: string;
+  reposts: Repost[];
+  page: number;
+  hasMore: boolean;
+};
+
+export type SingleRepostResponse = {
+  success: boolean;
+  message: string;
+  repost: Repost;
+};
+
 export type FeedType = 'all' | 'following';
 
 export type FeedQueryArgs = {
@@ -200,4 +223,8 @@ export type FeedQueryArgs = {
 export type PostsQueryArgs = {
   page?: number;
   limit?: number;
+};
+
+export type UserRepostsQueryArgs = PostsQueryArgs & {
+  userId: string;
 };
