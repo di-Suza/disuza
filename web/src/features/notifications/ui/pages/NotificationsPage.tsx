@@ -1,5 +1,4 @@
 import { Bell, Check, Loader2, LogIn, RefreshCw, Trash2, UserRound } from 'lucide-react';
-import { Link } from 'react-router-dom';
 
 import {
   getNotificationIcon,
@@ -65,7 +64,6 @@ const NotificationsPage = () => {
           </div>
 
           <div className="notifications-header__actions">
-            <Link to="/home" className="button button--secondary">Feed</Link>
             <Button variant="ghost" className="button--icon" onClick={() => refetch()} disabled={isFetching} aria-label="Refresh notifications">
               {isFetching ? <Loader2 className="spin" size={18} aria-hidden="true" /> : <RefreshCw size={18} aria-hidden="true" />}
             </Button>
