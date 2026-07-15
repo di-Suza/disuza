@@ -166,14 +166,6 @@ const DashboardPortfolioEditor = ({
   return (
     <div className="portfolio-builder-v1">
       <div className="portfolio-builder-v1__inner">
-        <section className="portfolio-info-card-v1">
-          <span><Sparkles size={20} aria-hidden="true" /></span>
-          <div>
-            <strong>Make it stand out</strong>
-            <p>Your portfolio is your first impression. Be authentic, highlight your strengths, and showcase what makes you unique as a developer.</p>
-          </div>
-        </section>
-
         <section className="portfolio-header-v1">
           <div className="portfolio-header-v1__top">
             <div className="portfolio-header-v1__title">
