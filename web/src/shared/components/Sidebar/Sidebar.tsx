@@ -1,4 +1,4 @@
-import { Bell, Earth, Home, Menu, SendHorizonal, User, X } from 'lucide-react';
+import { Bell, Earth, Home, Menu, SendHorizonal, User } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
@@ -51,11 +51,10 @@ const Sidebar = () => {
             aria-label={isExpanded ? 'Collapse sidebar' : 'Expand sidebar'}
             aria-expanded={isExpanded}
           >
-            {isExpanded ? <X size={22} aria-hidden="true" /> : <Menu size={22} aria-hidden="true" />}
+            <Menu size={22} aria-hidden="true" />
           </button>
           <Link to="/home" className="app-sidebar__brand" aria-label="DevLoopFeed home">
             <img src={logo} alt="" />
-            <span>DevFeed</span>
           </Link>
         </header>
 
