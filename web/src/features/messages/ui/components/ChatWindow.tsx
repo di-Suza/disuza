@@ -1,5 +1,5 @@
 import { ArrowLeft, Code2, Loader2, RefreshCw, Send, UserX, X } from 'lucide-react';
-import { memo, useState, type MouseEvent } from 'react';
+import { memo, useEffect, useRef, useState, type MouseEvent } from 'react';
 
 import {
   formatChatDateDivider,
@@ -44,6 +44,7 @@ const ChatWindow = ({
   selectedChat,
 }: ChatWindowProps) => {
   const [contextMenu, setContextMenu] = useState<ContextMenu | null>(null);
+  const contextMenuRef = useRef<HTMLDivElement | null>(null);
   const {
     handleBackToChats,
     handleCollabClick,
@@ -64,6 +65,27 @@ const ChatWindow = ({
   const isDeletedUser = Boolean(selectedChat?.otherUser?.isDeletedUser);
   const isBlockedChat = Boolean(selectedChat?.isBlocked || selectedChat?.hasBlockedMe);
   const canSendMessages = Boolean(selectedChat && !isDeletedUser && !isBlockedChat);
+
+  useEffect(() => {
+    if (!contextMenu) return;
+
+    const handleOutsidePointerDown = (event: PointerEvent) => {
+      if (event.target instanceof Node && contextMenuRef.current?.contains(event.target)) return;
+      setContextMenu(null);
+    };
+
+    const handleEscape = (event: globalThis.KeyboardEvent) => {
+      if (event.key === 'Escape') setContextMenu(null);
+    };
+
+    document.addEventListener('pointerdown', handleOutsidePointerDown);
+    document.addEventListener('keydown', handleEscape);
+
+    return () => {
+      document.removeEventListener('pointerdown', handleOutsidePointerDown);
+      document.removeEventListener('keydown', handleEscape);
+    };
+  }, [contextMenu]);
 
   const handleChatContextMenu = (event: MouseEvent<HTMLDivElement>) => {
     if (!selectedChat) return;
@@ -207,7 +229,7 @@ const ChatWindow = ({
       )}
 
       {contextMenu && (
-        <div className="messages-v1-menu messages-v1-context-menu" style={{ left: contextMenu.x, top: contextMenu.y }} onClick={(event) => event.stopPropagation()}>
+        <div ref={contextMenuRef} className="messages-v1-menu messages-v1-context-menu" style={{ left: contextMenu.x, top: contextMenu.y }} onClick={(event) => event.stopPropagation()}>
           <button type="button" onClick={closeChatFromMenu}>
             <X size={16} aria-hidden="true" />
             Close chat

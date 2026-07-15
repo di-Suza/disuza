@@ -46,6 +46,27 @@ const Conversations = ({ conversations, getConversationsLoading, handleChatSelec
     setVisibleCount(CONVERSATION_PAGE_SIZE);
   }, [conversations.length, searchQuery]);
 
+  useEffect(() => {
+    if (!openMenuId) return;
+
+    const handleOutsidePointerDown = (event: PointerEvent) => {
+      if (event.target instanceof Element && event.target.closest('[data-conversation-menu-root]')) return;
+      setOpenMenuId(null);
+    };
+
+    const handleEscape = (event: globalThis.KeyboardEvent) => {
+      if (event.key === 'Escape') setOpenMenuId(null);
+    };
+
+    document.addEventListener('pointerdown', handleOutsidePointerDown);
+    document.addEventListener('keydown', handleEscape);
+
+    return () => {
+      document.removeEventListener('pointerdown', handleOutsidePointerDown);
+      document.removeEventListener('keydown', handleEscape);
+    };
+  }, [openMenuId]);
+
   const handleSelectChat = (chat: ChatConversation) => {
     handleConversationSelect(chat);
     setSearchQuery('');
@@ -144,6 +165,7 @@ const Conversations = ({ conversations, getConversationsLoading, handleChatSelec
                         <button
                           type="button"
                           className="messages-v1-icon-button messages-v1-conversation__menu-button"
+                          data-conversation-menu-root
                           onClick={(event) => handleMenuToggle(event, chat._id)}
                           aria-label="Conversation options"
                         >
@@ -151,10 +173,10 @@ const Conversations = ({ conversations, getConversationsLoading, handleChatSelec
                         </button>
 
                         {openMenuId === chat._id && (
-                          <div className="messages-v1-menu messages-v1-conversation__menu" onClick={(event) => event.stopPropagation()}>
+                          <div className="messages-v1-menu messages-v1-conversation__menu" data-conversation-menu-root onClick={(event) => event.stopPropagation()}>
                             <button type="button" onClick={(event) => handleDeleteChat(event, chat)} disabled={deletingConversation}>
                               <Trash2 size={16} aria-hidden="true" />
-                              {deletingConversation ? 'Removing...' : 'Delete chat'}
+                              {deletingConversation ? 'Removing...' : 'Delete'}
                             </button>
                           </div>
                         )}

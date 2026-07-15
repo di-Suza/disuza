@@ -1,5 +1,5 @@
 import { Flag, MoreVertical, Undo2 } from 'lucide-react';
-import { memo, useState } from 'react';
+import { memo, useEffect, useRef, useState } from 'react';
 
 import { formatChatMessageTime, getFeedbackMediaUrl, getSharedPostMediaUrl } from '@/features/messages/model/chat.helpers';
 import type { ChatMessage } from '@/features/messages/model/chat.types';
@@ -14,6 +14,7 @@ type MessageItemProps = {
 const MessageItem = ({ message }: MessageItemProps) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  const menuRootRef = useRef<HTMLDivElement | null>(null);
   const {
     goToFeedbackPost,
     goToFeedbackProfile,
@@ -28,14 +29,34 @@ const MessageItem = ({ message }: MessageItemProps) => {
   const sharedPostAuthor = message.sharedPostDetails?.user?.userName || 'DevLoopFeed';
   const sharedPostCaption = message.sharedPostDetails?.caption || 'View shared post';
 
+  useEffect(() => {
+    if (!isMenuOpen) return;
+
+    const handleOutsidePointerDown = (event: PointerEvent) => {
+      if (event.target instanceof Node && menuRootRef.current?.contains(event.target)) return;
+      setIsMenuOpen(false);
+    };
+
+    const handleEscape = (event: globalThis.KeyboardEvent) => {
+      if (event.key === 'Escape') setIsMenuOpen(false);
+    };
+
+    document.addEventListener('pointerdown', handleOutsidePointerDown);
+    document.addEventListener('keydown', handleEscape);
+
+    return () => {
+      document.removeEventListener('pointerdown', handleOutsidePointerDown);
+      document.removeEventListener('keydown', handleEscape);
+    };
+  }, [isMenuOpen]);
+
   return (
     <>
       <div
         className={`messages-v1-message ${senderIsMe ? 'is-mine' : 'is-theirs'}`}
-        onMouseLeave={() => setIsMenuOpen(false)}
       >
         <div className="messages-v1-message__inner">
-          <div className="messages-v1-message__actions">
+          <div className="messages-v1-message__actions" ref={menuRootRef}>
             <button
               type="button"
               className="messages-v1-icon-button"
