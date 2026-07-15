@@ -1946,3 +1946,41 @@ npm --prefix api run build
 npm --prefix web run build
 git diff --check
 ```
+
+## Step 38: Repost Policy And Profile Surfacing
+
+Updated the rich post branch repost behavior on `feature/post-rich-content-sharing`.
+
+API completed:
+
+- enforced the backend domain rule that users cannot repost their own posts
+- added repost list and repost detail endpoints under the post API surface
+- kept reposts as durable user-post relations instead of feed fan-out posts
+- applied block visibility checks to repost list/detail reads
+- enriched reposted original posts with viewer like/save/repost state
+
+Web completed:
+
+- hid the repost action on the viewer's own posts
+- added a Yours/Reposts switcher to the dashboard posts panel
+- added a Reposts section to public profile activity
+- added clickable repost preview cards that route to repost detail
+- added a repost detail layout that shows reposter context, hides feedback, and keeps original post engagement actions on the original post
+- kept original post detail available through a `See original post` action
+
+Policy recorded:
+
+- `DevLoopFeed-Architecture-Guide.md` now records repost ownership, visibility, feed, and engagement rules
+- `ARCHITECTURE-DECISIONS.md` now records DLF-037 for reposts as profile-visible references instead of feed fan-out
+
+Why:
+
+Reposts should help users show activity on their dashboard/profile without creating duplicate posts in follower feeds or letting users artificially repost their own content. Keeping reposts as a relation preserves the original post as the engagement source while giving reposts their own profile/detail presentation.
+
+Verification used:
+
+```bash
+npm run build:api
+npm run build:web
+git diff --check
+```
