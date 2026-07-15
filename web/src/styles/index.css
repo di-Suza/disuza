@@ -7087,8 +7087,10 @@ svg {
 .v1-post-card__media-stage {
   position: relative;
   display: flex;
-  height: clamp(240px, 52vw, 420px);
+  width: 100%;
+  min-height: 180px;
   max-height: 420px;
+  aspect-ratio: var(--post-media-aspect, 16 / 9);
   align-items: center;
   justify-content: center;
   overflow: hidden;
@@ -7117,6 +7119,7 @@ svg {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  object-position: center center;
 }
 
 .v1-post-card__media-main:is(video) {
@@ -7644,6 +7647,17 @@ svg {
   grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr) auto;
   gap: 8px;
   align-items: center;
+}
+
+.inline-post-composer__tool-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1390;
+  border: 0;
+  background: rgba(2, 6, 23, 0.58);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  cursor: default;
 }
 
 .inline-post-composer__tool-modal {

@@ -20,7 +20,7 @@ import {
   UserRound,
   X,
 } from 'lucide-react';
-import { memo, useCallback, useMemo, useState, type ReactNode } from 'react';
+import { memo, useCallback, useMemo, useState, type CSSProperties, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import CommentModal from '@/features/comments/ui/components/CommentModal';
@@ -118,6 +118,11 @@ const PostCard = ({ className, fallbackAuthor, post, viewerId }: PostCardProps) 
   const avatarUrl = getPostImageUrl(author);
   const media = useMemo(() => getPostMedia(post), [post]);
   const activeMedia = media[currentIndex];
+  const mediaStageStyle = useMemo(() => {
+    if (!activeMedia?.width || !activeMedia.height) return undefined;
+
+    return { '--post-media-aspect': `${activeMedia.width} / ${activeMedia.height}` } as CSSProperties;
+  }, [activeMedia]);
   const isOwner = Boolean(viewerId && ownerId && viewerId === ownerId);
   const counts = post.counts || {};
   const commentsDisabled = Boolean(post.settings?.commentsDisabled);
@@ -271,7 +276,7 @@ const PostCard = ({ className, fallbackAuthor, post, viewerId }: PostCardProps) 
 
         {activeMedia && (
           <section className="v1-post-card__media-shell">
-            <div className="v1-post-card__media-stage">
+            <div className="v1-post-card__media-stage" style={mediaStageStyle}>
               {!isVideoMedia(activeMedia) && <img className="v1-post-card__media-bg" src={activeMedia.url} alt="" aria-hidden="true" />}
               <div className="v1-post-card__media-overlay" />
               {isVideoMedia(activeMedia) ? (

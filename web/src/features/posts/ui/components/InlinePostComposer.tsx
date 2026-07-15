@@ -99,105 +99,108 @@ const InlinePostComposer = () => {
       )}
 
       {activePanel && (
-        <section className="inline-post-composer__tool-modal" aria-label="Post tool options">
-          <button type="button" className="inline-post-composer__tool-close" onClick={closePanel} aria-label="Close tool options">
-            <X size={16} aria-hidden="true" />
-          </button>
+        <>
+          <button type="button" className="inline-post-composer__tool-backdrop" onClick={closePanel} aria-label="Close post tool options" />
+          <section className="inline-post-composer__tool-modal" aria-label="Post tool options">
+            <button type="button" className="inline-post-composer__tool-close" onClick={closePanel} aria-label="Close tool options">
+              <X size={16} aria-hidden="true" />
+            </button>
 
-          {activePanel === 'code' && (
-            <>
-              <header>
-                <Code2 size={17} aria-hidden="true" />
-                <span>Code snippet</span>
-              </header>
-              <Input
-                value={codeSnippet.language}
-                onChange={(event) => updateCodeSnippet('language', event.target.value)}
-                placeholder="Language, e.g. tsx"
-                aria-label="Code language"
-              />
-              <textarea
-                className="inline-post-composer__code"
-                value={codeSnippet.code}
-                onChange={(event) => updateCodeSnippet('code', event.target.value)}
-                placeholder="Paste code here..."
-                rows={7}
-                aria-label="Code snippet"
-              />
-            </>
-          )}
+            {activePanel === 'code' && (
+              <>
+                <header>
+                  <Code2 size={17} aria-hidden="true" />
+                  <span>Code snippet</span>
+                </header>
+                <Input
+                  value={codeSnippet.language}
+                  onChange={(event) => updateCodeSnippet('language', event.target.value)}
+                  placeholder="Language, e.g. tsx"
+                  aria-label="Code language"
+                />
+                <textarea
+                  className="inline-post-composer__code"
+                  value={codeSnippet.code}
+                  onChange={(event) => updateCodeSnippet('code', event.target.value)}
+                  placeholder="Paste code here..."
+                  rows={7}
+                  aria-label="Code snippet"
+                />
+              </>
+            )}
 
-          {activePanel === 'link' && (
-            <>
-              <header>
-                <Link2 size={17} aria-hidden="true" />
-                <span>Links</span>
-                <Button variant="ghost" onClick={addLink}>
-                  <Plus size={15} aria-hidden="true" />
-                  Add
-                </Button>
-              </header>
-              <div className="inline-post-composer__link-list">
-                {links.map((link) => (
-                  <div className="inline-post-composer__link-row" key={link.id}>
-                    <Input value={link.label} onChange={(event) => updateLink(link.id, 'label', event.target.value)} placeholder="Label" aria-label="Link label" />
-                    <Input type="url" value={link.url} onChange={(event) => updateLink(link.id, 'url', event.target.value)} placeholder="https://example.com" aria-label="Link URL" />
-                    <Button variant="ghost" className="button--icon" onClick={() => removeLink(link.id)} aria-label="Remove link">
-                      <Trash2 size={15} aria-hidden="true" />
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            </>
-          )}
+            {activePanel === 'link' && (
+              <>
+                <header>
+                  <Link2 size={17} aria-hidden="true" />
+                  <span>Links</span>
+                  <Button variant="ghost" onClick={addLink}>
+                    <Plus size={15} aria-hidden="true" />
+                    Add
+                  </Button>
+                </header>
+                <div className="inline-post-composer__link-list">
+                  {links.map((link) => (
+                    <div className="inline-post-composer__link-row" key={link.id}>
+                      <Input value={link.label} onChange={(event) => updateLink(link.id, 'label', event.target.value)} placeholder="Label" aria-label="Link label" />
+                      <Input type="url" value={link.url} onChange={(event) => updateLink(link.id, 'url', event.target.value)} placeholder="https://example.com" aria-label="Link URL" />
+                      <Button variant="ghost" className="button--icon" onClick={() => removeLink(link.id)} aria-label="Remove link">
+                        <Trash2 size={15} aria-hidden="true" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
 
-          {activePanel === 'more' && (
-            <>
-              <header>
-                <MoreHorizontal size={17} aria-hidden="true" />
-                <span>More options</span>
-              </header>
-              <section className="inline-post-composer__project-block">
+            {activePanel === 'more' && (
+              <>
+                <header>
+                  <MoreHorizontal size={17} aria-hidden="true" />
+                  <span>More options</span>
+                </header>
+                <section className="inline-post-composer__project-block">
+                  <label className="inline-post-composer__toggle-row">
+                    <span>
+                      <strong>Project post</strong>
+                      <small>Live demo and GitHub links required</small>
+                    </span>
+                    <span className={isProjectPost ? 'post-composer-v1__switch is-active' : 'post-composer-v1__switch'}>
+                      <input type="checkbox" checked={isProjectPost} onChange={(event) => setIsProjectPost(event.target.checked)} />
+                      <i />
+                    </span>
+                  </label>
+                  {isProjectPost && (
+                    <div className="inline-post-composer__project-fields">
+                      <Input type="url" value={projectLinks.liveDemoUrl} onChange={updateProjectLink('liveDemoUrl')} placeholder="Live demo URL" aria-label="Live demo URL" />
+                      <Input type="url" value={projectLinks.repositoryUrl} onChange={updateProjectLink('repositoryUrl')} placeholder="GitHub repository URL" aria-label="GitHub repository URL" />
+                    </div>
+                  )}
+                </section>
                 <label className="inline-post-composer__toggle-row">
                   <span>
-                    <strong>Project post</strong>
-                    <small>Live demo and GitHub links required</small>
+                    <strong>Hide like count</strong>
+                    <small>Only you can see likes</small>
                   </span>
-                  <span className={isProjectPost ? 'post-composer-v1__switch is-active' : 'post-composer-v1__switch'}>
-                    <input type="checkbox" checked={isProjectPost} onChange={(event) => setIsProjectPost(event.target.checked)} />
+                  <span className={settings.hideLikesCount ? 'post-composer-v1__switch is-active' : 'post-composer-v1__switch'}>
+                    <input type="checkbox" checked={settings.hideLikesCount} onChange={updateSetting('hideLikesCount')} />
                     <i />
                   </span>
                 </label>
-                {isProjectPost && (
-                  <div className="inline-post-composer__project-fields">
-                    <Input type="url" value={projectLinks.liveDemoUrl} onChange={updateProjectLink('liveDemoUrl')} placeholder="Live demo URL" aria-label="Live demo URL" />
-                    <Input type="url" value={projectLinks.repositoryUrl} onChange={updateProjectLink('repositoryUrl')} placeholder="GitHub repository URL" aria-label="GitHub repository URL" />
-                  </div>
-                )}
-              </section>
-              <label className="inline-post-composer__toggle-row">
-                <span>
-                  <strong>Hide like count</strong>
-                  <small>Only you can see likes</small>
-                </span>
-                <span className={settings.hideLikesCount ? 'post-composer-v1__switch is-active' : 'post-composer-v1__switch'}>
-                  <input type="checkbox" checked={settings.hideLikesCount} onChange={updateSetting('hideLikesCount')} />
-                  <i />
-                </span>
-              </label>
-              <label className="inline-post-composer__toggle-row">
-                <span>
-                  <strong>Turn off comments</strong>
-                  <small>Hide comment action on this post</small>
-                </span>
-                <span className={settings.commentsDisabled ? 'post-composer-v1__switch is-active' : 'post-composer-v1__switch'}>
-                  <input type="checkbox" checked={settings.commentsDisabled} onChange={updateSetting('commentsDisabled')} />
-                  <i />
-                </span>
-              </label>
-            </>
-          )}
-        </section>
+                <label className="inline-post-composer__toggle-row">
+                  <span>
+                    <strong>Turn off comments</strong>
+                    <small>Hide comment action on this post</small>
+                  </span>
+                  <span className={settings.commentsDisabled ? 'post-composer-v1__switch is-active' : 'post-composer-v1__switch'}>
+                    <input type="checkbox" checked={settings.commentsDisabled} onChange={updateSetting('commentsDisabled')} />
+                    <i />
+                  </span>
+                </label>
+              </>
+            )}
+          </section>
+        </>
       )}
 
       <footer className="inline-post-composer__footer">
