@@ -1405,18 +1405,24 @@
 .dashboard-modal__row { border-radius: 16px; background: var(--bg-main); }
 .dashboard-user-list-v1 {
   display: flex;
-  width: min(100%, 500px);
-  max-height: min(82vh, 620px);
+  width: min(calc(100vw - 32px), 460px);
+  max-height: min(calc(100dvh - 32px), 620px);
   flex-direction: column;
   overflow: hidden;
   padding: 0;
 }
 .dashboard-user-list-v1__header {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-columns: 40px minmax(0, 1fr) 36px;
   flex: 0 0 auto;
   align-items: center;
   gap: 12px;
+  padding: 14px 16px;
+}
+.dashboard-user-list-v1__header .report-modal__icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
 }
 .dashboard-user-list-v1__title { min-width: 0; }
 .dashboard-user-list-v1__title h1 {
@@ -1429,10 +1435,11 @@
   color: var(--text-primary);
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 22px;
+  font-size: 20px;
 }
 .dashboard-user-list-v1__title h1 span {
   display: inline-grid;
+  flex: 0 0 auto;
   min-width: 28px;
   height: 24px;
   place-items: center;
@@ -1458,10 +1465,48 @@
 }
 .dashboard-user-list-v1__close:hover { color: var(--accent); }
 .dashboard-user-list-v1 .dashboard-modal__list {
+  display: grid;
   flex: 1;
+  gap: 10px;
   min-height: 0;
+  overflow-x: hidden;
   overflow-y: auto;
-  padding: 16px;
+  padding: 14px;
+}
+.dashboard-user-list-v1 .dashboard-modal__row {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  border: 1px solid var(--border-secondary);
+  border-radius: 10px;
+  color: var(--text-primary);
+  padding: 10px;
+  text-decoration: none;
+}
+.dashboard-user-list-v1 .dashboard-modal__row:hover {
+  border-color: color-mix(in srgb, var(--accent) 42%, var(--border-secondary));
+}
+.dashboard-user-list-v1 .dashboard-modal__row > span:last-child {
+  display: grid;
+  min-width: 0;
+  gap: 3px;
+}
+.dashboard-user-list-v1 .dashboard-modal__row strong,
+.dashboard-user-list-v1 .dashboard-modal__row small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dashboard-user-list-v1 .dashboard-modal__row small {
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+.dashboard-user-list-v1 .user-row__avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
 }
 .dashboard-modal__load-more { display: flex; justify-content: center; padding-top: 8px; }
 .dashboard-modal__load-more button { display: grid; width: 40px; height: 40px; place-items: center; border: 1px solid var(--border-secondary); border-radius: 999px; background: var(--bg-main); color: var(--text-secondary); }
