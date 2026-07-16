@@ -140,7 +140,7 @@ const DashboardActivitiesModal = ({ isOpen, onClose, type }: DashboardActivities
         <div className="dashboard-modal__list">
           {isFetching && activities.length === 0 && <p className="empty-copy">Loading activity...</p>}
           {!isFetching && activities.length === 0 && <p className="empty-copy">{copy.empty}</p>}
-          <div className={type === 'likes' ? 'dashboard-activity-v1-list is-grid' : 'dashboard-activity-v1-list'}>
+          <div className="dashboard-activity-v1-list">
             {activities.map((activity, index) => (
               <DashboardActivityItem
                 key={getActivityId(activity, index)}
