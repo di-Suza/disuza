@@ -71,8 +71,10 @@ const PostComposerModal = ({ isOpen, isPostLoading = false, mode, onClose, post 
   if (!isOpen) return null;
 
   const submitLabel = isSubmitting ? 'Saving...' : isEditMode ? 'Save changes' : 'Post';
+  const showProjectSection = !isEditMode || isEditingProjectPost;
   const projectLinksRequired = canEditProjectLinks && (isProjectPost || isEditingProjectPost);
-  const isPostEnabled = !isSubmitting && (isEditMode || hasComposerContent);
+  const projectLinksComplete = Boolean(projectLinks.liveDemoUrl.trim() && projectLinks.repositoryUrl.trim());
+  const isPostEnabled = !isSubmitting && (isEditMode || hasComposerContent) && (!projectLinksRequired || projectLinksComplete);
 
   return (
     <div className="modal-backdrop post-composer-v1-backdrop" role="dialog" aria-modal="true" aria-label={isEditMode ? 'Edit post' : 'Create post'}>
@@ -115,12 +117,15 @@ const PostComposerModal = ({ isOpen, isPostLoading = false, mode, onClose, post 
                 />
               </section>
 
-              {(!isEditMode || projectLinksRequired) && (
+              {showProjectSection && (
                 <section className="post-composer-v1__project">
-                  <label>
+                  <label className="post-composer-v1__project-title" htmlFor={!isEditMode ? projectToggleId : undefined}>
                     <span className="post-composer-v1__project-main">
                       <span><Code2 size={17} aria-hidden="true" /></span>
-                      <span><strong>Is project post</strong><small>Requires live link and GitHub repo link before posting</small></span>
+                      <span>
+                        <strong>{isEditMode ? 'Project links' : 'Project post?'}</strong>
+                        <small>{isEditMode ? 'Update live demo and GitHub repository links' : 'Turn on to add live demo and GitHub repository links'}</small>
+                      </span>
                     </span>
                     {!isEditMode && (
                       <span className={isProjectPost ? 'post-composer-v1__switch is-active' : 'post-composer-v1__switch'}>
@@ -139,7 +144,7 @@ const PostComposerModal = ({ isOpen, isPostLoading = false, mode, onClose, post 
                   {projectLinksRequired && (
                     <div className="post-composer-v1__links">
                       <label>
-                        <span>Live Link *</span>
+                        <span>Live Demo Link *</span>
                         <span className="post-composer-v1__input-icon"><Link2 size={16} aria-hidden="true" /></span>
                         <Input
                           id={liveDemoInputId}
@@ -151,7 +156,7 @@ const PostComposerModal = ({ isOpen, isPostLoading = false, mode, onClose, post 
                         />
                       </label>
                       <label>
-                        <span>GitHub Repo Link *</span>
+                        <span>GitHub Repository Link *</span>
                         <span className="post-composer-v1__input-icon"><GitFork size={16} aria-hidden="true" /></span>
                         <Input
                           id={repositoryInputId}
