@@ -35,6 +35,9 @@ type PostComposerModalProps = {
 
 const PostComposerModal = ({ isOpen, isPostLoading = false, mode, onClose, post }: PostComposerModalProps) => {
   const fileInputId = useId();
+  const projectToggleId = `${fileInputId}-project-toggle`;
+  const liveDemoInputId = `${fileInputId}-project-live-demo`;
+  const repositoryInputId = `${fileInputId}-project-repository`;
   const [showAdvancedSettings, setShowAdvancedSettings] = useState(false);
   const {
     addLink,
@@ -69,6 +72,7 @@ const PostComposerModal = ({ isOpen, isPostLoading = false, mode, onClose, post 
 
   const submitLabel = isSubmitting ? 'Saving...' : isEditMode ? 'Save changes' : 'Post';
   const showProjectLinks = canEditProjectLinks && (isProjectPost || isEditingProjectPost);
+  const projectLinksRequired = showProjectLinks;
   const isPostEnabled = !isSubmitting && (isEditMode || hasComposerContent);
 
   return (
@@ -121,7 +125,13 @@ const PostComposerModal = ({ isOpen, isPostLoading = false, mode, onClose, post 
                     </span>
                     {!isEditMode && (
                       <span className={isProjectPost ? 'post-composer-v1__switch is-active' : 'post-composer-v1__switch'}>
-                        <input type="checkbox" checked={isProjectPost} onChange={(event) => setIsProjectPost(event.target.checked)} />
+                        <input
+                          id={projectToggleId}
+                          type="checkbox"
+                          checked={isProjectPost}
+                          onChange={(event) => setIsProjectPost(event.target.checked)}
+                          aria-label="Project post"
+                        />
                         <i />
                       </span>
                     )}
@@ -130,14 +140,28 @@ const PostComposerModal = ({ isOpen, isPostLoading = false, mode, onClose, post 
                   {showProjectLinks && (
                     <div className="post-composer-v1__links">
                       <label>
-                        <span>Live Demo Link</span>
+                        <span>Live Demo Link *</span>
                         <span className="post-composer-v1__input-icon"><Link2 size={16} aria-hidden="true" /></span>
-                        <Input type="url" value={projectLinks.liveDemoUrl} onChange={updateProjectLink('liveDemoUrl')} placeholder="https://your-demo.com" />
+                        <Input
+                          id={liveDemoInputId}
+                          type="url"
+                          value={projectLinks.liveDemoUrl}
+                          onChange={updateProjectLink('liveDemoUrl')}
+                          placeholder="https://your-demo.com"
+                          required={projectLinksRequired}
+                        />
                       </label>
                       <label>
-                        <span>GitHub Repository Link</span>
+                        <span>GitHub Repository Link *</span>
                         <span className="post-composer-v1__input-icon"><GitFork size={16} aria-hidden="true" /></span>
-                        <Input type="url" value={projectLinks.repositoryUrl} onChange={updateProjectLink('repositoryUrl')} placeholder="https://github.com/username/repo" />
+                        <Input
+                          id={repositoryInputId}
+                          type="url"
+                          value={projectLinks.repositoryUrl}
+                          onChange={updateProjectLink('repositoryUrl')}
+                          placeholder="https://github.com/username/repo"
+                          required={projectLinksRequired}
+                        />
                       </label>
                     </div>
                   )}
