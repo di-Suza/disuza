@@ -1133,20 +1133,6 @@
   }
 }
 
-@media (min-width: 1024px) {
-  .app-sidebar {
-    display: block;
-  }
-
-  .app-bottom-nav {
-    display: none;
-  }
-
-  .sidebar-layout__content {
-    margin-left: 64px;
-  }
-}
-
 /* V1-style dashboard parity */
 
 /* Chat post preview bounds */
