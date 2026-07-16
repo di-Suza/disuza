@@ -375,7 +375,8 @@
   gap: 8px;
 }
 
-.chip-list span {
+.chip-list span,
+.chip-list a {
   border: 1px solid var(--border-secondary);
   border-radius: 999px;
   background: rgba(59, 99, 255, 0.1);
@@ -383,6 +384,25 @@
   padding: 7px 11px;
   font-size: 13px;
   font-weight: 800;
+  text-decoration: none;
+}
+
+.chip-list a:hover {
+  border-color: color-mix(in srgb, var(--accent) 45%, transparent);
+  color: var(--accent);
+}
+
+.chip-list--links a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-color: color-mix(in srgb, var(--accent) 32%, var(--border-secondary));
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  color: var(--accent);
+}
+
+.chip-list--links a svg {
+  flex: 0 0 auto;
 }
 
 .profile-timeline-list {

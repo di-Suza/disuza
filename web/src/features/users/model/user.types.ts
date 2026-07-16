@@ -19,12 +19,18 @@ export type PortfolioEducation = {
   course: string;
 };
 
+export type PortfolioHandle = {
+  label: string;
+  link: string;
+};
+
 export type UserProfile = AuthUser & {
   headline?: string;
   about?: string;
   skills?: string[];
   experiences?: PortfolioExperience[];
   educations?: PortfolioEducation[];
+  handles?: PortfolioHandle[];
   interests?: string[];
   languages?: string[];
   followersCount?: number;
@@ -71,6 +77,7 @@ export type UpdateProfessionalInfoRequest = Partial<{
   skills: string[];
   experiences: PortfolioExperience[];
   educations: PortfolioEducation[];
+  handles: PortfolioHandle[];
   interests: string[];
   languages: string[];
 }>;

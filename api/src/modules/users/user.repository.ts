@@ -8,7 +8,7 @@ type GeneralInfoUpdate = Partial<Pick<User, 'headline' | 'about'>> & {
   address?: UserAddress;
 };
 
-type ProfessionalInfoUpdate = Partial<Pick<User, 'skills' | 'experiences' | 'educations' | 'interests' | 'languages'>>;
+type ProfessionalInfoUpdate = Partial<Pick<User, 'skills' | 'experiences' | 'educations' | 'handles' | 'interests' | 'languages'>>;
 
 type UserCounterField = 'followersCount' | 'followingCount' | 'postsCount' | 'projectsCount' | 'profileContributions';
 

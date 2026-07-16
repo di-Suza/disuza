@@ -16,6 +16,7 @@ import type {
   PortfolioAddress,
   PortfolioEducation,
   PortfolioExperience,
+  PortfolioHandle,
   UpdateGeneralInfoRequest,
   UpdateProfessionalInfoRequest,
 } from '@/features/users/model/user.types';
@@ -39,6 +40,7 @@ type ProfessionalFormState = {
   languages: string;
   experiences: PortfolioExperience[];
   educations: PortfolioEducation[];
+  handles: PortfolioHandle[];
 };
 
 type ProfessionalTextField = 'skills' | 'interests' | 'languages';
@@ -47,6 +49,8 @@ type GeneralTextField = 'headline' | 'about';
 const createEmptyExperience = (): PortfolioExperience => ({ companyName: '', role: '', timePeriod: '' });
 
 const createEmptyEducation = (): PortfolioEducation => ({ collegeName: '', timePeriod: '', course: '' });
+
+const createEmptyHandle = (): PortfolioHandle => ({ label: '', link: '' });
 
 const createEmptyAddress = (): PortfolioAddress => ({ city: '', state: '', country: '' });
 
@@ -123,6 +127,18 @@ const normalizeEducations = (educations: unknown): PortfolioEducation[] => {
   });
 };
 
+const normalizeHandles = (handles: unknown): PortfolioHandle[] => {
+  if (!Array.isArray(handles) || handles.length === 0) return [createEmptyHandle()];
+
+  return handles.map((item) => {
+    const handle = toRecord(item);
+    return {
+      label: typeof handle.label === 'string' ? handle.label : '',
+      link: typeof handle.link === 'string' ? handle.link : '',
+    };
+  });
+};
+
 const getSubmitExperiences = (experiences: PortfolioExperience[]): PortfolioExperience[] => experiences
   .map((experience) => ({
     companyName: experience.companyName.trim(),
@@ -138,6 +154,20 @@ const getSubmitEducations = (educations: PortfolioEducation[]): PortfolioEducati
     course: education.course.trim(),
   }))
   .filter((education) => education.collegeName || education.timePeriod || education.course);
+
+const withUrlProtocol = (value: string): string => {
+  const trimmed = value.trim();
+  if (!trimmed) return '';
+  if (/^https?:\/\//i.test(trimmed)) return trimmed;
+  return `https://${trimmed.replace(/^[a-z][a-z\d+\-.]*:\/\//i, '')}`;
+};
+
+const getSubmitHandles = (handles: PortfolioHandle[]): PortfolioHandle[] => handles
+  .map((handle) => ({
+    label: handle.label.trim(),
+    link: withUrlProtocol(handle.link),
+  }))
+  .filter((handle) => handle.label && handle.link);
 
 export const useDashboardPage = () => {
   const user = useAppSelector((state) => state.auth.user);
@@ -163,6 +193,7 @@ export const useDashboardPage = () => {
     languages: '',
     experiences: [createEmptyExperience()],
     educations: [createEmptyEducation()],
+    handles: [createEmptyHandle()],
   });
   const [passwordForm, setPasswordForm] = useState({ currentPassword: '', newPassword: '' });
   const generalHydratedUserIdRef = useRef<string | null>(null);
@@ -192,6 +223,7 @@ export const useDashboardPage = () => {
       languages: joinCsv(user.languages),
       experiences: normalizeExperiences(user.experiences),
       educations: normalizeEducations(user.educations),
+      handles: normalizeHandles(user.handles),
     });
   }, [user]);
 
@@ -262,12 +294,25 @@ export const useDashboardPage = () => {
     }));
   }, []);
 
+  const updateHandleField = useCallback((index: number, field: keyof PortfolioHandle) => (event: ChangeEvent<HTMLInputElement>) => {
+    setProfessionalForm((current) => ({
+      ...current,
+      handles: current.handles.map((handle, itemIndex) => (
+        itemIndex === index ? { ...handle, [field]: event.target.value } : handle
+      )),
+    }));
+  }, []);
+
   const addExperience = useCallback(() => {
     setProfessionalForm((current) => ({ ...current, experiences: [...current.experiences, createEmptyExperience()] }));
   }, []);
 
   const addEducation = useCallback(() => {
     setProfessionalForm((current) => ({ ...current, educations: [...current.educations, createEmptyEducation()] }));
+  }, []);
+
+  const addHandle = useCallback(() => {
+    setProfessionalForm((current) => ({ ...current, handles: [...current.handles, createEmptyHandle()] }));
   }, []);
 
   const removeExperience = useCallback((index: number) => {
@@ -281,6 +326,13 @@ export const useDashboardPage = () => {
     setProfessionalForm((current) => ({
       ...current,
       educations: current.educations.length <= 1 ? [createEmptyEducation()] : current.educations.filter((_item, itemIndex) => itemIndex !== index),
+    }));
+  }, []);
+
+  const removeHandle = useCallback((index: number) => {
+    setProfessionalForm((current) => ({
+      ...current,
+      handles: current.handles.length <= 1 ? [createEmptyHandle()] : current.handles.filter((_item, itemIndex) => itemIndex !== index),
     }));
   }, []);
 
@@ -366,6 +418,7 @@ export const useDashboardPage = () => {
       languages: splitCsv(professionalForm.languages),
       experiences: getSubmitExperiences(professionalForm.experiences),
       educations: getSubmitEducations(professionalForm.educations),
+      handles: getSubmitHandles(professionalForm.handles),
     };
 
     try {
@@ -407,6 +460,7 @@ export const useDashboardPage = () => {
   }, [showError, showSuccess, unblockUser]);
 
   return useMemo(() => ({
+    addHandle,
     addEducation,
     addExperience,
     blockedUsers: blockedUsersData?.blockedUsers || [],
@@ -435,10 +489,12 @@ export const useDashboardPage = () => {
     passwordForm,
     professionalForm,
     recommendations: recommendationsData?.recommendations || [],
+    removeHandle,
     removeEducation,
     removeExperience,
     updateEducationField,
     updateExperienceField,
+    updateHandleField,
     updateAddressField,
     updateGeneralField,
     updateIdentityFile,
@@ -447,6 +503,7 @@ export const useDashboardPage = () => {
     updateProfessionalField,
     user,
   }), [
+    addHandle,
     addEducation,
     addExperience,
     blockedUsersData?.blockedUsers,
@@ -474,10 +531,12 @@ export const useDashboardPage = () => {
     passwordForm,
     professionalForm,
     recommendationsData?.recommendations,
+    removeHandle,
     removeEducation,
     removeExperience,
     updateEducationField,
     updateExperienceField,
+    updateHandleField,
     updateAddressField,
     updateGeneralField,
     updateIdentityFile,

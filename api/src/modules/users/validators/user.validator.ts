@@ -107,7 +107,7 @@ const updateGeneralInfoRules = [
 const updateProfessionalInfoRules = [
   body()
     .custom((value) => {
-      const allowedFields = ['skills', 'experiences', 'educations', 'interests', 'languages'];
+      const allowedFields = ['skills', 'experiences', 'educations', 'handles', 'interests', 'languages'];
       const fields = Object.keys(value || {});
       return fields.length > 0 && fields.every((field) => allowedFields.includes(field));
     })
@@ -126,6 +126,9 @@ const updateProfessionalInfoRules = [
   body('experiences.*.companyName').optional().isString().withMessage('Company name is required').trim().notEmpty().withMessage('Company name is required'),
   body('experiences.*.role').optional().isString().withMessage('Role must be a string').trim(),
   body('experiences.*.timePeriod').optional().isString().withMessage('Time period is required').trim().notEmpty().withMessage('Time period is required'),
+  body('handles').optional().isArray().withMessage('Handles must be an array'),
+  body('handles.*.label').optional().isString().withMessage('Handle label is required').trim().notEmpty().withMessage('Handle label is required'),
+  body('handles.*.link').optional().isString().withMessage('Handle link is required').trim().notEmpty().withMessage('Handle link is required'),
 ];
 
 const pageQueryRules = [
