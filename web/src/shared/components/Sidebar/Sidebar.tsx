@@ -59,23 +59,25 @@ const Sidebar = () => {
           </Link>
         </header>
 
-        <div className="app-sidebar__items">
-          {sidebarItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = isItemActive(item.path);
-            const badgeCount = item.id === 'messages' ? messageCount : item.id === 'notifications' ? notificationCount : 0;
+        <nav className="app-sidebar__panel" aria-label="Main navigation">
+          <div className="app-sidebar__items">
+            {sidebarItems.map((item) => {
+              const Icon = item.icon;
+              const isActive = isItemActive(item.path);
+              const badgeCount = item.id === 'messages' ? messageCount : item.id === 'notifications' ? notificationCount : 0;
 
-            return (
-              <Link key={item.id} title={item.label} to={item.path} className={isActive ? 'app-sidebar__link is-active' : 'app-sidebar__link'}>
-                <span className="app-sidebar__icon-wrap">
-                  <Icon size={24} aria-hidden="true" />
-                  {badgeCount > 0 && <small>{badgeCount > 99 ? '99+' : badgeCount}</small>}
-                </span>
-                <span className="app-sidebar__label">{item.label}</span>
-              </Link>
-            );
-          })}
-        </div>
+              return (
+                <Link key={item.id} title={item.label} to={item.path} className={isActive ? 'app-sidebar__link is-active' : 'app-sidebar__link'}>
+                  <span className="app-sidebar__icon-wrap">
+                    <Icon size={24} aria-hidden="true" />
+                    {badgeCount > 0 && <small>{badgeCount > 99 ? '99+' : badgeCount}</small>}
+                  </span>
+                  <span className="app-sidebar__label">{item.label}</span>
+                </Link>
+              );
+            })}
+          </div>
+        </nav>
       </aside>
     </>
   );

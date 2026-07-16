@@ -2,7 +2,7 @@
 :root {
   --app-shell-max: 1360px;
   --app-sidebar-width: 264px;
-  --app-sidebar-gap: 32px;
+  --app-sidebar-gap: 20px;
   --app-content-max: calc(var(--app-shell-max) - var(--app-sidebar-width) - var(--app-sidebar-gap));
   --app-rail-width: 320px;
   --app-feed-width: calc(var(--app-content-max) - var(--app-sidebar-gap) - var(--app-rail-width));
@@ -96,6 +96,14 @@
     width: min(var(--app-content-max), calc(100vw - var(--app-sidebar-width) - var(--app-sidebar-gap)));
     margin-left: calc(var(--app-shell-offset) + var(--app-sidebar-width) + var(--app-sidebar-gap));
     padding-top: 0;
+  }
+
+  .sidebar-layout .dashboard-shell--wide,
+  .sidebar-layout .dashboard-v1-shell,
+  .sidebar-layout .search-shell,
+  .sidebar-layout .notifications-shell {
+    padding-right: 0;
+    padding-left: 0;
   }
 
   .app-sidebar,

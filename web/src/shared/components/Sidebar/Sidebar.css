@@ -18,9 +18,10 @@
   width: min(82vw, 264px);
   height: 100vh;
   overflow: hidden;
-  border-right: 1px solid var(--border-primary);
+  border-right: 0;
   background: linear-gradient(180deg, rgba(5, 7, 11, 0.98), rgba(9, 13, 20, 0.94), rgba(5, 7, 11, 0.98));
   box-shadow: 24px 0 70px rgba(0, 0, 0, 0.42);
+  padding: 0 12px 18px;
 }
 
 .app-sidebar__backdrop {
@@ -51,12 +52,11 @@
   min-height: 72px;
   justify-content: flex-start;
   gap: 12px;
-  border-width: 0 0 1px;
-  border-color: var(--border-primary);
+  border: 0;
   border-radius: 0;
   background: transparent;
   box-shadow: none;
-  padding: 14px 16px;
+  padding: 14px 4px;
 }
 
 .app-sidebar__toggle {
@@ -97,18 +97,28 @@
   object-fit: contain;
 }
 
-.app-sidebar__items {
+.app-sidebar__panel {
   display: none;
   min-height: 0;
   flex: 1 1 auto;
+  overflow: hidden;
+  border: 1px solid var(--border-primary);
+  border-radius: 12px;
+  background: var(--surface);
+  box-shadow: var(--shadow-media);
+}
+
+.app-sidebar.is-expanded .app-sidebar__panel {
+  display: block;
+}
+
+.app-sidebar__items {
+  display: flex;
+  min-height: 0;
   flex-direction: column;
   justify-content: flex-start;
   gap: 8px;
   padding: 14px 12px;
-}
-
-.app-sidebar.is-expanded .app-sidebar__items {
-  display: flex;
 }
 
 .app-sidebar__link {
@@ -188,13 +198,16 @@
 @media (min-width: 1024px) {
   .app-sidebar,
   .app-sidebar.is-expanded {
-    inset: 0 auto 0 0;
+    inset: 16px auto auto 0;
     width: 264px;
-    height: 100vh;
-    overflow: hidden;
-    border-right: 1px solid var(--border-primary);
-    background: linear-gradient(180deg, rgba(5, 7, 11, 0.98), rgba(9, 13, 20, 0.94), rgba(5, 7, 11, 0.98));
+    height: auto;
+    max-height: calc(100vh - 32px);
+    overflow: visible;
+    gap: 14px;
+    border-right: 0;
+    background: transparent;
     box-shadow: none;
+    padding: 0;
   }
 
   .app-sidebar__backdrop {
@@ -207,8 +220,7 @@
     min-height: 72px;
     justify-content: flex-start;
     gap: 12px;
-    border-width: 0 0 1px;
-    border-color: var(--border-primary);
+    border: 0;
     border-radius: 0;
     background: transparent;
     box-shadow: none;
@@ -221,5 +233,9 @@
 
   .app-sidebar__items {
     display: flex;
+  }
+
+  .app-sidebar__panel {
+    display: block;
   }
 }
