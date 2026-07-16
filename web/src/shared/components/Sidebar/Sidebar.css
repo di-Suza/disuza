@@ -366,10 +366,10 @@
 @media (min-width: 1024px) {
   .app-sidebar,
   .app-sidebar.is-expanded {
-    inset: 16px auto auto 0;
+    inset: var(--app-column-top-gap, 16px) auto auto 0;
     width: 264px;
-    height: calc(100vh - 32px);
-    max-height: calc(100vh - 32px);
+    height: calc(100vh - (var(--app-column-top-gap, 16px) * 2));
+    max-height: calc(100vh - (var(--app-column-top-gap, 16px) * 2));
     overflow: visible;
     gap: 14px;
     border-right: 0;

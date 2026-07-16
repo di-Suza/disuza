@@ -3,6 +3,7 @@
   --app-shell-max: 1360px;
   --app-sidebar-width: 264px;
   --app-sidebar-gap: 20px;
+  --app-column-top-gap: 16px;
   --app-content-max: calc(var(--app-shell-max) - var(--app-sidebar-width) - var(--app-sidebar-gap));
   --app-rail-width: 320px;
   --app-feed-width: calc(var(--app-content-max) - var(--app-sidebar-gap) - var(--app-rail-width));
@@ -17,7 +18,7 @@
   align-items: start;
   gap: 16px;
   margin: 0 auto;
-  padding: 10px 0 64px;
+  padding: var(--app-column-top-gap) 0 64px;
 }
 
 .sidebar-layout .home-feed-exact.has-recommendations {
@@ -58,7 +59,7 @@
 }
 
 .sidebar-layout .home-feed-exact .recommendation-rail {
-  top: 10px;
+  top: var(--app-column-top-gap);
 }
 
 .dashboard-v1-container,
@@ -96,6 +97,7 @@
   .sidebar-layout .search-shell,
   .sidebar-layout .notifications-shell,
   .sidebar-layout .messages-v1-page {
+    padding-top: var(--app-column-top-gap);
     padding-right: 0;
     padding-left: 0;
   }
