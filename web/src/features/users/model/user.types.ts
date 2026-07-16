@@ -9,6 +9,7 @@ export type PortfolioAddress = {
 
 export type PortfolioExperience = {
   companyName: string;
+  role: string;
   timePeriod: string;
 };
 

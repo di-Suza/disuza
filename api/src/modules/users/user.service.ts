@@ -540,15 +540,16 @@ class UserService {
 
     const page = this.normalizePage(pageInput);
     const limit = this.normalizeLimit(limitInput, 10, 20);
+    const queryLimit = limit + 1;
     const blockedUserIds = await this.blockRules.getBlockedUserIds(userId);
     const blockedUserIdSet = new Set(blockedUserIds.map((id) => id.toString()));
 
     if (type === 'follows') {
-      return this.follows.findFollowingActivity(userId, blockedUserIds, page, limit);
+      return this.follows.findFollowingActivity(userId, blockedUserIds, page, queryLimit, limit);
     }
 
     if (type === 'comments') {
-      const comments = await this.comments.findUserActivity(userId, page, limit);
+      const comments = await this.comments.findUserActivity(userId, page, queryLimit, limit);
       return comments.filter((activity) => {
         const post = activity.post as { user?: Types.ObjectId | string } | null | undefined;
         if (!post?.user) return false;
@@ -557,7 +558,7 @@ class UserService {
     }
 
     if (type === 'feedbacks') {
-      const feedbacks = await this.chats.findFeedbackActivity(userId, page, limit);
+      const feedbacks = await this.chats.findFeedbackActivity(userId, page, queryLimit, limit);
 
       return feedbacks.map((activity) => {
         const normalizedActivity = { ...activity } as Record<string, unknown>;
@@ -573,7 +574,7 @@ class UserService {
       });
     }
 
-    const likes = await this.likes.findUserActivity(userId, page, limit);
+    const likes = await this.likes.findUserActivity(userId, page, queryLimit, limit);
     const populatedLikes = likes as Array<{ post?: { user?: Types.ObjectId | string } | null }>;
 
     return populatedLikes.filter((activity) => {

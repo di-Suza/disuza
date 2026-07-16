@@ -93,11 +93,12 @@ class UserController {
   private async handleGetUserAccountHistory(req: Request, res: Response) {
     const limit = 10;
     const activities = await this.service.getUserAccountHistory(req.user!.id, String(req.query.type), req.query.page, limit);
+    const visibleActivities = activities.slice(0, limit);
 
     res.status(200).json({
       success: true,
-      activities,
-      hasMore: activities.length === limit,
+      activities: visibleActivities,
+      hasMore: activities.length > limit,
     });
   }
 

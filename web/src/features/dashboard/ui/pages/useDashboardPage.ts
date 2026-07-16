@@ -44,7 +44,7 @@ type ProfessionalFormState = {
 type ProfessionalTextField = 'skills' | 'interests' | 'languages';
 type GeneralTextField = 'headline' | 'about';
 
-const createEmptyExperience = (): PortfolioExperience => ({ companyName: '', timePeriod: '' });
+const createEmptyExperience = (): PortfolioExperience => ({ companyName: '', role: '', timePeriod: '' });
 
 const createEmptyEducation = (): PortfolioEducation => ({ collegeName: '', timePeriod: '', course: '' });
 
@@ -104,6 +104,7 @@ const normalizeExperiences = (experiences: unknown): PortfolioExperience[] => {
     const experience = toRecord(item);
     return {
       companyName: typeof experience.companyName === 'string' ? experience.companyName : '',
+      role: typeof experience.role === 'string' ? experience.role : '',
       timePeriod: typeof experience.timePeriod === 'string' ? experience.timePeriod : '',
     };
   });
@@ -125,6 +126,7 @@ const normalizeEducations = (educations: unknown): PortfolioEducation[] => {
 const getSubmitExperiences = (experiences: PortfolioExperience[]): PortfolioExperience[] => experiences
   .map((experience) => ({
     companyName: experience.companyName.trim(),
+    role: experience.role.trim(),
     timePeriod: experience.timePeriod.trim(),
   }))
   .filter((experience) => experience.companyName || experience.timePeriod);

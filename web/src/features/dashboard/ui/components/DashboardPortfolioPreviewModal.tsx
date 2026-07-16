@@ -194,7 +194,11 @@ const DashboardPortfolioPreviewModal = ({ isOpen, onClose, user }: DashboardPort
                     {experiences.map((experience, index) => (
                       <article key={`${experience.companyName}-${index}`}>
                         <i><Briefcase size={16} aria-hidden="true" /></i>
-                        <span><strong>{experience.companyName}</strong><small className="is-pill"><Calendar size={14} aria-hidden="true" />{experience.timePeriod}</small></span>
+                        <span>
+                          <strong>{experience.companyName}</strong>
+                          {experience.role && <small><Briefcase size={14} aria-hidden="true" />{experience.role}</small>}
+                          <small className="is-pill"><Calendar size={14} aria-hidden="true" />{experience.timePeriod}</small>
+                        </span>
                       </article>
                     ))}
                   </div>

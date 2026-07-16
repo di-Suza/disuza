@@ -25,6 +25,7 @@ type User = {
   skills: string[];
   experiences: Array<{
     companyName: string;
+    role: string;
     timePeriod: string;
   }>;
   educations: Array<{
@@ -100,6 +101,7 @@ const userSchema = new mongoose.Schema<User, UserModel>(
       type: [
         {
           companyName: { type: String, default: '' },
+          role: { type: String, default: '' },
           timePeriod: { type: String, default: '' },
         },
       ],

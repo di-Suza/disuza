@@ -1,5 +1,5 @@
 import { Loader2, RotateCw, UserRound, UsersRound, X } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Link } from 'react-router-dom';
 
@@ -45,11 +45,11 @@ const DashboardUserListModal = ({ isOpen, onClose, type, userId }: DashboardUser
   const followersQuery = useGetFollowersQuery({ userId: userId || '', page }, { skip: shouldSkip || type !== 'followers' });
   const followingQuery = useGetFollowingQuery({ userId: userId || '', page }, { skip: shouldSkip || type !== 'following' });
   const activeQuery = type === 'followers' ? followersQuery : followingQuery;
-  const latestUsers = getUserList(type, followersQuery.data?.followers, followingQuery.data?.following);
+  const latestUsers = getUserList(type, followersQuery.currentData?.followers, followingQuery.currentData?.following);
 
   useLockBodyScroll(isOpen);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (isOpen) {
       setPage(1);
       setUsers([]);
@@ -66,16 +66,14 @@ const DashboardUserListModal = ({ isOpen, onClose, type, userId }: DashboardUser
   return createPortal(
     <div className="modal-backdrop report-modal-backdrop" role="dialog" aria-modal="true" onMouseDown={onClose}>
       <section className="modal-card dashboard-modal dashboard-user-list-v1" onMouseDown={(event) => event.stopPropagation()}>
-        <Button variant="ghost" className="button--icon dashboard-user-list-v1__close" onClick={onClose} aria-label={`Close ${copy.title.toLowerCase()} modal`}>
-          <X size={18} aria-hidden="true" />
-        </Button>
-
-        <header className="modal-card__header report-modal__header">
+        <header className="modal-card__header report-modal__header dashboard-user-list-v1__header">
           <span className="report-modal__icon"><UsersRound size={22} aria-hidden="true" /></span>
-          <div>
-            <p className="state-panel__eyebrow">Community</p>
-            <h1>{copy.title}: {Number(activeQuery.data?.count || users.length)}</h1>
+          <div className="dashboard-user-list-v1__title">
+            <h1>{copy.title}<span>{users.length}</span></h1>
           </div>
+          <Button variant="ghost" className="button--icon dashboard-user-list-v1__close" onClick={onClose} aria-label={`Close ${copy.title.toLowerCase()} modal`}>
+            <X size={18} aria-hidden="true" />
+          </Button>
         </header>
 
         <div className="dashboard-modal__list">
@@ -90,7 +88,7 @@ const DashboardUserListModal = ({ isOpen, onClose, type, userId }: DashboardUser
             </Link>
           ))}
 
-          {activeQuery.data?.hasMore && (
+          {activeQuery.currentData?.hasMore && (
             <div className="dashboard-modal__load-more">
               <button type="button" onClick={() => setPage((current) => current + 1)} disabled={activeQuery.isFetching} aria-label={`Load more ${copy.title.toLowerCase()}`}>
                 {activeQuery.isFetching ? <Loader2 className="spin" size={16} aria-hidden="true" /> : <RotateCw size={16} aria-hidden="true" />}

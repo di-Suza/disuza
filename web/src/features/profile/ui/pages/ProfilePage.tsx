@@ -144,7 +144,7 @@ const ProfilePage = () => {
   const skills = listToChips(profileUser.skills);
   const interests = listToChips(profileUser.interests);
   const languages = listToChips(profileUser.languages);
-  const experiences = listToRecords<{ companyName?: string; timePeriod?: string }>(profileUser.experiences);
+  const experiences = listToRecords<{ companyName?: string; role?: string; timePeriod?: string }>(profileUser.experiences);
   const educations = listToRecords<{ collegeName?: string; course?: string; timePeriod?: string }>(profileUser.educations);
   const relationshipList = listMode === 'followers' ? followers : following;
   const isLimitedProfile = Boolean(profileUser.blockedProfile || profileUser.isBlocked || profileUser.hasBlockedMe);
@@ -301,6 +301,7 @@ const ProfilePage = () => {
                   {experiences.map((experience, index) => (
                     <article key={`${experience.companyName || 'experience'}-${index}`}>
                       <strong>{experience.companyName || 'Experience'}</strong>
+                      {experience.role && <small>{experience.role}</small>}
                       {experience.timePeriod && <span>{experience.timePeriod}</span>}
                     </article>
                   ))}

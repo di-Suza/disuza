@@ -124,6 +124,7 @@ const updateProfessionalInfoRules = [
   body('educations.*.course').optional().isString().withMessage('Course is required').trim().notEmpty().withMessage('Course is required'),
   body('experiences').optional().isArray().withMessage('Experiences must be an array'),
   body('experiences.*.companyName').optional().isString().withMessage('Company name is required').trim().notEmpty().withMessage('Company name is required'),
+  body('experiences.*.role').optional().isString().withMessage('Role must be a string').trim(),
   body('experiences.*.timePeriod').optional().isString().withMessage('Time period is required').trim().notEmpty().withMessage('Time period is required'),
 ];
 

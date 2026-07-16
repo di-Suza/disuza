@@ -1,4 +1,4 @@
-import { HeartOff, Loader2, MessageSquare, SendHorizontal, Trash2, UserMinus, UserRound } from 'lucide-react';
+import { HeartOff, Loader2, MessageSquare, SendHorizontal, Trash2, UserMinus, UserRound, type LucideIcon } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 import { getPostMedia, isVideoMedia } from '@/features/posts/model/post.helpers';
@@ -21,7 +21,7 @@ const asRecord = (value: unknown): ActivityRecord | null => (
 
 const text = (value: unknown): string => (typeof value === 'string' ? value : '');
 
-const PostPreview = ({ post, onNavigate }: { post: ActivityRecord | null; onNavigate: () => void }) => {
+const PostPreview = ({ meta, post, onNavigate }: { meta: string; post: ActivityRecord | null; onNavigate: () => void }) => {
   const postId = text(post?._id);
   const caption = text(post?.caption) || 'Untitled post';
   const media = post ? getPostMedia(post as unknown as Post) : [];
@@ -31,10 +31,13 @@ const PostPreview = ({ post, onNavigate }: { post: ActivityRecord | null; onNavi
     <>
       <span className="activity-post-preview-v1__media">
         {firstMedia && isVideoMedia(firstMedia)
-          ? <video src={firstMedia.url} muted preload="metadata" />
-          : firstMedia ? <img src={firstMedia.url} alt="" /> : null}
+          ? <video src={firstMedia.url} poster={firstMedia.thumbnailUrl} muted preload="metadata" />
+          : firstMedia ? <img src={firstMedia.url} alt="" /> : <MessageSquare size={20} aria-hidden="true" />}
       </span>
-      <span>{caption}</span>
+      <span className="activity-post-preview-v1__body">
+        <strong>{caption}</strong>
+        <small>{meta}</small>
+      </span>
     </>
   );
 
@@ -47,7 +50,7 @@ const PostPreview = ({ post, onNavigate }: { post: ActivityRecord | null; onNavi
 
 const ActionButton = ({ children, icon: Icon, isLoading, onClick }: {
   children?: string;
-  icon: typeof Trash2;
+  icon: LucideIcon;
   isLoading: boolean;
   onClick: () => void;
 }) => (
@@ -64,8 +67,8 @@ const DashboardActivityItem = ({ activity, isLoading, onAction, onNavigate, type
   if (type === 'likes') {
     return (
       <article className="activity-liked-v1">
-        <PostPreview post={post} onNavigate={onNavigate} />
-        <footer><ActionButton icon={HeartOff} isLoading={isLoading} onClick={onAction} /></footer>
+        <PostPreview meta="Liked post" post={post} onNavigate={onNavigate} />
+        <ActionButton icon={HeartOff} isLoading={isLoading} onClick={onAction}>Unlike</ActionButton>
       </article>
     );
   }
@@ -75,13 +78,12 @@ const DashboardActivityItem = ({ activity, isLoading, onAction, onNavigate, type
     const parentUser = asRecord(parent?.user);
     return (
       <article className="activity-comment-v1">
-        <PostPreview post={post} onNavigate={onNavigate} />
-        <div>
-          <p>{parent ? `Replied${text(parentUser?.userName) ? ` to @${text(parentUser?.userName)}` : ''}` : 'Comment'}</p>
-          {text(parent?.comment) && <blockquote>{text(parent?.comment)}</blockquote>}
-          <span>{text(record?.comment) || 'Comment activity'}</span>
-          <footer><ActionButton icon={Trash2} isLoading={isLoading} onClick={onAction} /></footer>
+        <div className="activity-comment-v1__main">
+          <PostPreview meta={parent ? `Reply${text(parentUser?.userName) ? ` to @${text(parentUser?.userName)}` : ''}` : 'Commented post'} post={post} onNavigate={onNavigate} />
+          {text(parent?.comment) && <p className="activity-comment-v1__context">{text(parent?.comment)}</p>}
+          <p className="activity-comment-v1__text">{text(record?.comment) || 'Comment activity'}</p>
         </div>
+        <ActionButton icon={Trash2} isLoading={isLoading} onClick={onAction}>Delete</ActionButton>
       </article>
     );
   }

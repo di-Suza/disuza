@@ -36,10 +36,10 @@ class LikeRepository {
   }
 
 
-  async findUserActivity(userId: string | Types.ObjectId, page: number, limit: number) {
+  async findUserActivity(userId: string | Types.ObjectId, page: number, limit: number, skipLimit = limit) {
     return LikeModel.find({ user: userId })
       .sort({ createdAt: -1 })
-      .skip((page - 1) * limit)
+      .skip((page - 1) * skipLimit)
       .limit(limit)
       .populate({
         path: 'post',

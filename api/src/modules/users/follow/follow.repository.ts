@@ -76,7 +76,7 @@ class FollowRepository {
   }
 
 
-  findFollowingActivity(userId: string | Types.ObjectId, excludedIds: Array<string | Types.ObjectId>, page: number, limit: number) {
+  findFollowingActivity(userId: string | Types.ObjectId, excludedIds: Array<string | Types.ObjectId>, page: number, limit: number, skipLimit = limit) {
     const query: Record<string, unknown> = { follower: userId };
 
     if (excludedIds.length > 0) {
@@ -86,7 +86,7 @@ class FollowRepository {
     return FollowModel.find(query)
       .populate('following', 'userName profilePicture headline')
       .sort({ createdAt: -1 })
-      .skip((page - 1) * limit)
+      .skip((page - 1) * skipLimit)
       .limit(limit)
       .lean();
   }

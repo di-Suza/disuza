@@ -15,7 +15,6 @@ import {
   MessageSquare,
   Monitor,
   Moon,
-  PlusSquare,
   Settings,
   Shield,
   ShieldCheck,
@@ -33,7 +32,6 @@ import ReportAProblemModal from '@/features/issues/ui/components/ReportAProblemM
 import DashboardPostsPanel from '@/features/posts/ui/components/DashboardPostsPanel';
 import PostComposerModal from '@/features/posts/ui/components/PostComposerModal';
 import SavedCollectionsPanel from '@/features/saves/ui/components/SavedCollectionsPanel';
-import Button from '@/shared/ui/Button';
 import DashboardAccountModal, { type DashboardAccountModalMode } from '../components/DashboardAccountModal';
 import DashboardActivitiesModal, { type DashboardActivityType } from '../components/DashboardActivitiesModal';
 import DashboardBlockedUsersModal from '../components/DashboardBlockedUsersModal';
@@ -156,7 +154,12 @@ const DashboardPage = () => {
               </span>
               <span className="dashboard-v1-user__copy">
                 <small>Your Dashboard</small>
-                <h1>{user?.userName || 'DevLoopFeed user'}</h1>
+                <span className="dashboard-v1-user__name-row">
+                  <h1>{user?.userName || 'DevLoopFeed user'}</h1>
+                  <button type="button" className="dashboard-v1-edit-profile-button" onClick={() => setEditProfileOpen(true)} aria-label="Edit profile">
+                    <UserPen size={17} aria-hidden="true" />
+                  </button>
+                </span>
                 <em><UserStar size={16} aria-hidden="true" />{Number(user?.profileContributions || 0)} contributions</em>
               </span>
             </div>
@@ -166,11 +169,6 @@ const DashboardPage = () => {
               <button type="button" onClick={() => setUserListModal('followers')}><strong>{Number(user?.followersCount || 0)}</strong><span>Followers</span></button>
               <button type="button" onClick={() => setUserListModal('following')}><strong>{Number(user?.followingCount || 0)}</strong><span>Following</span></button>
             </div>
-          </div>
-
-          <div className="dashboard-v1-header__actions">
-            <Button variant="secondary" onClick={() => setEditProfileOpen(true)}><UserPen size={17} aria-hidden="true" />Edit Profile</Button>
-            <Button onClick={() => setComposerOpen(true)}><PlusSquare size={17} aria-hidden="true" />Add Post</Button>
           </div>
         </section>
 

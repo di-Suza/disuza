@@ -1,5 +1,5 @@
 import { Activity, Heart, Loader2, MessageCircle, UserPlus, X } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 import { useDeleteCommentMutation } from '@/features/comments/api/comment.api';
@@ -48,9 +48,15 @@ const getActivityId = (activity: unknown, index: number): string => {
   return getString(record?._id) || `activity-${index}`;
 };
 
+const mergeActivities = (current: unknown[], next: unknown[]): unknown[] => {
+  const existingIds = new Set(current.map((activity, index) => getActivityId(activity, index)));
+  return [...current, ...next.filter((activity, index) => !existingIds.has(getActivityId(activity, index)))];
+};
+
 const DashboardActivitiesModal = ({ isOpen, onClose, type }: DashboardActivitiesModalProps) => {
   const [page, setPage] = useState(1);
   const [activities, setActivities] = useState<unknown[]>([]);
+  const [activitiesType, setActivitiesType] = useState<DashboardActivityType>(type);
   const [unlikePost, { isLoading: unlikeLoading }] = useUnlikePostMutation();
   const [deleteComment, { isLoading: deleteCommentLoading }] = useDeleteCommentMutation();
   const [unsendMessage, { isLoading: unsendLoading }] = useUnsendMessageMutation();
@@ -58,23 +64,27 @@ const DashboardActivitiesModal = ({ isOpen, onClose, type }: DashboardActivities
   const { showError, showSuccess } = useToast();
   const copy = useMemo(() => activityCopy[type], [type]);
   const Icon = activityIcon[type];
-  const { data, isFetching } = useGetUserAccountHistoryQuery({ type, page }, { skip: !isOpen });
-  const latestActivities = data?.activities || [];
+  const { currentData, isFetching } = useGetUserAccountHistoryQuery({ type, page }, { skip: !isOpen });
+  const latestActivities = currentData?.activities || [];
   const isActionLoading = unlikeLoading || deleteCommentLoading || unsendLoading || unfollowLoading;
+  const visibleActivities = activitiesType === type ? activities : [];
+  const isInitialLoading = (isFetching || activitiesType !== type) && visibleActivities.length === 0;
 
   useLockBodyScroll(isOpen);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (isOpen) {
       setPage(1);
       setActivities([]);
+      setActivitiesType(type);
     }
   }, [isOpen, type]);
 
   useEffect(() => {
-    if (!isOpen || latestActivities.length === 0) return;
-    setActivities((current) => (page === 1 ? latestActivities : [...current, ...latestActivities]));
-  }, [isOpen, latestActivities, page]);
+    if (!isOpen || !currentData) return;
+    setActivities((current) => (page === 1 ? latestActivities : mergeActivities(current, latestActivities)));
+    setActivitiesType(type);
+  }, [currentData, isOpen, latestActivities, page, type]);
 
   const removeActivity = useCallback((activityId: string) => {
     setActivities((current) => current.filter((activity, index) => getActivityId(activity, index) !== activityId));
@@ -138,10 +148,10 @@ const DashboardActivitiesModal = ({ isOpen, onClose, type }: DashboardActivities
         </header>
 
         <div className="dashboard-modal__list">
-          {isFetching && activities.length === 0 && <p className="empty-copy">Loading activity...</p>}
-          {!isFetching && activities.length === 0 && <p className="empty-copy">{copy.empty}</p>}
-          <div className={type === 'likes' ? 'dashboard-activity-v1-list is-grid' : 'dashboard-activity-v1-list'}>
-            {activities.map((activity, index) => (
+          {isInitialLoading && <p className="empty-copy">Loading activity...</p>}
+          {!isFetching && visibleActivities.length === 0 && activitiesType === type && <p className="empty-copy">{copy.empty}</p>}
+          <div className="dashboard-activity-v1-list" aria-busy={isFetching}>
+            {visibleActivities.map((activity, index) => (
               <DashboardActivityItem
                 key={getActivityId(activity, index)}
                 activity={activity}
@@ -156,7 +166,7 @@ const DashboardActivitiesModal = ({ isOpen, onClose, type }: DashboardActivities
 
         <footer className="report-modal__footer">
           <Button variant="secondary" onClick={onClose}>Close</Button>
-          {data?.hasMore && (
+          {activitiesType === type && currentData?.hasMore && (
             <Button onClick={() => setPage((current) => current + 1)} disabled={isFetching}>
               {isFetching ? <Loader2 className="spin" size={17} aria-hidden="true" /> : <Activity size={17} aria-hidden="true" />}
               Load more
