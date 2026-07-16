@@ -1,3 +1,5 @@
+import './FullPageLoader.css';
+
 type FullPageLoaderProps = {
   label?: string;
 };

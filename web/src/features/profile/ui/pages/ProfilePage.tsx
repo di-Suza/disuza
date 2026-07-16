@@ -23,6 +23,8 @@ import ReportModal from '@/features/reports/ui/components/ReportModal';
 import Button from '@/shared/ui/Button';
 import { getErrorMessage } from '@/shared/utils/getErrorMessage';
 import { useProfilePage } from './useProfilePage';
+import './ProfilePage.css';
+import '@/app/layouts/ProductShell.css';
 
 const avatarUrl = (url: unknown): string | null => (typeof url === 'string' && url.trim() ? url : null);
 const listToChips = (items: unknown): string[] => Array.isArray(items) ? items.filter((item): item is string => typeof item === 'string') : [];

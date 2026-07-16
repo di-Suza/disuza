@@ -1,0 +1,37 @@
+.sidebar-layout {
+  min-height: 100vh;
+  background: var(--bg-main);
+  color: var(--text-primary);
+}
+
+.sidebar-layout__content {
+  min-height: 100vh;
+  margin-left: 0;
+}
+
+.feed-navbar-exact {
+  display: none;
+}
+
+.home-feed-exact {
+  padding-top: 24px;
+}
+
+@media (max-width: 1023px) {
+  .sidebar-layout__content {
+    padding-top: 72px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .sidebar-layout__content {
+    margin-left: 264px;
+    padding-top: 0;
+  }
+}
+
+@media (max-width: 767px) {
+  .home-feed-exact {
+    padding: 16px 8px 0;
+  }
+}

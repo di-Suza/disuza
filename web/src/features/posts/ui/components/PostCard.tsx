@@ -40,6 +40,7 @@ import { cn } from '@/shared/utils/cn';
 import { getErrorMessage } from '@/shared/utils/getErrorMessage';
 import PostComposerModal from './PostComposerModal';
 import SharePostModal from './SharePostModal';
+import '../posts.css';
 
 type PostCardProps = {
   post: Post;

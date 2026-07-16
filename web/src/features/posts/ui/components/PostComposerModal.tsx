@@ -23,6 +23,7 @@ import Button from '@/shared/ui/Button';
 import Input from '@/shared/ui/Input';
 import { cn } from '@/shared/utils/cn';
 import { type PostComposerMode, usePostComposer } from '../hooks/usePostComposer';
+import '../posts.css';
 
 type PostComposerModalProps = {
   isOpen: boolean;

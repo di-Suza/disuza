@@ -7,6 +7,8 @@ import Button from '@/shared/ui/Button';
 import Input from '@/shared/ui/Input';
 import { getErrorMessage } from '@/shared/utils/getErrorMessage';
 import { useSearchPage } from './useSearchPage';
+import './SearchPage.css';
+import '@/app/layouts/ProductShell.css';
 
 const SearchPage = () => {
   const {

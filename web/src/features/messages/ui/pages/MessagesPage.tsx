@@ -5,6 +5,8 @@ import Conversations from '@/features/messages/ui/components/Conversations';
 import Button from '@/shared/ui/Button';
 import { getErrorMessage } from '@/shared/utils/getErrorMessage';
 import { useMessagesPage } from './useMessagesPage';
+import './MessagesPage.css';
+import '@/app/layouts/ProductShell.css';
 
 const MessagesPage = () => {
   const {

@@ -8,6 +8,7 @@ import Input from '@/shared/ui/Input';
 import { cn } from '@/shared/utils/cn';
 import CommentReplies from './CommentReplies';
 import { useCommentModal } from '../hooks/useCommentModal';
+import './Comments.css';
 
 type CommentModalProps = {
   isOpen: boolean;

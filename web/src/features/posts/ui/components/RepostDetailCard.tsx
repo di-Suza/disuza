@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 
 import type { Repost } from '@/features/posts/model/post.types';
 import PostCard from './PostCard';
+import '../posts.css';
 
 type RepostDetailCardProps = {
   repost: Repost;

@@ -1,6 +1,7 @@
 import { Outlet } from 'react-router-dom';
 
 import Sidebar from '@/shared/components/Sidebar/Sidebar';
+import './SidebarLayout.css';
 
 const SidebarLayout = () => (
   <div className="sidebar-layout">

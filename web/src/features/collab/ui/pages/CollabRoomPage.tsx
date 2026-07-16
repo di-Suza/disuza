@@ -23,6 +23,7 @@ import FullPageLoader from '@/shared/components/FullPageLoader/FullPageLoader';
 import { useToast } from '@/shared/hooks/useToast';
 import { getSocket } from '@/shared/services/socket';
 import { getErrorMessage } from '@/shared/utils/getErrorMessage';
+import './CollabRoomPage.css';
 
 const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
 

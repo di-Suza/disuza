@@ -2,6 +2,8 @@ import { Undo2 } from 'lucide-react';
 import { memo } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import './BackButton.css';
+
 type BackButtonProps = {
   className?: string;
 };

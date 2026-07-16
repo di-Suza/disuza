@@ -14,6 +14,7 @@ import Button from '@/shared/ui/Button';
 import Input from '@/shared/ui/Input';
 import { cn } from '@/shared/utils/cn';
 import { getErrorMessage } from '@/shared/utils/getErrorMessage';
+import './Saves.css';
 
 type ManageSaveCollectionsModalProps = {
   isOpen: boolean;
