@@ -78,25 +78,6 @@
   color: var(--brand-blue);
 }
 
-.app-sidebar__brand {
-  display: none;
-  min-width: 0;
-  align-items: center;
-  justify-content: center;
-  color: var(--text-primary);
-  text-decoration: none;
-}
-
-.app-sidebar.is-expanded .app-sidebar__brand {
-  display: flex;
-}
-
-.app-sidebar__brand img {
-  width: 42px;
-  height: 42px;
-  object-fit: contain;
-}
-
 .app-sidebar__panel {
   display: none;
   min-height: 0;
@@ -106,6 +87,45 @@
   border-radius: 12px;
   background: var(--surface);
   box-shadow: var(--shadow-media);
+}
+
+.app-sidebar__feed-switcher {
+  display: none;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+  width: 100%;
+  flex: 0 0 auto;
+  border: 1px solid var(--border-primary);
+  border-radius: 12px;
+  background: var(--surface);
+  padding: 6px;
+  box-shadow: var(--shadow-media);
+}
+
+.app-sidebar.is-expanded .app-sidebar__feed-switcher {
+  display: grid;
+}
+
+.app-sidebar__feed-switcher a {
+  display: inline-flex;
+  min-width: 0;
+  min-height: 38px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 800;
+  transition: border-color 160ms ease, background 160ms ease, color 160ms ease;
+}
+
+.app-sidebar__feed-switcher a:hover,
+.app-sidebar__feed-switcher a.is-active {
+  border-color: rgba(59, 99, 255, 0.58);
+  background: rgba(59, 99, 255, 0.14);
+  color: var(--text-primary);
 }
 
 .app-sidebar.is-expanded .app-sidebar__panel {
@@ -216,19 +236,7 @@
 
   .app-sidebar__header,
   .app-sidebar.is-expanded .app-sidebar__header {
-    width: 100%;
-    min-height: 72px;
-    justify-content: flex-start;
-    gap: 12px;
-    border: 0;
-    border-radius: 0;
-    background: transparent;
-    box-shadow: none;
-    padding: 14px 16px;
-  }
-
-  .app-sidebar__brand {
-    display: flex;
+    display: none;
   }
 
   .app-sidebar__items {
@@ -237,5 +245,9 @@
 
   .app-sidebar__panel {
     display: block;
+  }
+
+  .app-sidebar__feed-switcher {
+    display: grid;
   }
 }

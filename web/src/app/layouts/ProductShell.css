@@ -80,13 +80,6 @@
   margin: 0 auto;
 }
 
-.app-sidebar__brand img {
-  width: 170px;
-  height: 48px;
-  object-fit: contain;
-  object-position: left center;
-}
-
 @media (min-width: 1024px) {
   :root {
     --app-shell-offset: max(0px, calc((100vw - var(--app-shell-max)) / 2));
@@ -101,7 +94,8 @@
   .sidebar-layout .dashboard-shell--wide,
   .sidebar-layout .dashboard-v1-shell,
   .sidebar-layout .search-shell,
-  .sidebar-layout .notifications-shell {
+  .sidebar-layout .notifications-shell,
+  .sidebar-layout .messages-v1-page {
     padding-right: 0;
     padding-left: 0;
   }
@@ -117,10 +111,7 @@
 
   .app-sidebar__header,
   .app-sidebar.is-expanded .app-sidebar__header {
-    min-height: 68px;
-    align-items: center;
-    justify-content: flex-start;
-    padding: 14px 20px;
+    display: none;
   }
 }
 

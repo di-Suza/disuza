@@ -3,7 +3,6 @@ import { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
 import { useGetNotificationsQuery } from '@/features/notifications/api/notification.api';
-import logo from '@/shared/assets/images/logo.png';
 import useUnreadMessagesCount from '@/shared/hooks/useUnreadMessagesCount';
 import './Sidebar.css';
 
@@ -16,11 +15,12 @@ const sidebarItems = [
 ] as const;
 
 const Sidebar = () => {
-  const { pathname } = useLocation();
+  const { pathname, search } = useLocation();
   const [isExpanded, setExpanded] = useState(false);
   const { data: notificationsData } = useGetNotificationsQuery({ page: 1, limit: 1 });
   const notificationCount = notificationsData?.unreadCount ?? 0;
   const messageCount = useUnreadMessagesCount();
+  const activeFeedType = new URLSearchParams(search).get('type') === 'following' ? 'following' : 'all';
 
   const isItemActive = (itemPath: string) => pathname === itemPath || pathname.startsWith(`${itemPath}/`);
 
@@ -54,10 +54,24 @@ const Sidebar = () => {
           >
             <Menu size={22} aria-hidden="true" />
           </button>
-          <Link to="/home" className="app-sidebar__brand" aria-label="DevLoopFeed home">
-            <img src={logo} alt="" />
-          </Link>
         </header>
+
+        <div className="app-sidebar__feed-switcher" aria-label="Feed filter">
+          <Link
+            to="/home?type=all"
+            className={activeFeedType === 'all' ? 'is-active' : ''}
+            onClick={() => setExpanded(false)}
+          >
+            All
+          </Link>
+          <Link
+            to="/home?type=following"
+            className={activeFeedType === 'following' ? 'is-active' : ''}
+            onClick={() => setExpanded(false)}
+          >
+            Following
+          </Link>
+        </div>
 
         <nav className="app-sidebar__panel" aria-label="Main navigation">
           <div className="app-sidebar__items">
