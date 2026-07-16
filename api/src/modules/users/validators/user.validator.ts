@@ -128,7 +128,7 @@ const updateProfessionalInfoRules = [
   body('experiences.*.timePeriod').optional().isString().withMessage('Time period is required').trim().notEmpty().withMessage('Time period is required'),
   body('handles').optional().isArray().withMessage('Handles must be an array'),
   body('handles.*.label').optional().isString().withMessage('Handle label is required').trim().notEmpty().withMessage('Handle label is required'),
-  body('handles.*.link').optional().isString().withMessage('Handle link is required').trim().notEmpty().withMessage('Handle link is required').isURL({ require_protocol: true }).withMessage('Handle link must be a valid URL'),
+  body('handles.*.link').optional().isString().withMessage('Handle link is required').trim().notEmpty().withMessage('Handle link is required'),
 ];
 
 const pageQueryRules = [

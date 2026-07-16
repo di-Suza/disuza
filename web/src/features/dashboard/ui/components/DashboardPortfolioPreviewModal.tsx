@@ -52,13 +52,18 @@ const listOfStrings = (value: unknown): string[] => (
   Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string' && Boolean(item.trim())) : []
 );
 
+const toExternalHref = (link: string): string => {
+  if (/^https?:\/\//i.test(link)) return link;
+  return `https://${link.replace(/^[a-z][a-z\d+\-.]*:\/\//i, '')}`;
+};
+
 const listOfHandles = (value: unknown): PortfolioHandle[] => (
   Array.isArray(value)
     ? value
       .map((item) => (typeof item === 'object' && item !== null ? item as Partial<PortfolioHandle> : {}))
       .map((handle) => ({
         label: typeof handle.label === 'string' ? handle.label.trim() : '',
-        link: typeof handle.link === 'string' ? handle.link.trim() : '',
+        link: typeof handle.link === 'string' ? toExternalHref(handle.link.trim()) : '',
       }))
       .filter((handle): handle is PortfolioHandle => Boolean(handle.label && handle.link))
     : []

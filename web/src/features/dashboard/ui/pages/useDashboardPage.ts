@@ -158,7 +158,8 @@ const getSubmitEducations = (educations: PortfolioEducation[]): PortfolioEducati
 const withUrlProtocol = (value: string): string => {
   const trimmed = value.trim();
   if (!trimmed) return '';
-  return /^[a-z][a-z\d+\-.]*:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+  if (/^https?:\/\//i.test(trimmed)) return trimmed;
+  return `https://${trimmed.replace(/^[a-z][a-z\d+\-.]*:\/\//i, '')}`;
 };
 
 const getSubmitHandles = (handles: PortfolioHandle[]): PortfolioHandle[] => handles

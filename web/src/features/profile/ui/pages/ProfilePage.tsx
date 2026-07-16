@@ -29,13 +29,18 @@ import '@/app/layouts/ProductShell.css';
 const avatarUrl = (url: unknown): string | null => (typeof url === 'string' && url.trim() ? url : null);
 const listToChips = (items: unknown): string[] => Array.isArray(items) ? items.filter((item): item is string => typeof item === 'string') : [];
 const listToRecords = <T,>(items: unknown): T[] => Array.isArray(items) ? items.filter((item): item is T => typeof item === 'object' && item !== null) : [];
+const toExternalHref = (link: string): string => {
+  if (/^https?:\/\//i.test(link)) return link;
+  return `https://${link.replace(/^[a-z][a-z\d+\-.]*:\/\//i, '')}`;
+};
+
 const listToHandles = (items: unknown): Array<{ label: string; link: string }> => (
   Array.isArray(items)
     ? items
       .map((item) => (typeof item === 'object' && item !== null ? item as Record<string, unknown> : {}))
       .map((handle) => ({
         label: typeof handle.label === 'string' ? handle.label.trim() : '',
-        link: typeof handle.link === 'string' ? handle.link.trim() : '',
+        link: typeof handle.link === 'string' ? toExternalHref(handle.link.trim()) : '',
       }))
       .filter((handle) => handle.label && handle.link)
     : []

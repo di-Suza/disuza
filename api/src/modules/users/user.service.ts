@@ -199,6 +199,28 @@ class UserService {
     };
   }
 
+  private normalizeExternalLink(link: string): string {
+    const trimmed = link.trim();
+    if (!trimmed) return '';
+    if (/^https?:\/\//i.test(trimmed)) return trimmed;
+    return `https://${trimmed.replace(/^[a-z][a-z\d+\-.]*:\/\//i, '')}`;
+  }
+
+  private normalizeProfessionalInfo(updates: ProfessionalInfoUpdate): ProfessionalInfoUpdate {
+    const normalizedUpdates: ProfessionalInfoUpdate = { ...updates };
+
+    if (Array.isArray(normalizedUpdates.handles)) {
+      normalizedUpdates.handles = normalizedUpdates.handles
+        .map((handle) => ({
+          label: typeof handle.label === 'string' ? handle.label.trim() : '',
+          link: typeof handle.link === 'string' ? this.normalizeExternalLink(handle.link) : '',
+        }))
+        .filter((handle) => Boolean(handle.label && handle.link));
+    }
+
+    return normalizedUpdates;
+  }
+
   async updateGeneralInfo(userId: string, headline?: string, about?: string, address?: AddressInput) {
     const updateData: { headline?: string; about?: string; address?: UserAddress } = {};
 
@@ -232,14 +254,15 @@ class UserService {
   }
 
   async updateProfessionalInfo(userId: string, updates: ProfessionalInfoUpdate) {
-    const incomingFields = Object.keys(updates) as ProfessionalField[];
+    const normalizedUpdates = this.normalizeProfessionalInfo(updates);
+    const incomingFields = Object.keys(normalizedUpdates) as ProfessionalField[];
     const isValidOperation = incomingFields.every((field) => PROFESSIONAL_FIELDS.includes(field));
 
     if (!isValidOperation || incomingFields.length === 0) {
       throw new BadRequestError('Invalid or empty updates!');
     }
 
-    const updatedData = await this.users.updateProfessionalInfo(userId, updates);
+    const updatedData = await this.users.updateProfessionalInfo(userId, normalizedUpdates);
 
     if (!updatedData) {
       throw new NotFoundError('User Not Found!');
