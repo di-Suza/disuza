@@ -10,7 +10,6 @@ import {
   Plus,
   Presentation,
   Sparkles,
-  User,
   X,
 } from 'lucide-react';
 import { useRef, useState, type ChangeEvent } from 'react';
@@ -169,17 +168,7 @@ const DashboardPortfolioEditor = ({
   return (
     <div className="portfolio-builder-v1">
       <div className="portfolio-builder-v1__inner">
-        <section className="portfolio-header-v1">
-          <div className="portfolio-header-v1__top">
-            <div className="portfolio-header-v1__title">
-              <span><User size={20} aria-hidden="true" /></span>
-              <div><p>Portfolio Builder</p><h2>Portfolio Details</h2></div>
-            </div>
-            <Button variant="secondary" onClick={() => setPreviewOpen(true)}>
-              <Presentation size={16} aria-hidden="true" />Preview
-            </Button>
-          </div>
-
+        <section className="portfolio-header-v1 portfolio-header-v1--compact">
           <nav className="portfolio-header-v1__nav" aria-label="Portfolio sections">
             {portfolioTabs.map((tab) => (
               <button
@@ -192,6 +181,9 @@ const DashboardPortfolioEditor = ({
               </button>
             ))}
           </nav>
+          <Button variant="secondary" className="button--icon portfolio-preview-button-v1" onClick={() => setPreviewOpen(true)} aria-label="Preview portfolio">
+            <Presentation size={17} aria-hidden="true" />
+          </Button>
         </section>
 
         <section className="portfolio-editor-card-v1">
