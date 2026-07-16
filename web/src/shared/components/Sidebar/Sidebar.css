@@ -224,6 +224,19 @@
   transform: none;
 }
 
+.app-sidebar__compose-button {
+  border-color: rgba(59, 99, 255, 0.72);
+  background: var(--accent);
+  color: white;
+  box-shadow: 0 14px 30px rgba(59, 99, 255, 0.24);
+}
+
+.app-sidebar__compose-button:hover {
+  border-color: rgba(125, 153, 255, 0.82);
+  background: #4a70ff;
+  color: white;
+}
+
 .app-sidebar__footer {
   margin-top: auto;
   border-top: 1px solid var(--border-primary);
