@@ -231,7 +231,6 @@ const ProfilePage = () => {
   const educations = listToRecords<{ collegeName?: string; course?: string; timePeriod?: string }>(profileUser.educations);
   const relationshipList = listMode === 'followers' ? followers : following;
   const isLimitedProfile = Boolean(profileUser.blockedProfile || profileUser.isBlocked || profileUser.hasBlockedMe);
-  const hasPosts = normalPosts.length > 0 || projectPosts.length > 0;
   const canReportProfile = !isLimitedProfile;
   const canSendFeedback = canReportProfile && Boolean(profileUser._id && profileUser._id !== currentUserId);
   const profileBlockedByViewer = Boolean(profileUser.isBlocked);
@@ -387,9 +386,7 @@ const ProfilePage = () => {
               </ProfileSection>
             )}
 
-            {hasPosts && (
-              <ProfilePostsSection normalPosts={normalPosts} projectPosts={projectPosts} profileUser={profileUser} viewerId={currentUserId} />
-            )}
+            <ProfilePostsSection normalPosts={normalPosts} projectPosts={projectPosts} profileUser={profileUser} viewerId={currentUserId} />
 
             {experiences.length > 0 && (
               <ProfileSection icon={Briefcase} spacious title="Experience">

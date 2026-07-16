@@ -1,10 +1,11 @@
-import { Grid2X2, Loader2 } from 'lucide-react';
-import { memo, useMemo } from 'react';
+import { Briefcase, Eye, Grid2X2, Heart, Loader2, MessageCircle, Play, Repeat2, type LucideIcon } from 'lucide-react';
+import { memo, type ReactNode } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 import { useGetUserRepostsQuery } from '@/features/posts/api/post.api';
-import type { Post, PostAuthor } from '@/features/posts/model/post.types';
+import { getPostMedia, isVideoMedia } from '@/features/posts/model/post.helpers';
+import type { Post } from '@/features/posts/model/post.types';
 import type { UserProfile } from '@/features/users/model/user.types';
-import PostList from './PostList';
 import RepostPreviewCard from './RepostPreviewCard';
 import '../posts.css';
 
@@ -15,7 +16,49 @@ type ProfilePostsSectionProps = {
   viewerId?: string;
 };
 
-const ProfilePostsSection = ({ normalPosts, profileUser, projectPosts, viewerId }: ProfilePostsSectionProps) => {
+const ProfilePostPreviewCard = ({ post }: { post: Post }) => {
+  const navigate = useNavigate();
+  const media = getPostMedia(post);
+  const firstMedia = media[0];
+  const caption = post.caption || 'Untitled post';
+
+  return (
+    <button type="button" onClick={() => navigate(`/post/${post._id}`)} className="dashboard-post-preview-card profile-post-preview-card">
+      <span className="dashboard-post-preview-card__media">
+        {firstMedia && isVideoMedia(firstMedia) ? (
+          <>
+            <video src={firstMedia.url} preload="metadata" muted />
+            <i><Play size={14} aria-hidden="true" /></i>
+          </>
+        ) : firstMedia ? (
+          <img src={firstMedia.url} alt="Post" loading="lazy" />
+        ) : (
+          <span className="repost-preview-card__empty"><Grid2X2 size={22} aria-hidden="true" /></span>
+        )}
+        <em><Eye size={14} aria-hidden="true" /></em>
+      </span>
+      <span className="dashboard-post-preview-card__body">
+        <strong>{caption}</strong>
+        <small>
+          <span><Heart size={12} aria-hidden="true" />{Number(post.counts?.likes || 0)}</span>
+          <span><MessageCircle size={12} aria-hidden="true" />{Number(post.counts?.comments || 0)}</span>
+        </small>
+      </span>
+    </button>
+  );
+};
+
+const ProfilePostSection = ({ children, icon: Icon, title }: { children: ReactNode; icon: LucideIcon; title: string }) => (
+  <section className="profile-posts-section">
+    <div className="profile-posts-section__header">
+      <span><Icon size={20} aria-hidden="true" /></span>
+      <div><h2>{title}</h2></div>
+    </div>
+    <div className="profile-posts-section__gallery">{children}</div>
+  </section>
+);
+
+const ProfilePostsSection = ({ normalPosts, profileUser, projectPosts }: ProfilePostsSectionProps) => {
   const { data: repostData, isFetching: isRepostsFetching, isLoading: isRepostsLoading } = useGetUserRepostsQuery({
     userId: profileUser._id,
     page: 1,
@@ -25,52 +68,36 @@ const ProfilePostsSection = ({ normalPosts, profileUser, projectPosts, viewerId 
   const hasNormalPosts = normalPosts.length > 0;
   const hasProjectPosts = projectPosts.length > 0;
   const hasReposts = reposts.length > 0;
-  const fallbackAuthor = useMemo<PostAuthor>(() => ({
-    _id: profileUser._id,
-    userName: profileUser.userName,
-    profilePicture: profileUser.profilePicture,
-    headline: profileUser.headline,
-  }), [profileUser._id, profileUser.headline, profileUser.profilePicture, profileUser.userName]);
 
   if (!hasNormalPosts && !hasProjectPosts && !hasReposts && !isRepostsLoading) return null;
 
   return (
-    <section className="profile-posts-section">
-      <div className="profile-posts-section__header">
-        <span><Grid2X2 size={20} aria-hidden="true" /></span>
-        <div>
-          <h2>Activity</h2>
-        </div>
-      </div>
+    <>
+      {hasProjectPosts && (
+        <ProfilePostSection icon={Briefcase} title="Project Posts">
+          {projectPosts.map((post) => <ProfilePostPreviewCard post={post} key={post._id} />)}
+        </ProfilePostSection>
+      )}
 
-      <div className="profile-posts-section__columns">
-        {hasProjectPosts && (
-          <div className="profile-posts-section__column">
-            <h3>Projects</h3>
-            <PostList posts={projectPosts} viewerId={viewerId} fallbackAuthor={fallbackAuthor} compact emptyText="No project posts yet." />
-          </div>
-        )}
-        {hasNormalPosts && (
-          <div className="profile-posts-section__column">
-            <h3>Posts</h3>
-            <PostList posts={normalPosts} viewerId={viewerId} fallbackAuthor={fallbackAuthor} compact emptyText="No posts yet." />
-          </div>
-        )}
-        {(hasReposts || isRepostsLoading) && (
-          <div className="profile-posts-section__column">
-            <h3>Reposts</h3>
-            {isRepostsLoading ? (
-              <div className="post-empty-state"><Loader2 className="spin" size={20} aria-hidden="true" /><p>Loading reposts...</p></div>
-            ) : (
-              <div className="repost-preview-list">
-                {reposts.map((repost) => <RepostPreviewCard repost={repost} key={repost._id} />)}
-                {isRepostsFetching && <div className="dashboard-posts-v1__loading"><Loader2 className="spin" size={18} aria-hidden="true" />Refreshing reposts...</div>}
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-    </section>
+      {hasNormalPosts && (
+        <ProfilePostSection icon={Grid2X2} title="All Posts">
+          {normalPosts.map((post) => <ProfilePostPreviewCard post={post} key={post._id} />)}
+        </ProfilePostSection>
+      )}
+
+      {(hasReposts || isRepostsLoading) && (
+        <ProfilePostSection icon={Repeat2} title="Reposts">
+          {isRepostsLoading ? (
+            <div className="profile-posts-section__state"><Loader2 className="spin" size={20} aria-hidden="true" /><p>Loading reposts...</p></div>
+          ) : (
+            <>
+              {reposts.map((repost) => <RepostPreviewCard repost={repost} key={repost._id} />)}
+              {isRepostsFetching && <div className="profile-posts-section__state is-inline"><Loader2 className="spin" size={18} aria-hidden="true" />Refreshing reposts...</div>}
+            </>
+          )}
+        </ProfilePostSection>
+      )}
+    </>
   );
 };
 
