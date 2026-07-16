@@ -1,5 +1,6 @@
 import {
   Ban,
+  ExternalLink,
   Flag,
   Loader2,
   LockOpen,
@@ -314,7 +315,10 @@ const ProfilePage = () => {
                 <div className="profile-card__header"><h2>Handles</h2><p>Links around the web.</p></div>
                 <div className="chip-list chip-list--links">
                   {handles.map((handle, index) => (
-                    <a key={`${handle.label}-${index}`} href={handle.link} target="_blank" rel="noreferrer">{handle.label}</a>
+                    <a key={`${handle.label}-${index}`} href={handle.link} target="_blank" rel="noreferrer">
+                      {handle.label}
+                      <ExternalLink size={13} aria-hidden="true" />
+                    </a>
                   ))}
                 </div>
               </section>

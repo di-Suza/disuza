@@ -392,6 +392,19 @@
   color: var(--accent);
 }
 
+.chip-list--links a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-color: color-mix(in srgb, var(--accent) 32%, var(--border-secondary));
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  color: var(--accent);
+}
+
+.chip-list--links a svg {
+  flex: 0 0 auto;
+}
+
 .profile-timeline-list {
   display: grid;
   gap: 10px;

@@ -4,6 +4,7 @@ import {
   Calendar,
   Code2,
   Eye,
+  ExternalLink,
   GraduationCap,
   Grid2X2,
   Heart,
@@ -208,7 +209,10 @@ const DashboardPortfolioPreviewModal = ({ isOpen, onClose, user }: DashboardPort
                 <PreviewSection icon={Link2} title="Handles">
                   <div className="portfolio-preview-profile-chips">
                     {handles.map((handle, index) => (
-                      <a key={`${handle.label}-${index}`} href={handle.link} target="_blank" rel="noreferrer">{handle.label}</a>
+                      <a key={`${handle.label}-${index}`} href={handle.link} target="_blank" rel="noreferrer">
+                        {handle.label}
+                        <ExternalLink size={13} aria-hidden="true" />
+                      </a>
                     ))}
                   </div>
                 </PreviewSection>
