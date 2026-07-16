@@ -1,7 +1,15 @@
 import {
   Ban,
+  BookOpen,
+  Briefcase,
+  Calendar,
+  Code2,
   ExternalLink,
   Flag,
+  GraduationCap,
+  Heart,
+  Languages,
+  Link2,
   Loader2,
   LockOpen,
   MapPin,
@@ -9,12 +17,16 @@ import {
   RefreshCw,
   SendHorizontal,
   ShieldAlert,
+  Star,
+  User,
+  UserCheck,
   UserPlus,
   UserRound,
   UserX,
   Users,
+  type LucideIcon,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 
 import ContributionHeatmap from '@/features/dashboard/ui/components/ContributionHeatmap';
@@ -53,6 +65,57 @@ const formatAddress = (address: unknown): string => {
     .map((item) => (typeof item === 'string' ? item.trim() : ''))
     .filter(Boolean)
     .join(', ');
+};
+
+const ProfileSection = ({
+  children,
+  icon: Icon,
+  spacious = false,
+  title,
+}: {
+  children: ReactNode;
+  icon: LucideIcon;
+  spacious?: boolean;
+  title: string;
+}) => (
+  <section className={spacious ? 'profile-preview-section is-spacious' : 'profile-preview-section'}>
+    <header>
+      <span><Icon size={20} aria-hidden="true" /></span>
+      <h2>{title}</h2>
+    </header>
+    {children}
+  </section>
+);
+
+const ProfileStat = ({
+  disabled,
+  icon: Icon,
+  label,
+  onClick,
+  value,
+}: {
+  disabled?: boolean;
+  icon?: LucideIcon;
+  label: string;
+  onClick?: () => void;
+  value: number;
+}) => {
+  const content = (
+    <>
+      <span>{Icon && <Icon size={16} aria-hidden="true" />}<small>{label}</small></span>
+      <strong>{value}</strong>
+    </>
+  );
+
+  if (onClick) {
+    return (
+      <button type="button" className="profile-preview-stat" onClick={onClick} disabled={disabled}>
+        {content}
+      </button>
+    );
+  }
+
+  return <span className="profile-preview-stat">{content}</span>;
 };
 
 const BlockConfirmModal = ({
@@ -215,58 +278,61 @@ const ProfilePage = () => {
           </div>
         ) : (
           <>
-            <div className="profile-hero profile-hero--v1">
-              <span className="dashboard-profile__avatar dashboard-profile__avatar--image profile-hero__avatar">
-                {image ? <img src={image} alt={profileUser.userName} /> : <UserRound size={42} aria-hidden="true" />}
-              </span>
-              <div className="profile-hero__content">
-                <div className="profile-hero__title-row">
-                  <div>
-                    <p className="state-panel__eyebrow">Developer Profile</p>
-                    <h1>{profileUser.userName}</h1>
-                  </div>
-                  <div className="profile-hero__menu">
-                    <button
-                      type="button"
-                      aria-label="Profile options"
-                      className="profile-hero__menu-button"
-                      onClick={() => setProfileMenuOpen((isOpen) => !isOpen)}
-                    >
-                      <MoreVertical size={18} aria-hidden="true" />
-                    </button>
-                    {isProfileMenuOpen && (
-                      <div className="profile-hero__dropdown">
-                        {canReportProfile && (
-                          <button type="button" onClick={handleOpenReport}>
-                            <Flag size={16} aria-hidden="true" />
-                            Report profile
+            <section className="profile-preview-header">
+              <div className="profile-preview-header__top">
+                <span className="profile-preview-header__avatar-wrap">
+                  <span className="profile-preview-header__avatar">
+                    {image ? <img src={image} alt={profileUser.userName} /> : <UserRound size={42} aria-hidden="true" />}
+                  </span>
+                </span>
+                <div className="profile-preview-header__main">
+                  <div className="profile-preview-header__title-row">
+                    <div>
+                      <p>Developer Profile</p>
+                      <h1>{profileUser.userName}</h1>
+                    </div>
+                    <div className="profile-hero__menu">
+                      <button
+                        type="button"
+                        aria-label="Profile options"
+                        className="profile-hero__menu-button"
+                        onClick={() => setProfileMenuOpen((isOpen) => !isOpen)}
+                      >
+                        <MoreVertical size={18} aria-hidden="true" />
+                      </button>
+                      {isProfileMenuOpen && (
+                        <div className="profile-hero__dropdown">
+                          {canReportProfile && (
+                            <button type="button" onClick={handleOpenReport}>
+                              <Flag size={16} aria-hidden="true" />
+                              Report profile
+                            </button>
+                          )}
+                          <button type="button" className="is-danger" onClick={handleOpenBlockConfirm}>
+                            <UserX size={16} aria-hidden="true" />
+                            Block user
                           </button>
-                        )}
-                        <button type="button" className="is-danger" onClick={handleOpenBlockConfirm}>
-                          <UserX size={16} aria-hidden="true" />
-                          Block user
-                        </button>
-                      </div>
-                    )}
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
-                <p>{profileUser.headline || 'DevLoopFeed developer'}</p>
-                {profileAddress && <p className="profile-hero__address"><MapPin size={14} aria-hidden="true" />{profileAddress}</p>}
-                {profileBlockedViewer && (
-                  <div className="profile-hero__notice">
-                    <ShieldAlert size={16} aria-hidden="true" />
-                    <span>Profile actions are unavailable right now.</span>
+                  <div className="profile-preview-header__headline">{profileUser.headline || 'DevLoopFeed developer'}</div>
+                  {profileAddress && <div className="profile-preview-header__address"><MapPin size={14} aria-hidden="true" />{profileAddress}</div>}
+                  {profileBlockedViewer && (
+                    <div className="profile-hero__notice">
+                      <ShieldAlert size={16} aria-hidden="true" />
+                      <span>Profile actions are unavailable right now.</span>
+                    </div>
+                  )}
+                  <div className="profile-preview-header__stats">
+                    <ProfileStat label="Posts" value={Number(profileUser.postsCount || normalPosts.length + projectPosts.length || 0)} />
+                    <ProfileStat icon={Users} label="Followers" value={followersCount} onClick={() => openList('followers')} disabled={profileBlockedViewer} />
+                    <ProfileStat icon={UserCheck} label="Following" value={followingCount} onClick={() => openList('following')} disabled={profileBlockedViewer} />
+                    <ProfileStat icon={Star} label="Score" value={Number(profileUser.profileContributions || 0)} />
                   </div>
-                )}
-                <div className="profile-stats profile-stats--clickable profile-stats--hero">
-                  <article><strong>{Number(profileUser.postsCount || normalPosts.length + projectPosts.length || 0)}</strong><span>Posts</span></article>
-                  <button type="button" onClick={() => openList('followers')} disabled={profileBlockedViewer}><strong>{followersCount}</strong><span>Followers</span></button>
-                  <button type="button" onClick={() => openList('following')} disabled={profileBlockedViewer}><strong>{followingCount}</strong><span>Following</span></button>
-                  <article><strong>{Number(profileUser.profileContributions || 0)}</strong><span>Contributions</span></article>
                 </div>
               </div>
-            </div>
-            <div className="profile-hero__actions profile-hero__actions--v1">
+              <div className="profile-preview-header__actions">
               {profileBlockedViewer ? (
                 <Button disabled variant="secondary" className="profile-hero__unavailable">
                   <ShieldAlert size={18} aria-hidden="true" />
@@ -286,33 +352,30 @@ const ProfilePage = () => {
                   )}
                 </>
               )}
-            </div>
+              </div>
+            </section>
           </>
         )}
 
         {isLimitedProfile ? (
-          <section className="profile-card profile-card--full"><h2>Blocked profile</h2><p className="empty-copy">Unblock this user to view their profile details.</p></section>
+          <ProfileSection icon={ShieldAlert} title="Blocked profile"><p className="profile-copy">Unblock this user to view their profile details.</p></ProfileSection>
         ) : (
-          <div className="dashboard-grid dashboard-grid--secondary">
-            <ContributionHeatmap heatmap={profileUser.heatmap} />
+          <div className="profile-preview-content">
+            <section className="profile-preview-heatmap"><ContributionHeatmap heatmap={profileUser.heatmap} /></section>
 
             {profileUser.about && (
-              <section className="profile-card profile-card--full">
-                <div className="profile-card__header"><h2>About</h2><p>{isFetching ? 'Refreshing profile...' : 'Public profile summary.'}</p></div>
+              <ProfileSection icon={User} title="About">
                 <p className="profile-copy">{profileUser.about}</p>
-              </section>
+                {isFetching && <small className="profile-refresh-note">Refreshing profile...</small>}
+              </ProfileSection>
             )}
 
             {skills.length > 0 && (
-              <section className="profile-card">
-                <div className="profile-card__header"><h2>Skills</h2><p>Technical strengths.</p></div>
-                <div className="chip-list">{skills.map((skill) => <span key={skill}>{skill}</span>)}</div>
-              </section>
+              <ProfileSection icon={Code2} title="Skills"><div className="chip-list">{skills.map((skill) => <span key={skill}>{skill}</span>)}</div></ProfileSection>
             )}
 
             {handles.length > 0 && (
-              <section className="profile-card">
-                <div className="profile-card__header"><h2>Handles</h2><p>Links around the web.</p></div>
+              <ProfileSection icon={Link2} title="Handles">
                 <div className="chip-list chip-list--links">
                   {handles.map((handle, index) => (
                     <a key={`${handle.label}-${index}`} href={handle.link} target="_blank" rel="noreferrer">
@@ -321,7 +384,7 @@ const ProfilePage = () => {
                     </a>
                   ))}
                 </div>
-              </section>
+              </ProfileSection>
             )}
 
             {hasPosts && (
@@ -329,47 +392,45 @@ const ProfilePage = () => {
             )}
 
             {experiences.length > 0 && (
-              <section className="profile-card profile-card--full">
-                <div className="profile-card__header"><h2>Experience</h2><p>Professional work and practice.</p></div>
+              <ProfileSection icon={Briefcase} spacious title="Experience">
                 <div className="profile-timeline-list">
                   {experiences.map((experience, index) => (
                     <article key={`${experience.companyName || 'experience'}-${index}`}>
-                      <strong>{experience.companyName || 'Experience'}</strong>
-                      {experience.role && <small>{experience.role}</small>}
-                      {experience.timePeriod && <span>{experience.timePeriod}</span>}
+                      <i><Briefcase size={16} aria-hidden="true" /></i>
+                      <span>
+                        <strong>{experience.companyName || 'Experience'}</strong>
+                        {experience.role && <small><Briefcase size={14} aria-hidden="true" />{experience.role}</small>}
+                        {experience.timePeriod && <small className="is-pill"><Calendar size={14} aria-hidden="true" />{experience.timePeriod}</small>}
+                      </span>
                     </article>
                   ))}
                 </div>
-              </section>
+              </ProfileSection>
             )}
 
             {educations.length > 0 && (
-              <section className="profile-card profile-card--full">
-                <div className="profile-card__header"><h2>Education</h2><p>Learning history.</p></div>
+              <ProfileSection icon={GraduationCap} spacious title="Education">
                 <div className="profile-timeline-list">
                   {educations.map((education, index) => (
                     <article key={`${education.collegeName || 'education'}-${index}`}>
-                      <strong>{education.collegeName || 'Education'}</strong>
-                      {education.course && <small>{education.course}</small>}
-                      {education.timePeriod && <span>{education.timePeriod}</span>}
+                      <i><GraduationCap size={16} aria-hidden="true" /></i>
+                      <span>
+                        <strong>{education.collegeName || 'Education'}</strong>
+                        {education.course && <small><BookOpen size={14} aria-hidden="true" />{education.course}</small>}
+                        {education.timePeriod && <small className="is-pill"><Calendar size={14} aria-hidden="true" />{education.timePeriod}</small>}
+                      </span>
                     </article>
                   ))}
                 </div>
-              </section>
+              </ProfileSection>
             )}
 
             {languages.length > 0 && (
-              <section className="profile-card">
-                <div className="profile-card__header"><h2>Languages</h2><p>Programming languages.</p></div>
-                <div className="chip-list">{languages.map((language) => <span key={language}>{language}</span>)}</div>
-              </section>
+              <ProfileSection icon={Languages} title="Languages"><div className="chip-list">{languages.map((language) => <span key={language}>{language}</span>)}</div></ProfileSection>
             )}
 
             {interests.length > 0 && (
-              <section className="profile-card">
-                <div className="profile-card__header"><h2>Interests</h2><p>Topics they care about.</p></div>
-                <div className="chip-list">{interests.map((interest) => <span key={interest}>{interest}</span>)}</div>
-              </section>
+              <ProfileSection icon={Heart} title="Interests"><div className="chip-list">{interests.map((interest) => <span key={interest}>{interest}</span>)}</div></ProfileSection>
             )}
           </div>
         )}

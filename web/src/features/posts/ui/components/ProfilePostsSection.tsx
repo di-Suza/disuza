@@ -1,4 +1,4 @@
-import { Loader2 } from 'lucide-react';
+import { Grid2X2, Loader2 } from 'lucide-react';
 import { memo, useMemo } from 'react';
 
 import { useGetUserRepostsQuery } from '@/features/posts/api/post.api';
@@ -37,8 +37,8 @@ const ProfilePostsSection = ({ normalPosts, profileUser, projectPosts, viewerId 
   return (
     <section className="profile-posts-section">
       <div className="profile-posts-section__header">
+        <span><Grid2X2 size={20} aria-hidden="true" /></span>
         <div>
-          <p className="state-panel__eyebrow">Posts</p>
           <h2>Activity</h2>
         </div>
       </div>
