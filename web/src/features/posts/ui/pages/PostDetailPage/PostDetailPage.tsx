@@ -8,6 +8,9 @@ import RepostDetailCard from '@/features/posts/ui/components/RepostDetailCard';
 import BackButton from '@/shared/components/BackButton/BackButton';
 import Button from '@/shared/ui/Button';
 import { getErrorMessage } from '@/shared/utils/getErrorMessage';
+import '../../posts.css';
+import './PostDetailPage.css';
+import '@/app/layouts/ProductShell.css';
 
 const PostDetailPage = () => {
   const { postId } = useParams<{ postId: string }>();

@@ -7,6 +7,7 @@ import { useGetAllPostsQuery, useGetUserRepostsQuery } from '@/features/posts/ap
 import { getPostMedia, isVideoMedia } from '@/features/posts/model/post.helpers';
 import type { Post } from '@/features/posts/model/post.types';
 import RepostPreviewCard from './RepostPreviewCard';
+import '../posts.css';
 
 type DashboardPostsPanelProps = {
   user?: unknown;

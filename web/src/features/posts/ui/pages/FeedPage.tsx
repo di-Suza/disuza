@@ -8,6 +8,8 @@ import type { PostAuthor } from '@/features/posts/model/post.types';
 import InlinePostComposer from '../components/InlinePostComposer';
 import PostCard from '../components/PostCard';
 import { useFeedPage } from './useFeedPage';
+import '../posts.css';
+import '@/app/layouts/ProductShell.css';
 
 const PostCardSkeleton = () => (
   <div className="feed-post-skeleton">

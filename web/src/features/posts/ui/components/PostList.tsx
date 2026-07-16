@@ -4,6 +4,7 @@ import { memo } from 'react';
 import type { Post, PostAuthor } from '@/features/posts/model/post.types';
 import { cn } from '@/shared/utils/cn';
 import PostCard from './PostCard';
+import '../posts.css';
 
 type PostListProps = {
   posts: Post[];

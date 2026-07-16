@@ -6,6 +6,7 @@ import type { Post, PostAuthor } from '@/features/posts/model/post.types';
 import type { UserProfile } from '@/features/users/model/user.types';
 import PostList from './PostList';
 import RepostPreviewCard from './RepostPreviewCard';
+import '../posts.css';
 
 type ProfilePostsSectionProps = {
   normalPosts: Post[];

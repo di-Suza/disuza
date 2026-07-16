@@ -9,6 +9,7 @@ import { useLockBodyScroll } from '@/shared/hooks/useLockBodyScroll';
 import { useToast } from '@/shared/hooks/useToast';
 import Button from '@/shared/ui/Button';
 import { getErrorMessage } from '@/shared/utils/getErrorMessage';
+import './SendFeedbackModal.css';
 
 type SendFeedbackModalProps = {
   feedbackOn: FeedbackTargetType;

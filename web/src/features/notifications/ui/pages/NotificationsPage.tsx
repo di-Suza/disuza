@@ -9,6 +9,8 @@ import type { NotificationItem } from '@/features/notifications/model/notificati
 import Button from '@/shared/ui/Button';
 import { getErrorMessage } from '@/shared/utils/getErrorMessage';
 import { useNotificationsPage } from './useNotificationsPage';
+import './NotificationsPage.css';
+import '@/app/layouts/ProductShell.css';
 
 const getAvatarUrl = (notification: NotificationItem) => {
   const url = notification.sender?.profilePicture?.url;
