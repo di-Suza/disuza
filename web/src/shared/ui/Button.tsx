@@ -1,6 +1,7 @@
 import { forwardRef, memo, type ButtonHTMLAttributes } from 'react';
 
 import { cn } from '@/shared/utils/cn';
+import './Button.css';
 
 type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger';
 

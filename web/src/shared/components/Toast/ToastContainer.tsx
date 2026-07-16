@@ -2,6 +2,7 @@ import { memo } from 'react';
 
 import type { ToastItem } from '@/app/providers/toast/ToastContext';
 import Toast from './Toast';
+import './Toast.css';
 
 type ToastContainerProps = {
   toasts: ToastItem[];

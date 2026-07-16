@@ -1,5 +1,8 @@
 import { Link } from 'react-router-dom';
 
+import '@/shared/components/StatePanel/StatePanel.css';
+import '@/shared/ui/Button.css';
+
 const NotFound = () => (
   <main className="state-page">
     <section className="state-panel">

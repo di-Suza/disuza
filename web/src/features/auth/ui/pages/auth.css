@@ -7,6 +7,16 @@
   padding: 32px 16px;
 }
 
+.auth-grid-bg {
+  position: absolute;
+  inset: 0;
+  opacity: 0.04;
+  background-image:
+    linear-gradient(var(--border-secondary) 1px, transparent 1px),
+    linear-gradient(90deg, var(--border-secondary) 1px, transparent 1px);
+  background-size: 38px 38px;
+}
+
 .auth-layout {
   position: relative;
   z-index: 1;

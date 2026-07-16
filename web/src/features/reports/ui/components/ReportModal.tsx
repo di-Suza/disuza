@@ -4,6 +4,10 @@ import { createPortal } from 'react-dom';
 import type { ReportReason, ReportTargetModel } from '@/features/reports/model/report.types';
 import { useReportModal } from '@/features/reports/ui/hooks/useReportModal';
 import Button from '@/shared/ui/Button';
+import '@/shared/components/StatePanel/StatePanel.css';
+import '@/shared/ui/Modal.css';
+import '@/shared/ui/Spinner.css';
+import './ReportModal.css';
 
 type ReportModalProps = {
   isOpen: boolean;

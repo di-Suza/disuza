@@ -3,6 +3,10 @@ import { createPortal } from 'react-dom';
 
 import { useReportAProblemModal } from '@/features/issues/ui/hooks/useReportAProblemModal';
 import Button from '@/shared/ui/Button';
+import '@/features/reports/ui/components/ReportModal.css';
+import '@/shared/components/StatePanel/StatePanel.css';
+import '@/shared/ui/Modal.css';
+import '@/shared/ui/Spinner.css';
 
 type ReportAProblemModalProps = {
   isOpen: boolean;

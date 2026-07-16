@@ -43,6 +43,7 @@ import DashboardUserListModal, { type DashboardUserListType } from '../component
 import ContributionHeatmap from '../components/ContributionHeatmap';
 import HeatmapRules from '../components/HeatmapRules';
 import { useDashboardPage } from './useDashboardPage';
+import '@/features/reports/ui/components/ReportModal.css';
 import './DashboardLegacy.css';
 import './DashboardPage.css';
 import '@/app/layouts/ProductShell.css';

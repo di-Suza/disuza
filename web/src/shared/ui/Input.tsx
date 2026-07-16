@@ -1,6 +1,7 @@
 import { forwardRef, memo, type InputHTMLAttributes } from 'react';
 
 import { cn } from '@/shared/utils/cn';
+import './Input.css';
 
 type InputProps = InputHTMLAttributes<HTMLInputElement>;
 

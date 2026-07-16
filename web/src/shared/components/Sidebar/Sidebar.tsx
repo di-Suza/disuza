@@ -5,6 +5,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { useGetNotificationsQuery } from '@/features/notifications/api/notification.api';
 import logo from '@/shared/assets/images/logo.png';
 import useUnreadMessagesCount from '@/shared/hooks/useUnreadMessagesCount';
+import './Sidebar.css';
 
 const sidebarItems = [
   { id: 'home', label: 'Home', icon: Home, path: '/home' },

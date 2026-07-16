@@ -4,6 +4,9 @@ import { createPortal } from 'react-dom';
 
 import { useLockBodyScroll } from '@/shared/hooks/useLockBodyScroll';
 import Button from '@/shared/ui/Button';
+import './ConfirmDialog.css';
+import './Modal.css';
+import './Spinner.css';
 
 type ConfirmDialogProps = {
   cancelLabel?: string;

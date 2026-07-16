@@ -1,0 +1,47 @@
+.input {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid var(--border-secondary);
+  border-radius: 10px;
+  background: var(--surface-deep);
+  color: var(--text-primary);
+  outline: none;
+  transition: border-color 160ms ease, box-shadow 160ms ease, background 160ms ease;
+}
+
+.input::placeholder {
+  color: var(--text-secondary);
+}
+
+.input:focus {
+  border-color: rgba(59, 99, 255, 0.78);
+  box-shadow: 0 0 0 4px rgba(59, 99, 255, 0.12);
+}
+
+.textarea {
+  min-height: 116px;
+  padding: 14px 16px;
+  resize: vertical;
+}
+
+.field {
+  display: grid;
+  gap: 8px;
+}
+
+.field span,
+.toggle-row span {
+  color: var(--text-soft);
+  font-size: 13px;
+  font-weight: 850;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  clip-path: inset(50%);
+}
