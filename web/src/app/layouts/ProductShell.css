@@ -4,8 +4,8 @@
   --app-sidebar-width: 264px;
   --app-sidebar-gap: 32px;
   --app-content-max: calc(var(--app-shell-max) - var(--app-sidebar-width) - var(--app-sidebar-gap));
-  --app-feed-width: 640px;
   --app-rail-width: 320px;
+  --app-feed-width: calc(var(--app-content-max) - var(--app-sidebar-gap) - var(--app-rail-width));
 }
 
 .sidebar-layout .home-feed-exact {
@@ -27,7 +27,8 @@
 .sidebar-layout .home-feed-exact__main,
 .sidebar-layout .home-feed-exact .inline-post-composer,
 .sidebar-layout .home-feed-exact .feed-post-skeleton,
-.sidebar-layout .home-feed-exact .v1-post-card-outer {
+.sidebar-layout .home-feed-exact .v1-post-card-outer,
+.sidebar-layout .home-feed-exact .recommendation-slider {
   min-width: 0;
   width: 100%;
   max-width: var(--app-feed-width);
@@ -120,6 +121,7 @@
     width: min(100%, calc(var(--app-feed-width) + var(--app-sidebar-gap) + var(--app-rail-width)));
     max-width: calc(var(--app-feed-width) + var(--app-sidebar-gap) + var(--app-rail-width));
     grid-template-columns: minmax(0, var(--app-feed-width)) var(--app-rail-width);
+    column-gap: var(--app-sidebar-gap);
   }
 
   .sidebar-layout .home-feed-exact.has-recommendations > .home-feed-exact__rail {
