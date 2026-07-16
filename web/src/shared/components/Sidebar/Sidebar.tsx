@@ -1,4 +1,4 @@
-import { Bell, Earth, Home, LogOut, Menu, SendHorizonal, SquarePen, UserRound } from 'lucide-react';
+import { Bell, ChevronUp, Earth, Home, LogOut, Menu, SendHorizonal, SquarePen, UserRound } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
@@ -22,6 +22,7 @@ const Sidebar = () => {
   const { pathname, search } = useLocation();
   const [isExpanded, setExpanded] = useState(false);
   const [isComposerOpen, setComposerOpen] = useState(false);
+  const [isProfileMenuOpen, setProfileMenuOpen] = useState(false);
   const user = useAppSelector((state) => state.auth.user);
   const { data: notificationsData } = useGetNotificationsQuery({ page: 1, limit: 1 });
   const [logout, { isLoading: isLoggingOut }] = useLogoutMutation();
@@ -35,6 +36,7 @@ const Sidebar = () => {
 
   const handleOpenComposer = () => {
     setExpanded(false);
+    setProfileMenuOpen(false);
     setComposerOpen(true);
   };
 
@@ -49,18 +51,22 @@ const Sidebar = () => {
 
   useEffect(() => {
     setExpanded(false);
+    setProfileMenuOpen(false);
   }, [pathname]);
 
   useEffect(() => {
-    if (!isExpanded) return;
+    if (!isExpanded && !isProfileMenuOpen) return;
 
     const handleEscape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setExpanded(false);
+      if (event.key === 'Escape') {
+        setExpanded(false);
+        setProfileMenuOpen(false);
+      }
     };
 
     window.addEventListener('keydown', handleEscape);
     return () => window.removeEventListener('keydown', handleEscape);
-  }, [isExpanded]);
+  }, [isExpanded, isProfileMenuOpen]);
 
   return (
     <>
@@ -119,23 +125,53 @@ const Sidebar = () => {
               </span>
               <span className="app-sidebar__label">Add Post</span>
             </button>
-            <Link title="Profile" to="/dashboard" className={isItemActive('/dashboard') ? 'app-sidebar__link is-active' : 'app-sidebar__link'}>
-              <span className="app-sidebar__icon-wrap">
-                {profilePictureUrl ? (
-                  <img className="app-sidebar__profile-avatar" src={profilePictureUrl} alt="" />
-                ) : (
-                  <UserRound size={24} aria-hidden="true" />
-                )}
-              </span>
-              <span className="app-sidebar__label">Profile</span>
-            </Link>
           </div>
 
           <div className="app-sidebar__footer">
-            <button type="button" className="app-sidebar__link app-sidebar__logout" onClick={handleLogout} disabled={isLoggingOut}>
-              <span className="app-sidebar__icon-wrap"><LogOut size={22} aria-hidden="true" /></span>
-              <span className="app-sidebar__label">{isLoggingOut ? 'Logging out...' : 'Logout'}</span>
-            </button>
+            {isProfileMenuOpen && (
+              <div className="app-sidebar__profile-menu">
+                <button type="button" className="app-sidebar__profile-menu-item" onClick={handleLogout} disabled={isLoggingOut}>
+                  <LogOut size={18} aria-hidden="true" />
+                  {isLoggingOut ? 'Logging out...' : 'Logout'}
+                </button>
+              </div>
+            )}
+            <div
+              className={[
+                'app-sidebar__profile-row',
+                isItemActive('/dashboard') ? 'is-active' : '',
+                isProfileMenuOpen ? 'is-open' : '',
+              ].filter(Boolean).join(' ')}
+            >
+              <Link
+                title="Profile"
+                to="/dashboard"
+                className="app-sidebar__profile-link"
+                onClick={() => {
+                  setExpanded(false);
+                  setProfileMenuOpen(false);
+                }}
+              >
+                <span className="app-sidebar__icon-wrap">
+                  {profilePictureUrl ? (
+                    <img className="app-sidebar__profile-avatar" src={profilePictureUrl} alt="" />
+                  ) : (
+                    <UserRound size={24} aria-hidden="true" />
+                  )}
+                </span>
+                <span className="app-sidebar__label">Profile</span>
+              </Link>
+              <button
+                type="button"
+                className="app-sidebar__profile-toggle"
+                onClick={() => setProfileMenuOpen((current) => !current)}
+                aria-expanded={isProfileMenuOpen}
+                aria-haspopup="menu"
+                aria-label={isProfileMenuOpen ? 'Close profile actions' : 'Open profile actions'}
+              >
+                <ChevronUp className="app-sidebar__profile-caret" size={16} aria-hidden="true" />
+              </button>
+            </div>
           </div>
         </nav>
       </aside>
