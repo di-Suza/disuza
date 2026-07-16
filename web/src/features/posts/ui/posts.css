@@ -507,7 +507,7 @@
 
 .post-composer-v1__header-icon,
 .post-composer-v1__upload-zone span,
-.post-composer-v1__project-main > span:first-child {
+.post-composer-v1__project-icon {
   display: grid;
   width: 40px;
   height: 40px;
@@ -545,7 +545,7 @@
 }
 
 .post-composer-v1__caption-card,
-.post-composer-v1__project {
+.post-composer-v1__project-panel {
   border: 1px solid var(--border-secondary);
   border-radius: 10px;
   background: var(--bg-main);
@@ -557,7 +557,6 @@
 
 .post-composer-v1__caption-card > div,
 .post-composer-v1__section-heading,
-.post-composer-v1__project > label,
 .post-composer-v1__footer,
 .post-composer-v1__advanced > button,
 .post-composer-v1__advanced-menu label {
@@ -569,6 +568,7 @@
 
 .post-composer-v1__caption-card label,
 .post-composer-v1__section-heading label,
+.post-composer-v1__project-field > span:first-child,
 .post-composer-v1__links label > span:first-child {
   color: var(--text-primary);
   font-size: 14px;
@@ -578,7 +578,7 @@
 .post-composer-v1__caption-card span,
 .post-composer-v1__section-heading small,
 .post-composer-v1__upload-zone small,
-.post-composer-v1__project-main small {
+.post-composer-v1__project-copy small {
   color: var(--text-secondary);
   font-size: 12px;
 }
@@ -714,39 +714,142 @@
   background: rgba(8, 12, 18, 0.78);
 }
 
-.post-composer-v1__project {
-  overflow: hidden;
+.post-composer-v1__project-panel {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  min-height: 0;
+  overflow: visible;
+  isolation: isolate;
 }
 
-.post-composer-v1__project > label {
+.post-composer-v1__project-toggle-row {
+  appearance: none;
+  display: flex;
+  width: 100%;
+  min-height: 78px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  border: 0;
+  background: transparent;
+  color: var(--text-primary);
   cursor: pointer;
   padding: 16px;
+  text-align: left;
   transition: background 160ms ease;
 }
 
-.post-composer-v1__project-title {
-  display: flex;
-  min-height: 76px;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  color: var(--text-primary);
-}
-
-.post-composer-v1__project > label:hover {
+.post-composer-v1__project-toggle-row:hover:not(.is-static) {
   background: var(--surface-deep);
 }
 
-.post-composer-v1__project-main {
+.post-composer-v1__project-toggle-row.is-static {
+  cursor: default;
+}
+
+.post-composer-v1__project-summary {
   display: flex;
   min-width: 0;
   align-items: center;
   gap: 12px;
 }
 
-.post-composer-v1__project-main strong,
-.post-composer-v1__project-main small {
+.post-composer-v1__project-copy {
+  display: grid;
+  min-width: 0;
+  gap: 3px;
+}
+
+.post-composer-v1__project-copy strong,
+.post-composer-v1__project-copy small {
   display: block;
+}
+
+.post-composer-v1__project-copy strong {
+  color: var(--text-primary);
+  font-size: 14px;
+  font-weight: 850;
+}
+
+.post-composer-v1__project-switch {
+  position: relative;
+  display: inline-flex;
+  width: 46px;
+  height: 26px;
+  flex: 0 0 auto;
+  border: 1px solid var(--border-secondary);
+  border-radius: 999px;
+  background: var(--surface-muted);
+  transition: border-color 160ms ease, background 160ms ease;
+}
+
+.post-composer-v1__project-switch::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  background: var(--text-primary);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.28);
+  transition: transform 160ms ease;
+}
+
+.post-composer-v1__project-switch.is-active {
+  border-color: var(--accent);
+  background: var(--accent);
+}
+
+.post-composer-v1__project-switch.is-active::after {
+  transform: translateX(20px);
+}
+
+.post-composer-v1__project-pill {
+  display: inline-flex;
+  min-height: 28px;
+  align-items: center;
+  border: 1px solid rgba(59, 99, 255, 0.3);
+  border-radius: 999px;
+  background: rgba(59, 99, 255, 0.14);
+  color: var(--accent);
+  padding: 0 10px;
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.post-composer-v1__project-fields {
+  display: grid;
+  gap: 14px;
+  border-top: 1px solid var(--border-secondary);
+  background: var(--surface-deep);
+  padding: 16px;
+}
+
+.post-composer-v1__project-field {
+  position: relative;
+  display: grid;
+  gap: 6px;
+}
+
+.post-composer-v1__project-field-control {
+  position: relative;
+  display: block;
+}
+
+.post-composer-v1__project-field-control svg {
+  position: absolute;
+  top: 50%;
+  left: 12px;
+  z-index: 1;
+  color: var(--text-secondary);
+  pointer-events: none;
+  transform: translateY(-50%);
+}
+
+.post-composer-v1__project-field-control .input {
+  padding: 10px 14px 10px 40px;
 }
 
 .post-composer-v1__switch {
