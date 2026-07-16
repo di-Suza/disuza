@@ -1193,6 +1193,20 @@ svg {
   color: var(--text-secondary);
 }
 
+.profile-hero__content .profile-hero__address {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.profile-hero__content .profile-hero__address svg {
+  flex: 0 0 auto;
+  color: var(--accent);
+}
+
 .profile-hero__title-row {
   display: flex;
   align-items: flex-start;

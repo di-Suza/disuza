@@ -6,6 +6,7 @@ import {
   GraduationCap,
   Heart,
   Languages,
+  MapPin,
   Plus,
   Presentation,
   Sparkles,
@@ -34,6 +35,7 @@ type DashboardPortfolioEditorProps = Pick<
   | 'professionalForm'
   | 'removeEducation'
   | 'removeExperience'
+  | 'updateAddressField'
   | 'updateEducationField'
   | 'updateExperienceField'
   | 'updateGeneralField'
@@ -90,6 +92,7 @@ const DashboardPortfolioEditor = ({
   professionalForm,
   removeEducation,
   removeExperience,
+  updateAddressField,
   updateEducationField,
   updateExperienceField,
   updateGeneralField,
@@ -98,11 +101,11 @@ const DashboardPortfolioEditor = ({
 }: DashboardPortfolioEditorProps) => {
   const [activeTab, setActiveTab] = useState<PortfolioTab>('info');
   const [isPreviewOpen, setPreviewOpen] = useState(false);
-  const [focusedGeneralField, setFocusedGeneralField] = useState<'headline' | 'about' | null>(null);
+  const [focusedGeneralField, setFocusedGeneralField] = useState<'headline' | 'about' | 'city' | 'state' | 'country' | null>(null);
   const [addingExperienceIndex, setAddingExperienceIndex] = useState<number | null>(null);
   const [addingEducationIndex, setAddingEducationIndex] = useState<number | null>(null);
-  const generalFormRef = useRef<HTMLFormElement>(null);
   const professionalFormRef = useRef<HTMLFormElement>(null);
+  const addressIsFocused = focusedGeneralField === 'city' || focusedGeneralField === 'state' || focusedGeneralField === 'country';
 
   const scheduleProfessionalSave = () => {
     window.setTimeout(() => professionalFormRef.current?.requestSubmit(), 0);
@@ -193,11 +196,11 @@ const DashboardPortfolioEditor = ({
 
         <section className="portfolio-editor-card-v1">
           {activeTab === 'info' ? (
-            <form ref={generalFormRef} onSubmit={handleGeneralSubmit} className="portfolio-general-v1">
+            <form onSubmit={handleGeneralSubmit} className="portfolio-general-v1">
               <div className="portfolio-section-v1">
                 <div className="portfolio-section-v1__label-row">
                   <label htmlFor="portfolio-headline">Headline<span>*</span></label>
-                  {focusedGeneralField === 'headline' && <small>{isBusy ? 'saving...' : 'Up to date!'}</small>}
+                  {focusedGeneralField === 'headline' && <small>{isBusy ? 'saving...' : 'Autosaves'}</small>}
                 </div>
                 <div className="portfolio-field-v1">
                   <Sparkles size={20} aria-hidden="true" />
@@ -206,10 +209,7 @@ const DashboardPortfolioEditor = ({
                     value={generalForm.headline}
                     onChange={updateGeneralField('headline')}
                     onFocus={() => setFocusedGeneralField('headline')}
-                    onBlur={() => {
-                      setFocusedGeneralField(null);
-                      generalFormRef.current?.requestSubmit();
-                    }}
+                    onBlur={() => setFocusedGeneralField(null)}
                     placeholder="Full Stack Developer | React & Node.js Enthusiast"
                     maxLength={100}
                     required
@@ -221,7 +221,7 @@ const DashboardPortfolioEditor = ({
               <div className="portfolio-section-v1">
                 <div className="portfolio-section-v1__label-row">
                   <label htmlFor="portfolio-about">About<span>*</span></label>
-                  {focusedGeneralField === 'about' && <small>{isBusy ? 'saving...' : 'Up to date!'}</small>}
+                  {focusedGeneralField === 'about' && <small>{isBusy ? 'saving...' : 'Autosaves'}</small>}
                 </div>
                 <div className="portfolio-field-v1 portfolio-field-v1--textarea">
                   <FileText size={20} aria-hidden="true" />
@@ -230,10 +230,7 @@ const DashboardPortfolioEditor = ({
                     value={generalForm.about}
                     onChange={updateGeneralField('about')}
                     onFocus={() => setFocusedGeneralField('about')}
-                    onBlur={() => {
-                      setFocusedGeneralField(null);
-                      generalFormRef.current?.requestSubmit();
-                    }}
+                    onBlur={() => setFocusedGeneralField(null)}
                     placeholder="Tell us about yourself, your journey, skills, and what drives you as a developer..."
                     rows={6}
                     maxLength={500}
@@ -241,6 +238,49 @@ const DashboardPortfolioEditor = ({
                   />
                 </div>
                 <p className="portfolio-field-v1__count">{generalForm.about.length}/500 characters</p>
+              </div>
+
+              <div className="portfolio-section-v1">
+                <div className="portfolio-section-v1__label-row">
+                  <label>Address</label>
+                  {addressIsFocused && <small>{isBusy ? 'saving...' : 'Autosaves'}</small>}
+                </div>
+                <div className="portfolio-address-grid-v1">
+                  <label htmlFor="portfolio-city">
+                    <span>City</span>
+                    <Input
+                      id="portfolio-city"
+                      value={generalForm.address.city}
+                      onChange={updateAddressField('city')}
+                      onFocus={() => setFocusedGeneralField('city')}
+                      onBlur={() => setFocusedGeneralField(null)}
+                      placeholder="City"
+                    />
+                  </label>
+                  <label htmlFor="portfolio-state">
+                    <span>State</span>
+                    <Input
+                      id="portfolio-state"
+                      value={generalForm.address.state}
+                      onChange={updateAddressField('state')}
+                      onFocus={() => setFocusedGeneralField('state')}
+                      onBlur={() => setFocusedGeneralField(null)}
+                      placeholder="State"
+                    />
+                  </label>
+                  <label htmlFor="portfolio-country">
+                    <span>Country</span>
+                    <Input
+                      id="portfolio-country"
+                      value={generalForm.address.country}
+                      onChange={updateAddressField('country')}
+                      onFocus={() => setFocusedGeneralField('country')}
+                      onBlur={() => setFocusedGeneralField(null)}
+                      placeholder="Country"
+                    />
+                  </label>
+                </div>
+                <p className="portfolio-field-v1__count"><MapPin size={13} aria-hidden="true" />Shown below your headline on profile preview.</p>
               </div>
             </form>
           ) : (

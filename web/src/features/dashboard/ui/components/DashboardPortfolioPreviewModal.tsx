@@ -9,6 +9,7 @@ import {
   Heart,
   Languages,
   Loader2,
+  MapPin,
   MessageCircle,
   Play,
   RefreshCw,
@@ -48,6 +49,13 @@ type PreviewSectionProps = {
 
 const listOfStrings = (value: unknown): string[] => (
   Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string' && Boolean(item.trim())) : []
+);
+
+const formatAddress = (address: UserProfile['address']): string => (
+  [address?.city, address?.state, address?.country]
+    .map((item) => (typeof item === 'string' ? item.trim() : ''))
+    .filter(Boolean)
+    .join(', ')
 );
 
 const PreviewSection = ({ children, icon: Icon, spacious = false, title }: PreviewSectionProps) => (
@@ -121,6 +129,7 @@ const DashboardPortfolioPreviewModal = ({ isOpen, onClose, user }: DashboardPort
   const avatar = typeof user.profilePicture?.url === 'string' && user.profilePicture.url.trim()
     ? user.profilePicture.url
     : null;
+  const address = formatAddress(user.address);
 
   return createPortal(
     <div className="portfolio-preview-v1-backdrop" onMouseDown={onClose} role="dialog" aria-modal="true">
@@ -151,6 +160,7 @@ const DashboardPortfolioPreviewModal = ({ isOpen, onClose, user }: DashboardPort
                     <p>Developer Profile</p>
                     <h1>{user.userName}</h1>
                     {user.headline && <div className="portfolio-preview-profile-header__headline">{user.headline}</div>}
+                    {address && <div className="portfolio-preview-profile-header__address"><MapPin size={14} aria-hidden="true" />{address}</div>}
                     <div className="portfolio-preview-profile-header__stats">
                       <PreviewStat label="Posts" value={Number(user.postsCount || posts.length)} />
                       <PreviewStat icon={Users} label="Followers" value={Number(user.followersCount || 0)} />

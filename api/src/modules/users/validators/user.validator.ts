@@ -76,9 +76,32 @@ const updateGeneralInfoRules = [
     .isString()
     .withMessage('About must be a string')
     .trim(),
+  body('address')
+    .optional()
+    .isObject()
+    .withMessage('Address must be an object'),
+  body('address.city')
+    .optional()
+    .isString()
+    .withMessage('City must be a string')
+    .trim(),
+  body('address.state')
+    .optional()
+    .isString()
+    .withMessage('State must be a string')
+    .trim(),
+  body('address.country')
+    .optional()
+    .isString()
+    .withMessage('Country must be a string')
+    .trim(),
   body()
-    .custom((value) => Object.prototype.hasOwnProperty.call(value, 'headline') || Object.prototype.hasOwnProperty.call(value, 'about'))
-    .withMessage('Please provide either headline or about to update!'),
+    .custom((value) => (
+      Object.prototype.hasOwnProperty.call(value, 'headline')
+      || Object.prototype.hasOwnProperty.call(value, 'about')
+      || Object.prototype.hasOwnProperty.call(value, 'address')
+    ))
+    .withMessage('Please provide headline, about, or address to update!'),
 ];
 
 const updateProfessionalInfoRules = [
