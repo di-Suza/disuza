@@ -24,6 +24,7 @@ export const useCommentModal = ({ isOpen, onClose, post }: UseCommentModalOption
   const { showError } = useToast();
   const user = useAppSelector((state) => state.auth.user);
   const inputRef = useRef<HTMLInputElement>(null);
+  const pendingCommentKeyRef = useRef<string | null>(null);
   const [page, setPage] = useState(1);
   const [commentText, setCommentText] = useState('');
   const [replyTarget, setReplyTarget] = useState<ReplyTarget | null>(null);
@@ -93,11 +94,15 @@ export const useCommentModal = ({ isOpen, onClose, post }: UseCommentModalOption
     const text = commentText.trim();
     const previousText = commentText;
     const previousReplyTarget = replyTarget;
+    const commentKey = `${post._id}:${replyTarget?._id || 'root'}:${text}`;
 
     if (!text) {
       setEmptyError(true);
       return;
     }
+
+    if (pendingCommentKeyRef.current === commentKey) return;
+    pendingCommentKeyRef.current = commentKey;
 
     setCommentText('');
     setReplyTarget(null);
@@ -113,6 +118,10 @@ export const useCommentModal = ({ isOpen, onClose, post }: UseCommentModalOption
       setCommentText(previousText);
       setReplyTarget(previousReplyTarget);
       showError(getErrorMessage(apiError));
+    } finally {
+      if (pendingCommentKeyRef.current === commentKey) {
+        pendingCommentKeyRef.current = null;
+      }
     }
   }, [commentText, post._id, postComment, replyTarget, showError]);
 

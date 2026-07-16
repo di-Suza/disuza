@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import { useAppSelector } from '@/app/store/hooks';
@@ -11,10 +11,37 @@ import {
   useUnblockUserMutation,
   useUnfollowUserMutation,
 } from '@/features/users/api/user.api';
+import type { UserProfile } from '@/features/users/model/user.types';
+import useDebounce from '@/shared/hooks/useDebounce';
 import { useToast } from '@/shared/hooks/useToast';
 import { getErrorMessage } from '@/shared/utils/getErrorMessage';
 
 type RelationshipListMode = 'followers' | 'following';
+
+const FOLLOW_DEBOUNCE_MS = 600;
+
+type FollowState = {
+  userId: string;
+  isFollowed: boolean;
+  followersCount: number;
+};
+
+const getProfileFollowState = (profileUser: UserProfile): FollowState => ({
+  userId: profileUser._id,
+  isFollowed: Boolean(profileUser.isFollowed),
+  followersCount: Number(profileUser.followersCount || 0),
+});
+
+const getNextFollowState = (state: FollowState): FollowState => {
+  const nextFollowed = !state.isFollowed;
+  const delta = nextFollowed ? 1 : -1;
+
+  return {
+    ...state,
+    isFollowed: nextFollowed,
+    followersCount: Math.max(0, state.followersCount + delta),
+  };
+};
 
 export const useProfilePage = () => {
   const navigate = useNavigate();
@@ -43,6 +70,48 @@ export const useProfilePage = () => {
   const [unfollowUser, { isLoading: isUnfollowLoading }] = useUnfollowUserMutation();
   const [blockUser, { isLoading: isBlockLoading }] = useBlockUserMutation();
   const [unblockUser, { isLoading: isUnblockLoading }] = useUnblockUserMutation();
+  const [followState, setFollowState] = useState<FollowState | null>(null);
+  const debouncedFollowState = useDebounce(followState, FOLLOW_DEBOUNCE_MS);
+  const originalFollowStateRef = useRef<FollowState | null>(null);
+
+  useEffect(() => {
+    if (!profileUser?._id) {
+      originalFollowStateRef.current = null;
+      setFollowState(null);
+      return;
+    }
+
+    const nextState = getProfileFollowState(profileUser);
+    originalFollowStateRef.current = nextState;
+    setFollowState(nextState);
+  }, [profileUser?._id]);
+
+  useEffect(() => {
+    if (!debouncedFollowState) return;
+
+    const previousState = originalFollowStateRef.current;
+    if (!previousState || previousState.userId !== debouncedFollowState.userId) return;
+    if (debouncedFollowState.isFollowed === previousState.isFollowed) return;
+
+    originalFollowStateRef.current = debouncedFollowState;
+
+    const request = debouncedFollowState.isFollowed
+      ? followUser(debouncedFollowState.userId).unwrap()
+      : unfollowUser(debouncedFollowState.userId).unwrap();
+
+    request
+      .then((result) => showSuccess(result.message))
+      .catch((apiError) => {
+        originalFollowStateRef.current = previousState;
+        setFollowState((currentState) => (
+          currentState?.userId === debouncedFollowState.userId &&
+          currentState.isFollowed === debouncedFollowState.isFollowed
+            ? previousState
+            : currentState
+        ));
+        showError(getErrorMessage(apiError));
+      });
+  }, [debouncedFollowState, followUser, showError, showSuccess, unfollowUser]);
 
   const followersQuery = useGetFollowersQuery(
     { userId: profileUserId, page: 1 },
@@ -62,18 +131,17 @@ export const useProfilePage = () => {
   const openReport = useCallback(() => setReportOpen(true), []);
   const closeReport = useCallback(() => setReportOpen(false), []);
 
-  const handleFollowToggle = useCallback(async () => {
+  const handleFollowToggle = useCallback(() => {
     if (!profileUser) return;
 
-    try {
-      const result = profileUser.isFollowed
-        ? await unfollowUser(profileUser._id).unwrap()
-        : await followUser(profileUser._id).unwrap();
-      showSuccess(result.message);
-    } catch (apiError) {
-      showError(getErrorMessage(apiError));
-    }
-  }, [followUser, profileUser, showError, showSuccess, unfollowUser]);
+    setFollowState((currentState) => {
+      const baseState = currentState?.userId === profileUser._id
+        ? currentState
+        : getProfileFollowState(profileUser);
+
+      return getNextFollowState(baseState);
+    });
+  }, [profileUser]);
 
   const handleBlockToggle = useCallback(async () => {
     if (!profileUser) return;
@@ -89,6 +157,16 @@ export const useProfilePage = () => {
   }, [blockUser, profileUser, showError, showSuccess, unblockUser]);
 
   const goToDashboard = useCallback(() => navigate('/dashboard', { replace: true }), [navigate]);
+  const displayProfileUser = useMemo(() => {
+    if (!profileUser) return null;
+    if (!followState || followState.userId !== profileUser._id) return profileUser;
+
+    return {
+      ...profileUser,
+      isFollowed: followState.isFollowed,
+      followersCount: followState.followersCount,
+    };
+  }, [followState, profileUser]);
 
   return useMemo(() => ({
     closeList,
@@ -96,9 +174,9 @@ export const useProfilePage = () => {
     currentUserId,
     error,
     followers: followersQuery.data?.followers || [],
-    followersCount: profileUser?.followersCount || 0,
+    followersCount: displayProfileUser?.followersCount || 0,
     following: followingQuery.data?.following || [],
-    followingCount: profileUser?.followingCount || 0,
+    followingCount: displayProfileUser?.followingCount || 0,
     goToDashboard,
     handleBlockToggle,
     handleFollowToggle,
@@ -116,7 +194,7 @@ export const useProfilePage = () => {
     normalPosts: data?.normalPosts || [],
     openList,
     openReport,
-    profileUser,
+    profileUser: displayProfileUser,
     profileUserId,
     projectPosts: data?.projectPosts || [],
     refetch,
@@ -126,6 +204,7 @@ export const useProfilePage = () => {
     currentUserId,
     data?.normalPosts,
     data?.projectPosts,
+    displayProfileUser,
     error,
     followersQuery.data?.followers,
     followersQuery.isFetching,
@@ -147,7 +226,6 @@ export const useProfilePage = () => {
     listMode,
     openList,
     openReport,
-    profileUser,
     profileUserId,
     refetch,
   ]);
