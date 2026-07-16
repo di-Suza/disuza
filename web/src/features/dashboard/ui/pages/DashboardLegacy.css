@@ -1319,13 +1319,6 @@
 }
 
 @media (min-width: 1280px) {
-  .home-feed-exact.has-recommendations {
-    max-width: 72rem;
-    grid-template-columns: minmax(0, 680px) 320px;
-  }
-
-  .home-feed-exact__rail { display: block; }
-  .recommendation-slider { display: none; }
   .more-v1-shell { grid-template-columns: repeat(12, minmax(0, 1fr)); }
   .more-v1-menu { grid-column: span 3 / span 3; }
   .more-v1-panel { grid-column: span 9 / span 9; }

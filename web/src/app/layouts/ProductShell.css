@@ -8,50 +8,55 @@
   --app-rail-width: 320px;
 }
 
-.home-feed-exact {
+.sidebar-layout .home-feed-exact {
+  display: grid;
+  grid-template-columns: 1fr;
   width: min(100%, var(--app-feed-width));
   max-width: var(--app-feed-width);
+  min-height: 80vh;
   align-items: start;
   gap: 16px;
   margin: 0 auto;
   padding: 10px 0 64px;
 }
 
-.home-feed-exact.has-recommendations {
+.sidebar-layout .home-feed-exact.has-recommendations {
   max-width: var(--app-feed-width);
 }
 
-.home-feed-exact__main,
-.inline-post-composer,
-.feed-post-skeleton,
-.v1-post-card-outer {
+.sidebar-layout .home-feed-exact__main,
+.sidebar-layout .home-feed-exact .inline-post-composer,
+.sidebar-layout .home-feed-exact .feed-post-skeleton,
+.sidebar-layout .home-feed-exact .v1-post-card-outer {
+  min-width: 0;
   width: 100%;
   max-width: var(--app-feed-width);
 }
 
-.home-feed-exact .inline-post-composer,
-.home-feed-exact .feed-post-skeleton,
-.home-feed-exact .v1-post-card-outer,
-.home-feed-exact .recommendation-slider {
+.sidebar-layout .home-feed-exact .inline-post-composer,
+.sidebar-layout .home-feed-exact .feed-post-skeleton,
+.sidebar-layout .home-feed-exact .v1-post-card-outer,
+.sidebar-layout .home-feed-exact .recommendation-slider {
   margin-right: 0;
   margin-left: 0;
 }
 
-.home-feed-exact .inline-post-composer {
+.sidebar-layout .home-feed-exact .inline-post-composer {
   margin-top: 0;
   padding: 16px 18px;
 }
 
-.home-feed-exact .v1-post-card-outer {
+.sidebar-layout .home-feed-exact .v1-post-card-outer {
   padding-right: 0;
   padding-left: 0;
 }
 
-.home-feed-exact__rail {
+.sidebar-layout .home-feed-exact__rail {
   align-self: start;
+  min-width: 0;
 }
 
-.recommendation-rail {
+.sidebar-layout .home-feed-exact .recommendation-rail {
   top: 10px;
 }
 
@@ -86,7 +91,7 @@
     --app-shell-offset: max(0px, calc((100vw - var(--app-shell-max)) / 2));
   }
 
-  .sidebar-layout__content {
+  .sidebar-layout > .sidebar-layout__content {
     width: min(var(--app-content-max), calc(100vw - var(--app-sidebar-width) - var(--app-sidebar-gap)));
     margin-left: calc(var(--app-shell-offset) + var(--app-sidebar-width) + var(--app-sidebar-gap));
     padding-top: 0;
@@ -111,30 +116,30 @@
 }
 
 @media (min-width: 1200px) {
-  .home-feed-exact.has-recommendations {
+  .sidebar-layout .home-feed-exact.has-recommendations {
     width: min(100%, calc(var(--app-feed-width) + var(--app-sidebar-gap) + var(--app-rail-width)));
     max-width: calc(var(--app-feed-width) + var(--app-sidebar-gap) + var(--app-rail-width));
     grid-template-columns: minmax(0, var(--app-feed-width)) var(--app-rail-width);
   }
 
-  .home-feed-exact__rail {
+  .sidebar-layout .home-feed-exact.has-recommendations > .home-feed-exact__rail {
     display: block;
   }
 
-  .recommendation-slider {
+  .sidebar-layout .home-feed-exact.has-recommendations .recommendation-slider {
     display: none;
   }
 }
 
 @media (max-width: 1199px) {
-  .home-feed-exact {
+  .sidebar-layout .home-feed-exact {
     padding-right: 12px;
     padding-left: 12px;
   }
 }
 
 @media (max-width: 1023px) {
-  .sidebar-layout__content {
+  .sidebar-layout > .sidebar-layout__content {
     width: 100%;
     margin-left: 0;
     padding-top: 72px;
@@ -153,7 +158,7 @@
 }
 
 @media (max-width: 767px) {
-  .home-feed-exact {
+  .sidebar-layout .home-feed-exact {
     padding-top: 0;
   }
 }
