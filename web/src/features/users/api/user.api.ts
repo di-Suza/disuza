@@ -33,6 +33,29 @@ const mergeCurrentUser = (currentUser: AuthUser | null, updates: Partial<AuthUse
   return { ...currentUser, ...updates };
 };
 
+const updateProfileFollowState = (draft: ProfileUserResponse | undefined, followed: boolean) => {
+  const profileUser = draft?.profileUser;
+  if (!profileUser) return 0;
+
+  const wasFollowed = Boolean(profileUser.isFollowed);
+  const delta = followed ? (wasFollowed ? 0 : 1) : wasFollowed ? -1 : 0;
+
+  profileUser.isFollowed = followed;
+  profileUser.followersCount = Math.max(0, Number(profileUser.followersCount || 0) + delta);
+
+  return delta;
+};
+
+const getNextCurrentUserFollowState = (currentUser: AuthUser | null, delta: number): AuthUser | null => {
+  if (!currentUser || delta === 0) return null;
+
+  const currentFollowingCount = Number(currentUser.followingCount || 0);
+
+  return mergeCurrentUser(currentUser, {
+    followingCount: Math.max(0, currentFollowingCount + delta),
+  });
+};
+
 export const userApi = api.injectEndpoints({
   endpoints: (builder) => ({
     updatePassword: builder.mutation<MessageResponse, UpdatePasswordRequest>({
@@ -149,6 +172,25 @@ export const userApi = api.injectEndpoints({
         url: `/user/followUser/${userId}`,
         method: 'POST',
       }),
+      async onQueryStarted(userId, { dispatch, getState, queryFulfilled }) {
+        const previousUser = getCurrentUser(getState);
+        let followDelta = 0;
+        const profilePatch = dispatch(
+          userApi.util.updateQueryData('getProfileUser', userId, (draft) => {
+            followDelta = updateProfileFollowState(draft, true);
+          }),
+        );
+        const nextUser = getNextCurrentUserFollowState(previousUser, followDelta);
+
+        if (nextUser) dispatch(setUser(nextUser));
+
+        try {
+          await queryFulfilled;
+        } catch {
+          profilePatch.undo();
+          if (previousUser) dispatch(setUser(previousUser));
+        }
+      },
       invalidatesTags: (_result, _error, userId) => [
         { type: 'ProfileUser', id: userId },
         'Followers',
@@ -162,6 +204,25 @@ export const userApi = api.injectEndpoints({
         url: `/user/unfollowUser/${userId}`,
         method: 'DELETE',
       }),
+      async onQueryStarted(userId, { dispatch, getState, queryFulfilled }) {
+        const previousUser = getCurrentUser(getState);
+        let followDelta = 0;
+        const profilePatch = dispatch(
+          userApi.util.updateQueryData('getProfileUser', userId, (draft) => {
+            followDelta = updateProfileFollowState(draft, false);
+          }),
+        );
+        const nextUser = getNextCurrentUserFollowState(previousUser, followDelta);
+
+        if (nextUser) dispatch(setUser(nextUser));
+
+        try {
+          await queryFulfilled;
+        } catch {
+          profilePatch.undo();
+          if (previousUser) dispatch(setUser(previousUser));
+        }
+      },
       invalidatesTags: (_result, _error, userId) => [
         { type: 'ProfileUser', id: userId },
         'Followers',

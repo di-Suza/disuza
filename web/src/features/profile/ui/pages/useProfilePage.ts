@@ -109,7 +109,7 @@ export const useProfilePage = () => {
     isListOpen,
     isLoading,
     isReportOpen,
-    isMutating: isFollowLoading || isUnfollowLoading || isBlockLoading || isUnblockLoading,
+    isMutating: isBlockLoading || isUnblockLoading,
     isOwnProfile,
     isProfileError: isError,
     listMode,
