@@ -144,7 +144,7 @@
 .profile-preview-header {
   overflow: hidden;
   border: 1px solid var(--border-primary);
-  border-radius: 28px;
+  border-radius: 12px;
   background: var(--surface);
   box-shadow: var(--shadow-elevated);
 }
@@ -265,7 +265,7 @@
   display: block;
   min-width: 0;
   border: 1px solid var(--border-secondary);
-  border-radius: 16px;
+  border-radius: 10px;
   background: var(--surface);
   color: var(--text-primary);
   padding: 12px;
@@ -315,7 +315,7 @@ button.profile-preview-stat:hover:not(:disabled) {
 
 .profile-preview-header__actions .button {
   min-height: 44px;
-  border-radius: 999px;
+  border-radius: 10px;
   font-weight: 600;
 }
 
@@ -333,7 +333,7 @@ button.profile-preview-stat:hover:not(:disabled) {
 .profile-preview-heatmap {
   overflow: hidden;
   border: 1px solid var(--border-primary);
-  border-radius: 28px;
+  border-radius: 12px;
   background: var(--surface);
   box-shadow: var(--shadow-elevated);
 }
@@ -348,7 +348,7 @@ button.profile-preview-stat:hover:not(:disabled) {
 .profile-preview-section,
 .profile-page-panel .profile-posts-section {
   border: 1px solid var(--border-secondary);
-  border-radius: 24px;
+  border-radius: 12px;
   background: var(--surface);
   padding: 20px;
   box-shadow: var(--shadow-media);
@@ -374,7 +374,7 @@ button.profile-preview-stat:hover:not(:disabled) {
   height: 40px;
   flex: 0 0 auto;
   place-items: center;
-  border-radius: 16px;
+  border-radius: 10px;
   background: rgba(16, 185, 129, 0.12);
   color: var(--accent);
 }
@@ -399,7 +399,7 @@ button.profile-preview-stat:hover:not(:disabled) {
   align-items: start;
   gap: 12px;
   border: 1px solid var(--border-secondary);
-  border-radius: 16px;
+  border-radius: 10px;
   background: var(--bg-main);
   padding: 12px;
 }
@@ -696,7 +696,7 @@ button.profile-preview-stat:hover:not(:disabled) {
   height: 38px;
   place-items: center;
   border: 1px solid var(--border-secondary);
-  border-radius: 999px;
+  border-radius: 10px;
   background: var(--bg-main);
   color: var(--text-secondary);
   transition: border-color 160ms ease, background 160ms ease, color 160ms ease;
@@ -782,7 +782,7 @@ button.profile-preview-stat:hover:not(:disabled) {
 
 .profile-hero__actions--v1 .button {
   min-height: 46px;
-  border-radius: 999px;
+  border-radius: 10px;
 }
 
 .profile-hero__follow.button--secondary {
@@ -796,7 +796,7 @@ button.profile-preview-stat:hover:not(:disabled) {
 .profile-hero__unavailable,
 .profile-hero__unblock {
   min-width: 180px;
-  border-radius: 999px;
+  border-radius: 10px;
 }
 
 .profile-hero__unavailable {
@@ -892,7 +892,7 @@ button.profile-preview-stat:hover:not(:disabled) {
   align-items: flex-start;
   gap: 4px;
   border: 1px solid var(--border-secondary);
-  border-radius: 16px;
+  border-radius: 10px;
   background: var(--bg-main);
   padding: 16px;
 }
@@ -904,7 +904,7 @@ button.profile-preview-stat:hover:not(:disabled) {
   flex: 0 0 auto;
   place-items: center;
   margin-top: 4px;
-  border-radius: 16px;
+  border-radius: 10px;
   background: rgba(16, 185, 129, 0.12);
   color: var(--accent);
   font-style: normal;
