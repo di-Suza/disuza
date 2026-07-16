@@ -82,6 +82,7 @@
   display: none;
   min-height: 0;
   flex: 1 1 auto;
+  flex-direction: column;
   overflow: hidden;
   border: 1px solid var(--border-primary);
   border-radius: 12px;
@@ -129,12 +130,13 @@
 }
 
 .app-sidebar.is-expanded .app-sidebar__panel {
-  display: block;
+  display: flex;
 }
 
 .app-sidebar__items {
   display: flex;
   min-height: 0;
+  flex: 0 0 auto;
   flex-direction: column;
   justify-content: flex-start;
   gap: 8px;
@@ -150,9 +152,12 @@
   gap: 12px;
   border: 1px solid transparent;
   border-radius: 8px;
+  background: transparent;
   padding: 0 12px;
   color: var(--text-secondary);
+  font: inherit;
   text-decoration: none;
+  text-align: left;
   transition: color 180ms ease, transform 180ms ease, background 180ms ease;
 }
 
@@ -184,6 +189,14 @@
   line-height: 1;
 }
 
+.app-sidebar__profile-avatar {
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--border-secondary);
+  border-radius: 8px;
+  object-fit: cover;
+}
+
 .app-sidebar__label {
   overflow: hidden;
   max-width: 150px;
@@ -211,6 +224,27 @@
   transform: none;
 }
 
+.app-sidebar__footer {
+  margin-top: auto;
+  border-top: 1px solid var(--border-primary);
+  padding: 12px;
+}
+
+.app-sidebar__logout {
+  color: #fca5a5;
+}
+
+.app-sidebar__logout:hover:not(:disabled) {
+  border-color: rgba(239, 68, 68, 0.34);
+  background: rgba(239, 68, 68, 0.1);
+  color: #fecaca;
+}
+
+.app-sidebar__logout:disabled {
+  cursor: not-allowed;
+  opacity: 0.62;
+}
+
 .app-bottom-nav {
   display: none !important;
 }
@@ -220,7 +254,7 @@
   .app-sidebar.is-expanded {
     inset: 16px auto auto 0;
     width: 264px;
-    height: auto;
+    height: calc(100vh - 32px);
     max-height: calc(100vh - 32px);
     overflow: visible;
     gap: 14px;
@@ -244,7 +278,7 @@
   }
 
   .app-sidebar__panel {
-    display: block;
+    display: flex;
   }
 
   .app-sidebar__feed-switcher {
