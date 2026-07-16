@@ -31,7 +31,7 @@ const DEFAULT_PROFILE_PICTURE: ProfilePicture = {
   fileId: '0',
 };
 
-const PROFESSIONAL_FIELDS = ['skills', 'experiences', 'educations', 'interests', 'languages'] as const;
+const PROFESSIONAL_FIELDS = ['skills', 'experiences', 'educations', 'handles', 'interests', 'languages'] as const;
 
 type ProfessionalField = typeof PROFESSIONAL_FIELDS[number];
 

@@ -973,7 +973,8 @@
 
 .portfolio-timeline-editor-v1 article > span { display: grid; min-width: 0; flex: 1; gap: 4px; }
 .portfolio-timeline-editor-v1 article strong { overflow-wrap: anywhere; color: var(--text-primary); font-size: 16px; }
-.portfolio-timeline-editor-v1 article small { display: flex; align-items: center; gap: 6px; color: var(--text-secondary); font-size: 13px; }
+.portfolio-timeline-editor-v1 article small { display: flex; min-width: 0; align-items: center; gap: 6px; overflow-wrap: anywhere; color: var(--text-secondary); font-size: 13px; }
+.portfolio-timeline-editor-v1 article small svg { flex: 0 0 auto; }
 
 .portfolio-timeline-editor-v1 article > button {
   display: grid;
@@ -1169,7 +1170,9 @@
 .portfolio-preview-profile-section h2 { margin: 0; color: var(--text-primary); font-size: 20px; }
 .portfolio-preview-profile-copy { margin: 0; color: var(--text-secondary); font-size: 14px; line-height: 28px; white-space: pre-line; }
 .portfolio-preview-profile-chips { display: flex; flex-wrap: wrap; gap: 8px; }
-.portfolio-preview-profile-chips span { display: inline-flex; border: 1px solid var(--border-secondary); border-radius: 999px; background: var(--bg-main); color: var(--text-primary); padding: 6px 12px; font-size: 14px; font-weight: 600; }
+.portfolio-preview-profile-chips span,
+.portfolio-preview-profile-chips a { display: inline-flex; border: 1px solid var(--border-secondary); border-radius: 999px; background: var(--bg-main); color: var(--text-primary); padding: 6px 12px; font-size: 14px; font-weight: 600; text-decoration: none; }
+.portfolio-preview-profile-chips a:hover { border-color: color-mix(in srgb, var(--accent) 45%, transparent); color: var(--accent); }
 
 .portfolio-preview-profile-gallery { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; border: 1px solid var(--border-secondary); border-radius: 16px; background: var(--bg-main); padding: 12px; }
 .portfolio-preview-post-v1 { cursor: default; }

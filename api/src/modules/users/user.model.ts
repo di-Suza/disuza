@@ -33,6 +33,10 @@ type User = {
     timePeriod: string;
     course: string;
   }>;
+  handles: Array<{
+    label: string;
+    link: string;
+  }>;
   interests: string[];
   languages: string[];
   followersCount: number;
@@ -113,6 +117,15 @@ const userSchema = new mongoose.Schema<User, UserModel>(
           collegeName: { type: String, default: '' },
           timePeriod: { type: String, default: '' },
           course: { type: String, default: '' },
+        },
+      ],
+      default: [],
+    },
+    handles: {
+      type: [
+        {
+          label: { type: String, default: '' },
+          link: { type: String, default: '' },
         },
       ],
       default: [],

@@ -29,6 +29,17 @@ import '@/app/layouts/ProductShell.css';
 const avatarUrl = (url: unknown): string | null => (typeof url === 'string' && url.trim() ? url : null);
 const listToChips = (items: unknown): string[] => Array.isArray(items) ? items.filter((item): item is string => typeof item === 'string') : [];
 const listToRecords = <T,>(items: unknown): T[] => Array.isArray(items) ? items.filter((item): item is T => typeof item === 'object' && item !== null) : [];
+const listToHandles = (items: unknown): Array<{ label: string; link: string }> => (
+  Array.isArray(items)
+    ? items
+      .map((item) => (typeof item === 'object' && item !== null ? item as Record<string, unknown> : {}))
+      .map((handle) => ({
+        label: typeof handle.label === 'string' ? handle.label.trim() : '',
+        link: typeof handle.link === 'string' ? handle.link.trim() : '',
+      }))
+      .filter((handle) => handle.label && handle.link)
+    : []
+);
 const formatAddress = (address: unknown): string => {
   const record = typeof address === 'object' && address !== null ? address as Record<string, unknown> : {};
 
@@ -144,6 +155,7 @@ const ProfilePage = () => {
 
   const image = avatarUrl(profileUser.profilePicture?.url);
   const skills = listToChips(profileUser.skills);
+  const handles = listToHandles(profileUser.handles);
   const interests = listToChips(profileUser.interests);
   const languages = listToChips(profileUser.languages);
   const experiences = listToRecords<{ companyName?: string; role?: string; timePeriod?: string }>(profileUser.experiences);
@@ -289,6 +301,17 @@ const ProfilePage = () => {
               <section className="profile-card">
                 <div className="profile-card__header"><h2>Skills</h2><p>Technical strengths.</p></div>
                 <div className="chip-list">{skills.map((skill) => <span key={skill}>{skill}</span>)}</div>
+              </section>
+            )}
+
+            {handles.length > 0 && (
+              <section className="profile-card">
+                <div className="profile-card__header"><h2>Handles</h2><p>Links around the web.</p></div>
+                <div className="chip-list chip-list--links">
+                  {handles.map((handle, index) => (
+                    <a key={`${handle.label}-${index}`} href={handle.link} target="_blank" rel="noreferrer">{handle.label}</a>
+                  ))}
+                </div>
               </section>
             )}
 

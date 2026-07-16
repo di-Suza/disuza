@@ -2,10 +2,12 @@ import {
   BookOpen,
   Briefcase,
   Calendar,
+  ExternalLink,
   FileText,
   GraduationCap,
   Heart,
   Languages,
+  Link2,
   MapPin,
   Plus,
   Presentation,
@@ -27,6 +29,7 @@ type DashboardPortfolioEditorProps = Pick<
   DashboardPageState,
   | 'addEducation'
   | 'addExperience'
+  | 'addHandle'
   | 'generalForm'
   | 'handleGeneralSubmit'
   | 'handleProfessionalSubmit'
@@ -34,20 +37,23 @@ type DashboardPortfolioEditorProps = Pick<
   | 'professionalForm'
   | 'removeEducation'
   | 'removeExperience'
+  | 'removeHandle'
   | 'updateAddressField'
   | 'updateEducationField'
   | 'updateExperienceField'
+  | 'updateHandleField'
   | 'updateGeneralField'
   | 'updateProfessionalField'
   | 'user'
 >;
 
-type PortfolioTab = 'info' | 'skills' | 'experience' | 'education' | 'interests' | 'language';
+type PortfolioTab = 'info' | 'skills' | 'handles' | 'experience' | 'education' | 'interests' | 'language';
 type ProfessionalTextField = 'skills' | 'interests' | 'languages';
 
 const portfolioTabs: Array<{ id: PortfolioTab; label: string }> = [
   { id: 'info', label: 'Info' },
   { id: 'skills', label: 'Skills' },
+  { id: 'handles', label: 'Handles' },
   { id: 'experience', label: 'Experience' },
   { id: 'education', label: 'Education' },
   { id: 'interests', label: 'Interests' },
@@ -81,9 +87,14 @@ const hasEducation = (education: { collegeName: string; course: string; timePeri
   Boolean(education.collegeName.trim() || education.course.trim() || education.timePeriod.trim())
 );
 
+const hasHandle = (handle: { label: string; link: string }) => (
+  Boolean(handle.label.trim() || handle.link.trim())
+);
+
 const DashboardPortfolioEditor = ({
   addEducation,
   addExperience,
+  addHandle,
   generalForm,
   handleGeneralSubmit,
   handleProfessionalSubmit,
@@ -91,9 +102,11 @@ const DashboardPortfolioEditor = ({
   professionalForm,
   removeEducation,
   removeExperience,
+  removeHandle,
   updateAddressField,
   updateEducationField,
   updateExperienceField,
+  updateHandleField,
   updateGeneralField,
   updateProfessionalField,
   user,
@@ -103,6 +116,7 @@ const DashboardPortfolioEditor = ({
   const [focusedGeneralField, setFocusedGeneralField] = useState<'headline' | 'about' | 'city' | 'state' | 'country' | null>(null);
   const [addingExperienceIndex, setAddingExperienceIndex] = useState<number | null>(null);
   const [addingEducationIndex, setAddingEducationIndex] = useState<number | null>(null);
+  const [addingHandleIndex, setAddingHandleIndex] = useState<number | null>(null);
   const professionalFormRef = useRef<HTMLFormElement>(null);
   const addressIsFocused = focusedGeneralField === 'city' || focusedGeneralField === 'state' || focusedGeneralField === 'country';
 
@@ -138,6 +152,18 @@ const DashboardPortfolioEditor = ({
     setAddingEducationIndex(nextIndex);
   };
 
+  const beginAddingHandle = () => {
+    const emptyIndex = professionalForm.handles.findIndex((handle) => !hasHandle(handle));
+    if (emptyIndex >= 0) {
+      setAddingHandleIndex(emptyIndex);
+      return;
+    }
+
+    const nextIndex = professionalForm.handles.length;
+    addHandle();
+    setAddingHandleIndex(nextIndex);
+  };
+
   const experienceRows = professionalForm.experiences
     .map((experience, index) => ({ experience, index }))
     .filter(({ experience, index }) => index !== addingExperienceIndex && hasExperience(experience));
@@ -146,12 +172,19 @@ const DashboardPortfolioEditor = ({
     .map((education, index) => ({ education, index }))
     .filter(({ education, index }) => index !== addingEducationIndex && hasEducation(education));
 
+  const handleRows = professionalForm.handles
+    .map((handle, index) => ({ handle, index }))
+    .filter(({ handle, index }) => index !== addingHandleIndex && hasHandle(handle));
+
   const addingExperience = addingExperienceIndex === null
     ? null
     : professionalForm.experiences[addingExperienceIndex];
   const addingEducation = addingEducationIndex === null
     ? null
     : professionalForm.educations[addingEducationIndex];
+  const addingHandle = addingHandleIndex === null
+    ? null
+    : professionalForm.handles[addingHandleIndex];
 
   const finishAddingExperience = () => {
     if (!addingExperience?.companyName.trim() || !addingExperience.timePeriod.trim()) return;
@@ -162,6 +195,12 @@ const DashboardPortfolioEditor = ({
   const finishAddingEducation = () => {
     if (!addingEducation?.collegeName.trim() || !addingEducation.course.trim() || !addingEducation.timePeriod.trim()) return;
     setAddingEducationIndex(null);
+    scheduleProfessionalSave();
+  };
+
+  const finishAddingHandle = () => {
+    if (!addingHandle?.label.trim() || !addingHandle.link.trim()) return;
+    setAddingHandleIndex(null);
     scheduleProfessionalSave();
   };
 
@@ -292,6 +331,57 @@ const DashboardPortfolioEditor = ({
                   suggestions={skillSuggestions}
                   value={professionalForm.skills}
                 />
+              )}
+
+              {activeTab === 'handles' && (
+                <div className="portfolio-section-v1">
+                  <div className="portfolio-section-v1__label-row">
+                    <label>Handles<span>*</span></label>
+                    <small>{isBusy ? 'saving...' : 'Up to date!'}</small>
+                  </div>
+
+                  <div className="portfolio-timeline-editor-v1">
+                    {handleRows.map(({ handle, index }) => (
+                      <article key={`${handle.label}-${index}`}>
+                        <i><Link2 size={20} aria-hidden="true" /></i>
+                        <span>
+                          <strong>{handle.label}</strong>
+                          <small><ExternalLink size={14} aria-hidden="true" />{handle.link}</small>
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            removeHandle(index);
+                            scheduleProfessionalSave();
+                          }}
+                          aria-label="Remove handle"
+                        ><X size={16} aria-hidden="true" /></button>
+                      </article>
+                    ))}
+                  </div>
+
+                  {addingHandleIndex !== null && addingHandle ? (
+                    <div className="portfolio-add-form-v1">
+                      <label>Label<Input value={addingHandle.label} onChange={updateHandleField(addingHandleIndex, 'label')} placeholder="GitHub, Portfolio, LinkedIn..." autoFocus /></label>
+                      <label>Link<Input value={addingHandle.link} onChange={updateHandleField(addingHandleIndex, 'link')} placeholder="https://github.com/username" /></label>
+                      <div>
+                        <Button onClick={finishAddingHandle}>Add Handle</Button>
+                        <Button
+                          variant="secondary"
+                          onClick={() => {
+                            removeHandle(addingHandleIndex);
+                            setAddingHandleIndex(null);
+                          }}
+                        >Cancel</Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <button type="button" className="portfolio-add-button-v1" onClick={beginAddingHandle}>
+                      <i><Plus size={20} aria-hidden="true" /></i><span>Add Handle</span>
+                    </button>
+                  )}
+                  <p className="portfolio-field-v1__count">{handleRows.length} {handleRows.length === 1 ? 'handle' : 'handles'} added</p>
+                </div>
               )}
 
               {activeTab === 'interests' && (

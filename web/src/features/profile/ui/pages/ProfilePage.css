@@ -375,7 +375,8 @@
   gap: 8px;
 }
 
-.chip-list span {
+.chip-list span,
+.chip-list a {
   border: 1px solid var(--border-secondary);
   border-radius: 999px;
   background: rgba(59, 99, 255, 0.1);
@@ -383,6 +384,12 @@
   padding: 7px 11px;
   font-size: 13px;
   font-weight: 800;
+  text-decoration: none;
+}
+
+.chip-list a:hover {
+  border-color: color-mix(in srgb, var(--accent) 45%, transparent);
+  color: var(--accent);
 }
 
 .profile-timeline-list {

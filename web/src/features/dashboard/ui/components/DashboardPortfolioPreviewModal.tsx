@@ -8,6 +8,7 @@ import {
   Grid2X2,
   Heart,
   Languages,
+  Link2,
   Loader2,
   MapPin,
   MessageCircle,
@@ -29,7 +30,7 @@ import { createPortal } from 'react-dom';
 import { useGetAllPostsQuery } from '@/features/posts/api/post.api';
 import { getPostMedia, isVideoMedia } from '@/features/posts/model/post.helpers';
 import type { Post } from '@/features/posts/model/post.types';
-import type { UserProfile } from '@/features/users/model/user.types';
+import type { PortfolioHandle, UserProfile } from '@/features/users/model/user.types';
 import { useLockBodyScroll } from '@/shared/hooks/useLockBodyScroll';
 import Button from '@/shared/ui/Button';
 import ContributionHeatmap from './ContributionHeatmap';
@@ -49,6 +50,18 @@ type PreviewSectionProps = {
 
 const listOfStrings = (value: unknown): string[] => (
   Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string' && Boolean(item.trim())) : []
+);
+
+const listOfHandles = (value: unknown): PortfolioHandle[] => (
+  Array.isArray(value)
+    ? value
+      .map((item) => (typeof item === 'object' && item !== null ? item as Partial<PortfolioHandle> : {}))
+      .map((handle) => ({
+        label: typeof handle.label === 'string' ? handle.label.trim() : '',
+        link: typeof handle.link === 'string' ? handle.link.trim() : '',
+      }))
+      .filter((handle): handle is PortfolioHandle => Boolean(handle.label && handle.link))
+    : []
 );
 
 const formatAddress = (address: UserProfile['address']): string => (
@@ -122,6 +135,7 @@ const DashboardPortfolioPreviewModal = ({ isOpen, onClose, user }: DashboardPort
   const projectPosts = posts.filter((post) => post.isProjectPost === true);
   const normalPosts = posts.filter((post) => post.isProjectPost !== true);
   const skills = listOfStrings(user.skills);
+  const handles = listOfHandles(user.handles);
   const interests = listOfStrings(user.interests);
   const languages = listOfStrings(user.languages);
   const experiences = Array.isArray(user.experiences) ? [...user.experiences].reverse() : [];
@@ -183,6 +197,16 @@ const DashboardPortfolioPreviewModal = ({ isOpen, onClose, user }: DashboardPort
 
               {skills.length > 0 && (
                 <PreviewSection icon={Code2} title="Skills"><div className="portfolio-preview-profile-chips">{skills.map((skill) => <span key={skill}>{skill}</span>)}</div></PreviewSection>
+              )}
+
+              {handles.length > 0 && (
+                <PreviewSection icon={Link2} title="Handles">
+                  <div className="portfolio-preview-profile-chips">
+                    {handles.map((handle, index) => (
+                      <a key={`${handle.label}-${index}`} href={handle.link} target="_blank" rel="noreferrer">{handle.label}</a>
+                    ))}
+                  </div>
+                </PreviewSection>
               )}
 
               {projectPosts.length > 0 && <PreviewPostSection icon={Briefcase} posts={projectPosts} title="Projects" />}
