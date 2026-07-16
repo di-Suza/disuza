@@ -101,10 +101,10 @@ class CommentRepository {
     ]);
   }
 
-  findUserActivity(userId: string | Types.ObjectId, page: number, limit: number) {
+  findUserActivity(userId: string | Types.ObjectId, page: number, limit: number, skipLimit = limit) {
     return CommentModel.find({ user: userId })
       .sort({ createdAt: -1 })
-      .skip((page - 1) * limit)
+      .skip((page - 1) * skipLimit)
       .limit(limit)
       .populate({ path: 'post', select: { media: { $slice: 1 }, caption: 1, _id: 1, user: 1 } })
       .populate({

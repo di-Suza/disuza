@@ -128,10 +128,10 @@ class ChatRepository {
     return MessageModel.findOne({ conversationId }).sort({ createdAt: -1 }).select('text createdAt sender').lean();
   }
 
-  findFeedbackActivity(userId: string | Types.ObjectId, page: number, limit: number) {
+  findFeedbackActivity(userId: string | Types.ObjectId, page: number, limit: number, skipLimit = limit) {
     return MessageModel.find({ sender: userId, isFeedback: true })
       .sort({ createdAt: -1 })
-      .skip((page - 1) * limit)
+      .skip((page - 1) * skipLimit)
       .limit(limit)
       .populate({
         path: 'feedbackOn._id',
