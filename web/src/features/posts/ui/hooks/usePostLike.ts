@@ -37,7 +37,7 @@ export const usePostLike = (post: Post) => {
   const isLikeUpdating = isLiking || isUnliking;
 
   const toggleLike = useCallback(async () => {
-    if (!post._id || isLikeUpdating) return;
+    if (!post._id) return;
 
     const previousState = likeState;
     const nextLiked = !previousState.isLiked;
@@ -53,7 +53,7 @@ export const usePostLike = (post: Post) => {
       setLikeState(previousState);
       showError(getErrorMessage(error));
     }
-  }, [isLikeUpdating, likePost, likeState, post._id, showError, unlikePost]);
+  }, [likePost, likeState, post._id, showError, unlikePost]);
 
   return {
     isLiked: likeState.isLiked,

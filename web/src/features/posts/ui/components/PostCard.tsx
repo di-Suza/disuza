@@ -120,7 +120,7 @@ const PostCard = ({ className, fallbackAuthor, hideFeedbackAction = false, post,
   const [currentIndex, setCurrentIndex] = useState(0);
   const [deletePost, { isLoading: isDeleting }] = useDeletePostMutation();
   const { data: fullPostData, isFetching: isPostFetching } = useGetPostQuery(post._id, { skip: !isEditOpen });
-  const { isLiked, isLikeUpdating, likesCount, toggleLike } = usePostLike(post);
+  const { isLiked, likesCount, toggleLike } = usePostLike(post);
   const { isReposted, isRepostUpdating, repostsCount, toggleRepost } = usePostRepost(post);
   const { isSaved, isSaveUpdating, markSaved, toggleSave } = usePostSave(post);
 
@@ -385,7 +385,7 @@ const PostCard = ({ className, fallbackAuthor, hideFeedbackAction = false, post,
 
         <section className="v1-post-card__actions rich-post-card__actions">
           <div className="rich-post-card__action-left">
-            <ActionItem label="Like" count={hideLikesCount ? undefined : Number(likesCount || 0)} active={isLiked} disabled={isLikeUpdating} onClick={toggleLike} icon={<Heart size={20} className={isLiked ? 'is-filled' : ''} />} />
+            <ActionItem label="Like" count={hideLikesCount ? undefined : Number(likesCount || 0)} active={isLiked} onClick={toggleLike} icon={<Heart size={20} className={isLiked ? 'is-filled' : ''} />} />
             {!commentsDisabled && <ActionItem label="Comment" count={Number(counts.comments || 0)} onClick={() => setCommentsOpen(true)} icon={<MessageCircle size={20} />} />}
             {!isOwner && <ActionItem label="Repost" count={Number(repostsCount || 0)} active={isReposted} disabled={isRepostUpdating} onClick={toggleRepost} icon={<Repeat2 size={20} />} />}
             {!hideFeedbackAction && !isOwner && ownerId && <ActionItem label="Feedback" count={Number(counts.feedbacks || 0)} onClick={() => setFeedbackOpen(true)} icon={<SendHorizontal size={20} />} />}

@@ -91,11 +91,17 @@ export const useCommentModal = ({ isOpen, onClose, post }: UseCommentModalOption
     event?.preventDefault();
 
     const text = commentText.trim();
+    const previousText = commentText;
+    const previousReplyTarget = replyTarget;
 
     if (!text) {
       setEmptyError(true);
       return;
     }
+
+    setCommentText('');
+    setReplyTarget(null);
+    setEmptyError(false);
 
     try {
       await postComment({
@@ -103,14 +109,12 @@ export const useCommentModal = ({ isOpen, onClose, post }: UseCommentModalOption
         comment: text,
         ...(replyTarget?._id ? { parentCommentId: replyTarget._id } : {}),
       }).unwrap();
-
-      setCommentText('');
-      setReplyTarget(null);
-      setEmptyError(false);
     } catch (apiError) {
+      setCommentText(previousText);
+      setReplyTarget(previousReplyTarget);
       showError(getErrorMessage(apiError));
     }
-  }, [commentText, post._id, postComment, replyTarget?._id, showError]);
+  }, [commentText, post._id, postComment, replyTarget, showError]);
 
   const handleDeleteComment = useCallback(async (commentId: string, parentCommentId?: string | null) => {
     try {
