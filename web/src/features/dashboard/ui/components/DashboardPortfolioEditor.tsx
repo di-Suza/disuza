@@ -74,8 +74,8 @@ const inputChange = (value: string): ChangeEvent<HTMLInputElement> => ({
   target: { value },
 } as ChangeEvent<HTMLInputElement>);
 
-const hasExperience = (experience: { companyName: string; timePeriod: string }) => (
-  Boolean(experience.companyName.trim() || experience.timePeriod.trim())
+const hasExperience = (experience: { companyName: string; role: string; timePeriod: string }) => (
+  Boolean(experience.companyName.trim() || experience.role.trim() || experience.timePeriod.trim())
 );
 
 const hasEducation = (education: { collegeName: string; course: string; timePeriod: string }) => (
@@ -347,6 +347,7 @@ const DashboardPortfolioEditor = ({
                         <i><Briefcase size={20} aria-hidden="true" /></i>
                         <span>
                           <strong>{experience.companyName}</strong>
+                          {experience.role && <small><Briefcase size={14} aria-hidden="true" />{experience.role}</small>}
                           <small><Calendar size={14} aria-hidden="true" />{experience.timePeriod}</small>
                         </span>
                         <button
@@ -364,6 +365,7 @@ const DashboardPortfolioEditor = ({
                   {addingExperienceIndex !== null && addingExperience ? (
                     <div className="portfolio-add-form-v1">
                       <label>Company Name<Input value={addingExperience.companyName} onChange={updateExperienceField(addingExperienceIndex, 'companyName')} placeholder="Google, Microsoft, Startup Inc..." autoFocus /></label>
+                      <label>Role<Input value={addingExperience.role} onChange={updateExperienceField(addingExperienceIndex, 'role')} placeholder="Frontend Developer, SDE Intern..." /></label>
                       <label>Time Period<Input value={addingExperience.timePeriod} onChange={updateExperienceField(addingExperienceIndex, 'timePeriod')} placeholder="Jan 2022 - Present" /></label>
                       <div>
                         <Button onClick={finishAddingExperience}>Add Experience</Button>
