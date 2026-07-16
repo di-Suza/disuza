@@ -1,5 +1,11 @@
-import type { AuthUser, ProfilePicture } from '@/features/auth/model/auth.types';
+import type { AuthUser, ProfilePicture, UserAddress } from '@/features/auth/model/auth.types';
 import type { Post } from '@/features/posts/model/post.types';
+
+export type PortfolioAddress = {
+  city: string;
+  state: string;
+  country: string;
+};
 
 export type PortfolioExperience = {
   companyName: string;
@@ -51,11 +57,13 @@ export type UpdateIdentityResponse = {
 export type UpdateGeneralInfoRequest = {
   headline?: string;
   about?: string;
+  address?: UserAddress;
 };
 
 export type UpdateGeneralInfoResponse = {
   headline: string;
   about: string;
+  address: UserAddress;
 };
 
 export type UpdateProfessionalInfoRequest = Partial<{

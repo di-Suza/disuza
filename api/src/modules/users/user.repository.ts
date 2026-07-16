@@ -1,10 +1,12 @@
 import type { Types } from 'mongoose';
 
-import UserModel, { type ProfilePicture, type User, type UserDocument } from './user.model.js';
+import UserModel, { type ProfilePicture, type User, type UserAddress, type UserDocument } from './user.model.js';
 
 type CreateUserInput = Pick<User, 'userName' | 'email'> & Partial<Pick<User, 'password' | 'profilePicture' | 'isGoogleUser' | 'role'>>;
 
-type GeneralInfoUpdate = Partial<Pick<User, 'headline' | 'about'>>;
+type GeneralInfoUpdate = Partial<Pick<User, 'headline' | 'about'>> & {
+  address?: UserAddress;
+};
 
 type ProfessionalInfoUpdate = Partial<Pick<User, 'skills' | 'experiences' | 'educations' | 'interests' | 'languages'>>;
 
@@ -29,7 +31,7 @@ class UserRepository {
 
   findPublicById(id: string | Types.ObjectId) {
     return UserModel.findOne({ _id: id, active: { $ne: false } })
-      .select('_id userName email role profilePicture headline about followersCount followingCount postsCount projectsCount profileContributions active isGoogleUser lastLoginAt')
+      .select('_id userName email role profilePicture headline about address followersCount followingCount postsCount projectsCount profileContributions active isGoogleUser lastLoginAt')
       .lean();
   }
 
@@ -90,7 +92,7 @@ class UserRepository {
       { _id: userId, active: { $ne: false } },
       { $set: data },
       { new: true, runValidators: true },
-    ).select('headline about');
+    ).select('headline about address');
   }
 
   async updateProfessionalInfo(userId: string | Types.ObjectId, data: ProfessionalInfoUpdate) {

@@ -7,6 +7,12 @@ type ProfilePicture = {
   fileId: string;
 };
 
+type UserAddress = {
+  city: string;
+  state: string;
+  country: string;
+};
+
 type User = {
   userName: string;
   email: string;
@@ -15,6 +21,7 @@ type User = {
   profilePicture: ProfilePicture;
   headline: string;
   about: string;
+  address: UserAddress;
   skills: string[];
   experiences: Array<{
     companyName: string;
@@ -83,6 +90,11 @@ const userSchema = new mongoose.Schema<User, UserModel>(
     },
     headline: { type: String, default: '' },
     about: { type: String, default: '' },
+    address: {
+      city: { type: String, default: '' },
+      state: { type: String, default: '' },
+      country: { type: String, default: '' },
+    },
     skills: { type: [String], default: [] },
     experiences: {
       type: [
@@ -144,5 +156,5 @@ const userSchema = new mongoose.Schema<User, UserModel>(
 
 const UserModel = mongoose.models.User as UserModel || mongoose.model<User, UserModel>('User', userSchema, 'users');
 
-export { type ProfilePicture, type User, type UserDocument };
+export { type ProfilePicture, type User, type UserAddress, type UserDocument };
 export default UserModel;

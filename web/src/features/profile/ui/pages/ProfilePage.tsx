@@ -3,6 +3,7 @@ import {
   Flag,
   Loader2,
   LockOpen,
+  MapPin,
   MoreVertical,
   RefreshCw,
   SendHorizontal,
@@ -26,6 +27,14 @@ import { useProfilePage } from './useProfilePage';
 const avatarUrl = (url: unknown): string | null => (typeof url === 'string' && url.trim() ? url : null);
 const listToChips = (items: unknown): string[] => Array.isArray(items) ? items.filter((item): item is string => typeof item === 'string') : [];
 const listToRecords = <T,>(items: unknown): T[] => Array.isArray(items) ? items.filter((item): item is T => typeof item === 'object' && item !== null) : [];
+const formatAddress = (address: unknown): string => {
+  const record = typeof address === 'object' && address !== null ? address as Record<string, unknown> : {};
+
+  return [record.city, record.state, record.country]
+    .map((item) => (typeof item === 'string' ? item.trim() : ''))
+    .filter(Boolean)
+    .join(', ');
+};
 
 const BlockConfirmModal = ({
   isLoading,
@@ -144,6 +153,7 @@ const ProfilePage = () => {
   const canSendFeedback = canReportProfile && Boolean(profileUser._id && profileUser._id !== currentUserId);
   const profileBlockedByViewer = Boolean(profileUser.isBlocked);
   const profileBlockedViewer = Boolean(profileUser.hasBlockedMe);
+  const profileAddress = formatAddress(profileUser.address);
 
   const handleOpenReport = () => {
     setProfileMenuOpen(false);
@@ -221,6 +231,7 @@ const ProfilePage = () => {
                   </div>
                 </div>
                 <p>{profileUser.headline || 'DevLoopFeed developer'}</p>
+                {profileAddress && <p className="profile-hero__address"><MapPin size={14} aria-hidden="true" />{profileAddress}</p>}
                 {profileBlockedViewer && (
                   <div className="profile-hero__notice">
                     <ShieldAlert size={16} aria-hidden="true" />

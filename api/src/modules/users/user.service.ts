@@ -20,7 +20,7 @@ import likeRepository, { type LikeRepository } from '../likes/like.repository.js
 import notificationService, { type NotificationService } from '../notifications/notification.service.js';
 import postRepository, { type PostRepository } from '../posts/post.repository.js';
 import accountDeletionVerificationRepository, { type AccountDeletionVerificationRepository } from './accountDeletionVerification.repository.js';
-import type { ProfilePicture } from './user.model.js';
+import type { ProfilePicture, UserAddress } from './user.model.js';
 import userRepository, { type ProfessionalInfoUpdate, type UserRepository } from './user.repository.js';
 import blockRepository, { type BlockRepository } from './block/block.repository.js';
 import blockService, { type BlockService } from './block/block.service.js';
@@ -41,6 +41,8 @@ type IdentityUpdateInput = {
   profilePictureUrl?: string;
   profilePictureFileId?: string;
 };
+
+type AddressInput = Partial<Record<keyof UserAddress, unknown>>;
 
 class UserService {
   constructor(
@@ -189,8 +191,16 @@ class UserService {
     };
   }
 
-  async updateGeneralInfo(userId: string, headline?: string, about?: string) {
-    const updateData: { headline?: string; about?: string } = {};
+  private normalizeAddress(address: AddressInput): UserAddress {
+    return {
+      city: typeof address.city === 'string' ? address.city.trim() : '',
+      state: typeof address.state === 'string' ? address.state.trim() : '',
+      country: typeof address.country === 'string' ? address.country.trim() : '',
+    };
+  }
+
+  async updateGeneralInfo(userId: string, headline?: string, about?: string, address?: AddressInput) {
+    const updateData: { headline?: string; about?: string; address?: UserAddress } = {};
 
     if (typeof headline === 'string') {
       updateData.headline = headline.trim();
@@ -200,8 +210,12 @@ class UserService {
       updateData.about = about.trim();
     }
 
+    if (address && typeof address === 'object') {
+      updateData.address = this.normalizeAddress(address);
+    }
+
     if (Object.keys(updateData).length === 0) {
-      throw new BadRequestError('Please provide either headline or about to update!');
+      throw new BadRequestError('Please provide headline, about, or address to update!');
     }
 
     const updatedUser = await this.users.updateGeneralInfo(userId, updateData);
@@ -213,6 +227,7 @@ class UserService {
     return {
       headline: updatedUser.headline,
       about: updatedUser.about,
+      address: updatedUser.address,
     };
   }
 

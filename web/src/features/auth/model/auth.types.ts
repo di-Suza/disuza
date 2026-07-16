@@ -5,6 +5,12 @@ export type ProfilePicture = {
   fileId?: string;
 };
 
+export type UserAddress = {
+  city?: string;
+  state?: string;
+  country?: string;
+};
+
 export type AuthUser = {
   _id: string;
   userName: string;
@@ -13,6 +19,7 @@ export type AuthUser = {
   profilePicture?: ProfilePicture;
   headline?: string;
   about?: string;
+  address?: UserAddress;
   isGoogleUser?: boolean;
   active?: boolean;
   createdAt?: string;
