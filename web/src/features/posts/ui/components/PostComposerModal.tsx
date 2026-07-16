@@ -112,6 +112,38 @@ const PostComposerModal = ({ isOpen, isPostLoading = false, mode, onClose, post 
                 />
               </section>
 
+              {(!isEditMode || showProjectLinks) && (
+                <section className="post-composer-v1__project">
+                  <label>
+                    <span className="post-composer-v1__project-main">
+                      <span><Code2 size={17} aria-hidden="true" /></span>
+                      <span><strong>Project post</strong><small>Requires live demo and GitHub repository</small></span>
+                    </span>
+                    {!isEditMode && (
+                      <span className={isProjectPost ? 'post-composer-v1__switch is-active' : 'post-composer-v1__switch'}>
+                        <input type="checkbox" checked={isProjectPost} onChange={(event) => setIsProjectPost(event.target.checked)} />
+                        <i />
+                      </span>
+                    )}
+                  </label>
+
+                  {showProjectLinks && (
+                    <div className="post-composer-v1__links">
+                      <label>
+                        <span>Live Demo Link</span>
+                        <span className="post-composer-v1__input-icon"><Link2 size={16} aria-hidden="true" /></span>
+                        <Input type="url" value={projectLinks.liveDemoUrl} onChange={updateProjectLink('liveDemoUrl')} placeholder="https://your-demo.com" />
+                      </label>
+                      <label>
+                        <span>GitHub Repository Link</span>
+                        <span className="post-composer-v1__input-icon"><GitFork size={16} aria-hidden="true" /></span>
+                        <Input type="url" value={projectLinks.repositoryUrl} onChange={updateProjectLink('repositoryUrl')} placeholder="https://github.com/username/repo" />
+                      </label>
+                    </div>
+                  )}
+                </section>
+              )}
+
               <section>
                 <div className="post-composer-v1__section-heading">
                   <label>Media</label>
@@ -208,38 +240,6 @@ const PostComposerModal = ({ isOpen, isPostLoading = false, mode, onClose, post 
                   <p className="post-composer-v1__hint">Add a label and URL when you want to attach a resource.</p>
                 )}
               </section>
-
-              {(!isEditMode || showProjectLinks) && (
-                <section className="post-composer-v1__project">
-                  <label>
-                    <span className="post-composer-v1__project-main">
-                      <span><Code2 size={17} aria-hidden="true" /></span>
-                      <span><strong>Project post</strong><small>Requires live demo and GitHub repository</small></span>
-                    </span>
-                    {!isEditMode && (
-                      <span className={isProjectPost ? 'post-composer-v1__switch is-active' : 'post-composer-v1__switch'}>
-                        <input type="checkbox" checked={isProjectPost} onChange={(event) => setIsProjectPost(event.target.checked)} />
-                        <i />
-                      </span>
-                    )}
-                  </label>
-
-                  {showProjectLinks && (
-                    <div className="post-composer-v1__links">
-                      <label>
-                        <span>Live Demo Link</span>
-                        <span className="post-composer-v1__input-icon"><Link2 size={16} aria-hidden="true" /></span>
-                        <Input type="url" value={projectLinks.liveDemoUrl} onChange={updateProjectLink('liveDemoUrl')} placeholder="https://your-demo.com" />
-                      </label>
-                      <label>
-                        <span>GitHub Repository Link</span>
-                        <span className="post-composer-v1__input-icon"><GitFork size={16} aria-hidden="true" /></span>
-                        <Input type="url" value={projectLinks.repositoryUrl} onChange={updateProjectLink('repositoryUrl')} placeholder="https://github.com/username/repo" />
-                      </label>
-                    </div>
-                  )}
-                </section>
-              )}
             </div>
 
             <footer className="post-composer-v1__footer">
