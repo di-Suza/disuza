@@ -169,7 +169,6 @@ const ProfilePage = () => {
     followersCount,
     following,
     followingCount,
-    goToDashboard,
     handleBlockToggle,
     handleFollowToggle,
     isFetching,
@@ -190,15 +189,7 @@ const ProfilePage = () => {
   } = useProfilePage();
 
   if (isOwnProfile) {
-    return (
-      <main className="dashboard-shell">
-        <section className="state-panel">
-          <p className="state-panel__eyebrow">Own profile</p>
-          <h1>This profile is managed from dashboard.</h1>
-          <Button onClick={goToDashboard}>Open dashboard</Button>
-        </section>
-      </main>
-    );
+    return null;
   }
 
   if (isLoading) {

@@ -71,8 +71,7 @@ const PostComposerModal = ({ isOpen, isPostLoading = false, mode, onClose, post 
   if (!isOpen) return null;
 
   const submitLabel = isSubmitting ? 'Saving...' : isEditMode ? 'Save changes' : 'Post';
-  const showProjectLinks = canEditProjectLinks && (isProjectPost || isEditingProjectPost);
-  const projectLinksRequired = showProjectLinks;
+  const projectLinksRequired = canEditProjectLinks && (isProjectPost || isEditingProjectPost);
   const isPostEnabled = !isSubmitting && (isEditMode || hasComposerContent);
 
   return (
@@ -116,12 +115,12 @@ const PostComposerModal = ({ isOpen, isPostLoading = false, mode, onClose, post 
                 />
               </section>
 
-              {(!isEditMode || showProjectLinks) && (
+              {(!isEditMode || projectLinksRequired) && (
                 <section className="post-composer-v1__project">
                   <label>
                     <span className="post-composer-v1__project-main">
                       <span><Code2 size={17} aria-hidden="true" /></span>
-                      <span><strong>Project post</strong><small>Requires live demo and GitHub repository</small></span>
+                      <span><strong>Is project post</strong><small>Requires live link and GitHub repo link before posting</small></span>
                     </span>
                     {!isEditMode && (
                       <span className={isProjectPost ? 'post-composer-v1__switch is-active' : 'post-composer-v1__switch'}>
@@ -137,10 +136,10 @@ const PostComposerModal = ({ isOpen, isPostLoading = false, mode, onClose, post 
                     )}
                   </label>
 
-                  {showProjectLinks && (
+                  {projectLinksRequired && (
                     <div className="post-composer-v1__links">
                       <label>
-                        <span>Live Demo Link *</span>
+                        <span>Live Link *</span>
                         <span className="post-composer-v1__input-icon"><Link2 size={16} aria-hidden="true" /></span>
                         <Input
                           id={liveDemoInputId}
@@ -152,7 +151,7 @@ const PostComposerModal = ({ isOpen, isPostLoading = false, mode, onClose, post 
                         />
                       </label>
                       <label>
-                        <span>GitHub Repository Link *</span>
+                        <span>GitHub Repo Link *</span>
                         <span className="post-composer-v1__input-icon"><GitFork size={16} aria-hidden="true" /></span>
                         <Input
                           id={repositoryInputId}

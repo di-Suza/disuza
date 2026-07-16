@@ -65,6 +65,12 @@ export const useProfilePage = () => {
     skip: !profileUserId || isOwnProfile,
   });
 
+  useEffect(() => {
+    if (isOwnProfile) {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [isOwnProfile, navigate]);
+
   const profileUser = data?.profileUser || null;
   const [followUser, { isLoading: isFollowLoading }] = useFollowUserMutation();
   const [unfollowUser, { isLoading: isUnfollowLoading }] = useUnfollowUserMutation();
@@ -156,7 +162,6 @@ export const useProfilePage = () => {
     }
   }, [blockUser, profileUser, showError, showSuccess, unblockUser]);
 
-  const goToDashboard = useCallback(() => navigate('/dashboard', { replace: true }), [navigate]);
   const displayProfileUser = useMemo(() => {
     if (!profileUser) return null;
     if (!followState || followState.userId !== profileUser._id) return profileUser;
@@ -177,7 +182,6 @@ export const useProfilePage = () => {
     followersCount: displayProfileUser?.followersCount || 0,
     following: followingQuery.data?.following || [],
     followingCount: displayProfileUser?.followingCount || 0,
-    goToDashboard,
     handleBlockToggle,
     handleFollowToggle,
     isBlockLoading,
@@ -210,7 +214,6 @@ export const useProfilePage = () => {
     followersQuery.isFetching,
     followingQuery.data?.following,
     followingQuery.isFetching,
-    goToDashboard,
     handleBlockToggle,
     handleFollowToggle,
     isBlockLoading,
