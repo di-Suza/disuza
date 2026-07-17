@@ -1,6 +1,5 @@
 import { api } from '@/shared/api/api';
 import { getSocket } from '@/shared/services/socket';
-import { setLastReceivedMessage } from '../state/chatSlice';
 import type {
   ChatConversation,
   ChatMessage,
@@ -270,68 +269,8 @@ export const chatApi = api.injectEndpoints({
         conversations: response.conversations.map(normalizeChatConversation),
       }),
       providesTags: ['Conversations'],
-      async onCacheEntryAdded(_arg, { dispatch, getState, updateCachedData, cacheDataLoaded, cacheEntryRemoved }) {
+      async onCacheEntryAdded(_arg, { dispatch, updateCachedData, cacheDataLoaded, cacheEntryRemoved }) {
         const socket = getSocket();
-        const handleReceiveMessage = (payload: unknown) => {
-          const message = normalizeChatMessage(payload);
-          if (!message) return;
-
-          const currentUserId = (getState() as { auth?: { user?: { _id?: string } } }).auth?.user?._id;
-          const chatState = (getState() as {
-            chat?: {
-              isChatWindowActive?: boolean;
-              selectedChatId?: string | null;
-            };
-          }).chat;
-          const isActiveConversation = chatState?.isChatWindowActive && chatState.selectedChatId === message.conversationId;
-          let conversationWasPresent = false;
-
-          if (isActiveConversation) {
-            dispatch(
-              chatApi.util.updateQueryData('getMessages', { conversationId: message.conversationId, page: 1 }, (draft) => {
-                const exists = draft.messages.some((draftMessage) => draftMessage._id === message._id);
-                if (!exists) draft.messages.push(message);
-              }),
-            );
-          }
-
-          updateCachedData((draft) => {
-            const conversationIndex = draft.conversations.findIndex((conversation) => conversation._id === message.conversationId);
-            conversationWasPresent = conversationIndex !== -1;
-
-            if (conversationIndex === -1) return;
-
-            draft.conversations[conversationIndex].lastMessage = {
-              _id: message._id,
-              text: message.text,
-              sender: message.sender,
-              createdAt: message.createdAt,
-              messageType: message.messageType,
-              sharedPost: message.sharedPost,
-              attachment: message.attachment,
-            };
-            draft.conversations[conversationIndex].updatedAt = message.createdAt || new Date().toISOString();
-            if (message.sender !== currentUserId) {
-              draft.conversations[conversationIndex].isUnread = true;
-              draft.conversations[conversationIndex].unreadCount = Number(draft.conversations[conversationIndex].unreadCount || 0) + 1;
-            } else {
-              draft.conversations[conversationIndex].isUnread = false;
-              draft.conversations[conversationIndex].unreadCount = 0;
-            }
-            const [updatedConversation] = draft.conversations.splice(conversationIndex, 1);
-            draft.conversations.unshift(updatedConversation);
-            sortConversations(draft.conversations);
-          });
-
-          if (!conversationWasPresent) {
-            dispatch(chatApi.util.invalidateTags(['Conversations']));
-          }
-
-          if (message.sender !== currentUserId && !isActiveConversation) {
-            dispatch(setLastReceivedMessage(message));
-          }
-
-        };
         const handleMessageUnsent = (payload: unknown) => {
           const unsentMessage = normalizeUnsendPayload(payload);
           if (!unsentMessage) return;
@@ -343,8 +282,6 @@ export const chatApi = api.injectEndpoints({
 
         try {
           await cacheDataLoaded;
-          socket.off('receive-message', handleReceiveMessage);
-          socket.on('receive-message', handleReceiveMessage);
           socket.off('message-unsent', handleMessageUnsent);
           socket.on('message-unsent', handleMessageUnsent);
           socket.off('connect', handleReconnect);
@@ -356,7 +293,6 @@ export const chatApi = api.injectEndpoints({
         }
 
         await cacheEntryRemoved;
-        socket.off('receive-message', handleReceiveMessage);
         socket.off('message-unsent', handleMessageUnsent);
         socket.off('connect', handleReconnect);
         socket.io.off('reconnect', handleReconnect);

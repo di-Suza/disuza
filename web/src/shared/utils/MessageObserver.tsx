@@ -10,11 +10,12 @@ const MessageObserver = () => {
   const { showNotify } = useToast();
 
   useEffect(() => {
-    if (!lastReceivedMessage?.senderInfo) return;
+    if (!lastReceivedMessage) return;
 
-    const senderName = lastReceivedMessage.senderInfo.userName || 'Someone';
-    const image = lastReceivedMessage.senderInfo.profilePicture?.url;
-    let message = `Sent you message - "${lastReceivedMessage.text}"!`;
+    const senderName = lastReceivedMessage.senderInfo?.userName || 'Someone';
+    const image = lastReceivedMessage.senderInfo?.profilePicture?.url;
+    const preview = lastReceivedMessage.text?.trim() || (lastReceivedMessage.attachment ? 'Sent you an attachment' : 'Sent you a message');
+    let message = `Sent you message - "${preview}"!`;
 
     if (lastReceivedMessage.isFeedback) {
       message = lastReceivedMessage.feedbackOn?.type === 'User'
