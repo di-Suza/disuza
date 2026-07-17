@@ -17,7 +17,7 @@ import ResultsPanel from '@/features/collab/ui/components/ResultsPanel';
 import UsersPanel from '@/features/collab/ui/components/UsersPanel';
 import useAudioCall from '@/features/collab/ui/hooks/useAudioCall';
 import useCollabRoom from '@/features/collab/ui/hooks/useCollabRoom';
-import type { CodeExecutionPayload, CodeRunResult, ProblemLanguage, RoomSyncPayload } from '@/features/collab/model/collab.types';
+import type { CodeExecutionPayload, CodeRunResult, ProblemLanguage, RoomSyncPayload, RoomSyncUser } from '@/features/collab/model/collab.types';
 import { useAppSelector } from '@/app/store/hooks';
 import FullPageLoader from '@/shared/components/FullPageLoader/FullPageLoader';
 import { useToast } from '@/shared/hooks/useToast';
@@ -39,6 +39,14 @@ const isCodeExecutionPayload = (payload: unknown): payload is CodeExecutionPaylo
   && payload !== null
   && typeof (payload as CodeExecutionPayload).status === 'string'
   && typeof (payload as CodeExecutionPayload).roomId === 'string'
+);
+
+const getSyncUserId = (user?: RoomSyncUser) => user?.id || user?._id || '';
+
+const toNumberArray = (value: unknown) => (
+  Array.isArray(value) && value.every((item) => typeof item === 'number')
+    ? value
+    : null
 );
 
 const CollabRoomPage = () => {
@@ -225,21 +233,23 @@ const CollabRoomPage = () => {
     const handleYjsCodeUpdate = (payload: unknown) => {
       if (!isRoomSyncPayload(payload) || payload.roomId !== roomId || payload.type !== 'YJS_CODE_UPDATE') return;
       const data = payload.data || {};
-      const changedBy = data.changedBy as { id?: string; _id?: string } | undefined;
-      if (changedBy?.id === currentUserId || changedBy?._id === currentUserId) return;
+      const changedBy = (data.changedBy || data.updatedBy) as RoomSyncUser | undefined;
+      if (getSyncUserId(changedBy) === currentUserId) return;
       if (data.roomProblemId !== selectedRoomProblem?._id) return;
 
       const yText = yTextRef.current;
-      if (Array.isArray(data.update) && yDocRef.current) {
-        Y.applyUpdate(yDocRef.current, Uint8Array.from(data.update as number[]), 'remote');
+      const update = toNumberArray(data.update);
+
+      if (update && yDocRef.current) {
+        Y.applyUpdate(yDocRef.current, Uint8Array.from(update), 'remote');
+        const nextCode = yTextRef.current?.toString() || (typeof data.code === 'string' ? data.code : '');
+        setCode((previousCode) => (previousCode === nextCode ? previousCode : nextCode));
+        lastEmittedCodeRef.current = nextCode;
       } else if (typeof data.code === 'string' && yText) {
         yText.doc?.transact(() => {
           yText.delete(0, yText.length);
           yText.insert(0, data.code as string);
         }, 'remote');
-      }
-
-      if (typeof data.code === 'string') {
         setCode((previousCode) => (previousCode === data.code ? previousCode : data.code as string));
         lastEmittedCodeRef.current = data.code;
       }

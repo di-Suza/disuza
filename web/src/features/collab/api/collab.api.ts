@@ -7,6 +7,7 @@ import type {
   CollabStatusResponse,
   RoomProblem,
   RoomSyncPayload,
+  RoomSyncUser,
 } from '../model/collab.types';
 
 const isRoomSyncPayload = (payload: unknown): payload is RoomSyncPayload => (
@@ -28,6 +29,8 @@ const getRoomProblem = (value: unknown): RoomProblem | null => (
     ? value as RoomProblem
     : null
 );
+
+const getSyncUserId = (user?: RoomSyncUser) => user?.id || user?._id || '';
 
 export const collabApi = api.injectEndpoints({
   endpoints: (builder) => ({
@@ -105,7 +108,8 @@ export const collabApi = api.injectEndpoints({
             }
 
             if (payload.type === 'CODE_CHANGE' || payload.type === 'YJS_CODE_UPDATE') {
-              if ((payload.data?.changedBy as { id?: string; _id?: string } | undefined)?.id === currentUserId()) return;
+              const changedBy = (payload.data?.changedBy || payload.data?.updatedBy) as RoomSyncUser | undefined;
+              if (getSyncUserId(changedBy) === currentUserId()) return;
               const roomProblemId = typeof payload.data?.roomProblemId === 'string' ? payload.data.roomProblemId : null;
               const code = typeof payload.data?.code === 'string' ? payload.data.code : null;
               if (!roomProblemId || code === null) return;
