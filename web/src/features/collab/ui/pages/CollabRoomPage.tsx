@@ -96,7 +96,6 @@ const CollabRoomPage = () => {
   const yDocRef = useRef<Y.Doc | null>(null);
   const yTextRef = useRef<Y.Text | null>(null);
   const pendingYUpdatesRef = useRef<Uint8Array[]>([]);
-  const yjsEmitTimerRef = useRef<number | null>(null);
   const codeRef = useRef('// Write your code here...');
   const { roomId } = useParams();
   const currentUserId = useAppSelector((state) => state.auth.user?._id);
@@ -251,13 +250,8 @@ const CollabRoomPage = () => {
         yTextRef.current = null;
       }
       pendingYUpdatesRef.current = [];
-      if (yjsEmitTimerRef.current) window.clearTimeout(yjsEmitTimerRef.current);
     };
   }, [selectedRoomProblem?._id]);
-
-  useEffect(() => () => {
-    if (yjsEmitTimerRef.current) window.clearTimeout(yjsEmitTimerRef.current);
-  }, []);
 
   useEffect(() => {
     const socket = getSocket();
@@ -349,14 +343,7 @@ const CollabRoomPage = () => {
     if (!yText) return;
 
     syncYTextWithCode(yText, newCode, 'local');
-
-    if (yjsEmitTimerRef.current) window.clearTimeout(yjsEmitTimerRef.current);
-    const shouldEmitNow = /[\s;{}()[\],.]$/.test(newCode);
-    if (shouldEmitNow) {
-      emitYjsCodeChange();
-      return;
-    }
-    yjsEmitTimerRef.current = window.setTimeout(() => emitYjsCodeChange(), 300);
+    emitYjsCodeChange();
   };
 
   const handleLanguageChange = async (language: ProblemLanguage) => {
