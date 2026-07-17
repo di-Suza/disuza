@@ -93,10 +93,12 @@
 
 .messages-v1-create-menu-root {
   position: relative;
+  z-index: 120;
   flex: 0 0 auto;
 }
 
 .messages-v1-create-menu {
+  z-index: 140;
   top: 46px;
   right: 0;
 }

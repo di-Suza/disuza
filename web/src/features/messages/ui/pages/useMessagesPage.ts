@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks';
-import { useGetConversationsQuery, useGetMessagesQuery } from '@/features/messages/api/chat.api';
+import { chatApi, useGetMessagesQuery } from '@/features/messages/api/chat.api';
 import type { ChatConversation } from '@/features/messages/model/chat.types';
 import { setChatWindowActive, setSelectedChatInState } from '@/features/messages/state/chatSlice';
 import { getErrorMessage } from '@/shared/utils/getErrorMessage';
@@ -24,8 +24,10 @@ export const useMessagesPage = () => {
     error,
     isError,
     isLoading: getConversationsLoading,
-    refetch,
-  } = useGetConversationsQuery();
+  } = chatApi.endpoints.getConversations.useQueryState(undefined);
+  const refetch = useCallback(() => {
+    dispatch(chatApi.endpoints.getConversations.initiate(undefined, { forceRefetch: true }));
+  }, [dispatch]);
   const allConversations = useMemo(() => conversationsData?.conversations || [], [conversationsData?.conversations]);
   const selectedConversation = useMemo(
     () => allConversations.find((conversation) => conversation._id === selectedChatId) || null,

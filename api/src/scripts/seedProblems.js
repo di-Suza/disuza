@@ -1104,12 +1104,18 @@ const runSeed = async () => {
   try {
     console.log("🌱 Starting problem seed...");
     await database.connect();
-    
-    // Clear existing problems (optional - comment out if you want to keep them)
-    // await ProblemModel.deleteMany({});
-    
-    const inserted = await ProblemModel.insertMany(seedProblems);
-    console.log(`✅ Successfully seeded ${inserted.length} DSA problems into the database!`);
+
+    const result = await ProblemModel.bulkWrite(
+      seedProblems.map((problem) => ({
+        updateOne: {
+          filter: { title: problem.title },
+          update: { $set: problem },
+          upsert: true,
+        },
+      })),
+    );
+
+    console.log(`Seeded problems. Inserted: ${result.upsertedCount}, updated: ${result.modifiedCount}`);
     
     await database.disconnect();
     process.exit(0);

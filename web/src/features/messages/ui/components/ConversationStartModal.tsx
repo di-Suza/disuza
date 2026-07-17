@@ -1,5 +1,6 @@
 import { Check, Loader2, Search, UserRound, Users, X } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 
 import { useAppSelector } from '@/app/store/hooks';
 import { useCreateGroupMutation, useStartConversationMutation } from '@/features/messages/api/chat.api';
@@ -121,7 +122,7 @@ const ConversationStartModal = ({ isOpen, mode, onClose, onConversationReady }: 
     }
   };
 
-  return (
+  return createPortal(
     <div className="messages-v1-modal-backdrop" role="presentation" onMouseDown={onClose}>
       <section
         className="messages-v1-start-modal"
@@ -212,7 +213,8 @@ const ConversationStartModal = ({ isOpen, mode, onClose, onConversationReady }: 
           </Button>
         </footer>
       </section>
-    </div>
+    </div>,
+    document.body,
   );
 };
 
