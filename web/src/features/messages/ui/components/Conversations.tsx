@@ -122,7 +122,7 @@ const Conversations = ({ conversations, getConversationsLoading, handleChatSelec
         handleChatSelect(null);
       }
       setOpenMenuId(null);
-      showSuccess('Conversation removed from your inbox!');
+      showSuccess(chat.isGroup ? 'Group removed from your inbox!' : 'Conversation removed from your inbox!');
     } catch (error) {
       showError(getErrorMessage(error, 'Conversation could not be removed!'));
     }
@@ -231,7 +231,7 @@ const Conversations = ({ conversations, getConversationsLoading, handleChatSelec
                           <div className="messages-v1-menu messages-v1-conversation__menu" data-conversation-menu-root onClick={(event) => event.stopPropagation()}>
                             <button type="button" onClick={(event) => handleDeleteChat(event, chat)} disabled={deletingConversation}>
                               <Trash2 size={16} aria-hidden="true" />
-                              {deletingConversation ? 'Removing...' : 'Delete'}
+                              {deletingConversation ? 'Removing...' : chat.isGroup ? 'Leave' : 'Delete'}
                             </button>
                           </div>
                         )}
