@@ -17,7 +17,7 @@ import ResultsPanel from '@/features/collab/ui/components/ResultsPanel';
 import UsersPanel from '@/features/collab/ui/components/UsersPanel';
 import useAudioCall from '@/features/collab/ui/hooks/useAudioCall';
 import useCollabRoom from '@/features/collab/ui/hooks/useCollabRoom';
-import type { CodeExecutionPayload, CodeRunResult, ProblemLanguage, RoomSyncPayload, RoomSyncUser } from '@/features/collab/model/collab.types';
+import type { CodeExecutionPayload, CodeRunResult, ProblemLanguage, RoomSyncPayload } from '@/features/collab/model/collab.types';
 import { useAppSelector } from '@/app/store/hooks';
 import FullPageLoader from '@/shared/components/FullPageLoader/FullPageLoader';
 import { useToast } from '@/shared/hooks/useToast';
@@ -40,8 +40,6 @@ const isCodeExecutionPayload = (payload: unknown): payload is CodeExecutionPaylo
   && typeof (payload as CodeExecutionPayload).status === 'string'
   && typeof (payload as CodeExecutionPayload).roomId === 'string'
 );
-
-const getSyncUserId = (user?: RoomSyncUser) => user?.id || user?._id || '';
 
 const toNumberArray = (value: unknown) => (
   Array.isArray(value) && value.every((item) => typeof item === 'number')
@@ -264,32 +262,38 @@ const CollabRoomPage = () => {
   useEffect(() => {
     const socket = getSocket();
     const handleYjsCodeUpdate = (payload: unknown) => {
-      if (!isRoomSyncPayload(payload) || payload.roomId !== roomId || payload.type !== 'YJS_CODE_UPDATE') return;
+      if (
+        !isRoomSyncPayload(payload)
+        || payload.roomId !== roomId
+        || (payload.type !== 'YJS_CODE_UPDATE' && payload.type !== 'CODE_CHANGE')
+      ) return;
       const data = payload.data || {};
-      const changedBy = (data.changedBy || data.updatedBy) as RoomSyncUser | undefined;
-      if (getSyncUserId(changedBy) === currentUserId) return;
       if (data.roomProblemId !== selectedRoomProblem?._id) return;
 
       const yText = yTextRef.current;
+      const incomingCode = typeof data.code === 'string' ? data.code : null;
       const update = toNumberArray(data.update);
 
-      if (update && yDocRef.current) {
+      if (payload.type === 'YJS_CODE_UPDATE' && update && yDocRef.current) {
         Y.applyUpdate(yDocRef.current, Uint8Array.from(update), 'remote');
-        const nextCode = yTextRef.current?.toString() || (typeof data.code === 'string' ? data.code : '');
-        codeRef.current = nextCode;
-        setCode((previousCode) => (previousCode === nextCode ? previousCode : nextCode));
-      } else if (typeof data.code === 'string' && yText) {
-        syncYTextWithCode(yText, data.code, 'remote');
-        codeRef.current = data.code;
-        setCode((previousCode) => (previousCode === data.code ? previousCode : data.code as string));
+        const currentYText = yTextRef.current;
+        if (incomingCode !== null && currentYText && currentYText.toString() !== incomingCode) {
+          syncYTextWithCode(currentYText, incomingCode, 'remote');
+        }
+      } else if (incomingCode !== null && yText) {
+        syncYTextWithCode(yText, incomingCode, 'remote');
       }
+
+      const nextCode = incomingCode ?? yTextRef.current?.toString() ?? '';
+      codeRef.current = nextCode;
+      setCode((previousCode) => (previousCode === nextCode ? previousCode : nextCode));
     };
 
     socket.on('room_sync', handleYjsCodeUpdate);
     return () => {
       socket.off('room_sync', handleYjsCodeUpdate);
     };
-  }, [currentUserId, roomId, selectedRoomProblem?._id]);
+  }, [roomId, selectedRoomProblem?._id]);
 
   useEffect(() => {
     const socket = getSocket();
