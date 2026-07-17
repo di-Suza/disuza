@@ -16,6 +16,11 @@ type ServerToClientEvents = {
   room_sync_error: (payload: unknown) => void;
   code_execution: (payload: unknown) => void;
   call_signal: (payload: unknown) => void;
+  voice_state: (payload: unknown) => void;
+  voice_user_joined: (payload: unknown) => void;
+  voice_user_left: (payload: unknown) => void;
+  voice_media_state: (payload: unknown) => void;
+  voice_error: (payload: unknown) => void;
 };
 
 type ClientToServerEvents = {
@@ -25,6 +30,9 @@ type ClientToServerEvents = {
   code_change: (payload: Record<string, unknown>) => void;
   yjs_code_update: (payload: Record<string, unknown>) => void;
   call_signal: (payload: Record<string, unknown>) => void;
+  voice_join_room: (payload: Record<string, unknown>) => void;
+  voice_leave_room: (payload: Record<string, unknown>) => void;
+  voice_media_state: (payload: Record<string, unknown>) => void;
 };
 
 type AppSocket = Socket<ServerToClientEvents, ClientToServerEvents>;

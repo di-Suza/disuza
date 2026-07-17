@@ -1,20 +1,17 @@
-import { Mic, MicOff, PanelRightClose, Phone, PhoneOff, Users, X } from 'lucide-react';
+import { Mic, MicOff, PanelRightClose, PhoneOff, Users } from 'lucide-react';
 import type { RefObject } from 'react';
 
 import type { CollabParticipant } from '@/features/collab/model/collab.types';
 
 type UsersPanelProps = {
-  usersData: CollabParticipant[];
+  usersData: Array<CollabParticipant & { isInAudio?: boolean; micEnabled?: boolean }>;
   audioCallStatus: string;
+  audioParticipantCount: number;
   canStartAudioCall: boolean;
-  incomingCall: { fromUser?: CollabParticipant } | null;
   micEnabled: boolean;
-  remoteMicEnabled: boolean;
-  remoteAudioRef: RefObject<HTMLAudioElement | null>;
+  remoteAudioContainerRef: RefObject<HTMLDivElement | null>;
   onCollapse: () => void;
   startAudioCall: () => void;
-  acceptAudioCall: () => void;
-  rejectAudioCall: () => void;
   endAudioCall: () => void;
   toggleMic: () => void;
 };
@@ -22,29 +19,25 @@ type UsersPanelProps = {
 const UsersPanel = ({
   usersData,
   audioCallStatus,
+  audioParticipantCount,
   canStartAudioCall,
-  incomingCall,
   micEnabled,
-  remoteMicEnabled,
-  remoteAudioRef,
+  remoteAudioContainerRef,
   onCollapse,
   startAudioCall,
-  acceptAudioCall,
-  rejectAudioCall,
   endAudioCall,
   toggleMic,
 }: UsersPanelProps) => {
-  const isCallActive = ['calling', 'connecting', 'in_call'].includes(audioCallStatus);
-  const isRinging = audioCallStatus === 'ringing';
+  const isCallActive = ['connecting', 'in_call'].includes(audioCallStatus);
+  const isConnected = audioCallStatus === 'in_call';
   const callStatusText: Record<string, string> = {
-    calling: 'Calling your partner...',
     connecting: 'Connecting audio...',
-    in_call: 'Audio call connected',
+    in_call: `${audioParticipantCount} connected`,
   };
 
   return (
     <section className="collab-users-panel">
-      <audio ref={remoteAudioRef} autoPlay className="hidden" />
+      <div ref={remoteAudioContainerRef} className="hidden" />
       <header>
         <div>
           <Users size={20} aria-hidden="true" />
@@ -64,41 +57,36 @@ const UsersPanel = ({
             </div>
             <div>
               <strong>{user.userName || 'User'}</strong>
-              <p>{user.roomPresence === 'in_room' ? 'In Room' : 'Not In Room'}</p>
+              <p>
+                {user.roomPresence === 'in_room' ? 'In Room' : 'Not In Room'}
+                {user.isInAudio ? ` · Audio ${user.micEnabled === false ? 'muted' : 'on'}` : ''}
+              </p>
             </div>
           </article>
         ))}
       </div>
 
-      {isRinging && (
-        <div className="collab-call-box">
-          <p>{incomingCall?.fromUser?.userName || 'Your partner'} is calling</p>
-          <button type="button" onClick={acceptAudioCall}><Phone size={16} aria-hidden="true" />Accept</button>
-          <button type="button" className="is-danger" onClick={rejectAudioCall}><X size={16} aria-hidden="true" />Reject</button>
-        </div>
-      )}
-
       {isCallActive && (
         <div className="collab-call-box">
-          <p>{callStatusText[audioCallStatus] || 'Audio call'}</p>
-          {audioCallStatus === 'in_call' && <small>Partner mic: {remoteMicEnabled ? 'On' : 'Muted'}</small>}
-          <button type="button" disabled={audioCallStatus !== 'in_call'} onClick={toggleMic}>
+          <p>{callStatusText[audioCallStatus] || 'Audio channel'}</p>
+          <small>{isConnected ? 'Voice channel is active' : 'Preparing microphone...'}</small>
+          <button type="button" disabled={!isConnected} onClick={toggleMic}>
             {micEnabled ? <Mic size={16} aria-hidden="true" /> : <MicOff size={16} aria-hidden="true" />}
             {micEnabled ? 'Mute' : 'Unmute'}
           </button>
-          <button type="button" className="is-danger" onClick={endAudioCall}><PhoneOff size={16} aria-hidden="true" />End</button>
+          <button type="button" className="is-danger" onClick={endAudioCall}><PhoneOff size={16} aria-hidden="true" />Disconnect</button>
         </div>
       )}
 
-      {!isCallActive && !isRinging && canStartAudioCall && (
+      {!isCallActive && canStartAudioCall && (
         <button type="button" className="collab-audio-button" onClick={startAudioCall}>
           <Mic size={16} aria-hidden="true" />
-          <span>Connect with Audio</span>
+          <span>Connect with Audio{audioParticipantCount > 0 ? ` (${audioParticipantCount})` : ''}</span>
         </button>
       )}
 
-      {!isCallActive && !isRinging && !canStartAudioCall && (
-        <p className="collab-audio-note">Audio call is available when both users are in room.</p>
+      {!isCallActive && !canStartAudioCall && (
+        <p className="collab-audio-note">Audio is available after joining the room.</p>
       )}
     </section>
   );

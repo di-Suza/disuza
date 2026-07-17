@@ -29,7 +29,18 @@ type YjsCodeUpdatePayload = RoomPayload & {
   language?: string;
 };
 
+type VoicePayload = RoomPayload & {
+  peerId?: string;
+  micEnabled?: boolean;
+};
+
+type VoiceParticipant = PresenceUser & {
+  peerId: string;
+  micEnabled: boolean;
+};
+
 const activeRooms = new Map<string, Map<string, PresenceUser>>();
+const activeVoiceRooms = new Map<string, Map<string, VoiceParticipant>>();
 const activeCalls = new Map<string, string>();
 const callRingTimers = new Map<string, NodeJS.Timeout>();
 const codeSaveTimers = new Map<string, NodeJS.Timeout>();
@@ -60,6 +71,42 @@ function clearCallState(roomId: string): void {
   if (timer) clearTimeout(timer);
   callRingTimers.delete(roomId);
   activeCalls.delete(roomId);
+}
+
+function getVoicePresence(roomId: string) {
+  let roomUsers = activeVoiceRooms.get(roomId);
+
+  if (!roomUsers) {
+    roomUsers = new Map<string, VoiceParticipant>();
+    activeVoiceRooms.set(roomId, roomUsers);
+  }
+
+  return roomUsers;
+}
+
+function emitVoiceState(roomId: string, realtime: RealtimeService): void {
+  const users = Array.from(activeVoiceRooms.get(roomId)?.values() || []);
+  realtime.emitToRoom(roomId, 'voice_state', { roomId, users });
+}
+
+function removeVoiceUser(socket: AuthenticatedSocket, roomId: string, realtime: RealtimeService): void {
+  const roomUsers = activeVoiceRooms.get(roomId);
+  if (!roomUsers) return;
+
+  const removedUser = roomUsers.get(socket.user.id);
+  roomUsers.delete(socket.user.id);
+  socket.data.voiceRooms?.delete(roomId);
+
+  if (roomUsers.size === 0) {
+    activeVoiceRooms.delete(roomId);
+  }
+
+  realtime.emitToRoom(roomId, 'voice_user_left', {
+    roomId,
+    userId: socket.user.id,
+    user: removedUser,
+  });
+  emitVoiceState(roomId, realtime);
 }
 
 async function ensureRealtimeAccess(userId: string, roomId: string): Promise<boolean> {
@@ -115,6 +162,7 @@ function removeSocketFromRoom(socket: AuthenticatedSocket, roomId: string, realt
 
   socket.leave(roomId);
   socket.data.collabRooms?.delete(roomId);
+  removeVoiceUser(socket, roomId, realtime);
 
   realtime.emitToRoom(roomId, 'presence', {
     type: 'leave',
@@ -126,6 +174,7 @@ function removeSocketFromRoom(socket: AuthenticatedSocket, roomId: string, realt
 
 function collabHandler(socket: AuthenticatedSocket, realtime: RealtimeService): void {
   socket.data.collabRooms = socket.data.collabRooms || new Set<string>();
+  socket.data.voiceRooms = socket.data.voiceRooms || new Set<string>();
 
   socket.on('join_collab_room', (payload: RoomPayload = {}) => {
     void (async () => {
@@ -149,6 +198,10 @@ function collabHandler(socket: AuthenticatedSocket, realtime: RealtimeService): 
       const users = Array.from(roomUsers.values());
 
       socket.emit('presence_state', { roomId, users });
+      socket.emit('voice_state', {
+        roomId,
+        users: Array.from(activeVoiceRooms.get(roomId)?.values() || []),
+      });
       socket.to(roomId).emit('presence', {
         type: 'join',
         roomId,
@@ -166,6 +219,61 @@ function collabHandler(socket: AuthenticatedSocket, realtime: RealtimeService): 
   socket.on('leave_collab_room', (payload: RoomPayload = {}) => {
     if (!payload.roomId) return;
     removeSocketFromRoom(socket, payload.roomId, realtime);
+  });
+
+  socket.on('voice_join_room', (payload: VoicePayload = {}) => {
+    void (async () => {
+      const roomId = payload.roomId;
+      if (!roomId || !payload.peerId) return;
+
+      const canUseRealtime = await ensureRealtimeAccess(socket.user.id, roomId);
+      if (!canUseRealtime) return;
+
+      const voiceUsers = getVoicePresence(roomId);
+      const voiceUser: VoiceParticipant = {
+        ...toPresenceUser(socket),
+        peerId: payload.peerId,
+        micEnabled: payload.micEnabled ?? true,
+      };
+
+      voiceUsers.set(socket.user.id, voiceUser);
+      socket.data.voiceRooms!.add(roomId);
+      socket.to(roomId).emit('voice_user_joined', {
+        roomId,
+        user: voiceUser,
+      });
+      emitVoiceState(roomId, realtime);
+    })().catch((error) => {
+      socket.emit('voice_error', {
+        roomId: payload.roomId,
+        message: error instanceof Error ? error.message : 'Unable to connect audio.',
+      });
+    });
+  });
+
+  socket.on('voice_leave_room', (payload: RoomPayload = {}) => {
+    if (!payload.roomId) return;
+    removeVoiceUser(socket, payload.roomId, realtime);
+  });
+
+  socket.on('voice_media_state', (payload: VoicePayload = {}) => {
+    const roomId = payload.roomId;
+    if (!roomId) return;
+
+    const voiceUsers = activeVoiceRooms.get(roomId);
+    const currentUser = voiceUsers?.get(socket.user.id);
+    if (!voiceUsers || !currentUser) return;
+
+    const updatedUser = {
+      ...currentUser,
+      micEnabled: payload.micEnabled ?? currentUser.micEnabled,
+    };
+    voiceUsers.set(socket.user.id, updatedUser);
+    realtime.emitToRoom(roomId, 'voice_media_state', {
+      roomId,
+      user: updatedUser,
+    });
+    emitVoiceState(roomId, realtime);
   });
 
   socket.on('call_signal', (payload: CallSignalPayload = {}) => {
@@ -270,6 +378,8 @@ function collabHandler(socket: AuthenticatedSocket, realtime: RealtimeService): 
   socket.on('disconnect', () => {
     const rooms = Array.from((socket.data.collabRooms as Set<string> | undefined) ?? new Set<string>());
     rooms.forEach((roomId) => removeSocketFromRoom(socket, roomId, realtime));
+    const voiceRooms = Array.from((socket.data.voiceRooms as Set<string> | undefined) ?? new Set<string>());
+    voiceRooms.forEach((roomId) => removeVoiceUser(socket, roomId, realtime));
   });
 }
 

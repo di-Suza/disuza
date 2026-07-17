@@ -16,6 +16,7 @@ type AuthenticatedSocket = Socket & {
   user: RealtimeUser;
   data: Socket['data'] & {
     collabRooms?: Set<string>;
+    voiceRooms?: Set<string>;
   };
 };
 
