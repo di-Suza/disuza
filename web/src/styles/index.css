@@ -34,6 +34,31 @@
   --scrollbar-thumb-hover: rgba(91, 140, 255, 0.82);
   --shadow-elevated: 0 18px 50px rgba(0, 0, 0, 0.32);
   --shadow-media: 0 18px 34px rgba(0, 0, 0, 0.35);
+  --app-mobile-navbar-height: 64px;
+  --app-mobile-content-top: 80px;
+}
+
+:root[data-theme='light'] {
+  --primary: #3154d4;
+  --secondary: #4f7dff;
+  --accent: #3b63ff;
+  --bg-main: #f3f6fb;
+  --surface: #ffffff;
+  --surface-deep: #f8fafc;
+  --surface-muted: #eef4ff;
+  --surface-muted-hover: #dfe8ff;
+  --border-primary: #cfd9e8;
+  --border-secondary: #dce4ef;
+  --text-primary: #111827;
+  --text-secondary: #526071;
+  --text-soft: #263244;
+  --danger: #dc2626;
+  --warning: #3154d4;
+  --scrollbar-track: #e8eef7;
+  --scrollbar-thumb: rgba(59, 99, 255, 0.48);
+  --scrollbar-thumb-hover: rgba(49, 84, 212, 0.78);
+  --shadow-elevated: 0 18px 50px rgba(15, 23, 42, 0.12);
+  --shadow-media: 0 16px 34px rgba(15, 23, 42, 0.12);
 }
 
 * {
@@ -77,6 +102,65 @@ body,
 
 body {
   overflow-x: hidden;
+}
+
+:root[data-theme='light'] body {
+  background: var(--bg-main);
+}
+
+:root[data-theme='light'] .app-mobile-navbar,
+:root[data-theme='light'] .app-sidebar.is-expanded {
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  box-shadow: 0 18px 42px rgba(15, 23, 42, 0.14);
+}
+
+:root[data-theme='light'] .app-sidebar__header {
+  background: var(--surface);
+}
+
+:root[data-theme='light'] .messages-v1-page {
+  background: var(--bg-main);
+}
+
+:root[data-theme='light'] .messages-v1-sidebar,
+:root[data-theme='light'] .messages-v1-window {
+  background:
+    linear-gradient(180deg, rgba(59, 99, 255, 0.035), transparent 34%),
+    var(--surface);
+}
+
+:root[data-theme='light'] .messages-v1-sidebar__header,
+:root[data-theme='light'] .messages-v1-window__header,
+:root[data-theme='light'] .messages-v1-composer {
+  background: color-mix(in srgb, var(--surface) 86%, transparent);
+}
+
+:root[data-theme='light'] .messages-v1-search,
+:root[data-theme='light'] .messages-v1-date-divider span,
+:root[data-theme='light'] .messages-v1-composer__inner {
+  border-color: var(--border-secondary);
+  background: var(--surface-deep);
+}
+
+:root[data-theme='light'] .messages-v1-thread {
+  background:
+    linear-gradient(rgba(148, 163, 184, 0.16) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(148, 163, 184, 0.12) 1px, transparent 1px),
+    var(--surface);
+  background-size: 38px 38px;
+}
+
+:root[data-theme='light'] .messages-v1-composer .messages-v1-attach-button {
+  background: var(--surface-muted);
+  color: var(--text-secondary);
+}
+
+:root[data-theme='light'] .rich-post-card__code {
+  background: #f8fafc;
+}
+
+:root[data-theme='light'] .rich-post-card__code code {
+  color: #1e293b;
 }
 
 button,
