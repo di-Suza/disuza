@@ -122,7 +122,7 @@ const PostAnalyticsModal = ({ isOpen, onClose, postId }: PostAnalyticsModalProps
       { icon: <Repeat2 size={17} aria-hidden="true" />, label: 'Reposts', value: Number(counts?.reposts || 0) },
       { icon: <Share2 size={17} aria-hidden="true" />, label: 'Shares', value: Number(counts?.shares || 0) },
       { icon: <MousePointerClick size={17} aria-hidden="true" />, label: 'Link clicks', value: Number(counts?.linkClicks || 0) },
-    ];
+    ].filter((metric) => metric.value > 0);
   }, [overview?.counts]);
 
   const maxMetric = useMemo(() => Math.max(1, ...metrics.map((metric) => metric.value)), [metrics]);
@@ -173,11 +173,13 @@ const PostAnalyticsModal = ({ isOpen, onClose, postId }: PostAnalyticsModalProps
           </div>
         </header>
 
-        <div className="post-analytics-modal__metrics">
-          {metrics.map((metric) => (
-            <MetricCard key={metric.label} icon={metric.icon} label={metric.label} max={maxMetric} value={metric.value} />
-          ))}
-        </div>
+        {metrics.length > 0 && (
+          <div className="post-analytics-modal__metrics">
+            {metrics.map((metric) => (
+              <MetricCard key={metric.label} icon={metric.icon} label={metric.label} max={maxMetric} value={metric.value} />
+            ))}
+          </div>
+        )}
 
         <section className="post-analytics-modal__links">
           <div className="post-analytics-modal__section-title">

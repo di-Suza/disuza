@@ -3713,8 +3713,8 @@
 
 .post-analytics-modal__metrics {
   display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
-  gap: 8px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
 }
 
 .post-analytics-modal__metric {
@@ -3723,19 +3723,19 @@
   grid-template-columns: auto minmax(0, 1fr);
   align-items: center;
   min-width: 0;
-  column-gap: 8px;
-  row-gap: 8px;
+  column-gap: 10px;
+  row-gap: 9px;
   overflow: hidden;
   border: 1px solid var(--border-secondary);
   border-radius: 10px;
   background: var(--bg-main);
-  padding: 9px;
+  padding: 11px;
 }
 
 .post-analytics-modal__metric > span {
   display: grid;
-  width: 28px;
-  height: 28px;
+  width: 30px;
+  height: 30px;
   place-items: center;
   border-radius: 9px;
   background: rgba(59, 99, 255, 0.12);
@@ -3749,17 +3749,17 @@
 
 .post-analytics-modal__metric strong {
   color: var(--text-primary);
-  font-size: 20px;
+  font-size: 22px;
   line-height: 1;
 }
 
 .post-analytics-modal__metric small {
-  margin-top: 3px;
+  margin-top: 4px;
   color: var(--text-secondary);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 800;
 }
 
