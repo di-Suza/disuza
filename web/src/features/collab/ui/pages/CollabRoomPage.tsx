@@ -49,6 +49,36 @@ const toNumberArray = (value: unknown) => (
     : null
 );
 
+const syncYTextWithCode = (yText: Y.Text, nextCode: string, origin: 'local' | 'remote') => {
+  const currentCode = yText.toString();
+  if (currentCode === nextCode) return;
+
+  let prefixLength = 0;
+  const minLength = Math.min(currentCode.length, nextCode.length);
+  while (prefixLength < minLength && currentCode[prefixLength] === nextCode[prefixLength]) {
+    prefixLength += 1;
+  }
+
+  let currentSuffixIndex = currentCode.length - 1;
+  let nextSuffixIndex = nextCode.length - 1;
+  while (
+    currentSuffixIndex >= prefixLength
+    && nextSuffixIndex >= prefixLength
+    && currentCode[currentSuffixIndex] === nextCode[nextSuffixIndex]
+  ) {
+    currentSuffixIndex -= 1;
+    nextSuffixIndex -= 1;
+  }
+
+  const deleteLength = currentSuffixIndex - prefixLength + 1;
+  const insertText = nextCode.slice(prefixLength, nextSuffixIndex + 1);
+
+  yText.doc?.transact(() => {
+    if (deleteLength > 0) yText.delete(prefixLength, deleteLength);
+    if (insertText) yText.insert(prefixLength, insertText);
+  }, origin);
+};
+
 const CollabRoomPage = () => {
   const [code, setCode] = useState('// Write your code here...');
   const [results, setResults] = useState<CodeRunResult | null>(null);
@@ -69,6 +99,7 @@ const CollabRoomPage = () => {
   const yTextRef = useRef<Y.Text | null>(null);
   const pendingYUpdatesRef = useRef<Uint8Array[]>([]);
   const yjsEmitTimerRef = useRef<number | null>(null);
+  const codeRef = useRef('// Write your code here...');
   const { roomId } = useParams();
   const currentUserId = useAppSelector((state) => state.auth.user?._id);
   const [unselectProblem, { isLoading: isUnselecting }] = useUnselectProblemMutation();
@@ -90,7 +121,7 @@ const CollabRoomPage = () => {
   const selectedRoomProblem = roomDetails?.currentlySelectedProblem || null;
   const isSoloRoom = !roomDetails || roomDetails.roomType === 'personal' || roomDetails.realtimeDisabled;
   const usersData = isSoloRoom ? [] : roomDetails.conversationId?.participants || [];
-  const { usersWithPresence } = useCollabRoom({ roomId, usersData, currentUserId });
+  const { usersWithPresence } = useCollabRoom({ roomId: isSoloRoom ? undefined : roomId, usersData, currentUserId });
   const audioCall = useAudioCall({ roomId: isSoloRoom ? null : roomId, usersData: usersWithPresence, currentUserId });
   const otherUser = isSoloRoom ? null : usersData.find((item) => item._id !== currentUserId)?._id || null;
 
@@ -190,6 +221,7 @@ const CollabRoomPage = () => {
     yDocRef.current = yDoc;
     yTextRef.current = yText;
     pendingYUpdatesRef.current = [];
+    codeRef.current = initialCode;
     setCode(initialCode);
     setResults(null);
     lastEmittedCodeRef.current = initialCode;
@@ -200,6 +232,7 @@ const CollabRoomPage = () => {
     const handleYTextChange = (event: Y.YTextEvent) => {
       if (event.transaction.origin === 'local') return;
       const nextCode = yText.toString();
+      codeRef.current = nextCode;
       setCode((previousCode) => (previousCode === nextCode ? previousCode : nextCode));
     };
 
@@ -243,15 +276,12 @@ const CollabRoomPage = () => {
       if (update && yDocRef.current) {
         Y.applyUpdate(yDocRef.current, Uint8Array.from(update), 'remote');
         const nextCode = yTextRef.current?.toString() || (typeof data.code === 'string' ? data.code : '');
+        codeRef.current = nextCode;
         setCode((previousCode) => (previousCode === nextCode ? previousCode : nextCode));
-        lastEmittedCodeRef.current = nextCode;
       } else if (typeof data.code === 'string' && yText) {
-        yText.doc?.transact(() => {
-          yText.delete(0, yText.length);
-          yText.insert(0, data.code as string);
-        }, 'remote');
+        syncYTextWithCode(yText, data.code, 'remote');
+        codeRef.current = data.code;
         setCode((previousCode) => (previousCode === data.code ? previousCode : data.code as string));
-        lastEmittedCodeRef.current = data.code;
       }
     };
 
@@ -289,40 +319,40 @@ const CollabRoomPage = () => {
     };
   }, [roomId, selectedRoomProblem?._id, showError]);
 
-  const emitYjsCodeChange = (newCode: string) => {
+  const emitYjsCodeChange = () => {
     if (!roomId || !selectedRoomProblem?._id) return;
-    if (lastEmittedCodeRef.current === newCode) return;
+    const codeToEmit = codeRef.current;
+    if (lastEmittedCodeRef.current === codeToEmit) return;
     if (pendingYUpdatesRef.current.length === 0) return;
 
-    lastEmittedCodeRef.current = newCode;
+    lastEmittedCodeRef.current = codeToEmit;
     const mergedUpdate = Y.mergeUpdates(pendingYUpdatesRef.current);
     pendingYUpdatesRef.current = [];
     getSocket().emit('yjs_code_update', {
       roomId,
       roomProblemId: selectedRoomProblem._id,
       update: Array.from(mergedUpdate),
-      code: newCode,
+      code: codeToEmit,
       language: selectedRoomProblem.language,
     });
   };
 
   const handleCodeChange = (newCode: string) => {
+    if (newCode === codeRef.current) return;
+    codeRef.current = newCode;
     setCode(newCode);
     const yText = yTextRef.current;
     if (!yText) return;
 
-    yText.doc?.transact(() => {
-      yText.delete(0, yText.length);
-      yText.insert(0, newCode);
-    }, 'local');
+    syncYTextWithCode(yText, newCode, 'local');
 
     if (yjsEmitTimerRef.current) window.clearTimeout(yjsEmitTimerRef.current);
     const shouldEmitNow = /[\s;{}()[\],.]$/.test(newCode);
     if (shouldEmitNow) {
-      emitYjsCodeChange(newCode);
+      emitYjsCodeChange();
       return;
     }
-    yjsEmitTimerRef.current = window.setTimeout(() => emitYjsCodeChange(newCode), 300);
+    yjsEmitTimerRef.current = window.setTimeout(() => emitYjsCodeChange(), 300);
   };
 
   const handleLanguageChange = async (language: ProblemLanguage) => {

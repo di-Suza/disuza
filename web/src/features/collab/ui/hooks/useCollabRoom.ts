@@ -34,7 +34,7 @@ const useCollabRoom = ({ roomId, usersData, currentUserId }: UseCollabRoomArgs) 
   const { showInfo } = useToast();
 
   useEffect(() => {
-    if (!roomId || !accessToken || usersData.length === 0) return undefined;
+    if (!roomId || !accessToken) return undefined;
 
     const socket = getSocket(accessToken);
     const joinRoom = () => {
@@ -108,7 +108,7 @@ const useCollabRoom = ({ roomId, usersData, currentUserId }: UseCollabRoomArgs) 
       socket.off('presence', handlePresence);
       socket.off('room_sync', handleRoomSyncToast);
     };
-  }, [accessToken, currentUserId, roomId, showInfo, usersData.length]);
+  }, [accessToken, currentUserId, roomId, showInfo]);
 
   const usersWithPresence = useMemo(() => usersData.map((user) => ({
     ...user,

@@ -7,7 +7,6 @@ import type {
   CollabStatusResponse,
   RoomProblem,
   RoomSyncPayload,
-  RoomSyncUser,
 } from '../model/collab.types';
 
 const isRoomSyncPayload = (payload: unknown): payload is RoomSyncPayload => (
@@ -29,8 +28,6 @@ const getRoomProblem = (value: unknown): RoomProblem | null => (
     ? value as RoomProblem
     : null
 );
-
-const getSyncUserId = (user?: RoomSyncUser) => user?.id || user?._id || '';
 
 export const collabApi = api.injectEndpoints({
   endpoints: (builder) => ({
@@ -67,9 +64,8 @@ export const collabApi = api.injectEndpoints({
       query: (roomId) => `/collab/room/${roomId}`,
       providesTags: (_result, _error, roomId) => [{ type: 'CollabRoom', id: roomId }],
       keepUnusedDataFor: 0,
-      async onCacheEntryAdded(roomId, { getState, updateCachedData, cacheDataLoaded, cacheEntryRemoved }) {
+      async onCacheEntryAdded(roomId, { updateCachedData, cacheDataLoaded, cacheEntryRemoved }) {
         const socket = getSocket();
-        const currentUserId = () => (getState() as { auth?: { user?: { _id?: string } } }).auth?.user?._id;
 
         const handleRoomSync = (payload: unknown) => {
           if (!isRoomSyncPayload(payload) || payload.roomId !== roomId) return;
@@ -105,21 +101,6 @@ export const collabApi = api.injectEndpoints({
               if (unselectedProblem) {
                 draft.data.problems = draft.data.problems.map((problem) => (problem._id === unselectedProblem._id ? unselectedProblem : problem));
               }
-            }
-
-            if (payload.type === 'CODE_CHANGE' || payload.type === 'YJS_CODE_UPDATE') {
-              const changedBy = (payload.data?.changedBy || payload.data?.updatedBy) as RoomSyncUser | undefined;
-              if (getSyncUserId(changedBy) === currentUserId()) return;
-              const roomProblemId = typeof payload.data?.roomProblemId === 'string' ? payload.data.roomProblemId : null;
-              const code = typeof payload.data?.code === 'string' ? payload.data.code : null;
-              if (!roomProblemId || code === null) return;
-
-              if (draft.data.roomDetails.currentlySelectedProblem?._id === roomProblemId) {
-                draft.data.roomDetails.currentlySelectedProblem.currentCode = code;
-              }
-
-              const roomProblem = draft.data.problems.find((problem) => problem._id === roomProblemId);
-              if (roomProblem) roomProblem.currentCode = code;
             }
 
             if (payload.type === 'LANG_CHANGE' || payload.type === 'RUN_COMPLETED') {
