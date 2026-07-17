@@ -5,6 +5,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { useAppSelector } from '@/app/store/hooks';
 import { useLogoutMutation } from '@/features/auth/api/auth.api';
 import PostComposerModal from '@/features/posts/ui/components/PostComposerModal';
+import logo from '@/shared/assets/images/logo.png';
 import useUnreadMessagesCount from '@/shared/hooks/useUnreadMessagesCount';
 import { useUnreadNotificationsCount } from '@/shared/hooks/useUnreadNotificationsCount';
 import { useToast } from '@/shared/hooks/useToast';
@@ -69,6 +70,64 @@ const Sidebar = () => {
 
   return (
     <>
+      <header className="app-mobile-navbar" aria-label="Compact navigation">
+        <button
+          type="button"
+          className="app-mobile-navbar__menu"
+          onClick={() => {
+            setExpanded(true);
+            setProfileMenuOpen(false);
+          }}
+          aria-label="Open sidebar"
+          aria-expanded={isExpanded}
+        >
+          <Menu size={22} aria-hidden="true" />
+        </button>
+
+        <Link to="/home" className="app-mobile-navbar__brand" aria-label="DevLoopFeed home">
+          <img src={logo} alt="DevLoopFeed" />
+        </Link>
+
+        <div className="app-mobile-navbar__profile">
+          <Link
+            to="/dashboard"
+            className="app-mobile-navbar__profile-link"
+            onClick={() => {
+              setExpanded(false);
+              setProfileMenuOpen(false);
+            }}
+            aria-label="Open profile"
+          >
+            {profilePictureUrl ? (
+              <img className="app-mobile-navbar__avatar" src={profilePictureUrl} alt="" />
+            ) : (
+              <UserRound size={22} aria-hidden="true" />
+            )}
+          </Link>
+          <button
+            type="button"
+            className="app-mobile-navbar__profile-toggle"
+            onClick={() => {
+              setExpanded(false);
+              setProfileMenuOpen((current) => !current);
+            }}
+            aria-expanded={isProfileMenuOpen}
+            aria-haspopup="menu"
+            aria-label={isProfileMenuOpen ? 'Close profile actions' : 'Open profile actions'}
+          >
+            <ChevronUp size={16} aria-hidden="true" />
+          </button>
+          {isProfileMenuOpen && (
+            <div className="app-mobile-navbar__profile-menu" role="menu">
+              <button type="button" className="app-sidebar__profile-menu-item" onClick={handleLogout} disabled={isLoggingOut}>
+                <LogOut size={18} aria-hidden="true" />
+                {isLoggingOut ? 'Logging out...' : 'Logout'}
+              </button>
+            </div>
+          )}
+        </div>
+      </header>
+
       {isExpanded && <button type="button" className="app-sidebar__backdrop" onClick={() => setExpanded(false)} aria-label="Close sidebar" />}
 
       <aside className={isExpanded ? 'app-sidebar is-expanded' : 'app-sidebar'} aria-label="Primary navigation">

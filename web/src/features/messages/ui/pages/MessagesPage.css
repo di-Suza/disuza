@@ -1668,6 +1668,14 @@ video.messages-v1-attachment-media {
   }
 }
 
+@media (max-width: 992px) {
+  .messages-v1-page {
+    height: calc(100dvh - var(--app-mobile-content-top, 80px) - 12px);
+    min-height: 0;
+    overflow: hidden;
+  }
+}
+
 /* V1-style dashboard parity */
 
 /* Chat post preview bounds */

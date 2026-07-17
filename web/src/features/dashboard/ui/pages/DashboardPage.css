@@ -1,17 +1,20 @@
 :root[data-theme='light'] {
-  --primary: #243247;
-  --secondary: #3b4a60;
-  --accent: #059669;
-  --bg-main: #f5f7fb;
+  --primary: #3154d4;
+  --secondary: #4f7dff;
+  --accent: #3b63ff;
+  --bg-main: #f3f6fb;
   --surface: #ffffff;
-  --surface-deep: #eef3f8;
-  --surface-muted: #b7bab8;
-  --surface-muted-hover: #c8d6e4;
-  --border-primary: #c5d0dd;
-  --border-secondary: #d3dde8;
+  --surface-deep: #f8fafc;
+  --surface-muted: #eef4ff;
+  --surface-muted-hover: #dfe8ff;
+  --border-primary: #cfd9e8;
+  --border-secondary: #dce4ef;
   --text-primary: #111827;
-  --text-secondary: #4b5563;
-  --text-soft: #273449;
+  --text-secondary: #526071;
+  --text-soft: #263244;
+  --scrollbar-track: #e8eef7;
+  --scrollbar-thumb: rgba(59, 99, 255, 0.48);
+  --scrollbar-thumb-hover: rgba(49, 84, 212, 0.78);
   --shadow-elevated: 0 18px 50px rgba(15, 23, 42, 0.12);
   --shadow-media: 0 16px 34px rgba(15, 23, 42, 0.12);
 }
@@ -1728,6 +1731,159 @@
   .more-v1-panel .saved-panel__layout { grid-template-columns: 1fr; }
 }
 
+@media (max-width: 992px) {
+  .dashboard-v1-tabs {
+    gap: 6px;
+    border-radius: 12px;
+    padding: 6px;
+  }
+
+  .dashboard-v1-tab {
+    min-height: 46px;
+    flex-direction: row;
+    gap: 0;
+    padding: 8px 6px;
+  }
+
+  .dashboard-v1-tab > span:not(.heatmap-rules-v1),
+  .dashboard-v1-tab .heatmap-rules-v1 {
+    display: none;
+  }
+
+  .dashboard-v1-tab > svg {
+    width: 21px;
+    height: 21px;
+  }
+
+  .portfolio-header-v1--compact {
+    align-items: center;
+  }
+
+  .portfolio-header-v1--compact .portfolio-header-v1__nav,
+  .portfolio-header-v1__nav {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding: 0;
+  }
+
+  .portfolio-header-v1__nav button {
+    min-height: 38px;
+    flex: 0 0 auto;
+    padding: 8px 12px;
+    white-space: nowrap;
+  }
+
+  .portfolio-editor-card-v1 {
+    padding: 14px;
+  }
+
+  .portfolio-general-v1 {
+    gap: 18px;
+  }
+
+  .portfolio-section-v1__label-row {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .portfolio-address-grid-v1 {
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  }
+
+  .portfolio-tag-editor-v1__input-row {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .portfolio-tag-editor-v1__input-row input {
+    width: 100%;
+  }
+
+  .portfolio-add-form-v1 > div {
+    flex-wrap: wrap;
+  }
+
+  .portfolio-add-form-v1 > div .button {
+    flex: 1 1 140px;
+  }
+
+  .portfolio-timeline-editor-v1 article > button {
+    opacity: 1;
+  }
+
+  .more-page-v1 {
+    padding: 14px;
+  }
+
+  .more-v1-shell {
+    gap: 14px;
+  }
+
+  .more-v1-menu {
+    position: sticky;
+    top: 8px;
+    flex-direction: row;
+    overflow-x: auto;
+  }
+
+  .more-v1-menu__item {
+    flex: 0 0 auto;
+    min-width: 52px;
+    padding: 10px;
+  }
+
+  .more-v1-panel {
+    padding: 14px;
+  }
+
+  .settings-row {
+    align-items: flex-start;
+    padding: 14px;
+  }
+
+  .settings-row__main {
+    gap: 12px;
+  }
+
+  .settings-row__main small {
+    white-space: normal;
+  }
+
+  .activity-card-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .more-v1-panel .saved-panel__header {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .more-v1-panel .saved-panel__create {
+    display: grid;
+    gap: 10px;
+  }
+
+  .more-v1-panel .saved-panel__create .button {
+    width: 100%;
+  }
+}
+
+@media (max-width: 540px) {
+  .activity-liked-v1,
+  .activity-comment-v1,
+  .activity-follow-v1 {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .activity-action-v1 {
+    align-self: flex-end;
+  }
+}
+
 /* Dashboard visual tightening */
 .dashboard-v1-header,
 .dashboard-v1-tabs,
@@ -1835,7 +1991,7 @@
   max-width: var(--app-content-max, 1064px);
 }
 
-@media (max-width: 1023px) {
+@media (max-width: 992px) {
   .dashboard-v1-shell {
     padding-top: 16px;
   }

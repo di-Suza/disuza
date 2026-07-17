@@ -1,5 +1,4 @@
 import { Crown, Loader2, RefreshCw, Search, Sparkles, TrendingUp, X } from 'lucide-react';
-import { Link } from 'react-router-dom';
 
 import SearchPostCard from '@/features/search/ui/components/SearchPostCard';
 import SearchUserCard from '@/features/search/ui/components/SearchUserCard';
@@ -50,7 +49,6 @@ const SearchPage = () => {
             <p>{hasActiveSearchQuery ? `${totalUsers + totalPosts} result${totalUsers + totalPosts === 1 ? '' : 's'}` : 'Discover people and posts'}</p>
           </div>
           <div className="search-header__actions">
-            <Link to="/home" className="button button--secondary">Feed</Link>
             <Button variant="ghost" className="button--icon" onClick={() => refetch()} disabled={isFetching} aria-label="Refresh search">
               {isFetching ? <Loader2 className="spin" size={18} aria-hidden="true" /> : <RefreshCw size={18} aria-hidden="true" />}
             </Button>

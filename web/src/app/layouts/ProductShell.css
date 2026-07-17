@@ -81,7 +81,7 @@
   margin: 0 auto;
 }
 
-@media (min-width: 1024px) {
+@media (min-width: 993px) {
   :root {
     --app-shell-offset: max(0px, calc((100vw - var(--app-shell-max)) / 2));
   }
@@ -141,11 +141,39 @@
   }
 }
 
-@media (max-width: 1023px) {
+@media (max-width: 992px) {
   .sidebar-layout > .sidebar-layout__content {
     width: 100%;
     margin-left: 0;
-    padding-top: 72px;
+    padding-top: var(--app-mobile-content-top, 80px);
+  }
+
+  .sidebar-layout .home-feed-exact,
+  .sidebar-layout .home-feed-exact.has-recommendations {
+    width: min(100%, 720px);
+    max-width: 720px;
+    grid-template-columns: 1fr;
+    margin-right: auto;
+    margin-left: auto;
+    padding-top: 12px;
+    padding-right: clamp(12px, 3vw, 20px);
+    padding-left: clamp(12px, 3vw, 20px);
+  }
+
+  .sidebar-layout .home-feed-exact__main,
+  .sidebar-layout .home-feed-exact .inline-post-composer,
+  .sidebar-layout .home-feed-exact .feed-post-skeleton,
+  .sidebar-layout .home-feed-exact .v1-post-card-outer,
+  .sidebar-layout .home-feed-exact .recommendation-slider {
+    max-width: 100%;
+  }
+
+  .sidebar-layout .home-feed-exact.has-recommendations > .home-feed-exact__rail {
+    display: none;
+  }
+
+  .sidebar-layout .home-feed-exact.has-recommendations .recommendation-slider {
+    display: grid;
   }
 
   .dashboard-shell--wide,

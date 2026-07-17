@@ -17,13 +17,13 @@
   padding-top: 24px;
 }
 
-@media (max-width: 1023px) {
+@media (max-width: 992px) {
   .sidebar-layout__content {
-    padding-top: 72px;
+    padding-top: var(--app-mobile-content-top, 80px);
   }
 }
 
-@media (min-width: 1024px) {
+@media (min-width: 993px) {
   .sidebar-layout__content {
     margin-left: 264px;
     padding-top: 0;
