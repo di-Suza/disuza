@@ -65,6 +65,9 @@ const ChatWindow = ({
   const isDeletedUser = Boolean(selectedChat?.otherUser?.isDeletedUser);
   const isBlockedChat = Boolean(selectedChat?.isBlocked || selectedChat?.hasBlockedMe);
   const canSendMessages = Boolean(selectedChat && !isDeletedUser && !isBlockedChat);
+  const headerAvatarUser = selectedChat?.isGroup
+    ? { userName: getConversationTitle(selectedChat), profilePicture: selectedChat.groupAvatar }
+    : selectedChat?.otherUser;
 
   useEffect(() => {
     if (!contextMenu) return;
@@ -114,12 +117,12 @@ const ChatWindow = ({
               </button>
 
               <button type="button" className="messages-v1-window__avatar-button" onClick={handleUserProfileClick}>
-                <ChatAvatar user={selectedChat.otherUser} className="messages-v1-window__avatar" />
+                <ChatAvatar user={headerAvatarUser} className="messages-v1-window__avatar" />
               </button>
 
               <button type="button" className="messages-v1-window__identity" onClick={handleUserProfileClick}>
                 <h3>{getConversationTitle(selectedChat)}</h3>
-                <p>Right click anywhere to close chat</p>
+                <p>{selectedChat.isGroup ? `${selectedChat.participants?.length || 1} members` : 'Right click anywhere to close chat'}</p>
               </button>
             </div>
 
@@ -128,8 +131,8 @@ const ChatWindow = ({
                 <span>
                   <Code2 size={14} aria-hidden="true" />
                 </span>
-                <strong>Start Collab</strong>
-                <em>Collab</em>
+                <strong>{selectedChat.isGroup ? 'Open Room' : 'Start Collab'}</strong>
+                <em>{selectedChat.isGroup ? 'Room' : 'Collab'}</em>
               </button>
             )}
           </header>
@@ -238,7 +241,7 @@ const ChatWindow = ({
       )}
       </section>
 
-      {isCollabPermissionModalOpen && canSendMessages && selectedChat && (
+      {isCollabPermissionModalOpen && canSendMessages && selectedChat && !selectedChat.isGroup && (
         <CollabPermissionModal
           isOpen={isCollabPermissionModalOpen}
           onClose={() => setIsCollabPermissionModalOpen(false)}

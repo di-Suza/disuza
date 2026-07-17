@@ -3,7 +3,9 @@ import { Types } from 'mongoose';
 import cleanupQueue, { type CleanupQueue } from '../../infrastructure/jobs/cleanup.queue.js';
 import realtimeService, { type RealtimeService } from '../../infrastructure/realtime/realtime.service.js';
 import { BadRequestError, ForbiddenError, NotFoundError } from '../../shared/errors/index.js';
+import collabRepository, { type CollabRepository } from '../collab/collab.repository.js';
 import heatmapService, { type HeatmapService } from '../contributions/heatmap.service.js';
+import notificationService, { type NotificationService } from '../notifications/notification.service.js';
 import postRepository, { type PostRepository } from '../posts/post.repository.js';
 import UserModel from '../users/user.model.js';
 import blockService, { type BlockService } from '../users/block/block.service.js';
@@ -21,6 +23,8 @@ class ChatService {
     private readonly posts: PostRepository = postRepository,
     private readonly heatmap: HeatmapService = heatmapService,
     private readonly realtime: RealtimeService = realtimeService,
+    private readonly notifications: NotificationService = notificationService,
+    private readonly collab: CollabRepository = collabRepository,
     private readonly cleanupJobs: CleanupQueue = cleanupQueue,
   ) {}
 
@@ -40,6 +44,28 @@ class ChatService {
 
   private isParticipant(participants: Array<string | Types.ObjectId>, userId: string) {
     return participants.some((participant) => participant.toString() === userId.toString());
+  }
+
+  private isHiddenForUser(conversation: { hiddenBy?: Array<string | Types.ObjectId> }, userId: string | Types.ObjectId) {
+    return (conversation.hiddenBy || []).some((hiddenUserId) => hiddenUserId.toString() === userId.toString());
+  }
+
+  private getVisibleParticipantIds(conversation: { participants: Types.ObjectId[]; hiddenBy?: Types.ObjectId[] }, excludeUserId?: string) {
+    const hiddenIds = new Set((conversation.hiddenBy || []).map((id) => id.toString()));
+
+    return conversation.participants
+      .map((id) => id.toString())
+      .filter((id) => !hiddenIds.has(id) && id !== excludeUserId);
+  }
+
+  private getDefaultGroupName(users: Array<{ userName?: string }>) {
+    const names = users.map((user) => user.userName).filter(Boolean).slice(0, 3);
+    return names.length > 0 ? names.join(', ') : 'New Group';
+  }
+
+  private async getFormattedConversation(userId: string, conversationId: string | Types.ObjectId) {
+    const conversations = await this.getConversations(userId);
+    return conversations.find((conversation) => conversation._id?.toString() === conversationId.toString()) || null;
   }
 
   async saveMessage(input: SaveMessageInput) {
@@ -66,8 +92,14 @@ class ChatService {
     let receiverId = input.receiverId;
     let feedbackOwnerId: string | Types.ObjectId | null = null;
 
+    const isExistingGroupConversation = Boolean(conversation?.isGroup);
+
     if (conversation && !this.isParticipant(conversation.participants, input.senderId)) {
       throw new ForbiddenError('You can only send messages in your conversations!');
+    }
+
+    if (conversation && isExistingGroupConversation && this.isHiddenForUser(conversation, input.senderId)) {
+      throw new ForbiddenError('Accept the group invite before sending messages.');
     }
 
     if (!conversation) {
@@ -82,7 +114,7 @@ class ChatService {
 
       await this.blockRules.ensureUsersCanInteract(input.senderId, receiverId, 'message');
       conversation = await this.chats.findOrCreateConversation(input.senderId, receiverId);
-    } else {
+    } else if (!isExistingGroupConversation) {
       const otherParticipant = this.getOtherParticipant(conversation.participants, input.senderId);
       if (!otherParticipant) {
         throw new NotFoundError('Receiver not found!');
@@ -134,7 +166,20 @@ class ChatService {
       }
     }
 
-    const newMessage = await this.chats.createMessage(conversation, { ...input, message, messageType }, receiverId!);
+    const isGroupConversation = Boolean(conversation.isGroup);
+    const recipientIds = isGroupConversation
+      ? this.getVisibleParticipantIds(conversation, input.senderId)
+      : receiverId
+        ? [receiverId.toString()]
+        : [];
+    const newMessage = await this.chats.createMessage(
+      conversation,
+      { ...input, message, messageType },
+      {
+        receiverId: receiverId || null,
+        unhideParticipants: !isGroupConversation,
+      },
+    );
 
     if (input.isFeedback) {
       const messageId = String((newMessage as unknown as { _id: unknown })._id);
@@ -154,15 +199,168 @@ class ChatService {
       conversationIsUnread: true,
     };
 
-    this.realtime.emitToUser(receiverId!.toString(), 'receive-message', responseMessage);
+    recipientIds.forEach((recipientId) => {
+      this.realtime.emitToUser(recipientId, 'receive-message', responseMessage);
+    });
 
     return responseMessage;
+  }
+
+  async startConversation(userId: string, receiverId: string) {
+    if (userId.toString() === receiverId.toString()) {
+      throw new BadRequestError('You cannot message yourself!');
+    }
+
+    const receiver = await UserModel.findOne({ _id: receiverId, active: { $ne: false } }).select('_id').lean();
+    if (!receiver) {
+      throw new NotFoundError('User not found!');
+    }
+
+    await this.blockRules.ensureUsersCanInteract(userId, receiverId, 'message');
+
+    const conversation = await this.chats.startDirectConversation(userId, receiverId);
+    const formattedConversation = await this.getFormattedConversation(userId, conversation._id);
+
+    return {
+      conversation: formattedConversation,
+    };
+  }
+
+  async createGroup(userId: string, memberIdsInput: unknown, groupNameInput?: unknown) {
+    const memberIds = Array.isArray(memberIdsInput)
+      ? [...new Set(memberIdsInput.map((id) => String(id)).filter((id) => id && id !== userId))]
+      : [];
+
+    if (memberIds.length < 2) {
+      throw new BadRequestError('Select at least two members to create a group.');
+    }
+
+    const [creator, members] = await Promise.all([
+      UserModel.findOne({ _id: userId, active: { $ne: false } }).select('_id userName profilePicture headline').lean(),
+      UserModel.find({ _id: { $in: memberIds }, active: { $ne: false } }).select('_id userName profilePicture headline').lean(),
+    ]);
+
+    if (!creator) {
+      throw new NotFoundError('User not found!');
+    }
+
+    if (members.length !== memberIds.length) {
+      throw new NotFoundError('One or more selected users are unavailable.');
+    }
+
+    await Promise.all(memberIds.map((memberId) => this.blockRules.ensureUsersCanInteract(userId, memberId, 'create a group with')));
+
+    const groupName = typeof groupNameInput === 'string' && groupNameInput.trim()
+      ? groupNameInput.trim().slice(0, 80)
+      : this.getDefaultGroupName([creator, ...members]);
+    const conversation = await this.chats.createGroupConversation({
+      creatorId: userId,
+      memberIds,
+      groupName,
+    });
+    const room = await this.collab.createSharedRoom(conversation._id);
+
+    await Promise.all(memberIds.map((recipientId) => this.notifications.send({
+      senderId: userId,
+      recipientId,
+      type: 'GROUP_INVITE',
+      contentId: conversation._id,
+      onModel: 'Conversation',
+    })));
+
+    const formattedConversation = await this.getFormattedConversation(userId, conversation._id);
+
+    return {
+      conversation: formattedConversation,
+      roomId: room._id,
+    };
+  }
+
+  async acceptGroupInvite(userId: string, conversationId: string) {
+    const conversation = await this.chats.findGroupConversationForUser(conversationId, userId);
+
+    if (!conversation) {
+      throw new NotFoundError('Group invite not found!');
+    }
+
+    const wasHidden = this.isHiddenForUser(conversation, userId);
+
+    if (wasHidden) {
+      conversation.hiddenBy = (conversation.hiddenBy || []).filter((id) => id.toString() !== userId.toString());
+      await conversation.save();
+    }
+
+    const [room, user] = await Promise.all([
+      this.collab.findRoomByConversation(conversation._id).then((existingRoom) => existingRoom || this.collab.createSharedRoom(conversation._id)),
+      UserModel.findOne({ _id: userId, active: { $ne: false } }).select('_id userName profilePicture headline').lean(),
+    ]);
+
+    if (!user) {
+      throw new NotFoundError('User not found!');
+    }
+
+    const notificationSenderId = conversation.createdBy || conversation.admins?.[0] || userId;
+    await this.notifications.remove({
+      senderId: notificationSenderId,
+      recipientId: userId,
+      type: 'GROUP_INVITE',
+      contentId: conversation._id,
+    });
+
+    if (wasHidden) {
+      const systemMessage = await this.chats.createMessage(
+        conversation,
+        {
+          senderId: userId,
+          message: `${user.userName || 'A member'} joined the group`,
+          messageType: 'system',
+        },
+        {
+          receiverId: null,
+          unhideParticipants: false,
+        },
+      );
+      const responseMessage = {
+        ...systemMessage,
+        senderInfo: user,
+        conversationIsUnread: true,
+      };
+
+      this.getVisibleParticipantIds(conversation, userId).forEach((recipientId) => {
+        this.realtime.emitToUser(recipientId, 'receive-message', responseMessage);
+      });
+    }
+
+    const formattedConversation = await this.getFormattedConversation(userId, conversation._id);
+
+    return {
+      conversation: formattedConversation,
+      roomId: room._id,
+    };
   }
 
   async getConversations(userId: string) {
     const conversations = await this.chats.getConversations(userId);
 
     return Promise.all(conversations.map(async (conversation) => {
+      if (conversation.isGroup) {
+        return {
+          _id: conversation._id,
+          isGroup: true,
+          groupName: conversation.groupName,
+          groupAvatar: conversation.groupAvatar,
+          participants: conversation.participantsInfo || [],
+          admins: conversation.admins || [],
+          roomId: conversation.roomId,
+          lastMessage: conversation.lastMessage || null,
+          isUnread: conversation.isUnread,
+          updatedAt: conversation.updatedAt,
+          isBlocked: false,
+          hasBlockedMe: false,
+          isUnavailable: false,
+        };
+      }
+
       const otherUser = conversation.otherUser?.active === false || !conversation.otherUser
         ? {
           _id: conversation.otherUserId,
@@ -198,7 +396,7 @@ class ChatService {
       throw new ForbiddenError('Bad Request!');
     }
 
-    const otherUserId = this.getOtherParticipant(conversation.participants, userId);
+    const otherUserId = conversation.isGroup ? null : this.getOtherParticipant(conversation.participants, userId);
     if (otherUserId) {
       const otherUser = await UserModel.findById(otherUserId).select('active').lean();
       if (otherUser && otherUser.active !== false) {
@@ -226,7 +424,7 @@ class ChatService {
       throw new NotFoundError('Conversation not found!');
     }
 
-    const otherUserId = this.getOtherParticipant(conversation.participants, userId);
+    const otherUserId = conversation.isGroup ? null : this.getOtherParticipant(conversation.participants, userId);
     if (otherUserId) {
       await this.blockRules.ensureUsersCanInteract(userId, otherUserId, 'mark messages from');
     }

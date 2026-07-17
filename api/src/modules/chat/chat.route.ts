@@ -4,10 +4,13 @@ import { authenticate } from '../../shared/middleware/auth.js';
 import validateRequest from '../../shared/middleware/validateRequest.js';
 import chatController from './chat.controller.js';
 import {
+  acceptGroupInviteRules,
+  createGroupRules,
   deleteConversationRules,
   getMessagesRules,
   markAsReadRules,
   sendMessageRules,
+  startConversationRules,
   unsendMessageRules,
 } from './validators/chat.validator.js';
 
@@ -22,6 +25,9 @@ class ChatRoutes {
     this.router.use(authenticate);
 
     this.router.post('/sendMessage', sendMessageRules, validateRequest, chatController.sendMessage);
+    this.router.post('/startConversation', startConversationRules, validateRequest, chatController.startConversation);
+    this.router.post('/groups', createGroupRules, validateRequest, chatController.createGroup);
+    this.router.post('/groups/:conversationId/accept', acceptGroupInviteRules, validateRequest, chatController.acceptGroupInvite);
     this.router.get('/getConversations', chatController.getConversations);
     this.router.get('/getMessages/:conversationId', getMessagesRules, validateRequest, chatController.getMessages);
     this.router.patch('/markAsRead/:conversationId', markAsReadRules, validateRequest, chatController.markAsRead);

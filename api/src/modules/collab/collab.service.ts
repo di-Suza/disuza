@@ -40,9 +40,14 @@ class CollabService {
     }
 
     const isParticipant = conversation.participants.some((id) => this.isSameId(id, userId));
+    const hasAcceptedAccess = !(conversation.hiddenBy || []).some((id) => this.isSameId(id, userId));
 
-    if (!isParticipant) {
+    if (!isParticipant || !hasAcceptedAccess) {
       throw new ForbiddenError("You're not authorized for this conversation");
+    }
+
+    if (conversation.isGroup) {
+      return { conversation, otherUserId: null };
     }
 
     const otherUserId = conversation.participants.find((id) => !this.isSameId(id, userId));
@@ -55,7 +60,32 @@ class CollabService {
   }
 
   async checkCollabRequestStatus(senderId: string, conversationId: string) {
-    const { otherUserId } = await this.getConversationParticipantIds(conversationId, senderId);
+    const { conversation, otherUserId } = await this.getConversationParticipantIds(conversationId, senderId);
+
+    if (conversation.isGroup) {
+      const existingRoom = await this.collab.findRoomByConversation(conversationId);
+      if (existingRoom) {
+        return {
+          status: 'accepted',
+          roomId: existingRoom._id,
+          acceptedNotificationId: null,
+          message: 'Active',
+        };
+      }
+
+      const room = await this.collab.createSharedRoom(conversationId);
+      return {
+        status: 'accepted',
+        roomId: room._id,
+        acceptedNotificationId: null,
+        message: 'Active',
+      };
+    }
+
+    if (!otherUserId) {
+      throw new NotFoundError('Recipient not found');
+    }
+
     const blockStatus = await this.blockRules.getBlockStatus(senderId, otherUserId);
 
     if (blockStatus.block) {
@@ -104,7 +134,15 @@ class CollabService {
       throw new BadRequestError('Request already pending');
     }
 
-    const { otherUserId: recipientId } = await this.getConversationParticipantIds(conversationId, senderId);
+    const { conversation, otherUserId: recipientId } = await this.getConversationParticipantIds(conversationId, senderId);
+
+    if (conversation.isGroup) {
+      throw new BadRequestError('Group rooms are available without a collab request.');
+    }
+
+    if (!recipientId) {
+      throw new NotFoundError('Recipient not found');
+    }
 
     await this.blockRules.ensureUsersCanInteract(senderId, recipientId, 'collaborate with');
 
@@ -178,7 +216,7 @@ class CollabService {
       : [
         {
           path: 'conversationId',
-          select: 'participants',
+          select: 'participants isGroup groupName groupAvatar admins',
           populate: {
             path: 'participants',
             model: 'User',
@@ -259,6 +297,24 @@ class CollabService {
       const conversation = conversationMap.get(room.conversationId.toString());
       if (!conversation) continue;
 
+      if (conversation.isGroup) {
+        const roomStats = statsMap.get(room._id.toString());
+        formattedRooms.push({
+          _id: room._id,
+          roomType: 'shared',
+          accessMode: 'shared',
+          realtimeDisabled: false,
+          title: conversation.groupName || 'Group Room',
+          subtitle: `${conversation.participantsInfo?.length || conversation.participants.length} members`,
+          participants: conversation.participantsInfo || [],
+          currentlySelectedProblem: room.currentlySelectedProblem,
+          updatedAt: room.updatedAt,
+          problemsCount: roomStats?.problemsCount || 0,
+          solvedCount: roomStats?.solvedCount || 0,
+        });
+        continue;
+      }
+
       const otherUser = this.getRoomOtherUser(conversation);
       if (!otherUser?._id) continue;
 
@@ -295,6 +351,8 @@ class CollabService {
     if (conversation.otherUser && conversation.otherUser.active !== false) {
       return conversation.otherUser;
     }
+
+    if (!conversation.otherUserId) return null;
 
     return getDeletedUserFallback(conversation.otherUserId);
   }

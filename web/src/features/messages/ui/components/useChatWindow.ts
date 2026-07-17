@@ -39,10 +39,11 @@ export const useChatWindow = ({ allMessages, handleChatSelect, isFetchingMessage
   }, [dispatch, handleChatSelect]);
 
   const handleUserProfileClick = useCallback(() => {
+    if (selectedChat?.isGroup) return;
     if (selectedChat?.otherUser?.isDeletedUser) return;
     const profileId = selectedChat?.otherUser?._id;
     if (profileId) navigate(`/profile/${profileId}`);
-  }, [navigate, selectedChat?.otherUser?._id, selectedChat?.otherUser?.isDeletedUser]);
+  }, [navigate, selectedChat?.isGroup, selectedChat?.otherUser?._id, selectedChat?.otherUser?.isDeletedUser]);
 
   const handleMessageInputChange = useCallback((event: ChangeEvent<HTMLTextAreaElement>) => {
     setMessageInput(event.target.value);
@@ -62,7 +63,7 @@ export const useChatWindow = ({ allMessages, handleChatSelect, isFetchingMessage
       await sendMessage({
         conversationId: selectedChat?._id,
         message: trimmedMessage,
-        receiverId: selectedChat?.otherUser?._id,
+        receiverId: selectedChat?.isGroup ? undefined : selectedChat?.otherUser?._id,
       }).unwrap();
       setMessageInput('');
     } catch (error) {
@@ -78,8 +79,18 @@ export const useChatWindow = ({ allMessages, handleChatSelect, isFetchingMessage
   }, [handleSendMessage]);
 
   const handleCollabClick = useCallback(() => {
+    if (selectedChat?.isGroup) {
+      if (selectedChat.roomId) {
+        navigate(`/collab/${selectedChat.roomId}`);
+        return;
+      }
+
+      showError('Group room is not ready yet.');
+      return;
+    }
+
     setIsCollabPermissionModalOpen(true);
-  }, []);
+  }, [navigate, selectedChat?.isGroup, selectedChat?.roomId, showError]);
 
   useEffect(() => {
     const container = messagesContainerRef.current;

@@ -57,9 +57,10 @@ export const getUserAvatarUrl = (user?: Pick<ChatUser, 'profilePicture'> | null)
   return typeof url === 'string' && url.trim() ? url : null;
 };
 
-export const getConversationTitle = (conversation?: ChatConversation | null) => (
-  conversation?.otherUser?.userName || 'User'
-);
+export const getConversationTitle = (conversation?: ChatConversation | null) => {
+  if (conversation?.isGroup) return conversation.groupName || 'Group Chat';
+  return conversation?.otherUser?.userName || 'User';
+};
 
 export const getFeedbackMediaUrl = (details?: FeedbackDetails | null) => {
   const media = details?.images?.[0] || details?.media?.[0];
@@ -75,6 +76,7 @@ export const getSharedPostMediaUrl = (details?: SharedPostDetails | null) => {
 
 export const getConversationPreview = (lastMessage?: ChatLastMessage | null) => {
   if (!lastMessage) return 'Start a conversation';
+  if (lastMessage.messageType === 'system') return lastMessage.text || 'Group update';
   if (lastMessage.messageType === 'post' || lastMessage.sharedPost) return 'Shared a post';
   return lastMessage.text || 'Start a conversation';
 };

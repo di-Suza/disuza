@@ -68,4 +68,37 @@ const unsendMessageRules = [
 
 const deleteConversationRules = conversationIdParamRules;
 
-export { deleteConversationRules, getMessagesRules, markAsReadRules, sendMessageRules, unsendMessageRules };
+const startConversationRules = [
+  body('receiverId')
+    .custom((value) => mongoIdPattern.test(String(value)))
+    .withMessage('receiverId must be a valid MongoDB ObjectId'),
+];
+
+const createGroupRules = [
+  body('groupName')
+    .optional({ nullable: true })
+    .isString()
+    .withMessage('Group name must be a string')
+    .trim()
+    .isLength({ max: 80 })
+    .withMessage('Group name cannot exceed 80 characters'),
+  body('memberIds')
+    .isArray({ min: 2 })
+    .withMessage('Select at least two group members'),
+  body('memberIds.*')
+    .custom((value) => mongoIdPattern.test(String(value)))
+    .withMessage('memberIds must be valid MongoDB ObjectIds'),
+];
+
+const acceptGroupInviteRules = conversationIdParamRules;
+
+export {
+  acceptGroupInviteRules,
+  createGroupRules,
+  deleteConversationRules,
+  getMessagesRules,
+  markAsReadRules,
+  sendMessageRules,
+  startConversationRules,
+  unsendMessageRules,
+};

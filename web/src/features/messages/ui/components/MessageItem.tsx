@@ -51,6 +51,14 @@ const MessageItem = ({ message }: MessageItemProps) => {
     };
   }, [isMenuOpen]);
 
+  if (message.messageType === 'system') {
+    return (
+      <div className="messages-v1-system-message">
+        <span>{message.text}</span>
+      </div>
+    );
+  }
+
   return (
     <>
       <div

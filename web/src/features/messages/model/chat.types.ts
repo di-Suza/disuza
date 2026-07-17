@@ -1,5 +1,5 @@
 export type FeedbackTargetType = 'Post' | 'User';
-export type ChatMessageType = 'text' | 'feedback' | 'post';
+export type ChatMessageType = 'text' | 'feedback' | 'post' | 'system';
 
 export type ChatImage = {
   url?: string;
@@ -61,6 +61,12 @@ export type ChatLastMessage = Pick<ChatMessage, '_id' | 'text' | 'sender' | 'cre
 export type ChatConversation = {
   _id: string;
   otherUser?: ChatUser;
+  participants?: ChatUser[];
+  isGroup?: boolean;
+  groupName?: string;
+  groupAvatar?: ChatImage;
+  admins?: string[];
+  roomId?: string;
   lastMessage?: ChatLastMessage | null;
   isUnread?: boolean;
   updatedAt?: string;
@@ -107,6 +113,30 @@ export type SendMessageResponse = {
   message: string;
   newMessage: ChatMessage;
 };
+
+export type StartConversationRequest = {
+  receiverId: string;
+};
+
+export type StartConversationResponse = {
+  success: boolean;
+  message: string;
+  conversation: ChatConversation;
+};
+
+export type CreateGroupRequest = {
+  memberIds: string[];
+  groupName?: string;
+};
+
+export type CreateGroupResponse = {
+  success: boolean;
+  message: string;
+  conversation: ChatConversation;
+  roomId?: string;
+};
+
+export type AcceptGroupInviteResponse = CreateGroupResponse;
 
 export type UnsendMessageRequest = {
   messageId: string;

@@ -1,7 +1,7 @@
 import mongoose, { type HydratedDocument, type Model, type Types } from 'mongoose';
 
 type FeedbackTargetModel = 'Post' | 'User';
-type MessageType = 'text' | 'feedback' | 'post';
+type MessageType = 'text' | 'feedback' | 'post' | 'system';
 
 type Message = {
   conversationId: Types.ObjectId;
@@ -26,7 +26,7 @@ const messageSchema = new mongoose.Schema<Message, MessageModel>(
     conversationId: { type: mongoose.Schema.Types.ObjectId, ref: 'Conversation', required: true, index: true },
     sender: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
     text: { type: String, required: true, trim: true, maxlength: 2000 },
-    messageType: { type: String, enum: ['text', 'feedback', 'post'], default: 'text', index: true },
+    messageType: { type: String, enum: ['text', 'feedback', 'post', 'system'], default: 'text', index: true },
     isFeedback: { type: Boolean, default: false, index: true },
     feedbackOn: {
       type: {

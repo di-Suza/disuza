@@ -2,13 +2,18 @@ import { api } from '@/shared/api/api';
 import { getSocket } from '@/shared/services/socket';
 import { setLastReceivedMessage } from '../state/chatSlice';
 import type {
+  ChatConversation,
   ChatMessage,
+  CreateGroupRequest,
+  CreateGroupResponse,
   DeleteConversationRequest,
   DeleteConversationResponse,
   GetConversationsResponse,
   GetMessagesQueryArgs,
   GetMessagesResponse,
   MarkAsReadResponse,
+  StartConversationRequest,
+  StartConversationResponse,
   SendMessageRequest,
   SendMessageResponse,
   UnsendMessageRequest,
@@ -56,6 +61,24 @@ const normalizeChatMessage = (payload: unknown): ChatMessage | null => {
     sharedPost: message.sharedPost ? toIdString(message.sharedPost) : message.sharedPost,
   };
 };
+
+const normalizeChatConversation = (conversation: ChatConversation): ChatConversation => ({
+  ...conversation,
+  _id: toIdString(conversation._id),
+  roomId: conversation.roomId ? toIdString(conversation.roomId) : conversation.roomId,
+  admins: conversation.admins?.map((adminId) => toIdString(adminId)).filter(Boolean),
+  otherUser: conversation.otherUser ? { ...conversation.otherUser, _id: toIdString(conversation.otherUser._id) } : conversation.otherUser,
+  participants: conversation.participants?.map((participant) => ({
+    ...participant,
+    _id: toIdString(participant._id),
+  })),
+  lastMessage: conversation.lastMessage ? {
+    ...conversation.lastMessage,
+    _id: toIdString(conversation.lastMessage._id),
+    sender: toIdString(conversation.lastMessage.sender),
+    sharedPost: conversation.lastMessage.sharedPost ? toIdString(conversation.lastMessage.sharedPost) : conversation.lastMessage.sharedPost,
+  } : conversation.lastMessage,
+});
 
 const removeUnsentMessageFromDraft = (draft: GetMessagesResponse, messageId: string) => {
   draft.messages = draft.messages.filter((message) => message._id !== messageId);
@@ -171,6 +194,10 @@ export const chatApi = api.injectEndpoints({
     }),
     getConversations: builder.query<GetConversationsResponse, void>({
       query: () => '/chat/getConversations',
+      transformResponse: (response: GetConversationsResponse) => ({
+        ...response,
+        conversations: response.conversations.map(normalizeChatConversation),
+      }),
       providesTags: ['Conversations'],
       async onCacheEntryAdded(_arg, { dispatch, getState, updateCachedData, cacheDataLoaded, cacheEntryRemoved }) {
         const socket = getSocket();
@@ -317,6 +344,80 @@ export const chatApi = api.injectEndpoints({
         }
       },
     }),
+    startConversation: builder.mutation<StartConversationResponse, StartConversationRequest>({
+      query: (body) => ({
+        url: '/chat/startConversation',
+        method: 'POST',
+        body,
+      }),
+      async onQueryStarted(_arg, { dispatch, queryFulfilled }) {
+        try {
+          const { data } = await queryFulfilled;
+          const conversation = normalizeChatConversation(data.conversation);
+
+          dispatch(
+            chatApi.util.updateQueryData('getConversations', undefined, (draft) => {
+              draft.conversations = draft.conversations.filter((item) => item._id !== conversation._id);
+              draft.conversations.unshift(conversation);
+            }),
+          );
+        } catch {
+          // Caller surfaces the error.
+        }
+      },
+      invalidatesTags: ['Conversations'],
+    }),
+    createGroup: builder.mutation<CreateGroupResponse, CreateGroupRequest>({
+      query: (body) => ({
+        url: '/chat/groups',
+        method: 'POST',
+        body,
+      }),
+      async onQueryStarted(_arg, { dispatch, queryFulfilled }) {
+        try {
+          const { data } = await queryFulfilled;
+          const conversation = normalizeChatConversation({
+            ...data.conversation,
+            roomId: data.conversation.roomId || data.roomId,
+          });
+
+          dispatch(
+            chatApi.util.updateQueryData('getConversations', undefined, (draft) => {
+              draft.conversations = draft.conversations.filter((item) => item._id !== conversation._id);
+              draft.conversations.unshift(conversation);
+            }),
+          );
+        } catch {
+          // Caller surfaces the error.
+        }
+      },
+      invalidatesTags: ['Conversations', 'CollabRooms'],
+    }),
+    acceptGroupInvite: builder.mutation<CreateGroupResponse, string>({
+      query: (conversationId) => ({
+        url: `/chat/groups/${conversationId}/accept`,
+        method: 'POST',
+      }),
+      async onQueryStarted(_arg, { dispatch, queryFulfilled }) {
+        try {
+          const { data } = await queryFulfilled;
+          const conversation = normalizeChatConversation({
+            ...data.conversation,
+            roomId: data.conversation.roomId || data.roomId,
+          });
+
+          dispatch(
+            chatApi.util.updateQueryData('getConversations', undefined, (draft) => {
+              draft.conversations = draft.conversations.filter((item) => item._id !== conversation._id);
+              draft.conversations.unshift(conversation);
+            }),
+          );
+        } catch {
+          // Caller surfaces the error.
+        }
+      },
+      invalidatesTags: ['Conversations', 'Notifications', 'CollabRooms'],
+    }),
     markAsRead: builder.mutation<MarkAsReadResponse, string>({
       query: (conversationId) => ({
         url: `/chat/markAsRead/${conversationId}`,
@@ -387,10 +488,13 @@ export const chatApi = api.injectEndpoints({
 });
 
 export const {
+  useAcceptGroupInviteMutation,
+  useCreateGroupMutation,
   useDeleteConversationMutation,
   useGetConversationsQuery,
   useGetMessagesQuery,
   useMarkAsReadMutation,
   useSendMessageMutation,
+  useStartConversationMutation,
   useUnsendMessageMutation,
 } = chatApi;

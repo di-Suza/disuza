@@ -1,7 +1,7 @@
 import mongoose, { type HydratedDocument, type Model, type Types } from 'mongoose';
 
-const NOTIFICATION_TYPES = ['LIKE', 'FOLLOW', 'COMMENT', 'COMMENT_REPLY', 'COLLAB_REQUEST', 'COLLAB_ACCEPTED'] as const;
-const NOTIFICATION_TARGET_MODELS = ['Post', 'User', 'Comment', 'CollabRequest', 'CollabRoom'] as const;
+const NOTIFICATION_TYPES = ['LIKE', 'FOLLOW', 'COMMENT', 'COMMENT_REPLY', 'COLLAB_REQUEST', 'COLLAB_ACCEPTED', 'GROUP_INVITE'] as const;
+const NOTIFICATION_TARGET_MODELS = ['Post', 'User', 'Comment', 'CollabRequest', 'CollabRoom', 'Conversation'] as const;
 
 type NotificationType = typeof NOTIFICATION_TYPES[number];
 type NotificationTargetModel = typeof NOTIFICATION_TARGET_MODELS[number];

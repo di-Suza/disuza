@@ -10,6 +10,9 @@ class ChatController {
   readonly markAsRead: RequestHandler;
   readonly unsendMessage: RequestHandler;
   readonly deleteConversation: RequestHandler;
+  readonly startConversation: RequestHandler;
+  readonly createGroup: RequestHandler;
+  readonly acceptGroupInvite: RequestHandler;
 
   constructor(private readonly service: ChatService = chatService) {
     this.sendMessage = asyncHandler(this.handleSendMessage.bind(this));
@@ -18,6 +21,9 @@ class ChatController {
     this.markAsRead = asyncHandler(this.handleMarkAsRead.bind(this));
     this.unsendMessage = asyncHandler(this.handleUnsendMessage.bind(this));
     this.deleteConversation = asyncHandler(this.handleDeleteConversation.bind(this));
+    this.startConversation = asyncHandler(this.handleStartConversation.bind(this));
+    this.createGroup = asyncHandler(this.handleCreateGroup.bind(this));
+    this.acceptGroupInvite = asyncHandler(this.handleAcceptGroupInvite.bind(this));
   }
 
   private async handleSendMessage(req: Request, res: Response) {
@@ -37,6 +43,36 @@ class ChatController {
       success: true,
       message: 'Conversations fetched successfully!',
       conversations,
+    });
+  }
+
+  private async handleStartConversation(req: Request, res: Response) {
+    const data = await this.service.startConversation(req.user!.id, req.body.receiverId);
+
+    res.status(201).json({
+      success: true,
+      message: 'Conversation ready!',
+      ...data,
+    });
+  }
+
+  private async handleCreateGroup(req: Request, res: Response) {
+    const data = await this.service.createGroup(req.user!.id, req.body.memberIds, req.body.groupName);
+
+    res.status(201).json({
+      success: true,
+      message: 'Group created successfully!',
+      ...data,
+    });
+  }
+
+  private async handleAcceptGroupInvite(req: Request, res: Response) {
+    const data = await this.service.acceptGroupInvite(req.user!.id, String(req.params.conversationId));
+
+    res.status(200).json({
+      success: true,
+      message: 'Group invite accepted!',
+      ...data,
     });
   }
 
