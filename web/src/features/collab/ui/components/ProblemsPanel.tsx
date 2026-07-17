@@ -34,6 +34,7 @@ const ProblemsPanel = ({ selectedProblem, problems, roomId, onCollapse }: Proble
   const [isSelectProblemModalOpen, setIsSelectProblemModalOpen] = useState(false);
   const [selectProblem, { isLoading: isSelecting }] = useSelectProblemMutation();
   const { showError } = useToast();
+  const addedProblemIds = problems.map((problem) => problem.problemId._id);
 
   const handleSelectProblem = async (roomProblemId: string) => {
     if (!roomId || !roomProblemId || isSelecting) return;
@@ -106,6 +107,7 @@ const ProblemsPanel = ({ selectedProblem, problems, roomId, onCollapse }: Proble
         isOpen={isSelectProblemModalOpen}
         onClose={() => setIsSelectProblemModalOpen(false)}
         roomId={roomId}
+        addedProblemIds={addedProblemIds}
       />
     </>
   );
