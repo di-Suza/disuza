@@ -750,6 +750,23 @@
   font-weight: 600;
 }
 
+.messages-v1-feedback-post__caption {
+  display: -webkit-box;
+  overflow: hidden;
+  border: 1px solid var(--border-secondary);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--text-primary);
+  padding: 9px 10px;
+  text-align: left;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+
 .messages-v1-feedback-post small,
 .messages-v1-feedback-user small {
   color: var(--text-secondary);

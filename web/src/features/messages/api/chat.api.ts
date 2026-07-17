@@ -15,11 +15,56 @@ import type {
   UnsendMessageResponse,
 } from '../model/chat.types';
 
+const toIdString = (value: unknown): string => {
+  if (typeof value === 'string') return value;
+  if (typeof value === 'number') return String(value);
+
+  if (value && typeof value === 'object') {
+    const record = value as { _id?: unknown; id?: unknown; toString?: () => string };
+    const nestedId = record._id || record.id;
+
+    if (typeof nestedId === 'string') return nestedId;
+    if (nestedId && typeof nestedId === 'object' && typeof (nestedId as { toString?: () => string }).toString === 'function') {
+      return (nestedId as { toString: () => string }).toString();
+    }
+
+    if (typeof record.toString === 'function') {
+      const stringValue = record.toString();
+      if (stringValue && stringValue !== '[object Object]') return stringValue;
+    }
+  }
+
+  return '';
+};
+
+const normalizeChatMessage = (payload: unknown): ChatMessage | null => {
+  if (typeof payload !== 'object' || payload === null) return null;
+
+  const message = payload as ChatMessage;
+  const messageId = toIdString(message._id);
+  const conversationId = toIdString(message.conversationId);
+  const sender = toIdString(message.sender);
+
+  if (!messageId || !conversationId || !sender) return null;
+
+  return {
+    ...message,
+    _id: messageId,
+    conversationId,
+    sender,
+    receiverId: message.receiverId ? toIdString(message.receiverId) : message.receiverId,
+    sharedPost: message.sharedPost ? toIdString(message.sharedPost) : message.sharedPost,
+  };
+};
+
 const removeUnsentMessageFromDraft = (draft: GetMessagesResponse, messageId: string) => {
   draft.messages = draft.messages.filter((message) => message._id !== messageId);
 };
 
-const normalizeMessagesForDisplay = (messages: ChatMessage[]) => [...messages].reverse();
+const normalizeMessagesForDisplay = (messages: ChatMessage[]) => [...messages]
+  .map((message) => normalizeChatMessage(message))
+  .filter((message): message is ChatMessage => Boolean(message))
+  .reverse();
 
 const applyUnsentConversationUpdate = (draft: GetConversationsResponse, payload: UnsendMessageResponse) => {
   const conversationIndex = draft.conversations.findIndex((conversation) => conversation._id === payload.conversationId);
@@ -33,19 +78,21 @@ const applyUnsentConversationUpdate = (draft: GetConversationsResponse, payload:
   }
 };
 
-const isChatMessage = (payload: unknown): payload is ChatMessage => (
-  typeof payload === 'object'
-  && payload !== null
-  && typeof (payload as ChatMessage)._id === 'string'
-  && typeof (payload as ChatMessage).conversationId === 'string'
-);
+const normalizeUnsendPayload = (payload: unknown): UnsendMessageResponse | null => {
+  if (typeof payload !== 'object' || payload === null) return null;
 
-const isUnsendPayload = (payload: unknown): payload is UnsendMessageResponse => (
-  typeof payload === 'object'
-  && payload !== null
-  && typeof (payload as UnsendMessageResponse).messageId === 'string'
-  && typeof (payload as UnsendMessageResponse).conversationId === 'string'
-);
+  const unsendPayload = payload as UnsendMessageResponse;
+  const messageId = toIdString(unsendPayload.messageId);
+  const conversationId = toIdString(unsendPayload.conversationId);
+
+  if (!messageId || !conversationId) return null;
+
+  return {
+    ...unsendPayload,
+    messageId,
+    conversationId,
+  };
+};
 
 export const chatApi = api.injectEndpoints({
   endpoints: (builder) => ({
@@ -85,18 +132,20 @@ export const chatApi = api.injectEndpoints({
       async onCacheEntryAdded({ conversationId }, { dispatch, updateCachedData, cacheDataLoaded, cacheEntryRemoved }) {
         const socket = getSocket();
         const handleReceiveMessage = (payload: unknown) => {
-          if (!isChatMessage(payload) || payload.conversationId !== conversationId) return;
+          const message = normalizeChatMessage(payload);
+          if (!message || message.conversationId !== conversationId) return;
 
           updateCachedData((draft) => {
-            const exists = draft.messages.some((message) => message._id === payload._id);
-            if (!exists) draft.messages.push(payload);
+            const exists = draft.messages.some((draftMessage) => draftMessage._id === message._id);
+            if (!exists) draft.messages.push(message);
           });
         };
         const handleMessageUnsent = (payload: unknown) => {
-          if (!isUnsendPayload(payload) || payload.conversationId !== conversationId) return;
+          const unsentMessage = normalizeUnsendPayload(payload);
+          if (!unsentMessage || unsentMessage.conversationId !== conversationId) return;
 
           updateCachedData((draft) => {
-            removeUnsentMessageFromDraft(draft, payload.messageId);
+            removeUnsentMessageFromDraft(draft, unsentMessage.messageId);
           });
         };
         const handleReconnect = () => {
@@ -126,7 +175,8 @@ export const chatApi = api.injectEndpoints({
       async onCacheEntryAdded(_arg, { dispatch, getState, updateCachedData, cacheDataLoaded, cacheEntryRemoved }) {
         const socket = getSocket();
         const handleReceiveMessage = (payload: unknown) => {
-          if (!isChatMessage(payload)) return;
+          const message = normalizeChatMessage(payload);
+          if (!message) return;
 
           const currentUserId = (getState() as { auth?: { user?: { _id?: string } } }).auth?.user?._id;
           const chatState = (getState() as {
@@ -135,25 +185,25 @@ export const chatApi = api.injectEndpoints({
               selectedChatId?: string | null;
             };
           }).chat;
-          const isActiveConversation = chatState?.isChatWindowActive && chatState.selectedChatId === payload.conversationId;
+          const isActiveConversation = chatState?.isChatWindowActive && chatState.selectedChatId === message.conversationId;
           let conversationWasPresent = false;
 
           updateCachedData((draft) => {
-            const conversationIndex = draft.conversations.findIndex((conversation) => conversation._id === payload.conversationId);
+            const conversationIndex = draft.conversations.findIndex((conversation) => conversation._id === message.conversationId);
             conversationWasPresent = conversationIndex !== -1;
 
             if (conversationIndex === -1) return;
 
             draft.conversations[conversationIndex].lastMessage = {
-              _id: payload._id,
-              text: payload.text,
-              sender: payload.sender,
-              createdAt: payload.createdAt,
-              messageType: payload.messageType,
-              sharedPost: payload.sharedPost,
+              _id: message._id,
+              text: message.text,
+              sender: message.sender,
+              createdAt: message.createdAt,
+              messageType: message.messageType,
+              sharedPost: message.sharedPost,
             };
-            draft.conversations[conversationIndex].updatedAt = payload.createdAt || new Date().toISOString();
-            draft.conversations[conversationIndex].isUnread = payload.sender !== currentUserId && !isActiveConversation;
+            draft.conversations[conversationIndex].updatedAt = message.createdAt || new Date().toISOString();
+            draft.conversations[conversationIndex].isUnread = message.sender !== currentUserId && !isActiveConversation;
             const [updatedConversation] = draft.conversations.splice(conversationIndex, 1);
             draft.conversations.unshift(updatedConversation);
           });
@@ -162,13 +212,14 @@ export const chatApi = api.injectEndpoints({
             dispatch(chatApi.util.invalidateTags(['Conversations']));
           }
 
-          if (payload.sender !== currentUserId && !isActiveConversation) {
-            dispatch(setLastReceivedMessage(payload));
+          if (message.sender !== currentUserId && !isActiveConversation) {
+            dispatch(setLastReceivedMessage(message));
           }
         };
         const handleMessageUnsent = (payload: unknown) => {
-          if (!isUnsendPayload(payload)) return;
-          updateCachedData((draft) => applyUnsentConversationUpdate(draft, payload));
+          const unsentMessage = normalizeUnsendPayload(payload);
+          if (!unsentMessage) return;
+          updateCachedData((draft) => applyUnsentConversationUpdate(draft, unsentMessage));
         };
         const handleReconnect = () => {
           dispatch(chatApi.util.invalidateTags(['Conversations']));

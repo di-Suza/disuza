@@ -28,6 +28,7 @@ const MessageItem = ({ message }: MessageItemProps) => {
   const isPostMessage = message.messageType === 'post' || Boolean(message.sharedPost || message.sharedPostDetails);
   const sharedPostAuthor = message.sharedPostDetails?.user?.userName || 'DevLoopFeed';
   const sharedPostCaption = message.sharedPostDetails?.caption || 'View shared post';
+  const feedbackPostCaption = message.feedbackDetails?.caption?.trim() || '';
 
   useEffect(() => {
     if (!isMenuOpen) return;
@@ -105,13 +106,18 @@ const MessageItem = ({ message }: MessageItemProps) => {
                     {feedbackMediaUrl && (
                       <span className="messages-v1-feedback-post__media">
                         <img src={feedbackMediaUrl} alt="" loading="lazy" />
-                        {message.feedbackDetails?.caption && (
+                        {feedbackPostCaption && (
                           <span>
-                            {message.feedbackDetails.caption.substring(0, 20)}
+                            {feedbackPostCaption.substring(0, 20)}
                             ...
                           </span>
                         )}
                       </span>
+                    )}
+                    {!feedbackMediaUrl && feedbackPostCaption && (
+                      <strong className="messages-v1-feedback-post__caption">
+                        {feedbackPostCaption}
+                      </strong>
                     )}
                     <small>{senderIsMe ? 'Your feedback on this POST' : 'Feedback on your Post'}</small>
                   </button>
