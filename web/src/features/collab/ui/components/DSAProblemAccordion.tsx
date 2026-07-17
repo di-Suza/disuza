@@ -8,6 +8,7 @@ import { cn } from '@/shared/utils/cn';
 type DSAProblemAccordionProps = {
   problem: Problem;
   roomId?: string;
+  onProblemAdded?: (problemId: string) => void;
 };
 
 const getDifficultyClass = (difficulty?: string) => {
@@ -17,26 +18,47 @@ const getDifficultyClass = (difficulty?: string) => {
   return '';
 };
 
-const DSAProblemAccordion = ({ problem, roomId }: DSAProblemAccordionProps) => {
+const DSAProblemAccordion = ({ problem, roomId, onProblemAdded }: DSAProblemAccordionProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [addProblemToRoom, { isLoading: isAdding }] = useAddProblemToRoomMutation();
+  const isAdded = Boolean(problem.isAdded);
+
+  const toggleProblemDetails = () => {
+    setIsOpen((value) => !value);
+  };
+
+  const handleSummaryKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+
+    event.preventDefault();
+    toggleProblemDetails();
+  };
 
   const handleAddProblem = async (event: React.MouseEvent) => {
     event.stopPropagation();
-    if (problem.isAdded || isAdding || !roomId) return;
-    await addProblemToRoom({ roomId, problemId: problem._id }).unwrap().catch(() => undefined);
+    if (isAdded || isAdding || !roomId) return;
+
+    try {
+      await addProblemToRoom({ roomId, problemId: problem._id }).unwrap();
+      onProblemAdded?.(problem._id);
+    } catch {
+      // The modal keeps the previous state when the add request fails.
+    }
   };
 
   return (
     <article className="collab-dsa-card">
-      <button type="button" className="collab-dsa-card__header" onClick={() => setIsOpen((value) => !value)}>
-        <div>
+      <div className="collab-dsa-card__header">
+        <div
+          className="collab-dsa-card__summary"
+          role="button"
+          tabIndex={0}
+          onClick={toggleProblemDetails}
+          onKeyDown={handleSummaryKeyDown}
+        >
           <div className="collab-dsa-card__title">
             <h3>{problem.title}</h3>
             <span className={cn('collab-difficulty', getDifficultyClass(problem.difficulty))}>{problem.difficulty}</span>
-            <button type="button" onClick={handleAddProblem} disabled={problem.isAdded || isAdding}>
-              {problem.isAdded ? 'Added' : isAdding ? 'Adding' : <Plus size={16} aria-hidden="true" />}
-            </button>
           </div>
 
           <div className="collab-dsa-tags">
@@ -51,8 +73,32 @@ const DSAProblemAccordion = ({ problem, roomId }: DSAProblemAccordionProps) => {
           <p>{problem.description}</p>
         </div>
 
-        {isOpen ? <ChevronUp size={24} aria-hidden="true" /> : <ChevronDown size={24} aria-hidden="true" />}
-      </button>
+        <div className="collab-dsa-card__actions">
+          <button
+            type="button"
+            className={cn('collab-dsa-add-button', isAdded && 'is-added')}
+            onClick={handleAddProblem}
+            disabled={isAdded || isAdding}
+          >
+            {isAdded ? 'Added' : isAdding ? 'Adding' : (
+              <>
+                <Plus size={15} aria-hidden="true" />
+                <span>Add</span>
+              </>
+            )}
+          </button>
+
+          <button
+            type="button"
+            className="collab-dsa-expand-button"
+            onClick={toggleProblemDetails}
+            aria-label={isOpen ? 'Collapse problem details' : 'Expand problem details'}
+            aria-expanded={isOpen}
+          >
+            {isOpen ? <ChevronUp size={18} aria-hidden="true" /> : <ChevronDown size={18} aria-hidden="true" />}
+          </button>
+        </div>
+      </div>
 
       {isOpen && (
         <div className="collab-dsa-card__body">

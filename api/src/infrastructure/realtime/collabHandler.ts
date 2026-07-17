@@ -26,6 +26,7 @@ type CodeChangePayload = RoomPayload & {
 type YjsCodeUpdatePayload = RoomPayload & {
   roomProblemId?: string;
   update?: unknown;
+  code?: string;
   language?: string;
 };
 
@@ -148,6 +149,17 @@ function scheduleCodeSave(payload: CodeChangePayload): void {
   }, CODE_SAVE_DELAY_MS);
 
   codeSaveTimers.set(key, timer);
+}
+
+async function roomProblemExists(roomId: string, roomProblemId?: string): Promise<boolean> {
+  if (!roomProblemId) return false;
+
+  const roomProblem = await RoomProblemModel.exists({
+    _id: roomProblemId,
+    roomId,
+  });
+
+  return Boolean(roomProblem);
 }
 
 function removeSocketFromRoom(socket: AuthenticatedSocket, roomId: string, realtime: RealtimeService): void {
@@ -329,6 +341,7 @@ function collabHandler(socket: AuthenticatedSocket, realtime: RealtimeService): 
 
       const canUseRealtime = await ensureRealtimeAccess(socket.user.id, roomId);
       if (!canUseRealtime) return;
+      if (payload.roomProblemId && !await roomProblemExists(roomId, payload.roomProblemId)) return;
 
       scheduleCodeSave(payload);
       socket.to(roomId).emit('room_sync', {
@@ -352,19 +365,37 @@ function collabHandler(socket: AuthenticatedSocket, realtime: RealtimeService): 
   socket.on('yjs_code_update', (payload: YjsCodeUpdatePayload = {}) => {
     void (async () => {
       const roomId = payload.roomId;
-      if (!roomId || typeof payload.update === 'undefined') return;
+      if (
+        !roomId
+        || !payload.roomProblemId
+        || !Array.isArray(payload.update)
+        || typeof payload.code !== 'string'
+      ) return;
 
       const canUseRealtime = await ensureRealtimeAccess(socket.user.id, roomId);
       if (!canUseRealtime) return;
+      if (!await roomProblemExists(roomId, payload.roomProblemId)) return;
 
+      scheduleCodeSave({
+        roomId,
+        roomProblemId: payload.roomProblemId,
+        code: payload.code,
+        language: payload.language,
+      });
       socket.to(roomId).emit('room_sync', {
         type: 'YJS_CODE_UPDATE',
         roomId,
         data: {
           roomProblemId: payload.roomProblemId,
           update: payload.update,
+          code: payload.code,
           language: payload.language,
           changedBy: socket.user,
+          updatedBy: {
+            _id: socket.user.id,
+            userName: socket.user.userName,
+            profilePicture: socket.user.profilePicture,
+          },
         },
       });
     })().catch((error) => {

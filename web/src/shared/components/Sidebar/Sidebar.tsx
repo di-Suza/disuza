@@ -4,9 +4,9 @@ import { Link, useLocation } from 'react-router-dom';
 
 import { useAppSelector } from '@/app/store/hooks';
 import { useLogoutMutation } from '@/features/auth/api/auth.api';
-import { useGetNotificationsQuery } from '@/features/notifications/api/notification.api';
 import PostComposerModal from '@/features/posts/ui/components/PostComposerModal';
 import useUnreadMessagesCount from '@/shared/hooks/useUnreadMessagesCount';
+import { useUnreadNotificationsCount } from '@/shared/hooks/useUnreadNotificationsCount';
 import { useToast } from '@/shared/hooks/useToast';
 import { getErrorMessage } from '@/shared/utils/getErrorMessage';
 import './Sidebar.css';
@@ -24,10 +24,9 @@ const Sidebar = () => {
   const [isComposerOpen, setComposerOpen] = useState(false);
   const [isProfileMenuOpen, setProfileMenuOpen] = useState(false);
   const user = useAppSelector((state) => state.auth.user);
-  const { data: notificationsData } = useGetNotificationsQuery({ page: 1, limit: 1 });
   const [logout, { isLoading: isLoggingOut }] = useLogoutMutation();
   const { showError, showSuccess } = useToast();
-  const notificationCount = notificationsData?.unreadCount ?? 0;
+  const notificationCount = useUnreadNotificationsCount();
   const messageCount = useUnreadMessagesCount();
   const activeFeedType = new URLSearchParams(search).get('type') === 'following' ? 'following' : 'all';
   const profilePictureUrl = typeof user?.profilePicture?.url === 'string' ? user.profilePicture.url : '';

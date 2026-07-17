@@ -56,6 +56,18 @@ class RealtimeService {
     this.io.to(userId.toString()).emit(event, payload);
   }
 
+  async getOnlineUserIds(userIds: string[]): Promise<string[]> {
+    if (!this.io) return [];
+
+    const uniqueUserIds = [...new Set(userIds.map((userId) => userId.toString()).filter(Boolean))];
+    const onlineUserIds = await Promise.all(uniqueUserIds.map(async (userId) => {
+      const sockets = await this.io!.in(userId).fetchSockets();
+      return sockets.length > 0 ? userId : null;
+    }));
+
+    return onlineUserIds.filter((userId): userId is string => Boolean(userId));
+  }
+
   emitToRoom(roomId: string, event: string, payload: RealtimeEventPayload): void {
     if (!this.io) return;
     this.io.to(roomId.toString()).emit(event, payload);

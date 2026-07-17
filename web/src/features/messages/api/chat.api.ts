@@ -65,6 +65,7 @@ const normalizeChatMessage = (payload: unknown): ChatMessage | null => {
       ...receipt,
       user: toIdString(receipt.user),
     })),
+    deliveredTo: message.deliveredTo?.map((userId) => toIdString(userId)).filter(Boolean),
     receiverId: message.receiverId ? toIdString(message.receiverId) : message.receiverId,
     sharedPost: message.sharedPost ? toIdString(message.sharedPost) : message.sharedPost,
   };
@@ -549,8 +550,10 @@ export const chatApi = api.injectEndpoints({
         url: `/chat/markAsRead/${conversationId}`,
         method: 'PATCH',
       }),
-      async onQueryStarted(conversationId, { dispatch, queryFulfilled }) {
-        const patchResult = dispatch(
+      async onQueryStarted(conversationId, { dispatch, getState, queryFulfilled }) {
+        const currentUserId = (getState() as { auth?: { user?: { _id?: string } } }).auth?.user?._id || '';
+        const seenAt = new Date().toISOString();
+        const conversationPatch = dispatch(
           chatApi.util.updateQueryData('getConversations', undefined, (draft) => {
             const conversation = draft.conversations.find((item) => item._id === conversationId);
             if (conversation) {
@@ -559,11 +562,29 @@ export const chatApi = api.injectEndpoints({
             }
           }),
         );
+        const messagesPatch = currentUserId
+          ? dispatch(
+            chatApi.util.updateQueryData('getMessages', { conversationId, page: 1 }, (draft) => {
+              draft.messages.forEach((message) => {
+                if (message.sender === currentUserId) return;
+                if (message.seenBy?.some((receipt) => receipt.user === currentUserId)) return;
+                message.seenBy = [
+                  ...(message.seenBy || []),
+                  {
+                    user: currentUserId,
+                    seenAt,
+                  },
+                ];
+              });
+            }),
+          )
+          : undefined;
 
         try {
           await queryFulfilled;
         } catch {
-          patchResult.undo();
+          conversationPatch.undo();
+          messagesPatch?.undo();
         }
       },
     }),

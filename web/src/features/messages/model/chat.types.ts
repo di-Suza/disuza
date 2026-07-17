@@ -69,6 +69,7 @@ export type ChatMessage = {
   sharedPost?: string;
   sharedPostDetails?: SharedPostDetails | null;
   attachment?: ChatAttachment | null;
+  deliveredTo?: string[];
   receiverId?: string;
   conversationIsUnread?: boolean;
   createdAt?: string;

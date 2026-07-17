@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 
+import { useAppSelector } from '@/app/store/hooks';
 import type { CollabParticipant, RoomSyncPayload } from '@/features/collab/model/collab.types';
 import { useToast } from '@/shared/hooks/useToast';
 import { getSocket } from '@/shared/services/socket';
@@ -29,12 +30,13 @@ const getPresenceUserId = (payload: PresencePayload) => payload.userId || payloa
 const useCollabRoom = ({ roomId, usersData, currentUserId }: UseCollabRoomArgs) => {
   const [presenceMap, setPresenceMap] = useState<Record<string, 'in_room' | 'not_in_room'>>({});
   const joinedRoomRef = useRef<string | null>(null);
+  const accessToken = useAppSelector((state) => state.auth.accessToken);
   const { showInfo } = useToast();
 
   useEffect(() => {
-    if (!roomId || usersData.length === 0) return undefined;
+    if (!roomId || !accessToken) return undefined;
 
-    const socket = getSocket();
+    const socket = getSocket(accessToken);
     const joinRoom = () => {
       socket.emit('join_collab_room', { roomId });
       joinedRoomRef.current = roomId;
@@ -106,7 +108,7 @@ const useCollabRoom = ({ roomId, usersData, currentUserId }: UseCollabRoomArgs) 
       socket.off('presence', handlePresence);
       socket.off('room_sync', handleRoomSyncToast);
     };
-  }, [currentUserId, roomId, showInfo, usersData.length]);
+  }, [accessToken, currentUserId, roomId, showInfo]);
 
   const usersWithPresence = useMemo(() => usersData.map((user) => ({
     ...user,

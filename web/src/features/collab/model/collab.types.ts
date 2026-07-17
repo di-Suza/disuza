@@ -163,6 +163,12 @@ export type RoomSyncPayload = {
   data?: Record<string, unknown>;
 };
 
+export type RoomSyncUser = {
+  id?: string;
+  _id?: string;
+  userName?: string;
+};
+
 export type CodeExecutionPayload = {
   status: 'running' | 'completed' | 'failed';
   roomId: string;

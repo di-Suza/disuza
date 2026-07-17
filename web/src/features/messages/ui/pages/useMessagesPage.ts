@@ -71,10 +71,15 @@ export const useMessagesPage = () => {
   }, [allConversations, dispatch, location.pathname, location.state, navigate]);
 
   useEffect(() => {
-    if (selectedConversation && selectedConversation._id !== selectedChat?._id) {
+    if (selectedConversation && selectedConversation !== selectedChat) {
       setSelectedChat(selectedConversation);
+      return;
     }
-  }, [selectedConversation, selectedChat?._id]);
+
+    if (!selectedConversation && selectedChat?._id && selectedChat._id === selectedChatId) {
+      setSelectedChat(null);
+    }
+  }, [selectedChat, selectedChatId, selectedConversation]);
 
   const isSwitchingChat = Boolean(selectedChat?._id && selectedChatId && selectedChat._id !== selectedChatId);
   const isFirstPageFetch = chatPage === 1 && isFetching && !currentChatData;

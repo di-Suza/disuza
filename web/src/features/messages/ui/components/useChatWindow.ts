@@ -2,8 +2,9 @@ import { useCallback, useEffect, useRef, useState, type ChangeEvent, type Keyboa
 import { useNavigate } from 'react-router-dom';
 
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks';
-import { useSendMessageMutation } from '@/features/messages/api/chat.api';
-import type { ChatConversation, ChatMessage } from '@/features/messages/model/chat.types';
+import { useMarkAsReadMutation, useSendMessageMutation } from '@/features/messages/api/chat.api';
+import type { ChatConversation, ChatMessage, SendMessageRequest } from '@/features/messages/model/chat.types';
+import { isRetryableMessageSendError, queueOfflineMessage } from '@/features/messages/model/offlineMessageQueue';
 import {
   clearSelectedChatFromState,
   setChatWindowActive,
@@ -41,7 +42,7 @@ const TYPING_EXPIRE_MS = 2800;
 export const useChatWindow = ({ allMessages, handleChatSelect, isFetchingMessages, selectedChat }: UseChatWindowArgs) => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const { showError } = useToast();
+  const { showError, showInfo } = useToast();
   const currentUserId = useAppSelector((state) => state.auth.user?._id);
   const messagesContainerRef = useRef<HTMLDivElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -55,6 +56,7 @@ export const useChatWindow = ({ allMessages, handleChatSelect, isFetchingMessage
   const [selectedAttachment, setSelectedAttachment] = useState<File | null>(null);
   const [typingUsers, setTypingUsers] = useState<TypingUser[]>([]);
   const [isCollabPermissionModalOpen, setIsCollabPermissionModalOpen] = useState(false);
+  const [markAsRead] = useMarkAsReadMutation();
   const [sendMessage] = useSendMessageMutation();
   const { selectedChatId } = useAppSelector((state) => state.chat);
 
@@ -141,22 +143,39 @@ export const useChatWindow = ({ allMessages, handleChatSelect, isFetchingMessage
       return;
     }
 
+    const payload: SendMessageRequest = {
+      conversationId: selectedChat?._id,
+      message: trimmedMessage,
+      messageType: selectedAttachment ? 'attachment' : undefined,
+      attachment: selectedAttachment || undefined,
+      receiverId: selectedChat?.isGroup ? undefined : selectedChat?.otherUser?._id,
+    };
+
     try {
-      await sendMessage({
-        conversationId: selectedChat?._id,
-        message: trimmedMessage,
-        messageType: selectedAttachment ? 'attachment' : undefined,
-        attachment: selectedAttachment || undefined,
-        receiverId: selectedChat?.isGroup ? undefined : selectedChat?.otherUser?._id,
-      }).unwrap();
+      await sendMessage(payload).unwrap();
       setMessageInput('');
       setSelectedAttachment(null);
       if (fileInputRef.current) fileInputRef.current.value = '';
       emitTypingStop();
     } catch (error) {
+      if (isRetryableMessageSendError(error)) {
+        try {
+          await queueOfflineMessage(payload);
+          setMessageInput('');
+          setSelectedAttachment(null);
+          if (fileInputRef.current) fileInputRef.current.value = '';
+          emitTypingStop();
+          showInfo('Message queued. It will send when you reconnect.');
+          return;
+        } catch {
+          showError('Message could not be queued offline.');
+          return;
+        }
+      }
+
       showError(getErrorMessage(error, 'Message not sent! Try Again'));
     }
-  }, [emitTypingStop, messageInput, selectedAttachment, selectedChat, sendMessage, showError]);
+  }, [emitTypingStop, messageInput, selectedAttachment, selectedChat, sendMessage, showError, showInfo]);
 
   const handleMessageInputKeyDown = useCallback((event: KeyboardEvent<HTMLTextAreaElement>) => {
     if (event.key === 'Enter' && !event.shiftKey) {
@@ -216,6 +235,23 @@ export const useChatWindow = ({ allMessages, handleChatSelect, isFetchingMessage
       dispatch(setChatWindowClosed());
     };
   }, [dispatch, selectedChatId]);
+
+  useEffect(() => {
+    if (!selectedChat?._id || !currentUserId || selectedChat.isBlocked || selectedChat.hasBlockedMe) return undefined;
+
+    const hasUnseenIncomingMessage = allMessages.some((message) => (
+      message.sender !== currentUserId
+      && !message.seenBy?.some((receipt) => receipt.user === currentUserId)
+    ));
+
+    if (!hasUnseenIncomingMessage) return undefined;
+
+    const timeoutId = window.setTimeout(() => {
+      markAsRead(selectedChat._id).catch(() => undefined);
+    }, 250);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [allMessages, currentUserId, markAsRead, selectedChat?._id, selectedChat?.hasBlockedMe, selectedChat?.isBlocked]);
 
   useEffect(() => {
     isTypingRef.current = false;

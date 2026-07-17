@@ -14,6 +14,7 @@ type SelectProblemModalProps = {
   isOpen: boolean;
   onClose: () => void;
   roomId?: string;
+  addedProblemIds?: string[];
 };
 
 const suggestionSections = [
@@ -24,10 +25,11 @@ const suggestionSections = [
   { title: 'Top Companies', icon: Code2, items: problemSuggestions.companies },
 ];
 
-const SelectProblemModal = ({ isOpen, onClose, roomId }: SelectProblemModalProps) => {
+const SelectProblemModal = ({ isOpen, onClose, roomId, addedProblemIds = [] }: SelectProblemModalProps) => {
   useLockBodyScroll(isOpen);
   const [searchQuery, setSearchQuery] = useState('');
   const [page, setPage] = useState(1);
+  const [locallyAddedProblemIds, setLocallyAddedProblemIds] = useState<string[]>([]);
   const debouncedSearchQuery = useDebounce(searchQuery.trim(), 300);
   const {
     data: problemsData,
@@ -45,6 +47,16 @@ const SelectProblemModal = ({ isOpen, onClose, roomId }: SelectProblemModalProps
   useEffect(() => {
     setPage(1);
   }, [debouncedSearchQuery]);
+
+  useEffect(() => {
+    setLocallyAddedProblemIds([]);
+  }, [roomId]);
+
+  const handleProblemAdded = (problemId: string) => {
+    setLocallyAddedProblemIds((currentIds) => (
+      currentIds.includes(problemId) ? currentIds : [...currentIds, problemId]
+    ));
+  };
 
   if (!isOpen) return null;
 
@@ -80,7 +92,12 @@ const SelectProblemModal = ({ isOpen, onClose, roomId }: SelectProblemModalProps
                   <button type="button" onClick={() => refetch()}>Retry</button>
                 </div>
               ) : problems.length > 0 ? (
-                <DSAProblemList problems={problems} roomId={roomId} />
+                <DSAProblemList
+                  problems={problems}
+                  roomId={roomId}
+                  addedProblemIds={[...addedProblemIds, ...locallyAddedProblemIds]}
+                  onProblemAdded={handleProblemAdded}
+                />
               ) : (
                 <div className="collab-empty-box">No Problems Found</div>
               )}

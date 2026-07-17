@@ -1,4 +1,4 @@
-import { Flag, MoreVertical, Undo2 } from 'lucide-react';
+import { Check, CheckCheck, Flag, MoreVertical, Undo2 } from 'lucide-react';
 import { memo, useEffect, useRef, useState } from 'react';
 
 import { formatChatMessageTime, getFeedbackMediaUrl, getSharedPostMediaUrl } from '@/features/messages/model/chat.helpers';
@@ -22,7 +22,7 @@ const MessageItem = ({ message }: MessageItemProps) => {
     goToSharedPost,
     handleUnsendMessage,
     isUnsendLoading,
-    seenLabel,
+    deliveryStatus,
     senderIsMe,
   } = useMessageItem({ message });
   const feedbackMediaUrl = getFeedbackMediaUrl(message.feedbackDetails);
@@ -162,7 +162,15 @@ const MessageItem = ({ message }: MessageItemProps) => {
               {shouldShowText && <p>{message.text}</p>}
               <span className="messages-v1-bubble__meta">
                 <time dateTime={message.createdAt}>{formatChatMessageTime(message.createdAt)}</time>
-                {seenLabel && <em>{seenLabel}</em>}
+                {deliveryStatus && (
+                  <span
+                    className={`messages-v1-delivery-status is-${deliveryStatus}`}
+                    aria-label={deliveryStatus === 'seen' ? 'Seen' : deliveryStatus === 'delivered' ? 'Delivered' : 'Sent'}
+                    title={deliveryStatus === 'seen' ? 'Seen' : deliveryStatus === 'delivered' ? 'Delivered' : 'Sent'}
+                  >
+                    {deliveryStatus === 'sent' ? <Check size={14} aria-hidden="true" /> : <CheckCheck size={14} aria-hidden="true" />}
+                  </span>
+                )}
               </span>
             </div>
           </div>
