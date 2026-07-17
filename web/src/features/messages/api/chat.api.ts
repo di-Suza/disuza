@@ -311,10 +311,11 @@ export const chatApi = api.injectEndpoints({
               attachment: message.attachment,
             };
             draft.conversations[conversationIndex].updatedAt = message.createdAt || new Date().toISOString();
-            draft.conversations[conversationIndex].isUnread = message.sender !== currentUserId && !isActiveConversation;
-            if (message.sender !== currentUserId && !isActiveConversation) {
+            if (message.sender !== currentUserId) {
+              draft.conversations[conversationIndex].isUnread = true;
               draft.conversations[conversationIndex].unreadCount = Number(draft.conversations[conversationIndex].unreadCount || 0) + 1;
-            } else if (isActiveConversation) {
+            } else {
+              draft.conversations[conversationIndex].isUnread = false;
               draft.conversations[conversationIndex].unreadCount = 0;
             }
             const [updatedConversation] = draft.conversations.splice(conversationIndex, 1);
@@ -330,9 +331,6 @@ export const chatApi = api.injectEndpoints({
             dispatch(setLastReceivedMessage(message));
           }
 
-          if (message.sender !== currentUserId && isActiveConversation) {
-            dispatch(chatApi.endpoints.markAsRead.initiate(message.conversationId));
-          }
         };
         const handleMessageUnsent = (payload: unknown) => {
           const unsentMessage = normalizeUnsendPayload(payload);

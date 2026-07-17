@@ -16,6 +16,7 @@ export const useConversations = ({ conversations, handleChatSelect, selectedChat
   const userId = useAppSelector((state) => state.auth.user?._id);
   const [markAsRead] = useMarkAsReadMutation();
   const currentChatFromCache = conversations.find((conversation) => conversation._id === selectedChat?._id);
+  const currentUnreadCount = Number(currentChatFromCache?.unreadCount || 0);
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
@@ -23,15 +24,26 @@ export const useConversations = ({ conversations, handleChatSelect, selectedChat
         selectedChat?._id
         && !selectedChat.isBlocked
         && !selectedChat.hasBlockedMe
-        && currentChatFromCache?.isUnread
-        && selectedChat.lastMessage?.sender !== userId
+        && currentChatFromCache?._id === selectedChat._id
+        && (currentChatFromCache.isUnread || currentUnreadCount > 0)
+        && currentChatFromCache.lastMessage?.sender !== userId
       ) {
         markAsRead(selectedChat._id).catch(() => undefined);
       }
     }, 500);
 
     return () => window.clearTimeout(timeoutId);
-  }, [currentChatFromCache?.isUnread, markAsRead, selectedChat, userId]);
+  }, [
+    currentChatFromCache?._id,
+    currentChatFromCache?.isUnread,
+    currentChatFromCache?.lastMessage?.sender,
+    currentUnreadCount,
+    markAsRead,
+    selectedChat?._id,
+    selectedChat?.hasBlockedMe,
+    selectedChat?.isBlocked,
+    userId,
+  ]);
 
   const handleConversationSelect = useCallback((chat: ChatConversation) => {
     dispatch(setSelectedChatInState(chat._id));

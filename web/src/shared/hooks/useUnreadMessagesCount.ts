@@ -8,8 +8,12 @@ const useUnreadMessagesCount = () => {
   if (!userId) return 0;
 
   return data?.conversations?.reduce((count, conversation) => {
-    const hasIncomingUnread = conversation.isUnread && conversation.lastMessage?.sender !== userId;
-    return hasIncomingUnread ? count + 1 : count;
+    const hasIncomingUnread = (conversation.isUnread || Number(conversation.unreadCount || 0) > 0)
+      && conversation.lastMessage?.sender !== userId;
+
+    if (!hasIncomingUnread) return count;
+
+    return count + Math.max(1, Number(conversation.unreadCount || 0));
   }, 0) || 0;
 };
 

@@ -213,8 +213,9 @@ const Conversations = ({ conversations, getConversationsLoading, handleChatSelec
             <>
               {visibleConversations.map((chat) => {
               const isActive = selectedChat?._id === chat._id;
-              const unreadCount = Number(chat.unreadCount || 0);
-              const hasUnread = Boolean(chat.isUnread && unreadCount > 0);
+              const unreadCount = Math.max(0, Number(chat.unreadCount || 0));
+              const hasUnread = Boolean((chat.isUnread || unreadCount > 0) && chat.lastMessage?.sender !== userId);
+              const visibleUnreadCount = unreadCount > 0 ? unreadCount : hasUnread ? 1 : 0;
               const visibleMemberCount = chat.participants?.length || 0;
               const currentUserIsGroupAdmin = Boolean(chat.isGroup && userId && chat.admins?.includes(userId));
               const isSoloGroupAdmin = Boolean(chat.isGroup && currentUserIsGroupAdmin && visibleMemberCount <= 1);
@@ -272,7 +273,7 @@ const Conversations = ({ conversations, getConversationsLoading, handleChatSelec
                       <p className={hasUnread ? 'is-unread' : ''}>
                         {chat.isBlocked || chat.hasBlockedMe ? 'Chat unavailable' : getConversationPreview(chat.lastMessage)}
                       </p>
-                      {hasUnread && <span className="messages-v1-unread-count" aria-label={`${unreadCount} unread messages`}>{Math.min(unreadCount, 99)}</span>}
+                      {hasUnread && <span className="messages-v1-unread-count" aria-label={`${visibleUnreadCount} unread messages`}>{Math.min(visibleUnreadCount, 99)}</span>}
                     </div>
                   </div>
                 </article>
