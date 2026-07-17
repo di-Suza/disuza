@@ -3713,7 +3713,7 @@
 
 .post-analytics-modal__metrics {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(116px, 1fr));
   gap: 10px;
 }
 
@@ -3900,6 +3900,15 @@
   display: grid;
   min-width: 0;
   gap: 3px;
+}
+
+.post-analytics-modal__feedback-text {
+  display: -webkit-box;
+  overflow: hidden;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
 
 .post-analytics-modal__load-more {

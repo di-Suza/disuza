@@ -6,6 +6,7 @@ import {
   MessageCircle,
   MousePointerClick,
   Repeat2,
+  SendHorizontal,
   Share2,
   UserRound,
   X,
@@ -36,7 +37,10 @@ const tabs: AnalyticsTab[] = [
   { id: 'likes', label: 'Likes' },
   { id: 'comments', label: 'Comments' },
   { id: 'reposts', label: 'Reposts' },
+  { id: 'feedbacks', label: 'Feedbacks' },
 ];
+
+const ANALYTICS_PAGE_SIZE = 15;
 
 const formatDate = (value?: string) => {
   if (!value) return '';
@@ -51,6 +55,11 @@ const getUserName = (item: PostAnalyticsItem) => item.user?.userName || 'User';
 
 const AnalyticsUserRow = ({ item, section }: { item: PostAnalyticsItem; section: PostAnalyticsSection }) => {
   const avatarUrl = getUserAvatar(item);
+  const detail = section === 'comments' || section === 'feedbacks'
+    ? item.comment || (section === 'feedbacks' ? 'Sent feedback' : 'Commented on your post')
+    : section === 'reposts'
+      ? 'Reposted your post'
+      : 'Liked your post';
 
   return (
     <article className="post-analytics-modal__activity-row">
@@ -59,7 +68,7 @@ const AnalyticsUserRow = ({ item, section }: { item: PostAnalyticsItem; section:
       </span>
       <span className="post-analytics-modal__activity-copy">
         <strong>{getUserName(item)}</strong>
-        <small>{section === 'comments' ? item.comment : section === 'reposts' ? 'Reposted your post' : 'Liked your post'}</small>
+        <small className={section === 'feedbacks' ? 'post-analytics-modal__feedback-text' : undefined}>{detail}</small>
         {section === 'comments' && item.replyToUser?.userName && <em>Reply to {item.replyToUser.userName}</em>}
       </span>
       <time>{formatDate(item.createdAt)}</time>
@@ -109,6 +118,7 @@ const PostAnalyticsModal = ({ isOpen, onClose, postId }: PostAnalyticsModalProps
     return [
       { icon: <Heart size={17} aria-hidden="true" />, label: 'Likes', value: Number(counts?.likes || 0) },
       { icon: <MessageCircle size={17} aria-hidden="true" />, label: 'Comments', value: Number(counts?.comments || 0) },
+      { icon: <SendHorizontal size={17} aria-hidden="true" />, label: 'Feedbacks', value: Number(counts?.feedbacks || 0) },
       { icon: <Repeat2 size={17} aria-hidden="true" />, label: 'Reposts', value: Number(counts?.reposts || 0) },
       { icon: <Share2 size={17} aria-hidden="true" />, label: 'Shares', value: Number(counts?.shares || 0) },
       { icon: <MousePointerClick size={17} aria-hidden="true" />, label: 'Link clicks', value: Number(counts?.linkClicks || 0) },
@@ -119,7 +129,7 @@ const PostAnalyticsModal = ({ isOpen, onClose, postId }: PostAnalyticsModalProps
 
   const fetchAnalytics = useCallback(async (section: PostAnalyticsSection, nextPage: number, append = false) => {
     try {
-      const result = await loadAnalytics({ postId, section, page: nextPage, limit: 10 }, false).unwrap();
+      const result = await loadAnalytics({ postId, section, page: nextPage, limit: ANALYTICS_PAGE_SIZE }, false).unwrap();
 
       setOverview(result.overview);
       setItems((currentItems) => (append ? [...currentItems, ...result.items] : result.items));

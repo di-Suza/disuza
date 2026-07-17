@@ -253,8 +253,8 @@ const postAnalyticsRules = [
     .toInt(),
   query('section')
     .optional()
-    .isIn(['likes', 'comments', 'reposts'])
-    .withMessage('Analytics section must be likes, comments, or reposts'),
+    .isIn(['likes', 'comments', 'reposts', 'feedbacks'])
+    .withMessage('Analytics section must be likes, comments, reposts, or feedbacks'),
 ];
 
 const trackPostLinkClickRules = [

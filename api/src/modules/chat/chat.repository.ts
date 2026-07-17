@@ -140,6 +140,19 @@ class ChatRepository {
       .lean();
   }
 
+  findPostFeedbacks(postId: string | Types.ObjectId, page: number, limit: number) {
+    return MessageModel.find({
+      isFeedback: true,
+      'feedbackOn.type': 'Post',
+      'feedbackOn._id': postId,
+    })
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit)
+      .populate('sender', 'userName profilePicture headline')
+      .lean();
+  }
+
   async populateFeedbackDetails(message: MessageDocument, receiverId: string | Types.ObjectId) {
     let output = message.toObject() as Record<string, unknown>;
 

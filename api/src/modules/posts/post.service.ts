@@ -3,6 +3,7 @@ import mongoose, { type FilterQuery } from 'mongoose';
 import logger from '../../config/logger.js';
 import cleanupQueue, { type CleanupQueue } from '../../infrastructure/jobs/cleanup.queue.js';
 import { BadRequestError, NotFoundError } from '../../shared/errors/index.js';
+import chatRepository, { type ChatRepository } from '../chat/chat.repository.js';
 import commentRepository, { type CommentRepository } from '../comments/comment.repository.js';
 import heatmapService, { type HeatmapService } from '../contributions/heatmap.service.js';
 import mediaService, { type MediaService } from '../media/media.service.js';
@@ -55,7 +56,12 @@ type DeletePostResult = {
   alreadyDeleting: boolean;
 };
 
-type AnalyticsSection = 'likes' | 'comments' | 'reposts';
+type AnalyticsSection = 'likes' | 'comments' | 'reposts' | 'feedbacks';
+
+type PostFeedbackAnalyticsItem = {
+  sender?: unknown;
+  text?: string;
+} & Record<string, unknown>;
 
 type AnalyticsLinkSummary = Omit<PostLinkClick, 'clicks'> & {
   clicks: number;
@@ -73,6 +79,7 @@ class PostService {
     private readonly saves: SaveRepository = saveRepository,
     private readonly reposts: RepostRepository = repostRepository,
     private readonly comments: CommentRepository = commentRepository,
+    private readonly chats: ChatRepository = chatRepository,
     private readonly follows: FollowRepository = followRepository,
     private readonly blockRules: BlockService = blockService,
     private readonly media: MediaService = mediaService,
@@ -91,7 +98,7 @@ class PostService {
   }
 
   private normalizeAnalyticsSection(sectionInput: unknown): AnalyticsSection {
-    if (sectionInput === 'comments' || sectionInput === 'reposts') return sectionInput;
+    if (sectionInput === 'comments' || sectionInput === 'reposts' || sectionInput === 'feedbacks') return sectionInput;
     return 'likes';
   }
 
@@ -519,6 +526,7 @@ class PostService {
       counts: {
         likes: Number(post.counts?.likes || 0),
         comments: Number(post.counts?.comments || 0),
+        feedbacks: Number(post.counts?.feedbacks || 0),
         reposts: Number(post.counts?.reposts || 0),
         shares: Number(post.analytics?.shares || 0),
         linkClicks: linkClicks.reduce((total, link) => total + Number(link.clicks || 0), 0),
@@ -526,11 +534,20 @@ class PostService {
       links: linkClicks,
     };
 
-    const items = section === 'comments'
+    const rawItems = section === 'comments'
       ? await this.comments.findPostAnalyticsComments(postId, page, limit)
       : section === 'reposts'
         ? await this.reposts.findPostReposts(postId, page, limit)
-        : await this.likes.findPostLikes(postId, page, limit);
+        : section === 'feedbacks'
+          ? await this.chats.findPostFeedbacks(postId, page, limit)
+          : await this.likes.findPostLikes(postId, page, limit);
+    const items = section === 'feedbacks'
+      ? (rawItems as PostFeedbackAnalyticsItem[]).map((item) => ({
+        ...item,
+        user: item.sender,
+        comment: item.text,
+      }))
+      : rawItems;
 
     return {
       post: {

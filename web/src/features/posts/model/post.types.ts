@@ -129,7 +129,7 @@ export type PostRepostResponse = {
   alreadyUnreposted?: boolean;
 };
 
-export type PostAnalyticsSection = 'likes' | 'comments' | 'reposts';
+export type PostAnalyticsSection = 'likes' | 'comments' | 'reposts' | 'feedbacks';
 
 export type PostAnalyticsUser = {
   _id: string;
@@ -156,6 +156,7 @@ export type PostAnalyticsOverview = {
   counts: {
     likes: number;
     comments: number;
+    feedbacks: number;
     reposts: number;
     shares: number;
     linkClicks: number;
