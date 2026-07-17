@@ -7,6 +7,7 @@ import type { RoomChatPanelProps } from '@/features/collab/model/collab.types';
 import { useToast } from '@/shared/hooks/useToast';
 import Input from '@/shared/ui/Input';
 import { getErrorMessage } from '@/shared/utils/getErrorMessage';
+import './ChatPanel.css';
 
 const ChatPanel = ({ conversationId, otherUser }: RoomChatPanelProps) => {
   const { showError } = useToast();

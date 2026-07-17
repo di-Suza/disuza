@@ -4,6 +4,7 @@ import { memo } from 'react';
 import { getUserAvatarUrl, getUserInitial } from '@/features/messages/model/chat.helpers';
 import type { ChatUser } from '@/features/messages/model/chat.types';
 import { cn } from '@/shared/utils/cn';
+import './ChatAvatar.css';
 
 type ChatAvatarProps = {
   user?: Pick<ChatUser, 'profilePicture' | 'userName'> | null;

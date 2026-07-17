@@ -4,6 +4,7 @@ import { memo, useEffect, useMemo, useState } from 'react';
 import { useAppSelector } from '@/app/store/hooks';
 import type { ChatAttachment } from '@/features/messages/model/chat.types';
 import env from '@/shared/config/env';
+import './MessageAttachment.css';
 
 type MessageAttachmentProps = {
   attachment: ChatAttachment;

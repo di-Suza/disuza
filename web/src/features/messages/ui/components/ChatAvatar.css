@@ -1,0 +1,44 @@
+.chat-avatar,
+.messages-v1-conversation__avatar,
+.messages-v1-window__avatar,
+.messages-v1-feedback-user__avatar {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid var(--border-secondary);
+  border-radius: 999px;
+  background: var(--surface-muted);
+  color: var(--text-secondary);
+  font-weight: 900;
+}
+
+.chat-avatar img,
+.chat-avatar > span {
+  width: 100%;
+  height: 100%;
+}
+
+.chat-avatar img {
+  object-fit: cover;
+}
+
+.chat-avatar > span {
+  display: grid;
+  place-items: center;
+}
+
+.messages-v1-conversation__avatar {
+  width: 48px;
+  height: 48px;
+}
+
+.messages-v1-window__avatar {
+  width: 44px;
+  height: 44px;
+}
+
+.messages-v1-feedback-user__avatar {
+  width: 32px;
+  height: 32px;
+}
