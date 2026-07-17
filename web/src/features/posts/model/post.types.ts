@@ -29,6 +29,14 @@ export type PostLink = {
   url: string;
 };
 
+export type PostLinkClick = {
+  key: string;
+  label: string;
+  url: string;
+  type: 'custom' | 'project';
+  clicks: number;
+};
+
 export type CodeSnippet = {
   language: string;
   code: string;
@@ -39,6 +47,11 @@ export type PostCounts = {
   likes: number;
   feedbacks: number;
   reposts: number;
+};
+
+export type PostAnalyticsState = {
+  shares: number;
+  linkClicks: PostLinkClick[];
 };
 
 export type PostAuthor = {
@@ -60,6 +73,7 @@ export type Post = {
   images?: PostMedia[];
   counts?: Partial<PostCounts>;
   settings?: Partial<PostSettings>;
+  analytics?: Partial<PostAnalyticsState>;
   isProjectPost?: boolean;
   projectLinks?: ProjectLinks;
   links?: PostLink[];
@@ -113,6 +127,71 @@ export type PostRepostResponse = {
   message: string;
   reposted: boolean;
   alreadyUnreposted?: boolean;
+};
+
+export type PostAnalyticsSection = 'likes' | 'comments' | 'reposts';
+
+export type PostAnalyticsUser = {
+  _id: string;
+  userName: string;
+  headline?: string;
+  profilePicture?: {
+    url?: string;
+    fileId?: string;
+  };
+};
+
+export type PostAnalyticsItem = {
+  _id: string;
+  user?: PostAnalyticsUser;
+  comment?: string;
+  replyCount?: number;
+  parentComment?: string | null;
+  replyToUser?: PostAnalyticsUser | null;
+  createdAt?: string;
+  updatedAt?: string;
+};
+
+export type PostAnalyticsOverview = {
+  counts: {
+    likes: number;
+    comments: number;
+    reposts: number;
+    shares: number;
+    linkClicks: number;
+  };
+  links: PostLinkClick[];
+};
+
+export type PostAnalyticsResponse = {
+  success: boolean;
+  message: string;
+  post: Pick<Post, '_id' | 'caption' | 'createdAt'>;
+  overview: PostAnalyticsOverview;
+  section: PostAnalyticsSection;
+  items: PostAnalyticsItem[];
+  page: number;
+  hasMore: boolean;
+};
+
+export type PostAnalyticsQueryArgs = {
+  postId: string;
+  section?: PostAnalyticsSection;
+  page?: number;
+  limit?: number;
+};
+
+export type TrackPostLinkClickRequest = {
+  postId: string;
+  linkKey: string;
+};
+
+export type TrackPostLinkClickResponse = {
+  success: boolean;
+  message: string;
+  counted: boolean;
+  cooldownMs: number;
+  link: PostLinkClick;
 };
 
 export type SavedCollection = {

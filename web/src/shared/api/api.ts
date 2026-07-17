@@ -15,6 +15,7 @@ export const api = createApi({
     'UserAccountHistory',
     'Posts',
     'Post',
+    'PostAnalytics',
     'Repost',
     'Reposts',
     'Feed',

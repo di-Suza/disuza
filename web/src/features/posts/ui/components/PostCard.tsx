@@ -1,4 +1,5 @@
 import {
+  BarChart3,
   Bookmark,
   ChevronLeft,
   ChevronRight,
@@ -25,7 +26,7 @@ import { useNavigate } from 'react-router-dom';
 
 import CommentModal from '@/features/comments/ui/components/CommentModal';
 import SendFeedbackModal from '@/features/messages/ui/components/SendFeedbackModal';
-import { useDeletePostMutation, useGetPostQuery } from '@/features/posts/api/post.api';
+import { useDeletePostMutation, useGetPostQuery, useTrackPostLinkClickMutation } from '@/features/posts/api/post.api';
 import { getPostAuthor, getPostImageUrl, getPostMedia, getPostOwnerId, isVideoMedia } from '@/features/posts/model/post.helpers';
 import type { Post, PostAuthor, PostLink } from '@/features/posts/model/post.types';
 import { usePostLike } from '@/features/posts/ui/hooks/usePostLike';
@@ -39,6 +40,7 @@ import ConfirmDialog from '@/shared/ui/ConfirmDialog';
 import { cn } from '@/shared/utils/cn';
 import { getErrorMessage } from '@/shared/utils/getErrorMessage';
 import PostComposerModal from './PostComposerModal';
+import PostAnalyticsModal from './PostAnalyticsModal';
 import SharePostModal from './SharePostModal';
 import '../posts.css';
 
@@ -52,6 +54,10 @@ type PostCardProps = {
 };
 
 type PostAttachmentPanel = 'code' | 'media';
+
+type PostDisplayLink = PostLink & {
+  linkKey: string;
+};
 
 const formatTime = (value?: string) => {
   if (!value) return '';
@@ -109,6 +115,7 @@ const PostCard = ({ className, fallbackAuthor, hideFeedbackAction = false, post,
   const [isReportOpen, setReportOpen] = useState(false);
   const [isFeedbackOpen, setFeedbackOpen] = useState(false);
   const [isShareOpen, setShareOpen] = useState(false);
+  const [isAnalyticsOpen, setAnalyticsOpen] = useState(false);
   const [isDeleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
   const [showFullCaption, setShowFullCaption] = useState(false);
@@ -119,6 +126,7 @@ const PostCard = ({ className, fallbackAuthor, hideFeedbackAction = false, post,
   const [showSaveTooltip, setShowSaveTooltip] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [deletePost, { isLoading: isDeleting }] = useDeletePostMutation();
+  const [trackPostLinkClick] = useTrackPostLinkClickMutation();
   const { data: fullPostData, isFetching: isPostFetching } = useGetPostQuery(post._id, { skip: !isEditOpen });
   const { isLiked, likesCount, toggleLike } = usePostLike(post);
   const { isReposted, isRepostUpdating, repostsCount, toggleRepost } = usePostRepost(post);
@@ -149,9 +157,11 @@ const PostCard = ({ className, fallbackAuthor, hideFeedbackAction = false, post,
   const shouldCollapseCode = code.length > 600 || code.split(/\r?\n/).length > 10;
   const editablePost = fullPostData?.post || null;
   const userName = author?.userName || 'User';
-  const extraLinks = useMemo<PostLink[]>(() => {
+  const extraLinks = useMemo<PostDisplayLink[]>(() => {
     const links = Array.isArray(post.links) ? post.links : [];
-    return links.filter((link) => link.label?.trim() && link.url?.trim());
+    return links
+      .map((link, index) => ({ ...link, linkKey: `custom:${index}` }))
+      .filter((link) => link.label?.trim() && link.url?.trim());
   }, [post.links]);
 
   const goToPrevious = useCallback(() => {
@@ -217,6 +227,10 @@ const PostCard = ({ className, fallbackAuthor, hideFeedbackAction = false, post,
     }
   }, [isSaved, toggleSave]);
 
+  const trackLinkClick = useCallback((linkKey: string) => {
+    void trackPostLinkClick({ postId: post._id, linkKey }).unwrap().catch(() => undefined);
+  }, [post._id, trackPostLinkClick]);
+
   const copyCode = useCallback(async () => {
     if (!code) return;
 
@@ -278,6 +292,7 @@ const PostCard = ({ className, fallbackAuthor, hideFeedbackAction = false, post,
                   <div className="v1-post-card__dropdown">
                     <button type="button" onClick={() => { setShowDropdown(false); setShareOpen(true); }}><Share2 size={16} />Share</button>
                     {isOwner && <button type="button" onClick={() => { setShowDropdown(false); setEditOpen(true); }}><Edit3 size={16} />Edit</button>}
+                    {isOwner && <button type="button" onClick={() => { setShowDropdown(false); setAnalyticsOpen(true); }}><BarChart3 size={16} />Analytics</button>}
                     {isOwner && <button type="button" className="is-danger" onClick={() => { setShowDropdown(false); setDeleteConfirmOpen(true); }} disabled={isDeleting}>{isDeleting ? <Loader2 className="spin" size={16} /> : <Trash2 size={16} />}Delete</button>}
                     {!isOwner && <button type="button" className="is-danger" onClick={() => { setShowDropdown(false); setReportOpen(true); }}><MessageSquareWarning size={16} />Report</button>}
                     <button type="button" className="is-muted" onClick={() => setShowDropdown(false)}><X size={16} />Cancel</button>
@@ -325,7 +340,7 @@ const PostCard = ({ className, fallbackAuthor, hideFeedbackAction = false, post,
             {extraLinks.map((link) => {
               const href = normalizeLink(link.url);
               return (
-                <a key={`${link.label}-${link.url}`} href={href} target="_blank" rel="noopener noreferrer">
+                <a key={`${link.label}-${link.url}`} href={href} target="_blank" rel="noopener noreferrer" onClick={() => trackLinkClick(link.linkKey)}>
                   <ExternalLink size={14} aria-hidden="true" />
                   <span>{link.label}</span>
                   <small>{truncateUrl(href)}</small>
@@ -378,8 +393,8 @@ const PostCard = ({ className, fallbackAuthor, hideFeedbackAction = false, post,
 
         {post.isProjectPost && (
           <div className="v1-post-card__links rich-post-card__project-links">
-            {post.projectLinks?.liveDemoUrl && <a href={normalizeLink(post.projectLinks.liveDemoUrl)} target="_blank" rel="noopener noreferrer"><ExternalLink size={14} />Live Demo</a>}
-            {post.projectLinks?.repositoryUrl && <a href={normalizeLink(post.projectLinks.repositoryUrl)} target="_blank" rel="noopener noreferrer"><GitFork size={14} />Github</a>}
+            {post.projectLinks?.liveDemoUrl && <a href={normalizeLink(post.projectLinks.liveDemoUrl)} target="_blank" rel="noopener noreferrer" onClick={() => trackLinkClick('project:liveDemo')}><ExternalLink size={14} />Live Demo</a>}
+            {post.projectLinks?.repositoryUrl && <a href={normalizeLink(post.projectLinks.repositoryUrl)} target="_blank" rel="noopener noreferrer" onClick={() => trackLinkClick('project:repository')}><GitFork size={14} />Github</a>}
           </div>
         )}
 
@@ -415,6 +430,7 @@ const PostCard = ({ className, fallbackAuthor, hideFeedbackAction = false, post,
       {isCollectionsOpen && <ManageSaveCollectionsModal isOpen={isCollectionsOpen} onClose={() => setCollectionsOpen(false)} postId={post._id} onSaved={markSaved} />}
       {isReportOpen && <ReportModal isOpen={isReportOpen} onClose={() => setReportOpen(false)} targetId={post._id} onModel="Post" />}
       {isShareOpen && <SharePostModal isOpen={isShareOpen} onClose={() => setShareOpen(false)} post={post} />}
+      {isAnalyticsOpen && <PostAnalyticsModal isOpen={isAnalyticsOpen} onClose={() => setAnalyticsOpen(false)} postId={post._id} />}
       <ConfirmDialog
         isOpen={isDeleteConfirmOpen}
         isBusy={isDeleting}
