@@ -436,7 +436,7 @@ const CollabRoomPage = () => {
           <>
             <div role="separator" aria-orientation="vertical" className="collab-resize-handle is-vertical" onPointerDown={(event) => startHorizontalResize('right', event)} />
             <aside className="collab-right-panel" style={{ width: clamp(rightPanelWidth, 220, getAvailableSideWidth('right')) }}>
-              <UsersPanel usersData={usersWithPresence} onCollapse={() => setIsRightPanelCollapsed(true)} {...audioCall} />
+              <UsersPanel usersData={audioCall.usersWithVoice} onCollapse={() => setIsRightPanelCollapsed(true)} {...audioCall} />
               <div className="collab-chat-region">
                 <ChatPanel conversationId={roomDetails?.conversationId?._id || null} otherUser={otherUser} roomId={roomId} />
               </div>

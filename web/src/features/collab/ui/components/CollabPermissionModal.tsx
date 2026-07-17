@@ -11,6 +11,7 @@ import { useDeleteNotificationMutation } from '@/features/notifications/api/noti
 import { useToast } from '@/shared/hooks/useToast';
 import Button from '@/shared/ui/Button';
 import { getErrorMessage } from '@/shared/utils/getErrorMessage';
+import './CollabPermissionModal.css';
 
 type CollabPermissionModalProps = {
   isOpen: boolean;

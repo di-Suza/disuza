@@ -1,4 +1,4 @@
-type MediaKind = 'image' | 'video';
+type MediaKind = 'image' | 'video' | 'audio' | 'file';
 
 type StoredMedia = {
   url: string;

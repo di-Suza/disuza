@@ -5,6 +5,7 @@ import { formatChatMessageTime, getFeedbackMediaUrl, getSharedPostMediaUrl } fro
 import type { ChatMessage } from '@/features/messages/model/chat.types';
 import ReportModal from '@/features/reports/ui/components/ReportModal';
 import ChatAvatar from './ChatAvatar';
+import MessageAttachment from './MessageAttachment';
 import { useMessageItem } from './useMessageItem';
 
 type MessageItemProps = {
@@ -21,6 +22,7 @@ const MessageItem = ({ message }: MessageItemProps) => {
     goToSharedPost,
     handleUnsendMessage,
     isUnsendLoading,
+    seenLabel,
     senderIsMe,
   } = useMessageItem({ message });
   const feedbackMediaUrl = getFeedbackMediaUrl(message.feedbackDetails);
@@ -28,6 +30,8 @@ const MessageItem = ({ message }: MessageItemProps) => {
   const isPostMessage = message.messageType === 'post' || Boolean(message.sharedPost || message.sharedPostDetails);
   const sharedPostAuthor = message.sharedPostDetails?.user?.userName || 'DevLoopFeed';
   const sharedPostCaption = message.sharedPostDetails?.caption || 'View shared post';
+  const feedbackPostCaption = message.feedbackDetails?.caption?.trim() || '';
+  const shouldShowText = Boolean(message.text?.trim()) && !(message.messageType === 'attachment' && message.text === 'Sent an attachment');
 
   useEffect(() => {
     if (!isMenuOpen) return;
@@ -49,6 +53,14 @@ const MessageItem = ({ message }: MessageItemProps) => {
       document.removeEventListener('keydown', handleEscape);
     };
   }, [isMenuOpen]);
+
+  if (message.messageType === 'system') {
+    return (
+      <div className="messages-v1-system-message">
+        <span>{message.text}</span>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -105,13 +117,18 @@ const MessageItem = ({ message }: MessageItemProps) => {
                     {feedbackMediaUrl && (
                       <span className="messages-v1-feedback-post__media">
                         <img src={feedbackMediaUrl} alt="" loading="lazy" />
-                        {message.feedbackDetails?.caption && (
+                        {feedbackPostCaption && (
                           <span>
-                            {message.feedbackDetails.caption.substring(0, 20)}
+                            {feedbackPostCaption.substring(0, 20)}
                             ...
                           </span>
                         )}
                       </span>
+                    )}
+                    {!feedbackMediaUrl && feedbackPostCaption && (
+                      <strong className="messages-v1-feedback-post__caption">
+                        {feedbackPostCaption}
+                      </strong>
                     )}
                     <small>{senderIsMe ? 'Your feedback on this POST' : 'Feedback on your Post'}</small>
                   </button>
@@ -141,8 +158,12 @@ const MessageItem = ({ message }: MessageItemProps) => {
             )}
 
             <div className="messages-v1-bubble">
-              <p>{message.text}</p>
-              <time dateTime={message.createdAt}>{formatChatMessageTime(message.createdAt)}</time>
+              {message.attachment && <MessageAttachment attachment={message.attachment} />}
+              {shouldShowText && <p>{message.text}</p>}
+              <span className="messages-v1-bubble__meta">
+                <time dateTime={message.createdAt}>{formatChatMessageTime(message.createdAt)}</time>
+                {seenLabel && <em>{seenLabel}</em>}
+              </span>
             </div>
           </div>
         </div>

@@ -58,9 +58,23 @@ class CollabRoomAccessService {
     }
 
     const isParticipant = conversation.participants.some((participantId) => isSameId(participantId, userId));
+    const hasAcceptedAccess = !(conversation.hiddenBy || []).some((hiddenUserId) => isSameId(hiddenUserId, userId));
 
-    if (!isParticipant) {
+    if (!isParticipant || !hasAcceptedAccess) {
       throw new ForbiddenError("Room not found or you're not authorized");
+    }
+
+    if (conversation.isGroup) {
+      return {
+        room,
+        conversation,
+        roomType: SHARED_ROOM,
+        accessMode: SHARED_ROOM,
+        canAccess: true,
+        canUseRealtime: true,
+        otherUserId: null,
+        blockStatus: null,
+      };
     }
 
     const otherUserId = conversation.participants.find((participantId) => !isSameId(participantId, userId)) || null;

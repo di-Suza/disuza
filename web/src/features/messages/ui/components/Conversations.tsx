@@ -1,8 +1,8 @@
-import { Loader2, MessageCircle, MoreVertical, Search, Trash2, X } from 'lucide-react';
+import { Loader2, MessageSquarePlus, MoreVertical, Pin, PinOff, Search, Trash2, Users, X } from 'lucide-react';
 import { memo, useEffect, useMemo, useState, type KeyboardEvent, type MouseEvent } from 'react';
 
 import { useAppDispatch } from '@/app/store/hooks';
-import { useDeleteConversationMutation } from '@/features/messages/api/chat.api';
+import { useDeleteConversationMutation, usePinConversationMutation } from '@/features/messages/api/chat.api';
 import { formatChatMessageTime, getConversationPreview, getConversationTitle } from '@/features/messages/model/chat.helpers';
 import type { ChatConversation } from '@/features/messages/model/chat.types';
 import { clearSelectedChatFromState, setChatWindowClosed } from '@/features/messages/state/chatSlice';
@@ -10,6 +10,7 @@ import { useToast } from '@/shared/hooks/useToast';
 import Input from '@/shared/ui/Input';
 import { getErrorMessage } from '@/shared/utils/getErrorMessage';
 import ChatAvatar from './ChatAvatar';
+import ConversationStartModal from './ConversationStartModal';
 import { useConversations } from './useConversations';
 
 type ConversationsProps = {
@@ -26,15 +27,18 @@ const Conversations = ({ conversations, getConversationsLoading, handleChatSelec
   const { showError, showSuccess } = useToast();
   const [searchQuery, setSearchQuery] = useState('');
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const [isCreateMenuOpen, setIsCreateMenuOpen] = useState(false);
+  const [startMode, setStartMode] = useState<'chat' | 'group' | null>(null);
   const [visibleCount, setVisibleCount] = useState(CONVERSATION_PAGE_SIZE);
   const [deleteConversation, { isLoading: deletingConversation }] = useDeleteConversationMutation();
+  const [pinConversation, { isLoading: pinningConversation }] = usePinConversationMutation();
   const { handleConversationSelect, userId } = useConversations({ conversations, handleChatSelect, selectedChat });
 
   const filteredConversations = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
     if (!query) return conversations;
 
-    return conversations.filter((chat) => chat.otherUser?.userName?.toLowerCase().includes(query));
+    return conversations.filter((chat) => getConversationTitle(chat).toLowerCase().includes(query));
   }, [conversations, searchQuery]);
   const visibleConversations = useMemo(
     () => filteredConversations.slice(0, visibleCount),
@@ -67,6 +71,27 @@ const Conversations = ({ conversations, getConversationsLoading, handleChatSelec
     };
   }, [openMenuId]);
 
+  useEffect(() => {
+    if (!isCreateMenuOpen) return;
+
+    const handleOutsidePointerDown = (event: PointerEvent) => {
+      if (event.target instanceof Element && event.target.closest('[data-message-create-menu-root]')) return;
+      setIsCreateMenuOpen(false);
+    };
+
+    const handleEscape = (event: globalThis.KeyboardEvent) => {
+      if (event.key === 'Escape') setIsCreateMenuOpen(false);
+    };
+
+    document.addEventListener('pointerdown', handleOutsidePointerDown);
+    document.addEventListener('keydown', handleEscape);
+
+    return () => {
+      document.removeEventListener('pointerdown', handleOutsidePointerDown);
+      document.removeEventListener('keydown', handleEscape);
+    };
+  }, [isCreateMenuOpen]);
+
   const handleSelectChat = (chat: ChatConversation) => {
     handleConversationSelect(chat);
     setSearchQuery('');
@@ -98,9 +123,22 @@ const Conversations = ({ conversations, getConversationsLoading, handleChatSelec
         handleChatSelect(null);
       }
       setOpenMenuId(null);
-      showSuccess('Conversation removed from your inbox!');
+      showSuccess(chat.isGroup ? 'Group removed from your inbox!' : 'Conversation removed from your inbox!');
     } catch (error) {
       showError(getErrorMessage(error, 'Conversation could not be removed!'));
+    }
+  };
+
+  const handlePinChat = async (event: MouseEvent<HTMLButtonElement>, chat: ChatConversation) => {
+    event.stopPropagation();
+
+    if (!chat._id || pinningConversation) return;
+
+    try {
+      await pinConversation({ conversationId: chat._id, pinned: !chat.isPinned }).unwrap();
+      setOpenMenuId(null);
+    } catch (error) {
+      showError(getErrorMessage(error, chat.isPinned ? 'Conversation could not be unpinned!' : 'Conversation could not be pinned!'));
     }
   };
 
@@ -112,9 +150,40 @@ const Conversations = ({ conversations, getConversationsLoading, handleChatSelec
             <p>Inbox</p>
             <h1>Messages</h1>
           </div>
-          <span className="messages-v1-sidebar__icon">
-            <MessageCircle size={20} aria-hidden="true" />
-          </span>
+          <div className="messages-v1-create-menu-root" data-message-create-menu-root>
+            <button
+              type="button"
+              className="messages-v1-sidebar__icon"
+              onClick={() => setIsCreateMenuOpen((current) => !current)}
+              aria-label="Create conversation"
+            >
+              <MoreVertical size={20} aria-hidden="true" />
+            </button>
+            {isCreateMenuOpen && (
+              <div className="messages-v1-menu messages-v1-create-menu">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setStartMode('chat');
+                    setIsCreateMenuOpen(false);
+                  }}
+                >
+                  <MessageSquarePlus size={16} aria-hidden="true" />
+                  New chat
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setStartMode('group');
+                    setIsCreateMenuOpen(false);
+                  }}
+                >
+                  <Users size={16} aria-hidden="true" />
+                  New group
+                </button>
+              </div>
+            )}
+          </div>
         </div>
 
         <label className="messages-v1-search">
@@ -144,7 +213,14 @@ const Conversations = ({ conversations, getConversationsLoading, handleChatSelec
             <>
               {visibleConversations.map((chat) => {
               const isActive = selectedChat?._id === chat._id;
-              const hasUnread = Boolean(chat.isUnread && chat.lastMessage?.sender !== userId);
+              const unreadCount = Math.max(0, Number(chat.unreadCount || 0));
+              const hasUnread = Boolean((chat.isUnread || unreadCount > 0) && chat.lastMessage?.sender !== userId);
+              const visibleUnreadCount = unreadCount > 0 ? unreadCount : hasUnread ? 1 : 0;
+              const visibleMemberCount = chat.participants?.length || 0;
+              const currentUserIsGroupAdmin = Boolean(chat.isGroup && userId && chat.admins?.includes(userId));
+              const isSoloGroupAdmin = Boolean(chat.isGroup && currentUserIsGroupAdmin && visibleMemberCount <= 1);
+              const groupAdminCannotLeave = Boolean(chat.isGroup && currentUserIsGroupAdmin && visibleMemberCount > 1);
+              const removeLabel = chat.isGroup ? (isSoloGroupAdmin ? 'Delete group' : 'Leave') : 'Delete';
 
               return (
                 <article
@@ -155,7 +231,7 @@ const Conversations = ({ conversations, getConversationsLoading, handleChatSelec
                   onClick={() => handleSelectChat(chat)}
                   onKeyDown={(event) => handleConversationKeyDown(event, chat)}
                 >
-                  <ChatAvatar user={chat.otherUser} className="messages-v1-conversation__avatar" />
+                  <ChatAvatar user={chat.isGroup ? { userName: getConversationTitle(chat), profilePicture: chat.groupAvatar } : chat.otherUser} className="messages-v1-conversation__avatar" />
 
                   <div className="messages-v1-conversation__body">
                     <div className="messages-v1-conversation__topline">
@@ -174,9 +250,19 @@ const Conversations = ({ conversations, getConversationsLoading, handleChatSelec
 
                         {openMenuId === chat._id && (
                           <div className="messages-v1-menu messages-v1-conversation__menu" data-conversation-menu-root onClick={(event) => event.stopPropagation()}>
-                            <button type="button" onClick={(event) => handleDeleteChat(event, chat)} disabled={deletingConversation}>
+                            <button type="button" onClick={(event) => handlePinChat(event, chat)} disabled={pinningConversation}>
+                              {chat.isPinned ? <PinOff size={16} aria-hidden="true" /> : <Pin size={16} aria-hidden="true" />}
+                              {chat.isPinned ? 'Unpin' : 'Pin'}
+                            </button>
+                            <button
+                              type="button"
+                              className="is-danger"
+                              onClick={(event) => handleDeleteChat(event, chat)}
+                              disabled={deletingConversation || groupAdminCannotLeave}
+                              title={groupAdminCannotLeave ? 'Remove all members before leaving this group.' : undefined}
+                            >
                               <Trash2 size={16} aria-hidden="true" />
-                              {deletingConversation ? 'Removing...' : 'Delete'}
+                              {deletingConversation ? 'Removing...' : removeLabel}
                             </button>
                           </div>
                         )}
@@ -187,7 +273,7 @@ const Conversations = ({ conversations, getConversationsLoading, handleChatSelec
                       <p className={hasUnread ? 'is-unread' : ''}>
                         {chat.isBlocked || chat.hasBlockedMe ? 'Chat unavailable' : getConversationPreview(chat.lastMessage)}
                       </p>
-                      {hasUnread && <span aria-label="Unread conversation" />}
+                      {hasUnread && <span className="messages-v1-unread-count" aria-label={`${visibleUnreadCount} unread messages`}>{Math.min(visibleUnreadCount, 99)}</span>}
                     </div>
                   </div>
                 </article>
@@ -211,6 +297,15 @@ const Conversations = ({ conversations, getConversationsLoading, handleChatSelec
             </div>
           )}
         </div>
+      )}
+
+      {startMode && (
+        <ConversationStartModal
+          isOpen={Boolean(startMode)}
+          mode={startMode}
+          onClose={() => setStartMode(null)}
+          onConversationReady={handleSelectChat}
+        />
       )}
     </aside>
   );

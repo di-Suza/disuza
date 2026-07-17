@@ -379,18 +379,28 @@ const cleanupUser = async (userId: string, email?: string, profilePicture?: { fi
 const removeMessageContributions = (messageIds: Array<string | Types.ObjectId>) => removeContributionLogs(messageIds, 'FEEDBACK');
 
 const cleanupConversation = async (conversationId: string) => {
-  const messages = await MessageModel.find({ conversationId }).select('_id').lean();
+  const messages = await MessageModel.find({ conversationId }).select('_id attachment').lean();
   const messageIds = messages.map((message) => message._id);
+  const attachmentFileIds = messages
+    .map((message) => message.attachment?.fileId)
+    .filter((fileId): fileId is string => Boolean(fileId));
+  const rooms = await CollabRoomModel.find({ conversationId }).select('_id').lean();
+  const roomIds = rooms.map((room) => room._id);
 
   await Promise.all([
     removeMessageContributions(messageIds),
     ReportModel.deleteMany({ onModel: 'Message', targetId: { $in: messageIds } }),
+    NotificationModel.deleteMany({ contentId: conversationId }),
+    RoomProblemModel.deleteMany({ roomId: { $in: roomIds } }),
+    CollabRoomModel.deleteMany({ _id: { $in: roomIds } }),
   ]);
 
   await Promise.all([
     MessageModel.deleteMany({ conversationId }),
     ConversationModel.deleteOne({ _id: conversationId }),
   ]);
+
+  await Promise.all(attachmentFileIds.map((fileId) => mediaService.tryDeleteFile(fileId)));
 };
 
 const createWorker = <T>(

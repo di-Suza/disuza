@@ -7,6 +7,7 @@ import {
   useGetNotificationsQuery,
   useMarkAllAsReadMutation,
 } from '@/features/notifications/api/notification.api';
+import { useAcceptGroupInviteMutation } from '@/features/messages/api/chat.api';
 import { useAcceptCollabRequestMutation } from '@/features/collab/api/collab.api';
 import type { NotificationItem } from '@/features/notifications/model/notification.types';
 import { useToast } from '@/shared/hooks/useToast';
@@ -47,6 +48,7 @@ export const useNotificationsPage = () => {
   const [deleteNotification, { isLoading: isDeletingOne }] = useDeleteNotificationMutation();
   const [deleteAllNotifications, { isLoading: isDeletingAll }] = useDeleteAllNotificationsMutation();
   const [acceptCollabRequest] = useAcceptCollabRequestMutation();
+  const [acceptGroupInvite] = useAcceptGroupInviteMutation();
 
   const notifications = useMemo(() => data?.notifications || [], [data?.notifications]);
   const unreadCount = data?.unreadCount || 0;
@@ -103,8 +105,26 @@ export const useNotificationsPage = () => {
       return;
     }
 
+    if (notification.type === 'GROUP_INVITE') {
+      const content = getRecord(notification.contentId);
+      const conversationId = typeof content?._id === 'string' ? content._id : null;
+
+      if (!conversationId) {
+        showError('Group invite is expired or invalid');
+        return;
+      }
+
+      try {
+        const response = await acceptGroupInvite(conversationId).unwrap();
+        navigate('/messages', { state: { openConversationId: response.conversation?._id || conversationId } });
+      } catch (apiError) {
+        showError(getErrorMessage(apiError, 'Failed to accept group invite'));
+      }
+      return;
+    }
+
     showError('This notification action will be available when the related module is added.');
-  }, [acceptCollabRequest, navigate, showError]);
+  }, [acceptCollabRequest, acceptGroupInvite, navigate, showError]);
 
   const handleSenderClick = useCallback((event: MouseEvent, senderId: string) => {
     event.stopPropagation();
@@ -166,6 +186,28 @@ export const useNotificationsPage = () => {
     }
   }, [deleteNotification, navigate, showError]);
 
+  const handleAcceptGroupInviteFromNotification = useCallback(async (event: MouseEvent, notification: NotificationItem) => {
+    event.stopPropagation();
+
+    const content = getRecord(notification.contentId);
+    const conversationId = typeof content?._id === 'string' ? content._id : null;
+
+    if (!conversationId) {
+      showError('Group invite is expired or invalid');
+      return;
+    }
+
+    try {
+      setActiveActionId(notification._id);
+      const response = await acceptGroupInvite(conversationId).unwrap();
+      navigate('/messages', { state: { openConversationId: response.conversation?._id || conversationId } });
+    } catch (apiError) {
+      showError(getErrorMessage(apiError, 'Something went wrong while accepting group invite'));
+    } finally {
+      setActiveActionId(null);
+    }
+  }, [acceptGroupInvite, navigate, showError]);
+
   const handleDeleteNotification = useCallback(async (event: MouseEvent, notificationId: string) => {
     event.stopPropagation();
 
@@ -194,6 +236,7 @@ export const useNotificationsPage = () => {
     activeActionId,
     error,
     handleAcceptCollabFromNotification,
+    handleAcceptGroupInviteFromNotification,
     handleDeleteAllNotifications,
     handleDeleteNotification,
     handleEnterRoomFromNotification,

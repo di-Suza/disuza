@@ -1,4 +1,4 @@
-import { Bell, Code2, Heart, MessageCircle, MessageCircleReply, UserCheck, UserPlus } from 'lucide-react';
+import { Bell, Code2, Heart, MessageCircle, MessageCircleReply, UserCheck, UserPlus, Users } from 'lucide-react';
 import type { ReactNode } from 'react';
 
 import type { NotificationCommentContent, NotificationContent, NotificationItem, NotificationType } from './notification.types';
@@ -62,6 +62,8 @@ export const getNotificationIcon = (type: NotificationType) => {
       return <Code2 size={18} aria-hidden="true" />;
     case 'COLLAB_ACCEPTED':
       return <UserCheck size={18} aria-hidden="true" />;
+    case 'GROUP_INVITE':
+      return <Users size={18} aria-hidden="true" />;
     default:
       return <Bell size={18} aria-hidden="true" />;
   }
@@ -84,6 +86,13 @@ export const getNotificationText = (notification: NotificationItem): ReactNode =
       return <><strong>{senderName}</strong> sent you a collab request</>;
     case 'COLLAB_ACCEPTED':
       return <><strong>{senderName}</strong> accepted your collab request</>;
+    case 'GROUP_INVITE': {
+      const content = isRecord(notification.contentId) ? notification.contentId as Record<string, unknown> : null;
+      const groupName = typeof content?.groupName === 'string'
+        ? content.groupName
+        : 'a group';
+      return <><strong>{senderName}</strong> invited you to <strong>{groupName}</strong></>;
+    }
     default:
       return <><strong>{senderName}</strong> sent you a notification</>;
   }

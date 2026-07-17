@@ -32,6 +32,7 @@ const NotificationsPage = () => {
     activeActionId,
     error,
     handleAcceptCollabFromNotification,
+    handleAcceptGroupInviteFromNotification,
     handleDeleteAllNotifications,
     handleDeleteNotification,
     handleEnterRoomFromNotification,
@@ -135,6 +136,17 @@ const NotificationsPage = () => {
                       >
                         {activeActionId === notification._id ? <Loader2 className="spin" size={14} aria-hidden="true" /> : <LogIn size={14} aria-hidden="true" />}
                         {activeActionId === notification._id ? 'Opening...' : 'Enter Room'}
+                      </button>
+                    )}
+                    {notification.type === 'GROUP_INVITE' && (
+                      <button
+                        type="button"
+                        className="notification-card__action"
+                        disabled={activeActionId === notification._id}
+                        onClick={(event) => handleAcceptGroupInviteFromNotification(event, notification)}
+                      >
+                        {activeActionId === notification._id ? <Loader2 className="spin" size={14} aria-hidden="true" /> : <Check size={14} aria-hidden="true" />}
+                        {activeActionId === notification._id ? 'Joining...' : 'Accept Invite'}
                       </button>
                     )}
                   </div>

@@ -1,8 +1,8 @@
 import type { ProfilePicture } from '@/features/auth/model/auth.types';
 import type { Post } from '@/features/posts/model/post.types';
 
-export type NotificationType = 'LIKE' | 'FOLLOW' | 'COMMENT' | 'COMMENT_REPLY' | 'COLLAB_REQUEST' | 'COLLAB_ACCEPTED';
-export type NotificationTargetModel = 'Post' | 'User' | 'Comment' | 'CollabRequest' | 'CollabRoom';
+export type NotificationType = 'LIKE' | 'FOLLOW' | 'COMMENT' | 'COMMENT_REPLY' | 'COLLAB_REQUEST' | 'COLLAB_ACCEPTED' | 'GROUP_INVITE';
+export type NotificationTargetModel = 'Post' | 'User' | 'Comment' | 'CollabRequest' | 'CollabRoom' | 'Conversation';
 
 export type NotificationSender = {
   _id: string;
@@ -17,7 +17,13 @@ export type NotificationCommentContent = {
   post?: Pick<Post, '_id' | 'caption' | 'media'>;
 };
 
-export type NotificationContent = Pick<Post, '_id' | 'caption' | 'media'> | NotificationSender | NotificationCommentContent | string | null;
+export type NotificationConversationContent = {
+  _id: string;
+  groupName?: string;
+  isGroup?: boolean;
+};
+
+export type NotificationContent = Pick<Post, '_id' | 'caption' | 'media'> | NotificationSender | NotificationCommentContent | NotificationConversationContent | string | null;
 
 export type NotificationItem = {
   _id: string;

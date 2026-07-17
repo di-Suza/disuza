@@ -6,7 +6,7 @@ import notificationRepository, { type NotificationFilter, type NotificationRepos
 import { type NotificationTargetModel, type NotificationType } from './notification.model.js';
 
 const COLLAB_REQUEST_NOTIFICATION_TTL_MS = 24 * 60 * 60 * 1000;
-const CONTENT_BACKED_TYPES: NotificationType[] = ['LIKE', 'COMMENT', 'COMMENT_REPLY', 'COLLAB_REQUEST', 'COLLAB_ACCEPTED'];
+const CONTENT_BACKED_TYPES: NotificationType[] = ['LIKE', 'COMMENT', 'COMMENT_REPLY', 'COLLAB_REQUEST', 'COLLAB_ACCEPTED', 'GROUP_INVITE'];
 
 type SendNotificationInput = {
   senderId: string | Types.ObjectId;

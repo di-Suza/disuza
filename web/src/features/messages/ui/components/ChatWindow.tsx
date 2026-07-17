@@ -1,4 +1,4 @@
-import { ArrowLeft, Code2, Loader2, RefreshCw, Send, UserX, X } from 'lucide-react';
+import { ArrowLeft, Code2, Loader2, MoreVertical, Paperclip, RefreshCw, Send, UserX, X } from 'lucide-react';
 import { memo, useEffect, useRef, useState, type MouseEvent } from 'react';
 
 import {
@@ -10,6 +10,7 @@ import type { ChatConversation, ChatMessage } from '@/features/messages/model/ch
 import CollabPermissionModal from '@/features/collab/ui/components/CollabPermissionModal';
 import { cn } from '@/shared/utils/cn';
 import ChatAvatar from './ChatAvatar';
+import GroupSettingsModal from './GroupSettingsModal';
 import MessageItem from './MessageItem';
 import { useChatWindow } from './useChatWindow';
 
@@ -44,18 +45,25 @@ const ChatWindow = ({
   selectedChat,
 }: ChatWindowProps) => {
   const [contextMenu, setContextMenu] = useState<ContextMenu | null>(null);
+  const [isGroupSettingsOpen, setIsGroupSettingsOpen] = useState(false);
   const contextMenuRef = useRef<HTMLDivElement | null>(null);
   const {
+    fileInputRef,
+    handleAttachmentButtonClick,
+    handleAttachmentChange,
     handleBackToChats,
     handleCollabClick,
     handleMessageInputChange,
     handleMessageInputKeyDown,
+    handleRemoveAttachment,
     handleSendMessage,
     handleUserProfileClick,
     isCollabPermissionModalOpen,
     messageInput,
     messagesContainerRef,
+    selectedAttachment,
     setIsCollabPermissionModalOpen,
+    typingLabel,
   } = useChatWindow({
     allMessages,
     handleChatSelect,
@@ -65,6 +73,9 @@ const ChatWindow = ({
   const isDeletedUser = Boolean(selectedChat?.otherUser?.isDeletedUser);
   const isBlockedChat = Boolean(selectedChat?.isBlocked || selectedChat?.hasBlockedMe);
   const canSendMessages = Boolean(selectedChat && !isDeletedUser && !isBlockedChat);
+  const headerAvatarUser = selectedChat?.isGroup
+    ? { userName: getConversationTitle(selectedChat), profilePicture: selectedChat.groupAvatar }
+    : selectedChat?.otherUser;
 
   useEffect(() => {
     if (!contextMenu) return;
@@ -114,23 +125,35 @@ const ChatWindow = ({
               </button>
 
               <button type="button" className="messages-v1-window__avatar-button" onClick={handleUserProfileClick}>
-                <ChatAvatar user={selectedChat.otherUser} className="messages-v1-window__avatar" />
+                <ChatAvatar user={headerAvatarUser} className="messages-v1-window__avatar" />
               </button>
 
               <button type="button" className="messages-v1-window__identity" onClick={handleUserProfileClick}>
                 <h3>{getConversationTitle(selectedChat)}</h3>
-                <p>Right click anywhere to close chat</p>
+                <p>{selectedChat.isGroup ? `${selectedChat.participants?.length || 1} members` : 'Right click anywhere to close chat'}</p>
               </button>
             </div>
 
             {canSendMessages && (
-              <button type="button" className="messages-v1-collab-button" onClick={handleCollabClick}>
-                <span>
-                  <Code2 size={14} aria-hidden="true" />
-                </span>
-                <strong>Start Collab</strong>
-                <em>Collab</em>
-              </button>
+              <div className="messages-v1-window__actions">
+                <button type="button" className="messages-v1-collab-button" onClick={handleCollabClick}>
+                  <span>
+                    <Code2 size={14} aria-hidden="true" />
+                  </span>
+                  <strong>{selectedChat.isGroup ? 'Open Room' : 'Start Collab'}</strong>
+                  <em>{selectedChat.isGroup ? 'Room' : 'Collab'}</em>
+                </button>
+                {selectedChat.isGroup && (
+                  <button
+                    type="button"
+                    className="messages-v1-icon-button"
+                    onClick={() => setIsGroupSettingsOpen(true)}
+                    aria-label="Group settings"
+                  >
+                    <MoreVertical size={17} aria-hidden="true" />
+                  </button>
+                )}
+              </div>
             )}
           </header>
 
@@ -193,10 +216,42 @@ const ChatWindow = ({
                     </div>
                   );
                 })}
+
+                {typingLabel && (
+                  <div className="messages-v1-typing">
+                    <span>{typingLabel}</span>
+                  </div>
+                )}
               </div>
 
               <footer className="messages-v1-composer">
+                {selectedAttachment && (
+                  <div className="messages-v1-attachment-chip">
+                    <Paperclip size={14} aria-hidden="true" />
+                    <span>{selectedAttachment.name}</span>
+                    <small>{Math.max(1, Math.ceil(selectedAttachment.size / 1024))} KB</small>
+                    <button type="button" onClick={handleRemoveAttachment} aria-label="Remove attachment">
+                      <X size={13} aria-hidden="true" />
+                    </button>
+                  </div>
+                )}
                 <div className="messages-v1-composer__inner">
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    className="messages-v1-attachment-input"
+                    onChange={handleAttachmentChange}
+                    aria-label="Attach file"
+                  />
+                  <button
+                    type="button"
+                    className="messages-v1-attach-button"
+                    onClick={handleAttachmentButtonClick}
+                    disabled={!canSendMessages}
+                    aria-label="Attach file"
+                  >
+                    <Paperclip size={17} aria-hidden="true" />
+                  </button>
                   <textarea
                     value={messageInput}
                     onChange={handleMessageInputChange}
@@ -208,7 +263,7 @@ const ChatWindow = ({
                   <button
                     type="button"
                     onClick={handleSendMessage}
-                    disabled={!messageInput.trim() || !canSendMessages}
+                    disabled={(!messageInput.trim() && !selectedAttachment) || !canSendMessages}
                     aria-label="Send message"
                   >
                     <Send size={17} aria-hidden="true" />
@@ -238,12 +293,22 @@ const ChatWindow = ({
       )}
       </section>
 
-      {isCollabPermissionModalOpen && canSendMessages && selectedChat && (
+      {isCollabPermissionModalOpen && canSendMessages && selectedChat && !selectedChat.isGroup && (
         <CollabPermissionModal
           isOpen={isCollabPermissionModalOpen}
           onClose={() => setIsCollabPermissionModalOpen(false)}
           otherUser={selectedChat.otherUser?.userName}
           conversationId={selectedChat._id}
+        />
+      )}
+
+      {isGroupSettingsOpen && selectedChat?.isGroup && (
+        <GroupSettingsModal
+          isOpen={isGroupSettingsOpen}
+          conversation={selectedChat}
+          onClose={() => setIsGroupSettingsOpen(false)}
+          onConversationUpdated={(conversation) => handleChatSelect(conversation)}
+          onLeftGroup={handleBackToChats}
         />
       )}
     </>

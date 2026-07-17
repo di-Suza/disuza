@@ -1,5 +1,5 @@
 export type FeedbackTargetType = 'Post' | 'User';
-export type ChatMessageType = 'text' | 'feedback' | 'post';
+export type ChatMessageType = 'text' | 'feedback' | 'post' | 'system' | 'attachment';
 
 export type ChatImage = {
   url?: string;
@@ -26,6 +26,23 @@ export type SharedPostDetails = {
   createdAt?: string;
 };
 
+export type ChatSeenReceipt = {
+  user: string;
+  seenAt?: string;
+};
+
+export type ChatAttachment = {
+  fileId: string;
+  downloadUrl?: string;
+  name?: string;
+  mime?: string;
+  size?: number;
+  mediaType: 'image' | 'video' | 'audio' | 'file';
+  thumbnailUrl?: string;
+  width?: number;
+  height?: number;
+};
+
 export type ChatUser = {
   _id: string;
   userName?: string;
@@ -42,6 +59,7 @@ export type ChatMessage = {
   senderInfo?: ChatUser;
   text: string;
   messageType?: ChatMessageType;
+  seenBy?: ChatSeenReceipt[];
   isFeedback?: boolean;
   feedbackOn?: {
     type?: FeedbackTargetType;
@@ -50,19 +68,28 @@ export type ChatMessage = {
   feedbackDetails?: FeedbackDetails | null;
   sharedPost?: string;
   sharedPostDetails?: SharedPostDetails | null;
+  attachment?: ChatAttachment | null;
   receiverId?: string;
   conversationIsUnread?: boolean;
   createdAt?: string;
   updatedAt?: string;
 };
 
-export type ChatLastMessage = Pick<ChatMessage, '_id' | 'text' | 'sender' | 'createdAt' | 'messageType' | 'sharedPost'>;
+export type ChatLastMessage = Pick<ChatMessage, '_id' | 'text' | 'sender' | 'createdAt' | 'messageType' | 'sharedPost' | 'attachment'>;
 
 export type ChatConversation = {
   _id: string;
   otherUser?: ChatUser;
+  participants?: ChatUser[];
+  isGroup?: boolean;
+  groupName?: string;
+  groupAvatar?: ChatImage;
+  admins?: string[];
+  roomId?: string;
   lastMessage?: ChatLastMessage | null;
   isUnread?: boolean;
+  unreadCount?: number;
+  isPinned?: boolean;
   updatedAt?: string;
   isBlocked?: boolean;
   hasBlockedMe?: boolean;
@@ -100,12 +127,59 @@ export type SendMessageRequest = {
   postId?: string;
   sharedPostId?: string;
   userId?: string;
+  attachment?: File;
 };
 
 export type SendMessageResponse = {
   success: boolean;
   message: string;
   newMessage: ChatMessage;
+};
+
+export type StartConversationRequest = {
+  receiverId: string;
+};
+
+export type StartConversationResponse = {
+  success: boolean;
+  message: string;
+  conversation: ChatConversation;
+};
+
+export type CreateGroupRequest = {
+  memberIds: string[];
+  groupName?: string;
+};
+
+export type CreateGroupResponse = {
+  success: boolean;
+  message: string;
+  conversation: ChatConversation;
+  roomId?: string;
+};
+
+export type AcceptGroupInviteResponse = CreateGroupResponse;
+
+export type UpdateGroupRequest = {
+  conversationId: string;
+  groupName: string;
+};
+
+export type InviteGroupMembersRequest = {
+  conversationId: string;
+  memberIds: string[];
+};
+
+export type RemoveGroupMemberRequest = {
+  conversationId: string;
+  memberId: string;
+};
+
+export type GroupConversationResponse = {
+  success: boolean;
+  message: string;
+  conversation: ChatConversation | null;
+  conversationId?: string;
 };
 
 export type UnsendMessageRequest = {
@@ -137,4 +211,13 @@ export type DeleteConversationResponse = {
 export type MarkAsReadResponse = {
   success: boolean;
   message: string;
+  conversationId?: string;
+  unreadCount?: number;
+  seenCount?: number;
+  seenAt?: string;
+};
+
+export type PinConversationRequest = {
+  conversationId: string;
+  pinned: boolean;
 };

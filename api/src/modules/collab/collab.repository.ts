@@ -8,7 +8,16 @@ import CollabRoomModel, { type CollabRoomDocument } from './collabRoom.model.js'
 type ConversationWithOtherUser = {
   _id: Types.ObjectId;
   participants: Types.ObjectId[];
-  otherUserId: Types.ObjectId;
+  participantsInfo?: Array<{
+    _id: Types.ObjectId;
+    userName: string;
+    profilePicture?: {
+      url: string;
+      fileId?: string;
+    };
+    active?: boolean;
+  }>;
+  otherUserId?: Types.ObjectId | null;
   otherUser?: {
     _id: Types.ObjectId;
     userName: string;
@@ -18,12 +27,19 @@ type ConversationWithOtherUser = {
     };
     active?: boolean;
   };
+  isGroup?: boolean;
+  groupName?: string;
+  groupAvatar?: {
+    url?: string;
+    fileId?: string;
+  };
+  roomId?: Types.ObjectId;
   updatedAt: Date;
 };
 
 class CollabRepository {
   findConversationById(conversationId: string | Types.ObjectId) {
-    return ConversationModel.findById(conversationId).select('participants').lean();
+    return ConversationModel.findById(conversationId).select('participants hiddenBy isGroup groupName admins createdBy').lean();
   }
 
   findRoomByConversation(conversationId: string | Types.ObjectId) {
@@ -82,18 +98,25 @@ class CollabRepository {
       {
         $match: {
           participants: currentUserId,
+          hiddenBy: { $ne: currentUserId },
         },
       },
       {
         $addFields: {
           otherUserId: {
-            $first: {
-              $filter: {
-                input: '$participants',
-                as: 'participant',
-                cond: { $ne: ['$$participant', currentUserId] },
+            $cond: [
+              '$isGroup',
+              null,
+              {
+                $first: {
+                  $filter: {
+                    input: '$participants',
+                    as: 'participant',
+                    cond: { $ne: ['$$participant', currentUserId] },
+                  },
+                },
               },
-            },
+            ],
           },
         },
       },
@@ -116,10 +139,31 @@ class CollabRepository {
       },
       { $unwind: { path: '$otherUser', preserveNullAndEmptyArrays: true } },
       {
+        $lookup: {
+          from: 'users',
+          localField: 'participants',
+          foreignField: '_id',
+          as: 'participantsInfo',
+          pipeline: [
+            {
+              $project: {
+                userName: 1,
+                profilePicture: 1,
+                active: 1,
+              },
+            },
+          ],
+        },
+      },
+      {
         $project: {
           participants: 1,
+          participantsInfo: 1,
           otherUserId: 1,
           otherUser: 1,
+          isGroup: 1,
+          groupName: 1,
+          groupAvatar: 1,
           updatedAt: 1,
         },
       },

@@ -29,7 +29,7 @@ class NotificationRepository {
       .populate('sender', 'userName profilePicture headline')
       .populate({
         path: 'contentId',
-        select: 'caption media userName profilePicture headline comment post conversationId',
+        select: 'caption media userName profilePicture headline comment post conversationId groupName groupAvatar participants isGroup',
         options: { strictPopulate: false },
         populate: {
           path: 'post',
@@ -49,7 +49,7 @@ class NotificationRepository {
       .populate('sender', 'userName profilePicture headline')
       .populate({
         path: 'contentId',
-        select: 'caption media userName profilePicture headline comment post conversationId',
+        select: 'caption media userName profilePicture headline comment post conversationId groupName groupAvatar participants isGroup',
         options: { strictPopulate: false },
         populate: {
           path: 'post',
