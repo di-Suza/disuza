@@ -34,8 +34,8 @@ const sendMessageRules = [
     .withMessage('Message cannot exceed 2000 characters'),
   body('messageType')
     .optional()
-    .isIn(['text', 'feedback', 'post'])
-    .withMessage('messageType must be text, feedback, or post'),
+    .isIn(['text', 'feedback', 'post', 'attachment'])
+    .withMessage('messageType must be text, feedback, post, or attachment'),
   body('isFeedback')
     .optional()
     .customSanitizer((value) => value === true || value === 'true')
@@ -49,6 +49,7 @@ const sendMessageRules = [
     .custom((value) => {
       if (!value.receiverId && !value.conversationId) return false;
       if (value.messageType === 'post') return Boolean(value.postId || value.sharedPostId);
+      if (value.messageType === 'attachment') return true;
       if (!value.isFeedback && value.messageType !== 'feedback') return Boolean(value.message);
       if (!value.feedbackOn) return false;
       if (value.feedbackOn === 'Post') return Boolean(value.postId);
@@ -73,6 +74,25 @@ const unsendMessageRules = [
 ];
 
 const deleteConversationRules = conversationIdParamRules;
+
+const pinConversationRules = [
+  ...conversationIdParamRules,
+  body('pinned')
+    .customSanitizer((value) => value === true || value === 'true')
+    .isBoolean()
+    .withMessage('pinned must be a boolean'),
+];
+
+const attachmentRules = [
+  param('messageId')
+    .custom((value) => mongoIdPattern.test(String(value)))
+    .withMessage('messageId must be a valid MongoDB ObjectId'),
+  param('fileId')
+    .isString()
+    .trim()
+    .isLength({ min: 1 })
+    .withMessage('fileId is required'),
+];
 
 const startConversationRules = [
   body('receiverId')
@@ -127,9 +147,11 @@ export {
   acceptGroupInviteRules,
   createGroupRules,
   deleteConversationRules,
+  attachmentRules,
   getMessagesRules,
   inviteGroupMembersRules,
   markAsReadRules,
+  pinConversationRules,
   removeGroupMemberRules,
   sendMessageRules,
   startConversationRules,

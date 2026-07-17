@@ -7,6 +7,9 @@ import AppError from '../../shared/errors/AppError.js';
 import { BadRequestError } from '../../shared/errors/index.js';
 import HttpStatus from '../../shared/constants/httpStatus.js';
 import {
+  AUDIO_MIME_EXTENSION_MAP,
+  CHAT_ATTACHMENT_MAX_SIZE_BYTES,
+  CHAT_FILE_EXTENSION_FALLBACK,
   IMAGE_MIME_EXTENSION_MAP,
   MEDIA_FOLDERS,
   MEDIA_MIME_EXTENSION_MAP,
@@ -30,8 +33,16 @@ class MediaService {
   private getMediaType(file: Express.Multer.File): MediaKind {
     if (file.mimetype in IMAGE_MIME_EXTENSION_MAP) return 'image';
     if (file.mimetype in VIDEO_MIME_EXTENSION_MAP) return 'video';
+    if (file.mimetype in AUDIO_MIME_EXTENSION_MAP) return 'audio';
 
     throw new BadRequestError('Please attach only image or video files!');
+  }
+
+  private getChatAttachmentType(file: Express.Multer.File): MediaKind {
+    if (file.mimetype in IMAGE_MIME_EXTENSION_MAP) return 'image';
+    if (file.mimetype in VIDEO_MIME_EXTENSION_MAP) return 'video';
+    if (file.mimetype in AUDIO_MIME_EXTENSION_MAP) return 'audio';
+    return 'file';
   }
 
   private getMediaExtension(file: Express.Multer.File): string {
@@ -42,6 +53,14 @@ class MediaService {
     }
 
     return extension;
+  }
+
+  private getChatAttachmentExtension(file: Express.Multer.File): string {
+    const mappedExtension = MEDIA_MIME_EXTENSION_MAP[file.mimetype as keyof typeof MEDIA_MIME_EXTENSION_MAP];
+    if (mappedExtension) return mappedExtension;
+
+    const extension = file.originalname.split('.').pop()?.toLowerCase().replace(/[^a-z0-9]/g, '');
+    return extension || CHAT_FILE_EXTENSION_FALLBACK;
   }
 
   private assertExpectedType(file: Express.Multer.File, expectedType?: MediaKind): MediaKind {
@@ -71,6 +90,22 @@ class MediaService {
       .replace(/^-|-$/g, '') || 'media';
 
     return `${safePrefix}-${Date.now()}-${randomUUID()}.${this.getMediaExtension(file)}`;
+  }
+
+  private createChatAttachmentFileName(prefix: string, file: Express.Multer.File): string {
+    const safePrefix = prefix
+      .trim()
+      .replace(/[^a-zA-Z0-9-]/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '') || 'chat';
+
+    return `${safePrefix}-${Date.now()}-${randomUUID()}.${this.getChatAttachmentExtension(file)}`;
+  }
+
+  private assertChatAttachmentSize(file: Express.Multer.File): void {
+    if (file.size > CHAT_ATTACHMENT_MAX_SIZE_BYTES) {
+      throw new BadRequestError('Chat attachment must be 2MB or smaller.');
+    }
   }
 
   private assertStoredMedia(response: ImageKit.FileUploadResponse, mediaType: MediaKind, fallbackMime: string): StoredMedia {
@@ -156,6 +191,32 @@ class MediaService {
 
   uploadPostImages(files: Express.Multer.File[], userId: string, postId: string): Promise<StoredMedia[]> {
     return this.uploadPostMedia(files, userId, postId);
+  }
+
+  async uploadChatAttachment(file: Express.Multer.File, userId: string, conversationId: string): Promise<StoredMedia> {
+    const client = this.getClient();
+    const mediaType = this.getChatAttachmentType(file);
+    this.assertChatAttachmentSize(file);
+
+    try {
+      const response = await client.files.upload({
+        file: await toFile(file.buffer, file.originalname, { type: file.mimetype }),
+        fileName: this.createChatAttachmentFileName(`chat-${conversationId}-${userId}`, file),
+        folder: MEDIA_FOLDERS.chatAttachments(conversationId),
+        tags: [
+          MEDIA_TAGS.chatAttachment,
+          `conversation-${conversationId}`,
+          `user-${userId}`,
+          `chat-${mediaType}`,
+        ],
+        useUniqueFileName: false,
+      });
+
+      return this.assertStoredMedia(response, mediaType, file.mimetype);
+    } catch (error) {
+      logger.error({ error, conversationId, mediaType }, 'Chat attachment upload failed');
+      throw new AppError('Attachment upload failed. Please try again.', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 
   async deleteFile(fileId?: string | null): Promise<void> {

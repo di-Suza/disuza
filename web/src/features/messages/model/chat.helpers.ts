@@ -77,6 +77,13 @@ export const getSharedPostMediaUrl = (details?: SharedPostDetails | null) => {
 export const getConversationPreview = (lastMessage?: ChatLastMessage | null) => {
   if (!lastMessage) return 'Start a conversation';
   if (lastMessage.messageType === 'system') return lastMessage.text || 'Group update';
+  if (lastMessage.messageType === 'attachment' || lastMessage.attachment) {
+    const attachmentType = lastMessage.attachment?.mediaType;
+    if (attachmentType === 'image') return 'Sent an image';
+    if (attachmentType === 'video') return 'Sent a video';
+    if (attachmentType === 'audio') return 'Sent an audio file';
+    return 'Sent an attachment';
+  }
   if (lastMessage.messageType === 'post' || lastMessage.sharedPost) return 'Shared a post';
   return lastMessage.text || 'Start a conversation';
 };

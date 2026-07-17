@@ -10,7 +10,9 @@ class ChatController {
   readonly markAsRead: RequestHandler;
   readonly unsendMessage: RequestHandler;
   readonly deleteConversation: RequestHandler;
+  readonly getAttachment: RequestHandler;
   readonly startConversation: RequestHandler;
+  readonly pinConversation: RequestHandler;
   readonly createGroup: RequestHandler;
   readonly acceptGroupInvite: RequestHandler;
   readonly updateGroupDetails: RequestHandler;
@@ -24,7 +26,9 @@ class ChatController {
     this.markAsRead = asyncHandler(this.handleMarkAsRead.bind(this));
     this.unsendMessage = asyncHandler(this.handleUnsendMessage.bind(this));
     this.deleteConversation = asyncHandler(this.handleDeleteConversation.bind(this));
+    this.getAttachment = asyncHandler(this.handleGetAttachment.bind(this));
     this.startConversation = asyncHandler(this.handleStartConversation.bind(this));
+    this.pinConversation = asyncHandler(this.handlePinConversation.bind(this));
     this.createGroup = asyncHandler(this.handleCreateGroup.bind(this));
     this.acceptGroupInvite = asyncHandler(this.handleAcceptGroupInvite.bind(this));
     this.updateGroupDetails = asyncHandler(this.handleUpdateGroupDetails.bind(this));
@@ -33,7 +37,7 @@ class ChatController {
   }
 
   private async handleSendMessage(req: Request, res: Response) {
-    const newMessage = await this.service.saveMessage({ ...req.body, senderId: req.user!.id });
+    const newMessage = await this.service.saveMessage({ ...req.body, senderId: req.user!.id }, req.file);
 
     res.status(201).json({
       success: true,
@@ -58,6 +62,16 @@ class ChatController {
     res.status(201).json({
       success: true,
       message: 'Conversation ready!',
+      ...data,
+    });
+  }
+
+  private async handlePinConversation(req: Request, res: Response) {
+    const data = await this.service.setConversationPinned(req.user!.id, String(req.params.conversationId), Boolean(req.body.pinned));
+
+    res.status(200).json({
+      success: true,
+      message: data.conversation?.isPinned ? 'Conversation pinned!' : 'Conversation unpinned!',
       ...data,
     });
   }
@@ -123,11 +137,12 @@ class ChatController {
   }
 
   private async handleMarkAsRead(req: Request, res: Response) {
-    await this.service.markAsRead(String(req.params.conversationId), req.user!.id);
+    const data = await this.service.markAsRead(String(req.params.conversationId), req.user!.id);
 
     res.status(200).json({
       success: true,
       message: 'Conversation marked as read!',
+      ...data,
     });
   }
 
@@ -149,6 +164,27 @@ class ChatController {
       message: 'Conversation deleted successfully!',
       ...data,
     });
+  }
+
+  private async handleGetAttachment(req: Request, res: Response) {
+    const attachment = await this.service.getAttachmentAccess(req.user!.id, String(req.params.messageId), String(req.params.fileId));
+    const storageResponse = await fetch(attachment.url);
+
+    if (!storageResponse.ok) {
+      res.status(502).json({
+        success: false,
+        message: 'Attachment could not be loaded.',
+      });
+      return;
+    }
+
+    const buffer = Buffer.from(await storageResponse.arrayBuffer());
+    const fileName = (attachment.name || 'attachment').replace(/["\r\n]/g, '');
+
+    res.setHeader('Cache-Control', 'private, max-age=60');
+    res.setHeader('Content-Type', attachment.mime || storageResponse.headers.get('content-type') || 'application/octet-stream');
+    res.setHeader('Content-Disposition', `inline; filename*=UTF-8''${encodeURIComponent(fileName)}`);
+    res.send(buffer);
   }
 }
 

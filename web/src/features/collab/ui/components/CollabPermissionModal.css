@@ -1,0 +1,87 @@
+.collab-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 30000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.7);
+  padding: 16px;
+  backdrop-filter: blur(8px);
+}
+
+.collab-status-modal {
+  position: relative;
+  width: min(100%, 500px);
+  max-height: 86vh;
+  overflow: hidden;
+  border: 1px solid var(--border-primary);
+  border-radius: 12px;
+  background: var(--surface);
+  box-shadow: var(--shadow-elevated);
+}
+
+.collab-icon-button {
+  display: inline-flex;
+  width: 32px;
+  height: 32px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border-secondary);
+  border-radius: 50%;
+  background: var(--surface-deep);
+  color: var(--text-secondary);
+  transition: border-color 160ms ease, color 160ms ease, background 160ms ease;
+}
+
+.collab-icon-button:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.collab-status-modal__close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 2;
+}
+
+.collab-status-modal__header {
+  border-bottom: 1px solid var(--border-secondary);
+  padding: 18px 52px 18px 20px;
+}
+
+.collab-status-modal__header h3 {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 20px;
+}
+
+.collab-status-modal__body {
+  display: grid;
+  min-height: 190px;
+  place-items: center;
+  gap: 16px;
+  background: rgba(7, 10, 16, 0.45);
+  padding: 24px;
+  text-align: center;
+}
+
+.collab-status-modal__body p {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+.collab-modal-state {
+  display: grid;
+  place-items: center;
+  gap: 12px;
+  padding: 32px;
+  color: var(--text-secondary);
+  text-align: center;
+}
+
+.collab-modal-state h3,
+.collab-modal-state p {
+  margin: 0;
+}

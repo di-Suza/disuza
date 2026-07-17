@@ -166,6 +166,8 @@ const GroupSettingsModal = ({
                 const avatarUrl = getAvatarUrl(member);
                 const memberIsMe = member._id === currentUserId;
                 const canRemove = memberIsMe || (isAdmin && member._id !== currentUserId);
+                const adminCannotLeave = Boolean(memberIsMe && isAdmin);
+                const adminLeaveLabel = (conversation.participants?.length || 0) > 1 ? 'Remove members first' : 'Delete from inbox';
 
                 return (
                   <article key={member._id}>
@@ -177,9 +179,14 @@ const GroupSettingsModal = ({
                       <small>{conversation.admins?.includes(member._id) ? 'Admin' : 'Member'}</small>
                     </span>
                     {canRemove && (
-                      <button type="button" onClick={() => handleRemoveMember(member._id)} disabled={isRemoving}>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveMember(member._id)}
+                        disabled={isRemoving || adminCannotLeave}
+                        title={adminCannotLeave ? 'Use the conversation menu to delete the group after removing members.' : undefined}
+                      >
                         {memberIsMe ? <Trash2 size={15} aria-hidden="true" /> : <UserMinus size={15} aria-hidden="true" />}
-                        {memberIsMe ? 'Leave' : 'Remove'}
+                        {adminCannotLeave ? adminLeaveLabel : memberIsMe ? 'Leave' : 'Remove'}
                       </button>
                     )}
                   </article>

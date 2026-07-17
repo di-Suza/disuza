@@ -5,6 +5,7 @@ import realtimeService, { type RealtimeService } from '../../infrastructure/real
 import { BadRequestError, ForbiddenError, NotFoundError } from '../../shared/errors/index.js';
 import collabRepository, { type CollabRepository } from '../collab/collab.repository.js';
 import heatmapService, { type HeatmapService } from '../contributions/heatmap.service.js';
+import mediaService, { type MediaService } from '../media/media.service.js';
 import notificationService, { type NotificationService } from '../notifications/notification.service.js';
 import postRepository, { type PostRepository } from '../posts/post.repository.js';
 import UserModel from '../users/user.model.js';
@@ -25,6 +26,7 @@ class ChatService {
     private readonly realtime: RealtimeService = realtimeService,
     private readonly notifications: NotificationService = notificationService,
     private readonly collab: CollabRepository = collabRepository,
+    private readonly media: MediaService = mediaService,
     private readonly cleanupJobs: CleanupQueue = cleanupQueue,
   ) {}
 
@@ -56,6 +58,16 @@ class ChatService {
     return conversation.participants
       .map((id) => id.toString())
       .filter((id) => !hiddenIds.has(id) && id !== excludeUserId);
+  }
+
+  private getUnreadCount(conversation: { unreadCounts?: Map<string, number> }, userId: string | Types.ObjectId) {
+    return Number(conversation.unreadCounts?.get(userId.toString()) || 0);
+  }
+
+  private setUnreadCount(conversation: { unreadCounts?: Map<string, number> }, userId: string | Types.ObjectId, count: number) {
+    const unreadCounts = conversation.unreadCounts || new Map<string, number>();
+    unreadCounts.set(userId.toString(), Math.max(0, count));
+    conversation.unreadCounts = unreadCounts;
   }
 
   private getDefaultGroupName(users: Array<{ userName?: string }>) {
@@ -102,10 +114,12 @@ class ChatService {
     return responseMessage;
   }
 
-  async saveMessage(input: SaveMessageInput) {
-    const messageType = input.messageType || (input.isFeedback ? 'feedback' : input.sharedPostId || (input.postId && !input.feedbackOn) ? 'post' : 'text');
+  async saveMessage(input: SaveMessageInput, attachmentFile?: Express.Multer.File) {
+    const messageType = input.messageType || (attachmentFile ? 'attachment' : input.isFeedback ? 'feedback' : input.sharedPostId || (input.postId && !input.feedbackOn) ? 'post' : 'text');
     const message = typeof input.message === 'string' && input.message.trim()
       ? input.message.trim()
+      : messageType === 'attachment'
+        ? 'Sent an attachment'
       : messageType === 'post'
         ? 'Shared a post'
         : '';
@@ -178,6 +192,10 @@ class ChatService {
       input.isFeedback = false;
     }
 
+    if (messageType === 'attachment' && !attachmentFile) {
+      throw new BadRequestError('Attachment is required!');
+    }
+
     if (input.isFeedback) {
       if (!input.feedbackOn) {
         throw new BadRequestError('feedbackOn is required when isFeedback is true');
@@ -206,12 +224,32 @@ class ChatService {
       : receiverId
         ? [receiverId.toString()]
         : [];
+    const attachment = attachmentFile
+      ? await this.media.uploadChatAttachment(attachmentFile, input.senderId, conversation._id.toString())
+      : undefined;
     const newMessage = await this.chats.createMessage(
       conversation,
-      { ...input, message, messageType },
+      {
+        ...input,
+        message,
+        messageType,
+        attachment: attachment ? {
+          url: attachment.url,
+          fileId: attachment.fileId,
+          filePath: attachment.filePath,
+          name: attachment.name || attachmentFile?.originalname,
+          mime: attachment.mime,
+          size: attachment.size,
+          mediaType: attachment.mediaType,
+          thumbnailUrl: attachment.thumbnailUrl,
+          width: attachment.width,
+          height: attachment.height,
+        } : undefined,
+      },
       {
         receiverId: receiverId || null,
         unhideParticipants: !isGroupConversation,
+        unreadRecipientIds: recipientIds,
       },
     );
 
@@ -238,6 +276,20 @@ class ChatService {
     });
 
     return responseMessage;
+  }
+
+  async setConversationPinned(userId: string, conversationId: string, pinned: boolean) {
+    const conversation = await this.chats.setPinnedForUser(conversationId, userId, pinned);
+
+    if (!conversation) {
+      throw new NotFoundError('Conversation not found!');
+    }
+
+    const formattedConversation = await this.getFormattedConversation(userId, conversation._id);
+
+    return {
+      conversation: formattedConversation,
+    };
   }
 
   async startConversation(userId: string, receiverId: string) {
@@ -463,6 +515,13 @@ class ChatService {
     }
 
     const isSelfLeave = userId.toString() === memberId.toString();
+    const isAdmin = (conversation.admins || []).some((adminId) => adminId.toString() === userId.toString());
+    const visibleParticipantIds = this.getVisibleParticipantIds(conversation);
+
+    if (isSelfLeave && isAdmin && visibleParticipantIds.length > 1) {
+      throw new BadRequestError('Remove all members before leaving this group.');
+    }
+
     if (!isSelfLeave) {
       this.ensureGroupAdmin(conversation, userId);
     }
@@ -514,7 +573,9 @@ class ChatService {
           admins: conversation.admins || [],
           roomId: conversation.roomId,
           lastMessage: conversation.lastMessage || null,
-          isUnread: conversation.isUnread,
+          isUnread: Number(conversation.unreadCount || 0) > 0,
+          unreadCount: Number(conversation.unreadCount || 0),
+          isPinned: Boolean(conversation.isPinned),
           updatedAt: conversation.updatedAt,
           isBlocked: false,
           hasBlockedMe: false,
@@ -541,7 +602,9 @@ class ChatService {
         _id: conversation._id,
         otherUser,
         lastMessage: conversation.lastMessage || null,
-        isUnread: conversation.isUnread,
+        isUnread: Number(conversation.unreadCount || 0) > 0,
+        unreadCount: Number(conversation.unreadCount || 0),
+        isPinned: Boolean(conversation.isPinned),
         updatedAt: conversation.updatedAt,
         isBlocked: blockStatus.isBlocked,
         hasBlockedMe: blockStatus.hasBlockedMe,
@@ -592,11 +655,33 @@ class ChatService {
 
     const lastMessage = conversation.lastMessage ? await this.chats.findMessageById(conversation.lastMessage as Types.ObjectId) : null;
     const lastMessageSenderId = lastMessage?.sender?.toString();
+    const seenResult = await this.chats.markMessagesSeen(conversation._id, userId);
+    this.setUnreadCount(conversation, userId, 0);
 
     if (lastMessageSenderId && lastMessageSenderId !== userId.toString() && conversation.isUnread) {
       conversation.isUnread = false;
-      await conversation.save();
     }
+
+    await conversation.save();
+
+    if (seenResult.count > 0) {
+      conversation.participants
+        .filter((participantId) => participantId.toString() !== userId.toString())
+        .forEach((participantId) => {
+          this.realtime.emitToUser(participantId.toString(), 'messages_seen', {
+            conversationId: conversation._id,
+            seenBy: userId,
+            seenAt: seenResult.seenAt,
+          });
+        });
+    }
+
+    return {
+      conversationId: conversation._id,
+      unreadCount: this.getUnreadCount(conversation, userId),
+      seenCount: seenResult.count,
+      seenAt: seenResult.seenAt,
+    };
   }
 
   async unsendMessage(messageId: string, userId: string) {
@@ -636,11 +721,12 @@ class ChatService {
 
     await this.chats.deleteMessage(message._id);
 
-    let lastMessage = null;
+    let lastMessage: (Record<string, unknown> & { _id?: Types.ObjectId }) | null = null;
 
     if (wasLastMessage) {
-      lastMessage = await this.chats.findLatestMessage(conversation._id);
-      conversation.lastMessage = lastMessage?._id || null;
+      const latestMessage = await this.chats.findLatestMessage(conversation._id) as (Record<string, unknown> & { _id?: Types.ObjectId }) | null;
+      lastMessage = latestMessage;
+      conversation.lastMessage = latestMessage?._id || null;
       conversation.isUnread = false;
       await conversation.save();
     }
@@ -668,9 +754,31 @@ class ChatService {
       throw new NotFoundError('Conversation not found!');
     }
 
+    if (conversation.isGroup) {
+      const visibleParticipantIds = this.getVisibleParticipantIds(conversation);
+      const isAdmin = (conversation.admins || []).some((adminId) => adminId.toString() === userId.toString());
+
+      if (isAdmin && visibleParticipantIds.length > 1) {
+        throw new BadRequestError('Remove all members before deleting this group.');
+      }
+
+      if (isAdmin && visibleParticipantIds.length === 1) {
+        await this.cleanupJobs.enqueueConversationCleanup({
+          conversationId: conversation._id.toString(),
+        });
+
+        return {
+          conversationId: conversation._id,
+          hiddenForEveryone: true,
+          deletedGroup: true,
+        };
+      }
+    }
+
     const hiddenSet = new Set((conversation.hiddenBy || []).map((id) => id.toString()));
     hiddenSet.add(userId.toString());
     conversation.hiddenBy = [...hiddenSet].map((id) => new Types.ObjectId(id));
+    this.setUnreadCount(conversation, userId, 0);
     await conversation.save();
 
     const participantIds = conversation.participants.map((id) => id.toString());
@@ -689,6 +797,25 @@ class ChatService {
     return {
       conversationId: conversation._id,
       hiddenForEveryone,
+    };
+  }
+
+  async getAttachmentAccess(userId: string, messageId: string, fileId: string) {
+    const message = await this.chats.findMessageForAttachment(messageId, fileId);
+
+    if (!message?.attachment?.url || !message.conversationId) {
+      throw new NotFoundError('Attachment not found!');
+    }
+
+    const conversation = await this.chats.findConversationForUser(message.conversationId, userId);
+    if (!conversation) {
+      throw new ForbiddenError('You are not authorized to view this attachment.');
+    }
+
+    return {
+      url: message.attachment.url,
+      mime: message.attachment.mime,
+      name: message.attachment.name,
     };
   }
 }

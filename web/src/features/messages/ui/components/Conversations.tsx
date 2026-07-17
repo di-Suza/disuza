@@ -1,8 +1,8 @@
-import { Loader2, MessageSquarePlus, MoreVertical, Search, Trash2, Users, X } from 'lucide-react';
+import { Loader2, MessageSquarePlus, MoreVertical, Pin, PinOff, Search, Trash2, Users, X } from 'lucide-react';
 import { memo, useEffect, useMemo, useState, type KeyboardEvent, type MouseEvent } from 'react';
 
 import { useAppDispatch } from '@/app/store/hooks';
-import { useDeleteConversationMutation } from '@/features/messages/api/chat.api';
+import { useDeleteConversationMutation, usePinConversationMutation } from '@/features/messages/api/chat.api';
 import { formatChatMessageTime, getConversationPreview, getConversationTitle } from '@/features/messages/model/chat.helpers';
 import type { ChatConversation } from '@/features/messages/model/chat.types';
 import { clearSelectedChatFromState, setChatWindowClosed } from '@/features/messages/state/chatSlice';
@@ -31,6 +31,7 @@ const Conversations = ({ conversations, getConversationsLoading, handleChatSelec
   const [startMode, setStartMode] = useState<'chat' | 'group' | null>(null);
   const [visibleCount, setVisibleCount] = useState(CONVERSATION_PAGE_SIZE);
   const [deleteConversation, { isLoading: deletingConversation }] = useDeleteConversationMutation();
+  const [pinConversation, { isLoading: pinningConversation }] = usePinConversationMutation();
   const { handleConversationSelect, userId } = useConversations({ conversations, handleChatSelect, selectedChat });
 
   const filteredConversations = useMemo(() => {
@@ -128,6 +129,19 @@ const Conversations = ({ conversations, getConversationsLoading, handleChatSelec
     }
   };
 
+  const handlePinChat = async (event: MouseEvent<HTMLButtonElement>, chat: ChatConversation) => {
+    event.stopPropagation();
+
+    if (!chat._id || pinningConversation) return;
+
+    try {
+      await pinConversation({ conversationId: chat._id, pinned: !chat.isPinned }).unwrap();
+      setOpenMenuId(null);
+    } catch (error) {
+      showError(getErrorMessage(error, chat.isPinned ? 'Conversation could not be unpinned!' : 'Conversation could not be pinned!'));
+    }
+  };
+
   return (
     <aside className={`messages-v1-sidebar ${selectedChat ? 'is-hidden-mobile' : ''}`}>
       <div className="messages-v1-sidebar__header">
@@ -199,7 +213,13 @@ const Conversations = ({ conversations, getConversationsLoading, handleChatSelec
             <>
               {visibleConversations.map((chat) => {
               const isActive = selectedChat?._id === chat._id;
-              const hasUnread = Boolean(chat.isUnread && chat.lastMessage?.sender !== userId);
+              const unreadCount = Number(chat.unreadCount || 0);
+              const hasUnread = Boolean(chat.isUnread && unreadCount > 0);
+              const visibleMemberCount = chat.participants?.length || 0;
+              const currentUserIsGroupAdmin = Boolean(chat.isGroup && userId && chat.admins?.includes(userId));
+              const isSoloGroupAdmin = Boolean(chat.isGroup && currentUserIsGroupAdmin && visibleMemberCount <= 1);
+              const groupAdminCannotLeave = Boolean(chat.isGroup && currentUserIsGroupAdmin && visibleMemberCount > 1);
+              const removeLabel = chat.isGroup ? (isSoloGroupAdmin ? 'Delete group' : 'Leave') : 'Delete';
 
               return (
                 <article
@@ -229,9 +249,19 @@ const Conversations = ({ conversations, getConversationsLoading, handleChatSelec
 
                         {openMenuId === chat._id && (
                           <div className="messages-v1-menu messages-v1-conversation__menu" data-conversation-menu-root onClick={(event) => event.stopPropagation()}>
-                            <button type="button" onClick={(event) => handleDeleteChat(event, chat)} disabled={deletingConversation}>
+                            <button type="button" onClick={(event) => handlePinChat(event, chat)} disabled={pinningConversation}>
+                              {chat.isPinned ? <PinOff size={16} aria-hidden="true" /> : <Pin size={16} aria-hidden="true" />}
+                              {chat.isPinned ? 'Unpin' : 'Pin'}
+                            </button>
+                            <button
+                              type="button"
+                              className="is-danger"
+                              onClick={(event) => handleDeleteChat(event, chat)}
+                              disabled={deletingConversation || groupAdminCannotLeave}
+                              title={groupAdminCannotLeave ? 'Remove all members before leaving this group.' : undefined}
+                            >
                               <Trash2 size={16} aria-hidden="true" />
-                              {deletingConversation ? 'Removing...' : chat.isGroup ? 'Leave' : 'Delete'}
+                              {deletingConversation ? 'Removing...' : removeLabel}
                             </button>
                           </div>
                         )}
@@ -242,7 +272,7 @@ const Conversations = ({ conversations, getConversationsLoading, handleChatSelec
                       <p className={hasUnread ? 'is-unread' : ''}>
                         {chat.isBlocked || chat.hasBlockedMe ? 'Chat unavailable' : getConversationPreview(chat.lastMessage)}
                       </p>
-                      {hasUnread && <span aria-label="Unread conversation" />}
+                      {hasUnread && <span className="messages-v1-unread-count" aria-label={`${unreadCount} unread messages`}>{Math.min(unreadCount, 99)}</span>}
                     </div>
                   </div>
                 </article>

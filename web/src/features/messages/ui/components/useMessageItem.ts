@@ -18,6 +18,12 @@ export const useMessageItem = ({ message }: UseMessageItemArgs) => {
   const userId = useAppSelector((state) => state.auth.user?._id);
   const [unsendMessage, { isLoading: isUnsendLoading }] = useUnsendMessageMutation();
   const senderIsMe = isMessageFromUser(message, userId);
+  const seenCount = senderIsMe
+    ? new Set((message.seenBy || [])
+      .map((receipt) => receipt.user)
+      .filter((receiptUserId) => receiptUserId && receiptUserId !== userId)).size
+    : 0;
+  const seenLabel = seenCount > 0 ? (seenCount === 1 ? 'Seen' : `Seen by ${seenCount}`) : '';
 
   const goToFeedbackPost = useCallback(() => {
     const postId = message.feedbackDetails?._id;
@@ -53,6 +59,7 @@ export const useMessageItem = ({ message }: UseMessageItemArgs) => {
     goToSharedPost,
     handleUnsendMessage,
     isUnsendLoading,
+    seenLabel,
     senderIsMe,
   };
 };

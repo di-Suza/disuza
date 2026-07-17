@@ -14,6 +14,7 @@ import type {
   GroupConversationResponse,
   InviteGroupMembersRequest,
   MarkAsReadResponse,
+  PinConversationRequest,
   RemoveGroupMemberRequest,
   StartConversationRequest,
   StartConversationResponse,
@@ -61,9 +62,35 @@ const normalizeChatMessage = (payload: unknown): ChatMessage | null => {
     _id: messageId,
     conversationId,
     sender,
+    seenBy: message.seenBy?.map((receipt) => ({
+      ...receipt,
+      user: toIdString(receipt.user),
+    })),
     receiverId: message.receiverId ? toIdString(message.receiverId) : message.receiverId,
     sharedPost: message.sharedPost ? toIdString(message.sharedPost) : message.sharedPost,
   };
+};
+
+const isSeenPayload = (payload: unknown): payload is { conversationId: string; seenBy: string; seenAt?: string } => (
+  typeof payload === 'object'
+  && payload !== null
+  && Boolean(toIdString((payload as { conversationId?: unknown }).conversationId))
+  && Boolean(toIdString((payload as { seenBy?: unknown }).seenBy))
+);
+
+const applySeenReceipt = (draft: GetMessagesResponse, payload: { seenBy: string; seenAt?: string }) => {
+  draft.messages.forEach((message) => {
+    if (message.sender === payload.seenBy) return;
+    const exists = message.seenBy?.some((receipt) => receipt.user === payload.seenBy);
+    if (exists) return;
+    message.seenBy = [
+      ...(message.seenBy || []),
+      {
+        user: payload.seenBy,
+        seenAt: payload.seenAt,
+      },
+    ];
+  });
 };
 
 const normalizeChatConversation = (conversation: ChatConversation): ChatConversation => ({
@@ -83,6 +110,29 @@ const normalizeChatConversation = (conversation: ChatConversation): ChatConversa
     sharedPost: conversation.lastMessage.sharedPost ? toIdString(conversation.lastMessage.sharedPost) : conversation.lastMessage.sharedPost,
   } : conversation.lastMessage,
 });
+
+const sortConversations = (conversations: ChatConversation[]) => {
+  conversations.sort((first, second) => {
+    if (Boolean(first.isPinned) !== Boolean(second.isPinned)) return first.isPinned ? -1 : 1;
+    return new Date(second.updatedAt || 0).getTime() - new Date(first.updatedAt || 0).getTime();
+  });
+};
+
+const buildSendMessageBody = (body: SendMessageRequest) => {
+  if (!body.attachment) return body;
+
+  const formData = new FormData();
+  Object.entries(body).forEach(([key, value]) => {
+    if (typeof value === 'undefined' || value === null) return;
+    if (key === 'attachment' && value instanceof File) {
+      formData.append('attachment', value);
+      return;
+    }
+    formData.append(key, String(value));
+  });
+
+  return formData;
+};
 
 const removeUnsentMessageFromDraft = (draft: GetMessagesResponse, messageId: string) => {
   draft.messages = draft.messages.filter((message) => message._id !== messageId);
@@ -156,16 +206,21 @@ export const chatApi = api.injectEndpoints({
       forceRefetch({ currentArg, previousArg }) {
         return currentArg?.page !== previousArg?.page || currentArg?.conversationId !== previousArg?.conversationId;
       },
-      async onCacheEntryAdded({ conversationId }, { dispatch, updateCachedData, cacheDataLoaded, cacheEntryRemoved }) {
+      async onCacheEntryAdded({ conversationId }, { dispatch, getState, updateCachedData, cacheDataLoaded, cacheEntryRemoved }) {
         const socket = getSocket();
         const handleReceiveMessage = (payload: unknown) => {
           const message = normalizeChatMessage(payload);
           if (!message || message.conversationId !== conversationId) return;
+          const currentUserId = (getState() as { auth?: { user?: { _id?: string } } }).auth?.user?._id;
 
           updateCachedData((draft) => {
             const exists = draft.messages.some((draftMessage) => draftMessage._id === message._id);
             if (!exists) draft.messages.push(message);
           });
+
+          if (message.sender !== currentUserId) {
+            dispatch(chatApi.endpoints.markAsRead.initiate(conversationId));
+          }
         };
         const handleMessageUnsent = (payload: unknown) => {
           const unsentMessage = normalizeUnsendPayload(payload);
@@ -173,6 +228,16 @@ export const chatApi = api.injectEndpoints({
 
           updateCachedData((draft) => {
             removeUnsentMessageFromDraft(draft, unsentMessage.messageId);
+          });
+        };
+        const handleMessagesSeen = (payload: unknown) => {
+          if (!isSeenPayload(payload) || toIdString(payload.conversationId) !== conversationId) return;
+
+          updateCachedData((draft) => {
+            applySeenReceipt(draft, {
+              seenBy: toIdString(payload.seenBy),
+              seenAt: payload.seenAt,
+            });
           });
         };
         const handleReconnect = () => {
@@ -183,6 +248,7 @@ export const chatApi = api.injectEndpoints({
           await cacheDataLoaded;
           socket.on('receive-message', handleReceiveMessage);
           socket.on('message-unsent', handleMessageUnsent);
+          socket.on('messages_seen', handleMessagesSeen);
           socket.on('connect', handleReconnect);
           socket.io.on('reconnect', handleReconnect);
         } catch {
@@ -192,6 +258,7 @@ export const chatApi = api.injectEndpoints({
         await cacheEntryRemoved;
         socket.off('receive-message', handleReceiveMessage);
         socket.off('message-unsent', handleMessageUnsent);
+        socket.off('messages_seen', handleMessagesSeen);
         socket.off('connect', handleReconnect);
         socket.io.off('reconnect', handleReconnect);
       },
@@ -232,11 +299,16 @@ export const chatApi = api.injectEndpoints({
               createdAt: message.createdAt,
               messageType: message.messageType,
               sharedPost: message.sharedPost,
+              attachment: message.attachment,
             };
             draft.conversations[conversationIndex].updatedAt = message.createdAt || new Date().toISOString();
             draft.conversations[conversationIndex].isUnread = message.sender !== currentUserId && !isActiveConversation;
+            if (message.sender !== currentUserId && !isActiveConversation) {
+              draft.conversations[conversationIndex].unreadCount = Number(draft.conversations[conversationIndex].unreadCount || 0) + 1;
+            }
             const [updatedConversation] = draft.conversations.splice(conversationIndex, 1);
             draft.conversations.unshift(updatedConversation);
+            sortConversations(draft.conversations);
           });
 
           if (!conversationWasPresent) {
@@ -277,12 +349,12 @@ export const chatApi = api.injectEndpoints({
       query: (body) => ({
         url: '/chat/sendMessage',
         method: 'POST',
-        body,
+        body: buildSendMessageBody(body),
       }),
-      async onQueryStarted({ conversationId, message, messageType, sharedPostId }, { dispatch, getState, queryFulfilled }) {
+      async onQueryStarted({ conversationId, message, messageType, sharedPostId, attachment }, { dispatch, getState, queryFulfilled }) {
         const tempMessageId = `temp-${Date.now()}`;
         const userId = (getState() as { auth?: { user?: { _id?: string } } }).auth?.user?._id || '';
-        const previewText = message.trim() || (messageType === 'post' ? 'Shared a post' : message);
+        const previewText = message.trim() || (attachment ? 'Sent an attachment' : messageType === 'post' ? 'Shared a post' : message);
         let messagePatch: { undo: () => void } | undefined;
 
         if (conversationId) {
@@ -293,8 +365,21 @@ export const chatApi = api.injectEndpoints({
                 sender: userId,
                 text: previewText,
                 conversationId,
-                messageType,
+                messageType: attachment ? 'attachment' : messageType,
                 sharedPost: sharedPostId,
+                attachment: attachment ? {
+                  fileId: tempMessageId,
+                  name: attachment.name,
+                  mime: attachment.type,
+                  size: attachment.size,
+                  mediaType: attachment.type.startsWith('image/')
+                    ? 'image'
+                    : attachment.type.startsWith('video/')
+                      ? 'video'
+                      : attachment.type.startsWith('audio/')
+                        ? 'audio'
+                        : 'file',
+                } : undefined,
                 createdAt: new Date().toISOString(),
               };
               draft.messages.push(tempMessage);
@@ -318,24 +403,39 @@ export const chatApi = api.injectEndpoints({
               text: previewText,
               createdAt: new Date().toISOString(),
               sender: userId,
-              messageType,
+              messageType: attachment ? 'attachment' : messageType,
               sharedPost: sharedPostId,
+              attachment: attachment ? {
+                fileId: tempMessageId,
+                name: attachment.name,
+                mime: attachment.type,
+                size: attachment.size,
+                mediaType: attachment.type.startsWith('image/')
+                  ? 'image'
+                  : attachment.type.startsWith('video/')
+                    ? 'video'
+                    : attachment.type.startsWith('audio/')
+                      ? 'audio'
+                      : 'file',
+              } : undefined,
             };
             const [updatedConversation] = draft.conversations.splice(conversationIndex, 1);
             draft.conversations.unshift(updatedConversation);
+            sortConversations(draft.conversations);
           }),
         );
 
         try {
           const response = await queryFulfilled;
           const newConversationId = response.data.newMessage.conversationId;
+          const deliveredMessage = normalizeChatMessage(response.data.newMessage) || response.data.newMessage;
 
           if (conversationId) {
             dispatch(
               chatApi.util.updateQueryData('getMessages', { conversationId, page: 1 }, (draft) => {
                 const tempIndex = draft.messages.findIndex((item) => item._id === tempMessageId);
                 if (tempIndex !== -1) {
-                  draft.messages[tempIndex] = response.data.newMessage;
+                  draft.messages[tempIndex] = deliveredMessage;
                 }
               }),
             );
@@ -500,7 +600,10 @@ export const chatApi = api.injectEndpoints({
         const patchResult = dispatch(
           chatApi.util.updateQueryData('getConversations', undefined, (draft) => {
             const conversation = draft.conversations.find((item) => item._id === conversationId);
-            if (conversation) conversation.isUnread = false;
+            if (conversation) {
+              conversation.isUnread = false;
+              conversation.unreadCount = 0;
+            }
           }),
         );
 
@@ -510,6 +613,29 @@ export const chatApi = api.injectEndpoints({
           patchResult.undo();
         }
       },
+    }),
+    pinConversation: builder.mutation<GroupConversationResponse, PinConversationRequest>({
+      query: ({ conversationId, pinned }) => ({
+        url: `/chat/pin/${conversationId}`,
+        method: 'PATCH',
+        body: { pinned },
+      }),
+      async onQueryStarted({ conversationId, pinned }, { dispatch, queryFulfilled }) {
+        const patchResult = dispatch(
+          chatApi.util.updateQueryData('getConversations', undefined, (draft) => {
+            const conversation = draft.conversations.find((item) => item._id === conversationId);
+            if (conversation) conversation.isPinned = pinned;
+            sortConversations(draft.conversations);
+          }),
+        );
+
+        try {
+          await queryFulfilled;
+        } catch {
+          patchResult.undo();
+        }
+      },
+      invalidatesTags: ['Conversations'],
     }),
     unsendMessage: builder.mutation<UnsendMessageResponse, UnsendMessageRequest>({
       query: ({ messageId }) => ({
@@ -568,6 +694,7 @@ export const {
   useGetMessagesQuery,
   useInviteGroupMembersMutation,
   useMarkAsReadMutation,
+  usePinConversationMutation,
   useRemoveGroupMemberMutation,
   useSendMessageMutation,
   useStartConversationMutation,

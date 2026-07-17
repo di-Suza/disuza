@@ -1,4 +1,4 @@
-import { ArrowLeft, Code2, Loader2, MoreVertical, RefreshCw, Send, UserX, X } from 'lucide-react';
+import { ArrowLeft, Code2, Loader2, MoreVertical, Paperclip, RefreshCw, Send, UserX, X } from 'lucide-react';
 import { memo, useEffect, useRef, useState, type MouseEvent } from 'react';
 
 import {
@@ -48,16 +48,22 @@ const ChatWindow = ({
   const [isGroupSettingsOpen, setIsGroupSettingsOpen] = useState(false);
   const contextMenuRef = useRef<HTMLDivElement | null>(null);
   const {
+    fileInputRef,
+    handleAttachmentButtonClick,
+    handleAttachmentChange,
     handleBackToChats,
     handleCollabClick,
     handleMessageInputChange,
     handleMessageInputKeyDown,
+    handleRemoveAttachment,
     handleSendMessage,
     handleUserProfileClick,
     isCollabPermissionModalOpen,
     messageInput,
     messagesContainerRef,
+    selectedAttachment,
     setIsCollabPermissionModalOpen,
+    typingLabel,
   } = useChatWindow({
     allMessages,
     handleChatSelect,
@@ -210,10 +216,42 @@ const ChatWindow = ({
                     </div>
                   );
                 })}
+
+                {typingLabel && (
+                  <div className="messages-v1-typing">
+                    <span>{typingLabel}</span>
+                  </div>
+                )}
               </div>
 
               <footer className="messages-v1-composer">
+                {selectedAttachment && (
+                  <div className="messages-v1-attachment-chip">
+                    <Paperclip size={14} aria-hidden="true" />
+                    <span>{selectedAttachment.name}</span>
+                    <small>{Math.max(1, Math.ceil(selectedAttachment.size / 1024))} KB</small>
+                    <button type="button" onClick={handleRemoveAttachment} aria-label="Remove attachment">
+                      <X size={13} aria-hidden="true" />
+                    </button>
+                  </div>
+                )}
                 <div className="messages-v1-composer__inner">
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    className="messages-v1-attachment-input"
+                    onChange={handleAttachmentChange}
+                    aria-label="Attach file"
+                  />
+                  <button
+                    type="button"
+                    className="messages-v1-attach-button"
+                    onClick={handleAttachmentButtonClick}
+                    disabled={!canSendMessages}
+                    aria-label="Attach file"
+                  >
+                    <Paperclip size={17} aria-hidden="true" />
+                  </button>
                   <textarea
                     value={messageInput}
                     onChange={handleMessageInputChange}
@@ -225,7 +263,7 @@ const ChatWindow = ({
                   <button
                     type="button"
                     onClick={handleSendMessage}
-                    disabled={!messageInput.trim() || !canSendMessages}
+                    disabled={(!messageInput.trim() && !selectedAttachment) || !canSendMessages}
                     aria-label="Send message"
                   >
                     <Send size={17} aria-hidden="true" />
