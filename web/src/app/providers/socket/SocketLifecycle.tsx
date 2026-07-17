@@ -1,8 +1,9 @@
-import { useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks';
 import { chatApi } from '@/features/messages/api/chat.api';
 import type { ChatConversation, ChatMessage } from '@/features/messages/model/chat.types';
+import { deleteQueuedChatMessage, getQueuedChatMessages, isRetryableMessageSendError } from '@/features/messages/model/offlineMessageQueue';
 import { setLastReceivedMessage } from '@/features/messages/state/chatSlice';
 import { api } from '@/shared/api/api';
 import { connectSocket, disconnectSocket, getSocket } from '@/shared/services/socket';
@@ -42,6 +43,7 @@ const normalizeIncomingMessage = (payload: unknown): ChatMessage | null => {
     _id: messageId,
     conversationId,
     sender,
+    deliveredTo: message.deliveredTo?.map((userId) => toIdString(userId)).filter(Boolean),
   };
 };
 
@@ -60,6 +62,32 @@ const SocketLifecycle = () => {
   const isChatWindowActive = useAppSelector((state) => state.chat.isChatWindowActive);
   const selectedChatId = useAppSelector((state) => state.chat.selectedChatId);
   const hasConnectedRef = useRef(false);
+  const isDrainingOutboxRef = useRef(false);
+
+  const drainQueuedMessages = useCallback(async () => {
+    if (!accessToken || !isAuthenticated || isDrainingOutboxRef.current) return;
+    if (typeof navigator !== 'undefined' && !navigator.onLine) return;
+
+    isDrainingOutboxRef.current = true;
+
+    try {
+      const queuedMessages = await getQueuedChatMessages();
+
+      for (const queuedMessage of queuedMessages) {
+        try {
+          await dispatch(chatApi.endpoints.sendMessage.initiate(queuedMessage.payload)).unwrap();
+          await deleteQueuedChatMessage(queuedMessage.id);
+        } catch (error) {
+          if (isRetryableMessageSendError(error)) return;
+          await deleteQueuedChatMessage(queuedMessage.id);
+        }
+      }
+    } catch {
+      // Offline outbox is best-effort; normal realtime sync should keep running.
+    } finally {
+      isDrainingOutboxRef.current = false;
+    }
+  }, [accessToken, dispatch, isAuthenticated]);
 
   useEffect(() => {
     if (!accessToken || !isAuthenticated) {
@@ -71,10 +99,12 @@ const SocketLifecycle = () => {
     const socket = connectSocket(accessToken);
     const syncRealtimeState = () => {
       dispatch(api.util.invalidateTags(['Conversations', 'Notifications']));
+      void drainQueuedMessages();
     };
     const syncAfterInitialConnect = () => {
       if (!hasConnectedRef.current) {
         hasConnectedRef.current = true;
+        void drainQueuedMessages();
         return;
       }
 
@@ -86,6 +116,7 @@ const SocketLifecycle = () => {
         socket.connect();
       } else {
         socket.emit('heartbeat');
+        void drainQueuedMessages();
       }
     };
     const intervalId = window.setInterval(() => {
@@ -113,7 +144,7 @@ const SocketLifecycle = () => {
       window.removeEventListener('online', ensureConnected);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [accessToken, dispatch, isAuthenticated]);
+  }, [accessToken, dispatch, drainQueuedMessages, isAuthenticated]);
 
   useEffect(() => {
     if (!accessToken || !isAuthenticated || !currentUserId) return undefined;

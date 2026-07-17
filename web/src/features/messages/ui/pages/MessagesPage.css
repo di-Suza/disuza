@@ -901,8 +901,7 @@
   text-align: right;
 }
 
-.messages-v1-bubble time,
-.messages-v1-bubble__meta em {
+.messages-v1-bubble time {
   font-size: 10px;
   font-weight: 700;
 }
@@ -911,9 +910,15 @@
   color: rgba(255, 255, 255, 0.56);
 }
 
-.messages-v1-message.is-mine .messages-v1-bubble__meta em {
+.messages-v1-delivery-status {
+  display: inline-flex;
+  align-items: center;
   color: rgba(255, 255, 255, 0.72);
-  font-style: normal;
+  line-height: 1;
+}
+
+.messages-v1-delivery-status.is-seen {
+  color: #22c55e;
 }
 
 .messages-v1-message.is-theirs .messages-v1-bubble time {

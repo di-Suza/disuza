@@ -23,7 +23,18 @@ export const useMessageItem = ({ message }: UseMessageItemArgs) => {
       .map((receipt) => receipt.user)
       .filter((receiptUserId) => receiptUserId && receiptUserId !== userId)).size
     : 0;
-  const seenLabel = seenCount > 0 ? (seenCount === 1 ? 'Seen' : `Seen by ${seenCount}`) : '';
+  const deliveredCount = senderIsMe
+    ? new Set((message.deliveredTo || [])
+      .map((recipientId) => recipientId?.toString())
+      .filter((recipientId) => recipientId && recipientId !== userId)).size
+    : 0;
+  const deliveryStatus = senderIsMe
+    ? seenCount > 0
+      ? 'seen'
+      : deliveredCount > 0
+        ? 'delivered'
+        : 'sent'
+    : null;
 
   const goToFeedbackPost = useCallback(() => {
     const postId = message.feedbackDetails?._id;
@@ -59,7 +70,7 @@ export const useMessageItem = ({ message }: UseMessageItemArgs) => {
     goToSharedPost,
     handleUnsendMessage,
     isUnsendLoading,
-    seenLabel,
+    deliveryStatus,
     senderIsMe,
   };
 };

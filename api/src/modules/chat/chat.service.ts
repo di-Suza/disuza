@@ -265,10 +265,12 @@ class ChatService {
       await this.posts.incrementSharesCount(input.sharedPostId, 1);
     }
 
+    const deliveredTo = await this.realtime.getOnlineUserIds(recipientIds);
     const responseMessage = {
       ...newMessage,
       senderInfo: sender,
       conversationIsUnread: true,
+      deliveredTo,
     };
 
     recipientIds.forEach((recipientId) => {
