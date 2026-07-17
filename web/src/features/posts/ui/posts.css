@@ -3713,28 +3713,31 @@
 
 .post-analytics-modal__metrics {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(116px, 1fr));
-  gap: 10px;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 8px;
 }
 
 .post-analytics-modal__metric {
   position: relative;
   display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
   min-width: 0;
-  gap: 10px;
+  column-gap: 8px;
+  row-gap: 8px;
   overflow: hidden;
   border: 1px solid var(--border-secondary);
   border-radius: 10px;
   background: var(--bg-main);
-  padding: 12px;
+  padding: 9px;
 }
 
 .post-analytics-modal__metric > span {
   display: grid;
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   place-items: center;
-  border-radius: 10px;
+  border-radius: 9px;
   background: rgba(59, 99, 255, 0.12);
   color: var(--accent);
 }
@@ -3746,21 +3749,25 @@
 
 .post-analytics-modal__metric strong {
   color: var(--text-primary);
-  font-size: 24px;
+  font-size: 20px;
   line-height: 1;
 }
 
 .post-analytics-modal__metric small {
   margin-top: 3px;
   color: var(--text-secondary);
-  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11px;
   font-weight: 800;
 }
 
 .post-analytics-modal__metric i {
   display: block;
+  grid-column: 1 / -1;
   width: var(--metric-percent);
-  height: 4px;
+  height: 3px;
   border-radius: 999px;
   background: var(--accent);
 }
