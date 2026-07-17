@@ -115,6 +115,16 @@ class CommentRepository {
       .lean();
   }
 
+  findPostAnalyticsComments(postId: string | Types.ObjectId, page: number, limit: number) {
+    return CommentModel.find({ post: postId })
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit)
+      .populate('user', 'userName profilePicture headline')
+      .populate('replyToUser', 'userName profilePicture')
+      .lean();
+  }
+
   getReplies(parentCommentId: string | Types.ObjectId, page: number, limit: number, blockedUserIds: Types.ObjectId[]) {
     const skip = (page - 1) * limit;
     const matchStage: Record<string, unknown> = {

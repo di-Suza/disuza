@@ -3,6 +3,8 @@ import mongoose, { type FilterQuery } from 'mongoose';
 import logger from '../../config/logger.js';
 import cleanupQueue, { type CleanupQueue } from '../../infrastructure/jobs/cleanup.queue.js';
 import { BadRequestError, NotFoundError } from '../../shared/errors/index.js';
+import chatRepository, { type ChatRepository } from '../chat/chat.repository.js';
+import commentRepository, { type CommentRepository } from '../comments/comment.repository.js';
 import heatmapService, { type HeatmapService } from '../contributions/heatmap.service.js';
 import mediaService, { type MediaService } from '../media/media.service.js';
 import type { StoredMedia } from '../media/media.types.js';
@@ -12,7 +14,7 @@ import saveRepository, { type SaveRepository } from '../saves/save.repository.js
 import followRepository, { type FollowRepository } from '../users/follow/follow.repository.js';
 import userRepository, { type UserRepository } from '../users/user.repository.js';
 import repostRepository, { type RepostRepository } from '../reposts/repost.repository.js';
-import type { CodeSnippet, Post, PostLink, PostMedia, PostSettings, ProjectLinks } from './post.model.js';
+import type { CodeSnippet, Post, PostLink, PostLinkClick, PostMedia, PostSettings, ProjectLinks } from './post.model.js';
 import postRepository, { type PostRepository } from './post.repository.js';
 
 type MediaOrderItem = {
@@ -54,13 +56,30 @@ type DeletePostResult = {
   alreadyDeleting: boolean;
 };
 
+type AnalyticsSection = 'likes' | 'comments' | 'reposts' | 'feedbacks';
+
+type PostFeedbackAnalyticsItem = {
+  sender?: unknown;
+  text?: string;
+} & Record<string, unknown>;
+
+type AnalyticsLinkSummary = Omit<PostLinkClick, 'clicks'> & {
+  clicks: number;
+};
+
 class PostService {
+  private readonly linkClickCooldownMs = 20_000;
+
+  private readonly linkClickCooldowns = new Map<string, number>();
+
   constructor(
     private readonly posts: PostRepository = postRepository,
     private readonly users: UserRepository = userRepository,
     private readonly likes: LikeRepository = likeRepository,
     private readonly saves: SaveRepository = saveRepository,
     private readonly reposts: RepostRepository = repostRepository,
+    private readonly comments: CommentRepository = commentRepository,
+    private readonly chats: ChatRepository = chatRepository,
     private readonly follows: FollowRepository = followRepository,
     private readonly blockRules: BlockService = blockService,
     private readonly media: MediaService = mediaService,
@@ -76,6 +95,11 @@ class PostService {
   private normalizeLimit(limitInput: unknown, fallback: number, max: number): number {
     const limit = Number(limitInput) || fallback;
     return Math.min(Math.max(limit, 1), max);
+  }
+
+  private normalizeAnalyticsSection(sectionInput: unknown): AnalyticsSection {
+    if (sectionInput === 'comments' || sectionInput === 'reposts' || sectionInput === 'feedbacks') return sectionInput;
+    return 'likes';
   }
 
   private normalizeCaption(caption: unknown): string {
@@ -191,6 +215,65 @@ class PostService {
       || input.projectLinks?.liveDemoUrl
       || input.projectLinks?.repositoryUrl,
     );
+  }
+
+  private getStoredLinkClicks(post: Pick<Post, 'analytics'>): Map<string, number> {
+    return new Map((post.analytics?.linkClicks || []).map((item) => [item.key, Number(item.clicks || 0)]));
+  }
+
+  private buildAnalyticsLinks(post: Pick<Post, 'analytics' | 'isProjectPost' | 'links' | 'projectLinks'>): AnalyticsLinkSummary[] {
+    const storedClicks = this.getStoredLinkClicks(post);
+    const links: AnalyticsLinkSummary[] = [];
+
+    if (post.isProjectPost && post.projectLinks?.liveDemoUrl) {
+      links.push({
+        key: 'project:liveDemo',
+        label: 'Live Demo',
+        url: post.projectLinks.liveDemoUrl,
+        type: 'project',
+        clicks: storedClicks.get('project:liveDemo') || 0,
+      });
+    }
+
+    if (post.isProjectPost && post.projectLinks?.repositoryUrl) {
+      links.push({
+        key: 'project:repository',
+        label: 'GitHub Repository',
+        url: post.projectLinks.repositoryUrl,
+        type: 'project',
+        clicks: storedClicks.get('project:repository') || 0,
+      });
+    }
+
+    (post.links || []).forEach((link, index) => {
+      links.push({
+        key: `custom:${index}`,
+        label: link.label,
+        url: link.url,
+        type: 'custom',
+        clicks: storedClicks.get(`custom:${index}`) || 0,
+      });
+    });
+
+    return links;
+  }
+
+  private resolveAnalyticsLink(post: Pick<Post, 'analytics' | 'isProjectPost' | 'links' | 'projectLinks'>, linkKey: string): AnalyticsLinkSummary | null {
+    return this.buildAnalyticsLinks(post).find((link) => link.key === linkKey) || null;
+  }
+
+  private getCooldownKey(ipAddress: string, postId: string, linkKey: string): string {
+    return `${ipAddress || 'unknown'}:${postId}:${linkKey}`;
+  }
+
+  private pruneLinkClickCooldowns(now: number): void {
+    if (this.linkClickCooldowns.size < 5000) return;
+
+    this.linkClickCooldowns.forEach((timestamp, key) => {
+      if (now - timestamp > this.linkClickCooldownMs) {
+        this.linkClickCooldowns.delete(key);
+      }
+    });
   }
 
   private toPostMedia(media: StoredMedia, order: number): PostMedia {
@@ -420,6 +503,115 @@ class PostService {
       isLiked: Boolean(isLiked),
       isSaved: Boolean(isSaved),
       isReposted: Boolean(isReposted),
+    };
+  }
+
+  async getPostAnalytics(userId: string, postId: string, sectionInput: unknown, pageInput: unknown, limitInput: unknown) {
+    const post = await this.posts.findOwnedAnalyticsTarget(postId, userId);
+
+    if (!post) {
+      throw new NotFoundError("Post doesn't exist!");
+    }
+
+    const section = this.normalizeAnalyticsSection(sectionInput);
+    const page = this.normalizePage(pageInput);
+    const limit = this.normalizeLimit(limitInput, 10, 30);
+    const linkClicks = this.buildAnalyticsLinks({
+      analytics: post.analytics || { shares: 0, linkClicks: [] },
+      isProjectPost: Boolean(post.isProjectPost),
+      links: post.links || [],
+      projectLinks: post.projectLinks,
+    });
+    const overview = {
+      counts: {
+        likes: Number(post.counts?.likes || 0),
+        comments: Number(post.counts?.comments || 0),
+        feedbacks: Number(post.counts?.feedbacks || 0),
+        reposts: Number(post.counts?.reposts || 0),
+        shares: Number(post.analytics?.shares || 0),
+        linkClicks: linkClicks.reduce((total, link) => total + Number(link.clicks || 0), 0),
+      },
+      links: linkClicks,
+    };
+
+    const rawItems = section === 'comments'
+      ? await this.comments.findPostAnalyticsComments(postId, page, limit)
+      : section === 'reposts'
+        ? await this.reposts.findPostReposts(postId, page, limit)
+        : section === 'feedbacks'
+          ? await this.chats.findPostFeedbacks(postId, page, limit)
+          : await this.likes.findPostLikes(postId, page, limit);
+    const items = section === 'feedbacks'
+      ? (rawItems as PostFeedbackAnalyticsItem[]).map((item) => ({
+        ...item,
+        user: item.sender,
+        comment: item.text,
+      }))
+      : rawItems;
+
+    return {
+      post: {
+        _id: post._id,
+        caption: post.caption,
+        createdAt: post.createdAt,
+      },
+      overview,
+      section,
+      items,
+      page,
+      hasMore: items.length === limit,
+    };
+  }
+
+  async trackLinkClick(userId: string, postId: string, linkKey: string, ipAddress: string) {
+    const post = await this.posts.findVisibleLinkTarget(postId);
+
+    if (!post) {
+      throw new NotFoundError("Post doesn't exist!");
+    }
+
+    await this.blockRules.ensureUsersCanInteract(userId, post.user, 'open links from');
+
+    const link = this.resolveAnalyticsLink({
+      analytics: post.analytics || { shares: 0, linkClicks: [] },
+      isProjectPost: Boolean(post.isProjectPost),
+      links: post.links || [],
+      projectLinks: post.projectLinks,
+    }, linkKey);
+
+    if (!link) {
+      throw new BadRequestError('Link is no longer available on this post.');
+    }
+
+    const now = Date.now();
+    const cooldownKey = this.getCooldownKey(ipAddress, postId, linkKey);
+    const lastClickAt = this.linkClickCooldowns.get(cooldownKey);
+
+    this.pruneLinkClickCooldowns(now);
+
+    if (lastClickAt && now - lastClickAt < this.linkClickCooldownMs) {
+      return {
+        counted: false,
+        cooldownMs: this.linkClickCooldownMs - (now - lastClickAt),
+        link,
+      };
+    }
+
+    this.linkClickCooldowns.set(cooldownKey, now);
+    await this.posts.incrementLinkClick(postId, {
+      key: link.key,
+      label: link.label,
+      url: link.url,
+      type: link.type,
+    });
+
+    return {
+      counted: true,
+      cooldownMs: 0,
+      link: {
+        ...link,
+        clicks: link.clicks + 1,
+      },
     };
   }
 

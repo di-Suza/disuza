@@ -6,6 +6,8 @@ import type {
   DeletePostResponse,
   FeedQueryArgs,
   Post,
+  PostAnalyticsQueryArgs,
+  PostAnalyticsResponse,
   PostLikeResponse,
   PostRepostResponse,
   PostsListResponse,
@@ -19,6 +21,8 @@ import type {
   SavedCollectionsResponse,
   SinglePostResponse,
   SingleRepostResponse,
+  TrackPostLinkClickRequest,
+  TrackPostLinkClickResponse,
   UnsavePostResponse,
   UpdatePostResponse,
   UserRepostsQueryArgs,
@@ -77,6 +81,18 @@ export const postApi = api.injectEndpoints({
     getPost: builder.query<SinglePostResponse, string>({
       query: (postId) => `/post/getPost/${postId}`,
       providesTags: (_result, _error, postId) => [{ type: 'Post', id: postId }],
+    }),
+    getPostAnalytics: builder.query<PostAnalyticsResponse, PostAnalyticsQueryArgs>({
+      query: ({ limit, page = 1, postId, section = 'likes' }) => `/post/analytics/${postId}?${toQueryString({ page, limit, section })}`,
+      providesTags: (_result, _error, { postId }) => [{ type: 'PostAnalytics', id: postId }],
+    }),
+    trackPostLinkClick: builder.mutation<TrackPostLinkClickResponse, TrackPostLinkClickRequest>({
+      query: ({ linkKey, postId }) => ({
+        url: `/post/analytics/${postId}/link-click`,
+        method: 'POST',
+        body: { linkKey },
+      }),
+      invalidatesTags: (_result, _error, { postId }) => [{ type: 'PostAnalytics', id: postId }],
     }),
     getAllPosts: builder.query<PostsListResponse, PostsQueryArgs | void>({
       query: (args) => `/post/getAllPosts?${toQueryString({ page: args?.page || 1, limit: args?.limit })}`,
@@ -573,6 +589,7 @@ export const {
   useGetAllPostsQuery,
   useGetFeedQuery,
   useGetPostQuery,
+  useLazyGetPostAnalyticsQuery,
   useGetRepostQuery,
   useGetSavedCollectionPostsQuery,
   useGetSavedPostsCollectionsQuery,
@@ -580,6 +597,7 @@ export const {
   useLikePostMutation,
   useRepostPostMutation,
   useSavePostMutation,
+  useTrackPostLinkClickMutation,
   useUnlikePostMutation,
   useUnrepostPostMutation,
   useUnsavePostMutation,

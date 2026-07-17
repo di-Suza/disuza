@@ -5,6 +5,7 @@ import PostModel, {
   type Post,
   type PostDocument,
   type PostLink,
+  type PostLinkClick,
   type PostMedia,
   type PostSettings,
   type ProjectLinks,
@@ -36,8 +37,20 @@ class PostRepository {
     return PostModel.findOne({ _id: postId, user: userId, ...visiblePostQuery });
   }
 
+  findOwnedAnalyticsTarget(postId: string | Types.ObjectId, userId: string | Types.ObjectId) {
+    return PostModel.findOne({ _id: postId, user: userId, ...visiblePostQuery })
+      .select('caption counts analytics isProjectPost projectLinks links createdAt')
+      .lean();
+  }
+
   findVisibleById(postId: string | Types.ObjectId): Promise<PostDocument | null> {
     return PostModel.findOne({ _id: postId, ...visiblePostQuery }).populate('user', 'profilePicture userName headline');
+  }
+
+  findVisibleLinkTarget(postId: string | Types.ObjectId) {
+    return PostModel.findOne({ _id: postId, ...visiblePostQuery })
+      .select('user analytics isProjectPost projectLinks links')
+      .lean();
   }
 
   findVisibleActionTarget(postId: string | Types.ObjectId) {
@@ -92,6 +105,37 @@ class PostRepository {
     return PostModel.findOneAndUpdate(
       { _id: postId, ...visiblePostQuery, ...(delta < 0 ? { 'counts.reposts': { $gt: 0 } } : {}) },
       { $inc: { 'counts.reposts': delta } },
+      { new: true },
+    );
+  }
+
+  incrementSharesCount(postId: string | Types.ObjectId, delta: number) {
+    return PostModel.findOneAndUpdate(
+      { _id: postId, ...visiblePostQuery, ...(delta < 0 ? { 'analytics.shares': { $gt: 0 } } : {}) },
+      { $inc: { 'analytics.shares': delta } },
+      { new: true },
+    );
+  }
+
+  async incrementLinkClick(postId: string | Types.ObjectId, linkClick: Omit<PostLinkClick, 'clicks'>) {
+    const updatedPost = await PostModel.findOneAndUpdate(
+      { _id: postId, ...visiblePostQuery, 'analytics.linkClicks.key': linkClick.key },
+      {
+        $inc: { 'analytics.linkClicks.$.clicks': 1 },
+        $set: {
+          'analytics.linkClicks.$.label': linkClick.label,
+          'analytics.linkClicks.$.url': linkClick.url,
+          'analytics.linkClicks.$.type': linkClick.type,
+        },
+      },
+      { new: true },
+    );
+
+    if (updatedPost) return updatedPost;
+
+    return PostModel.findOneAndUpdate(
+      { _id: postId, ...visiblePostQuery, 'analytics.linkClicks.key': { $ne: linkClick.key } },
+      { $push: { 'analytics.linkClicks': { ...linkClick, clicks: 1 } } },
       { new: true },
     );
   }

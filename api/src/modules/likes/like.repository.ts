@@ -47,6 +47,16 @@ class LikeRepository {
       })
       .lean();
   }
+
+  findPostLikes(postId: string | Types.ObjectId, page: number, limit: number) {
+    return LikeModel.find({ post: postId })
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit)
+      .populate('user', 'userName profilePicture headline')
+      .lean();
+  }
+
   async findLikedPostIds(userId: string | Types.ObjectId, postIds: Array<string | Types.ObjectId>): Promise<Set<string>> {
     if (postIds.length === 0) return new Set();
 

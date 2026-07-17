@@ -144,6 +144,10 @@ class ChatService {
       ]);
     }
 
+    if (messageType === 'post' && input.sharedPostId) {
+      await this.posts.incrementSharesCount(input.sharedPostId, 1);
+    }
+
     const responseMessage = {
       ...newMessage,
       senderInfo: sender,
@@ -265,6 +269,10 @@ class ChatService {
       if (message.feedbackOn?.type === 'Post' && message.feedbackOn?._id) {
         await this.posts.incrementFeedbacksCount(message.feedbackOn._id as Types.ObjectId, -1);
       }
+    }
+
+    if (message.messageType === 'post' && message.sharedPost) {
+      await this.posts.incrementSharesCount(message.sharedPost as Types.ObjectId, -1);
     }
 
     await this.chats.deleteMessage(message._id);

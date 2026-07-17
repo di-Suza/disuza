@@ -35,7 +35,6 @@ const CommentModal = ({ isOpen, onClose, post }: CommentModalProps) => {
     isError,
     isFetching,
     isLoading,
-    isPosting,
     refetch,
     replyTarget,
     setCommentText,
@@ -138,8 +137,8 @@ const CommentModal = ({ isOpen, onClose, post }: CommentModalProps) => {
               className={cn('comments-composer__input', emptyError && 'comments-composer__input--error')}
               maxLength={1000}
             />
-            <Button type="submit" disabled={isPosting} className="button--icon" aria-label={replyTarget ? 'Post reply' : 'Post comment'}>
-              {isPosting ? <Loader2 className="spin" size={18} aria-hidden="true" /> : <Send size={18} aria-hidden="true" />}
+            <Button type="submit" className="button--icon" aria-label={replyTarget ? 'Post reply' : 'Post comment'}>
+              <Send size={18} aria-hidden="true" />
             </Button>
           </div>
         </form>

@@ -239,6 +239,34 @@ const updatePostRules = [
 
 const postIdParamRules = [mongoIdParam('postId')];
 
+const postAnalyticsRules = [
+  mongoIdParam('postId'),
+  query('page')
+    .optional()
+    .isInt({ min: 1 })
+    .withMessage('Page must be greater than 0')
+    .toInt(),
+  query('limit')
+    .optional()
+    .isInt({ min: 1, max: 30 })
+    .withMessage('Limit must be between 1 and 30')
+    .toInt(),
+  query('section')
+    .optional()
+    .isIn(['likes', 'comments', 'reposts', 'feedbacks'])
+    .withMessage('Analytics section must be likes, comments, reposts, or feedbacks'),
+];
+
+const trackPostLinkClickRules = [
+  mongoIdParam('postId'),
+  body('linkKey')
+    .isString()
+    .withMessage('Link key must be a string')
+    .trim()
+    .isLength({ min: 1, max: 80 })
+    .withMessage('Link key must be between 1 and 80 characters'),
+];
+
 const pageQueryRules = [
   query('page')
     .optional()
@@ -256,4 +284,4 @@ const pageQueryRules = [
     .withMessage('Feed type must be all or following'),
 ];
 
-export { createPostRules, pageQueryRules, postIdParamRules, updatePostRules };
+export { createPostRules, pageQueryRules, postAnalyticsRules, postIdParamRules, trackPostLinkClickRules, updatePostRules };

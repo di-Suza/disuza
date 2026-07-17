@@ -24,6 +24,7 @@ export const useCommentModal = ({ isOpen, onClose, post }: UseCommentModalOption
   const { showError } = useToast();
   const user = useAppSelector((state) => state.auth.user);
   const inputRef = useRef<HTMLInputElement>(null);
+  const pendingCommentKeyRef = useRef<string | null>(null);
   const [page, setPage] = useState(1);
   const [commentText, setCommentText] = useState('');
   const [replyTarget, setReplyTarget] = useState<ReplyTarget | null>(null);
@@ -91,11 +92,21 @@ export const useCommentModal = ({ isOpen, onClose, post }: UseCommentModalOption
     event?.preventDefault();
 
     const text = commentText.trim();
+    const previousText = commentText;
+    const previousReplyTarget = replyTarget;
+    const commentKey = `${post._id}:${replyTarget?._id || 'root'}:${text}`;
 
     if (!text) {
       setEmptyError(true);
       return;
     }
+
+    if (pendingCommentKeyRef.current === commentKey) return;
+    pendingCommentKeyRef.current = commentKey;
+
+    setCommentText('');
+    setReplyTarget(null);
+    setEmptyError(false);
 
     try {
       await postComment({
@@ -103,14 +114,16 @@ export const useCommentModal = ({ isOpen, onClose, post }: UseCommentModalOption
         comment: text,
         ...(replyTarget?._id ? { parentCommentId: replyTarget._id } : {}),
       }).unwrap();
-
-      setCommentText('');
-      setReplyTarget(null);
-      setEmptyError(false);
     } catch (apiError) {
+      setCommentText(previousText);
+      setReplyTarget(previousReplyTarget);
       showError(getErrorMessage(apiError));
+    } finally {
+      if (pendingCommentKeyRef.current === commentKey) {
+        pendingCommentKeyRef.current = null;
+      }
     }
-  }, [commentText, post._id, postComment, replyTarget?._id, showError]);
+  }, [commentText, post._id, postComment, replyTarget, showError]);
 
   const handleDeleteComment = useCallback(async (commentId: string, parentCommentId?: string | null) => {
     try {

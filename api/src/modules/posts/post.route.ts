@@ -11,7 +11,14 @@ import saveController from '../saves/save.controller.js';
 import { collectionIdParamRules, collectionNameRules, savePostRules, savedCollectionPostsRules } from '../saves/validators/save.validator.js';
 import { mongoIdParam } from '../../shared/validators/common.js';
 import postController from './post.controller.js';
-import { createPostRules, pageQueryRules, postIdParamRules, updatePostRules } from './validators/post.validator.js';
+import {
+  createPostRules,
+  pageQueryRules,
+  postAnalyticsRules,
+  postIdParamRules,
+  trackPostLinkClickRules,
+  updatePostRules,
+} from './validators/post.validator.js';
 
 class PostRoutes {
   private readonly router = Router();
@@ -26,6 +33,8 @@ class PostRoutes {
     this.router.post('/createPost', uploadPostMedia, createPostRules, validateRequest, postController.createPost);
     this.router.get('/getAllPosts', pageQueryRules, validateRequest, postController.getAllPosts);
     this.router.get('/getPost/:postId', postIdParamRules, validateRequest, postController.getPost);
+    this.router.get('/analytics/:postId', postAnalyticsRules, validateRequest, postController.getPostAnalytics);
+    this.router.post('/analytics/:postId/link-click', trackPostLinkClickRules, validateRequest, postController.trackLinkClick);
     this.router.patch('/updatePost/:postId', uploadPostMedia, updatePostRules, validateRequest, postController.updatePost);
     this.router.delete('/deletePost/:postId', postIdParamRules, validateRequest, postController.deletePost);
     this.router.post('/reportPost', postReportRules, validateRequest, reportController.reportPost);
