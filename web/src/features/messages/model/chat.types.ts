@@ -138,6 +138,28 @@ export type CreateGroupResponse = {
 
 export type AcceptGroupInviteResponse = CreateGroupResponse;
 
+export type UpdateGroupRequest = {
+  conversationId: string;
+  groupName: string;
+};
+
+export type InviteGroupMembersRequest = {
+  conversationId: string;
+  memberIds: string[];
+};
+
+export type RemoveGroupMemberRequest = {
+  conversationId: string;
+  memberId: string;
+};
+
+export type GroupConversationResponse = {
+  success: boolean;
+  message: string;
+  conversation: ChatConversation | null;
+  conversationId?: string;
+};
+
 export type UnsendMessageRequest = {
   messageId: string;
   conversationId?: string;

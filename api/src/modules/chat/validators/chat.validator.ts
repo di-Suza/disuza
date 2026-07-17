@@ -13,6 +13,12 @@ const conversationIdParamRules = [
     .withMessage('conversationId must be a valid MongoDB ObjectId'),
 ];
 
+const memberIdParamRules = [
+  param('memberId')
+    .custom((value) => mongoIdPattern.test(String(value)))
+    .withMessage('memberId must be a valid MongoDB ObjectId'),
+];
+
 const sendMessageRules = [
   mongoIdBody('receiverId'),
   mongoIdBody('conversationId'),
@@ -92,13 +98,41 @@ const createGroupRules = [
 
 const acceptGroupInviteRules = conversationIdParamRules;
 
+const updateGroupRules = [
+  ...conversationIdParamRules,
+  body('groupName')
+    .isString()
+    .withMessage('Group name must be a string')
+    .trim()
+    .isLength({ min: 1, max: 80 })
+    .withMessage('Group name must be between 1 and 80 characters'),
+];
+
+const inviteGroupMembersRules = [
+  ...conversationIdParamRules,
+  body('memberIds')
+    .isArray({ min: 1 })
+    .withMessage('Select at least one member'),
+  body('memberIds.*')
+    .custom((value) => mongoIdPattern.test(String(value)))
+    .withMessage('memberIds must be valid MongoDB ObjectIds'),
+];
+
+const removeGroupMemberRules = [
+  ...conversationIdParamRules,
+  ...memberIdParamRules,
+];
+
 export {
   acceptGroupInviteRules,
   createGroupRules,
   deleteConversationRules,
   getMessagesRules,
+  inviteGroupMembersRules,
   markAsReadRules,
+  removeGroupMemberRules,
   sendMessageRules,
   startConversationRules,
+  updateGroupRules,
   unsendMessageRules,
 };

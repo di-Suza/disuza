@@ -68,6 +68,40 @@ class ChatService {
     return conversations.find((conversation) => conversation._id?.toString() === conversationId.toString()) || null;
   }
 
+  private ensureGroupAdmin(conversation: { admins?: Types.ObjectId[] }, userId: string) {
+    const isAdmin = (conversation.admins || []).some((adminId) => adminId.toString() === userId.toString());
+    if (!isAdmin) {
+      throw new ForbiddenError('Only group admins can update this group.');
+    }
+  }
+
+  private async createGroupSystemMessage(conversation: NonNullable<Awaited<ReturnType<ChatRepository['findConversationById']>>>, senderId: string, text: string) {
+    const sender = await UserModel.findOne({ _id: senderId, active: { $ne: false } }).select('_id userName profilePicture headline').lean();
+    const systemMessage = await this.chats.createMessage(
+      conversation,
+      {
+        senderId,
+        message: text,
+        messageType: 'system',
+      },
+      {
+        receiverId: null,
+        unhideParticipants: false,
+      },
+    );
+    const responseMessage = {
+      ...systemMessage,
+      senderInfo: sender,
+      conversationIsUnread: true,
+    };
+
+    this.getVisibleParticipantIds(conversation, senderId).forEach((recipientId) => {
+      this.realtime.emitToUser(recipientId, 'receive-message', responseMessage);
+    });
+
+    return responseMessage;
+  }
+
   async saveMessage(input: SaveMessageInput) {
     const messageType = input.messageType || (input.isFeedback ? 'feedback' : input.sharedPostId || (input.postId && !input.feedbackOn) ? 'post' : 'text');
     const message = typeof input.message === 'string' && input.message.trim()
@@ -339,17 +373,144 @@ class ChatService {
     };
   }
 
+  async updateGroupDetails(userId: string, conversationId: string, groupNameInput: unknown) {
+    const conversation = await this.chats.findGroupConversationForUser(conversationId, userId);
+
+    if (!conversation || this.isHiddenForUser(conversation, userId)) {
+      throw new NotFoundError('Group not found!');
+    }
+
+    this.ensureGroupAdmin(conversation, userId);
+
+    const groupName = typeof groupNameInput === 'string' ? groupNameInput.trim().slice(0, 80) : '';
+    if (!groupName) {
+      throw new BadRequestError('Group name is required.');
+    }
+
+    conversation.groupName = groupName;
+    await conversation.save();
+
+    const formattedConversation = await this.getFormattedConversation(userId, conversation._id);
+
+    return {
+      conversation: formattedConversation,
+    };
+  }
+
+  async inviteGroupMembers(userId: string, conversationId: string, memberIdsInput: unknown) {
+    const conversation = await this.chats.findGroupConversationForUser(conversationId, userId);
+
+    if (!conversation || this.isHiddenForUser(conversation, userId)) {
+      throw new NotFoundError('Group not found!');
+    }
+
+    this.ensureGroupAdmin(conversation, userId);
+
+    const existingParticipantIds = new Set(conversation.participants.map((id) => id.toString()));
+    const memberIds = Array.isArray(memberIdsInput)
+      ? [...new Set(memberIdsInput.map((id) => String(id)).filter((id) => id && id !== userId && !existingParticipantIds.has(id)))]
+      : [];
+
+    if (memberIds.length === 0) {
+      throw new BadRequestError('Select at least one new member.');
+    }
+
+    const members = await UserModel.find({ _id: { $in: memberIds }, active: { $ne: false } }).select('_id userName').lean();
+    if (members.length !== memberIds.length) {
+      throw new NotFoundError('One or more selected users are unavailable.');
+    }
+
+    await Promise.all(memberIds.map((memberId) => this.blockRules.ensureUsersCanInteract(userId, memberId, 'invite to this group')));
+
+    const hiddenSet = new Set((conversation.hiddenBy || []).map((id) => id.toString()));
+    memberIds.forEach((memberId) => {
+      conversation.participants.push(new Types.ObjectId(memberId));
+      hiddenSet.add(memberId);
+    });
+    conversation.hiddenBy = Array.from(hiddenSet).map((id) => new Types.ObjectId(id));
+    await conversation.save();
+
+    await Promise.all(memberIds.map((recipientId) => this.notifications.send({
+      senderId: userId,
+      recipientId,
+      type: 'GROUP_INVITE',
+      contentId: conversation._id,
+      onModel: 'Conversation',
+    })));
+
+    await this.createGroupSystemMessage(
+      conversation,
+      userId,
+      `${members.map((member) => member.userName).filter(Boolean).join(', ')} invited to the group`,
+    );
+
+    const formattedConversation = await this.getFormattedConversation(userId, conversation._id);
+
+    return {
+      conversation: formattedConversation,
+    };
+  }
+
+  async removeGroupMember(userId: string, conversationId: string, memberId: string) {
+    const conversation = await this.chats.findGroupConversationForUser(conversationId, userId);
+
+    if (!conversation || this.isHiddenForUser(conversation, userId)) {
+      throw new NotFoundError('Group not found!');
+    }
+
+    if (!this.isParticipant(conversation.participants, memberId)) {
+      throw new NotFoundError('Member not found in this group.');
+    }
+
+    const isSelfLeave = userId.toString() === memberId.toString();
+    if (!isSelfLeave) {
+      this.ensureGroupAdmin(conversation, userId);
+    }
+
+    const hiddenSet = new Set((conversation.hiddenBy || []).map((id) => id.toString()));
+    hiddenSet.add(memberId);
+    conversation.hiddenBy = Array.from(hiddenSet).map((id) => new Types.ObjectId(id));
+    conversation.admins = (conversation.admins || []).filter((adminId) => adminId.toString() !== memberId.toString());
+
+    if ((conversation.admins || []).length === 0) {
+      const nextAdminId = this.getVisibleParticipantIds(conversation, memberId)[0];
+      if (nextAdminId) conversation.admins = [new Types.ObjectId(nextAdminId)];
+    }
+
+    await conversation.save();
+
+    const targetUser = await UserModel.findById(memberId).select('userName').lean();
+    await this.createGroupSystemMessage(
+      conversation,
+      userId,
+      isSelfLeave
+        ? `${targetUser?.userName || 'A member'} left the group`
+        : `${targetUser?.userName || 'A member'} was removed from the group`,
+    );
+
+    const formattedConversation = isSelfLeave ? null : await this.getFormattedConversation(userId, conversation._id);
+
+    return {
+      conversation: formattedConversation,
+      conversationId: conversation._id,
+    };
+  }
+
   async getConversations(userId: string) {
     const conversations = await this.chats.getConversations(userId);
 
     return Promise.all(conversations.map(async (conversation) => {
       if (conversation.isGroup) {
+        const hiddenIds = new Set((conversation.hiddenBy || []).map((id: Types.ObjectId) => id.toString()));
+
         return {
           _id: conversation._id,
           isGroup: true,
           groupName: conversation.groupName,
           groupAvatar: conversation.groupAvatar,
-          participants: conversation.participantsInfo || [],
+          participants: (conversation.participantsInfo || []).filter((participant: { _id?: Types.ObjectId }) => (
+            participant._id && !hiddenIds.has(participant._id.toString())
+          )),
           admins: conversation.admins || [],
           roomId: conversation.roomId,
           lastMessage: conversation.lastMessage || null,

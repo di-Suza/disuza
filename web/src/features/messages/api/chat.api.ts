@@ -11,13 +11,17 @@ import type {
   GetConversationsResponse,
   GetMessagesQueryArgs,
   GetMessagesResponse,
+  GroupConversationResponse,
+  InviteGroupMembersRequest,
   MarkAsReadResponse,
+  RemoveGroupMemberRequest,
   StartConversationRequest,
   StartConversationResponse,
   SendMessageRequest,
   SendMessageResponse,
   UnsendMessageRequest,
   UnsendMessageResponse,
+  UpdateGroupRequest,
 } from '../model/chat.types';
 
 const toIdString = (value: unknown): string => {
@@ -418,6 +422,75 @@ export const chatApi = api.injectEndpoints({
       },
       invalidatesTags: ['Conversations', 'Notifications', 'CollabRooms'],
     }),
+    updateGroup: builder.mutation<GroupConversationResponse, UpdateGroupRequest>({
+      query: ({ conversationId, groupName }) => ({
+        url: `/chat/groups/${conversationId}`,
+        method: 'PATCH',
+        body: { groupName },
+      }),
+      async onQueryStarted(_arg, { dispatch, queryFulfilled }) {
+        try {
+          const { data } = await queryFulfilled;
+          if (!data.conversation) return;
+          const conversation = normalizeChatConversation(data.conversation);
+
+          dispatch(
+            chatApi.util.updateQueryData('getConversations', undefined, (draft) => {
+              const index = draft.conversations.findIndex((item) => item._id === conversation._id);
+              if (index === -1) {
+                draft.conversations.unshift(conversation);
+                return;
+              }
+              draft.conversations[index] = { ...draft.conversations[index], ...conversation };
+            }),
+          );
+        } catch {
+          // Caller surfaces the error.
+        }
+      },
+      invalidatesTags: ['Conversations', 'CollabRooms'],
+    }),
+    inviteGroupMembers: builder.mutation<GroupConversationResponse, InviteGroupMembersRequest>({
+      query: ({ conversationId, memberIds }) => ({
+        url: `/chat/groups/${conversationId}/invite`,
+        method: 'POST',
+        body: { memberIds },
+      }),
+      invalidatesTags: ['Conversations', 'Notifications', 'CollabRooms'],
+    }),
+    removeGroupMember: builder.mutation<GroupConversationResponse, RemoveGroupMemberRequest>({
+      query: ({ conversationId, memberId }) => ({
+        url: `/chat/groups/${conversationId}/members/${memberId}`,
+        method: 'DELETE',
+      }),
+      async onQueryStarted({ conversationId, memberId }, { dispatch, getState, queryFulfilled }) {
+        const currentUserId = (getState() as { auth?: { user?: { _id?: string } } }).auth?.user?._id;
+        const removeSelf = currentUserId === memberId;
+        const patchResult = removeSelf
+          ? dispatch(
+            chatApi.util.updateQueryData('getConversations', undefined, (draft) => {
+              draft.conversations = draft.conversations.filter((conversation) => conversation._id !== conversationId);
+            }),
+          )
+          : undefined;
+
+        try {
+          const { data } = await queryFulfilled;
+          if (data.conversation) {
+            const conversation = normalizeChatConversation(data.conversation);
+            dispatch(
+              chatApi.util.updateQueryData('getConversations', undefined, (draft) => {
+                const index = draft.conversations.findIndex((item) => item._id === conversation._id);
+                if (index !== -1) draft.conversations[index] = { ...draft.conversations[index], ...conversation };
+              }),
+            );
+          }
+        } catch {
+          patchResult?.undo();
+        }
+      },
+      invalidatesTags: ['Conversations', 'CollabRooms'],
+    }),
     markAsRead: builder.mutation<MarkAsReadResponse, string>({
       query: (conversationId) => ({
         url: `/chat/markAsRead/${conversationId}`,
@@ -493,8 +566,11 @@ export const {
   useDeleteConversationMutation,
   useGetConversationsQuery,
   useGetMessagesQuery,
+  useInviteGroupMembersMutation,
   useMarkAsReadMutation,
+  useRemoveGroupMemberMutation,
   useSendMessageMutation,
   useStartConversationMutation,
+  useUpdateGroupMutation,
   useUnsendMessageMutation,
 } = chatApi;

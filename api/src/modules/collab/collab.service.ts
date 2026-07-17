@@ -216,7 +216,7 @@ class CollabService {
       : [
         {
           path: 'conversationId',
-          select: 'participants isGroup groupName groupAvatar admins',
+          select: 'participants hiddenBy isGroup groupName groupAvatar admins',
           populate: {
             path: 'participants',
             model: 'User',
@@ -252,6 +252,16 @@ class CollabService {
           ...(conversationDetails || {}),
           participants,
         };
+      }
+    }
+
+    if (access.roomType === 'shared' && !access.otherUserId) {
+      const conversationDetails = roomDetails.conversationId as { participants?: Array<Record<string, unknown>>; hiddenBy?: Array<Types.ObjectId> } | undefined;
+      const hiddenIds = new Set((conversationDetails?.hiddenBy || []).map((id) => id.toString()));
+      if (conversationDetails?.participants) {
+        conversationDetails.participants = conversationDetails.participants.filter((participant) => (
+          participant?._id && !hiddenIds.has(participant._id.toString())
+        ));
       }
     }
 

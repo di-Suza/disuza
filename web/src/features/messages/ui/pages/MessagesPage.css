@@ -660,6 +660,13 @@
   animation: message-in 220ms ease-out;
 }
 
+.messages-v1-window__actions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 8px;
+}
+
 .messages-v1-system-message {
   display: flex;
   justify-content: center;
@@ -1130,6 +1137,97 @@
   gap: 12px;
   border-top: 1px solid rgba(38, 49, 68, 0.95);
   padding: 14px 16px;
+}
+
+.messages-v1-group-settings__body {
+  overflow-y: auto;
+  padding-bottom: 16px;
+}
+
+.messages-v1-group-settings__actions {
+  display: flex;
+  justify-content: flex-end;
+  padding: 12px 16px 0;
+}
+
+.messages-v1-group-settings__section {
+  display: grid;
+  gap: 10px;
+  padding: 16px 16px 0;
+}
+
+.messages-v1-group-settings__section h3 {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 14px;
+}
+
+.messages-v1-group-members,
+.messages-v1-group-invite-list {
+  display: grid;
+  gap: 8px;
+}
+
+.messages-v1-group-members article {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid rgba(38, 49, 68, 0.86);
+  border-radius: 10px;
+  background: rgba(7, 10, 16, 0.54);
+  padding: 10px;
+}
+
+.messages-v1-group-members article > span:nth-child(2) {
+  display: grid;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.messages-v1-group-members strong,
+.messages-v1-group-members small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.messages-v1-group-members strong {
+  color: var(--text-primary);
+  font-size: 14px;
+}
+
+.messages-v1-group-members small,
+.messages-v1-group-settings__empty {
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+.messages-v1-group-members article button {
+  display: inline-flex;
+  min-height: 32px;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid rgba(239, 68, 68, 0.28);
+  border-radius: 999px;
+  background: rgba(239, 68, 68, 0.08);
+  color: #fca5a5;
+  padding: 0 10px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.messages-v1-group-invite-list {
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.messages-v1-group-settings__empty {
+  margin: 0;
+  border: 1px dashed rgba(38, 49, 68, 0.86);
+  border-radius: 10px;
+  padding: 16px;
+  text-align: center;
 }
 
 @keyframes message-in {

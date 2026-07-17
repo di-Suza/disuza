@@ -1,4 +1,4 @@
-import { ArrowLeft, Code2, Loader2, RefreshCw, Send, UserX, X } from 'lucide-react';
+import { ArrowLeft, Code2, Loader2, MoreVertical, RefreshCw, Send, UserX, X } from 'lucide-react';
 import { memo, useEffect, useRef, useState, type MouseEvent } from 'react';
 
 import {
@@ -10,6 +10,7 @@ import type { ChatConversation, ChatMessage } from '@/features/messages/model/ch
 import CollabPermissionModal from '@/features/collab/ui/components/CollabPermissionModal';
 import { cn } from '@/shared/utils/cn';
 import ChatAvatar from './ChatAvatar';
+import GroupSettingsModal from './GroupSettingsModal';
 import MessageItem from './MessageItem';
 import { useChatWindow } from './useChatWindow';
 
@@ -44,6 +45,7 @@ const ChatWindow = ({
   selectedChat,
 }: ChatWindowProps) => {
   const [contextMenu, setContextMenu] = useState<ContextMenu | null>(null);
+  const [isGroupSettingsOpen, setIsGroupSettingsOpen] = useState(false);
   const contextMenuRef = useRef<HTMLDivElement | null>(null);
   const {
     handleBackToChats,
@@ -127,13 +129,25 @@ const ChatWindow = ({
             </div>
 
             {canSendMessages && (
-              <button type="button" className="messages-v1-collab-button" onClick={handleCollabClick}>
-                <span>
-                  <Code2 size={14} aria-hidden="true" />
-                </span>
-                <strong>{selectedChat.isGroup ? 'Open Room' : 'Start Collab'}</strong>
-                <em>{selectedChat.isGroup ? 'Room' : 'Collab'}</em>
-              </button>
+              <div className="messages-v1-window__actions">
+                <button type="button" className="messages-v1-collab-button" onClick={handleCollabClick}>
+                  <span>
+                    <Code2 size={14} aria-hidden="true" />
+                  </span>
+                  <strong>{selectedChat.isGroup ? 'Open Room' : 'Start Collab'}</strong>
+                  <em>{selectedChat.isGroup ? 'Room' : 'Collab'}</em>
+                </button>
+                {selectedChat.isGroup && (
+                  <button
+                    type="button"
+                    className="messages-v1-icon-button"
+                    onClick={() => setIsGroupSettingsOpen(true)}
+                    aria-label="Group settings"
+                  >
+                    <MoreVertical size={17} aria-hidden="true" />
+                  </button>
+                )}
+              </div>
             )}
           </header>
 
@@ -247,6 +261,16 @@ const ChatWindow = ({
           onClose={() => setIsCollabPermissionModalOpen(false)}
           otherUser={selectedChat.otherUser?.userName}
           conversationId={selectedChat._id}
+        />
+      )}
+
+      {isGroupSettingsOpen && selectedChat?.isGroup && (
+        <GroupSettingsModal
+          isOpen={isGroupSettingsOpen}
+          conversation={selectedChat}
+          onClose={() => setIsGroupSettingsOpen(false)}
+          onConversationUpdated={(conversation) => handleChatSelect(conversation)}
+          onLeftGroup={handleBackToChats}
         />
       )}
     </>

@@ -8,9 +8,12 @@ import {
   createGroupRules,
   deleteConversationRules,
   getMessagesRules,
+  inviteGroupMembersRules,
   markAsReadRules,
+  removeGroupMemberRules,
   sendMessageRules,
   startConversationRules,
+  updateGroupRules,
   unsendMessageRules,
 } from './validators/chat.validator.js';
 
@@ -28,6 +31,9 @@ class ChatRoutes {
     this.router.post('/startConversation', startConversationRules, validateRequest, chatController.startConversation);
     this.router.post('/groups', createGroupRules, validateRequest, chatController.createGroup);
     this.router.post('/groups/:conversationId/accept', acceptGroupInviteRules, validateRequest, chatController.acceptGroupInvite);
+    this.router.patch('/groups/:conversationId', updateGroupRules, validateRequest, chatController.updateGroupDetails);
+    this.router.post('/groups/:conversationId/invite', inviteGroupMembersRules, validateRequest, chatController.inviteGroupMembers);
+    this.router.delete('/groups/:conversationId/members/:memberId', removeGroupMemberRules, validateRequest, chatController.removeGroupMember);
     this.router.get('/getConversations', chatController.getConversations);
     this.router.get('/getMessages/:conversationId', getMessagesRules, validateRequest, chatController.getMessages);
     this.router.patch('/markAsRead/:conversationId', markAsReadRules, validateRequest, chatController.markAsRead);

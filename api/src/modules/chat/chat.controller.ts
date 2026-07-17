@@ -13,6 +13,9 @@ class ChatController {
   readonly startConversation: RequestHandler;
   readonly createGroup: RequestHandler;
   readonly acceptGroupInvite: RequestHandler;
+  readonly updateGroupDetails: RequestHandler;
+  readonly inviteGroupMembers: RequestHandler;
+  readonly removeGroupMember: RequestHandler;
 
   constructor(private readonly service: ChatService = chatService) {
     this.sendMessage = asyncHandler(this.handleSendMessage.bind(this));
@@ -24,6 +27,9 @@ class ChatController {
     this.startConversation = asyncHandler(this.handleStartConversation.bind(this));
     this.createGroup = asyncHandler(this.handleCreateGroup.bind(this));
     this.acceptGroupInvite = asyncHandler(this.handleAcceptGroupInvite.bind(this));
+    this.updateGroupDetails = asyncHandler(this.handleUpdateGroupDetails.bind(this));
+    this.inviteGroupMembers = asyncHandler(this.handleInviteGroupMembers.bind(this));
+    this.removeGroupMember = asyncHandler(this.handleRemoveGroupMember.bind(this));
   }
 
   private async handleSendMessage(req: Request, res: Response) {
@@ -72,6 +78,36 @@ class ChatController {
     res.status(200).json({
       success: true,
       message: 'Group invite accepted!',
+      ...data,
+    });
+  }
+
+  private async handleUpdateGroupDetails(req: Request, res: Response) {
+    const data = await this.service.updateGroupDetails(req.user!.id, String(req.params.conversationId), req.body.groupName);
+
+    res.status(200).json({
+      success: true,
+      message: 'Group updated successfully!',
+      ...data,
+    });
+  }
+
+  private async handleInviteGroupMembers(req: Request, res: Response) {
+    const data = await this.service.inviteGroupMembers(req.user!.id, String(req.params.conversationId), req.body.memberIds);
+
+    res.status(200).json({
+      success: true,
+      message: 'Group invites sent!',
+      ...data,
+    });
+  }
+
+  private async handleRemoveGroupMember(req: Request, res: Response) {
+    const data = await this.service.removeGroupMember(req.user!.id, String(req.params.conversationId), String(req.params.memberId));
+
+    res.status(200).json({
+      success: true,
+      message: 'Group member updated!',
       ...data,
     });
   }
