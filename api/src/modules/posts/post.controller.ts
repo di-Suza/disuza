@@ -19,10 +19,19 @@ const getUploadedPostMediaFiles = (req: Request): Express.Multer.File[] => {
 
 const getPostId = (req: Request): string => String(req.params.postId);
 
+const getClientIp = (req: Request): string => {
+  const forwardedFor = req.headers['x-forwarded-for'];
+  const forwardedIp = Array.isArray(forwardedFor) ? forwardedFor[0] : forwardedFor;
+
+  return String(forwardedIp || req.ip || req.socket.remoteAddress || 'unknown').split(',')[0].trim();
+};
+
 class PostController {
   readonly createPost: RequestHandler;
   readonly getAllPosts: RequestHandler;
   readonly getPost: RequestHandler;
+  readonly getPostAnalytics: RequestHandler;
+  readonly trackLinkClick: RequestHandler;
   readonly updatePost: RequestHandler;
   readonly deletePost: RequestHandler;
   readonly getFeed: RequestHandler;
@@ -31,6 +40,8 @@ class PostController {
     this.createPost = asyncHandler(this.handleCreatePost.bind(this));
     this.getAllPosts = asyncHandler(this.handleGetAllPosts.bind(this));
     this.getPost = asyncHandler(this.handleGetPost.bind(this));
+    this.getPostAnalytics = asyncHandler(this.handleGetPostAnalytics.bind(this));
+    this.trackLinkClick = asyncHandler(this.handleTrackLinkClick.bind(this));
     this.updatePost = asyncHandler(this.handleUpdatePost.bind(this));
     this.deletePost = asyncHandler(this.handleDeletePost.bind(this));
     this.getFeed = asyncHandler(this.handleGetFeed.bind(this));
@@ -63,6 +74,26 @@ class PostController {
       success: true,
       message: 'Post fetched successfully!',
       post,
+    });
+  }
+
+  private async handleGetPostAnalytics(req: Request, res: Response) {
+    const data = await this.service.getPostAnalytics(req.user!.id, getPostId(req), req.query.section, req.query.page, req.query.limit);
+
+    res.status(200).json({
+      success: true,
+      message: 'Post analytics fetched successfully!',
+      ...data,
+    });
+  }
+
+  private async handleTrackLinkClick(req: Request, res: Response) {
+    const data = await this.service.trackLinkClick(req.user!.id, getPostId(req), String(req.body.linkKey), getClientIp(req));
+
+    res.status(200).json({
+      success: true,
+      message: data.counted ? 'Link click tracked.' : 'Link click already tracked recently.',
+      ...data,
     });
   }
 

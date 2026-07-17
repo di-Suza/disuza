@@ -29,6 +29,15 @@ class RepostRepository {
     return new Set(reposts.map((repost) => repost.post.toString()));
   }
 
+  findPostReposts(postId: string | Types.ObjectId, page: number, limit: number) {
+    return RepostModel.find({ post: postId })
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit)
+      .populate('user', 'userName profilePicture headline')
+      .lean();
+  }
+
   findVisibleUserReposts(
     userId: string | Types.ObjectId,
     blockedUserIds: Types.ObjectId[],

@@ -31,6 +31,14 @@ type PostLink = {
   url: string;
 };
 
+type PostLinkClick = {
+  key: string;
+  label: string;
+  url: string;
+  type: 'custom' | 'project';
+  clicks: number;
+};
+
 type CodeSnippet = {
   language: string;
   code: string;
@@ -43,12 +51,18 @@ type PostCounts = {
   reposts: number;
 };
 
+type PostAnalytics = {
+  shares: number;
+  linkClicks: PostLinkClick[];
+};
+
 type Post = {
   user: Types.ObjectId;
   caption: string;
   media: PostMedia[];
   counts: PostCounts;
   settings: PostSettings;
+  analytics: PostAnalytics;
   isProjectPost: boolean;
   projectLinks?: ProjectLinks;
   links: PostLink[];
@@ -87,6 +101,17 @@ const postLinkSchema = new mongoose.Schema<PostLink>(
   {
     label: { type: String, required: true, trim: true, maxlength: 80 },
     url: { type: String, required: true, trim: true, maxlength: 500 },
+  },
+  { _id: false },
+);
+
+const postLinkClickSchema = new mongoose.Schema<PostLinkClick>(
+  {
+    key: { type: String, required: true, trim: true, maxlength: 80 },
+    label: { type: String, required: true, trim: true, maxlength: 80 },
+    url: { type: String, required: true, trim: true, maxlength: 500 },
+    type: { type: String, enum: ['custom', 'project'], required: true },
+    clicks: { type: Number, default: 0, min: 0 },
   },
   { _id: false },
 );
@@ -132,6 +157,13 @@ const postSchema = new mongoose.Schema<Post, PostModel>(
     settings: {
       hideLikesCount: { type: Boolean, default: false },
       commentsDisabled: { type: Boolean, default: false },
+    },
+    analytics: {
+      shares: { type: Number, default: 0, min: 0 },
+      linkClicks: {
+        type: [postLinkClickSchema],
+        default: [],
+      },
     },
     isProjectPost: {
       type: Boolean,
@@ -254,5 +286,16 @@ postSchema.pre('validate', function normalizePost(next) {
 
 const PostModel = mongoose.models.Post as PostModel || mongoose.model<Post, PostModel>('Post', postSchema, 'posts');
 
-export { type CodeSnippet, type Post, type PostCounts, type PostDocument, type PostLink, type PostMedia, type PostSettings, type ProjectLinks };
+export {
+  type CodeSnippet,
+  type Post,
+  type PostAnalytics,
+  type PostCounts,
+  type PostDocument,
+  type PostLink,
+  type PostLinkClick,
+  type PostMedia,
+  type PostSettings,
+  type ProjectLinks,
+};
 export default PostModel;
