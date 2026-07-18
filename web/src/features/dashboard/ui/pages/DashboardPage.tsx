@@ -3,6 +3,7 @@ import {
   Activity,
   AlertCircle,
   Bookmark,
+  ChevronDown,
   ChevronRight,
   Code2,
   FileText,
@@ -138,6 +139,8 @@ const DashboardPage = () => {
   const [isBlockedUsersModalOpen, setBlockedUsersModalOpen] = useState(false);
   const avatarUrl = getAvatarUrl(user?.profilePicture?.url);
   const isDarkMode = theme === 'dark';
+  const [isMoreMenuOpen, setMoreMenuOpen] = useState(false);
+  const activeMoreSectionLabel = moreSections.find((section) => section.id === activeMoreSection)?.label || 'Display';
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
@@ -202,6 +205,38 @@ const DashboardPage = () => {
               <header className="more-page-v1__heading"><h1>More</h1></header>
 
               <div className="more-v1-shell">
+                <div className={isMoreMenuOpen ? 'more-v1-select is-open' : 'more-v1-select'}>
+                  <button
+                    type="button"
+                    className="more-v1-select__trigger"
+                    onClick={() => setMoreMenuOpen((current) => !current)}
+                    aria-expanded={isMoreMenuOpen}
+                    aria-haspopup="listbox"
+                  >
+                    <span>{activeMoreSectionLabel}</span>
+                    <ChevronDown size={16} aria-hidden="true" />
+                  </button>
+                  {isMoreMenuOpen && (
+                    <div className="more-v1-select__menu" role="listbox" aria-label="More sections">
+                      {moreSections.map((section) => (
+                        <button
+                          key={section.id}
+                          type="button"
+                          role="option"
+                          aria-selected={activeMoreSection === section.id}
+                          onClick={() => {
+                            setActiveMoreSection(section.id);
+                            setMoreMenuOpen(false);
+                          }}
+                          className={activeMoreSection === section.id ? 'is-active' : ''}
+                        >
+                          {section.label}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
                 <aside className="more-v1-menu">
                   {moreSections.map((section) => {
                     const Icon = section.icon;
