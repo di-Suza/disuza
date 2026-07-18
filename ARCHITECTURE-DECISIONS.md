@@ -1,6 +1,6 @@
 # DevLoopFeed Architecture Decision Register
 
-This register records durable product and engineering decisions for DevLoopFeed v2. It starts with the behavior proven in v1 and the foundation already established in v2.
+This register records durable product and engineering decisions for DevLoopFeed. It starts with the behavior proven in v1 and the foundation already established in the current implementation.
 
 The full system map lives in `DevLoopFeed-Architecture-Guide.md`.
 
@@ -12,18 +12,18 @@ The full system map lives in `DevLoopFeed-Architecture-Guide.md`.
 
 Delivery is tracked separately:
 
-- `Implemented`: present and verified in v2.
+- `Implemented`: present and verified in the current implementation.
 - `Partial`: part of the decision is present.
-- `Planned`: accepted but not delivered in v2.
+- `Planned`: accepted but not delivered in the current implementation.
 - `Deferred`: intentionally waiting for dependencies or product work.
 
 ## Register
 
-| ID | Decision | Decision state | V2 delivery |
+| ID | Decision | Decision state | Delivery |
 | --- | --- | --- | --- |
 | DLF-001 | Use v1 behavior as the migration parity baseline | Accepted | Partial |
-| DLF-002 | Treat live v2 code as implementation truth | Accepted | Implemented |
-| DLF-003 | Build v2 as a TypeScript modular monolith | Accepted | Implemented |
+| DLF-002 | Treat live code as implementation truth | Accepted | Implemented |
+| DLF-003 | Build the app as a TypeScript modular monolith | Accepted | Implemented |
 | DLF-004 | Use layered backend modules | Accepted | Implemented |
 | DLF-005 | Isolate persistence in repositories | Accepted | Implemented |
 | DLF-006 | Keep controllers thin and errors centralized | Accepted | Implemented |
@@ -68,23 +68,23 @@ Context: v1 already contains the intended product journey and many connected edg
 Decision:
 
 - Preserve user-visible flow, domain rules, and exact UI where parity is requested.
-- Rewrite implementation using v2 types, boundaries, repositories, hooks, and shared utilities.
+- Rewrite implementation using TypeScript types, boundaries, repositories, hooks, and shared utilities.
 - Any deliberate product behavior change needs its own documented decision.
 
 Consequence: source code is not copied blindly, but missing v1 behavior is a migration gap rather than a new design opportunity.
 
-### DLF-002: Live v2 code is implementation truth
+### DLF-002: live code is implementation truth
 
 Context: migration documentation may describe planned or partial work.
 
 Decision:
 
-- The checked-in v2 code determines what is currently implemented.
+- The checked-in current code determines what is currently implemented.
 - `docs.md` records delivery history.
 - The architecture guide records current boundaries and accepted targets.
 - Status labels must distinguish implemented, partial, planned, and deferred work.
 
-Consequence: documentation cannot claim Socket.IO, Redis, BullMQ, Yjs, Judge0, tests, or Docker are active before they exist and are verified in v2.
+Consequence: documentation cannot claim Socket.IO, Redis, BullMQ, Yjs, Judge0, tests, or Docker are active before they exist and are verified in the current implementation.
 
 ### DLF-003: TypeScript modular monolith
 
@@ -174,7 +174,7 @@ Current delivery note: a draft OpenAPI baseline exists under `contracts/openapi`
 
 ### DLF-010: Evolutionary frontend layering
 
-Context: v2 currently uses `app`, `features`, and `shared` successfully.
+Context: the current implementation currently uses `app`, `features`, and `shared` successfully.
 
 Decision:
 
@@ -213,7 +213,7 @@ Consequence: JSX remains readable without hiding all behavior inside generic abs
 Decision:
 
 - Feed, post card, dashboard, modal, navigation, and responsive behavior use v1 as visual truth when parity is requested.
-- V2 may improve accessibility, error boundaries, loading states, and component internals without changing product flow.
+- The current implementation may improve accessibility, error boundaries, loading states, and component internals without changing product flow.
 - New UI concepts require explicit product approval.
 
 Consequence: the rewrite feels like the same product rather than an unrelated redesign.
@@ -270,7 +270,7 @@ Consequence: security is a cross-cutting baseline rather than one middleware che
 
 Decision:
 
-- Keep MongoDB and Mongoose for v2.
+- Keep MongoDB and Mongoose for the current implementation.
 - Use separate collections for high-growth relations such as follows, blocks, likes, saves, sessions, and contribution sources.
 - Avoid unbounded relationship arrays in primary documents.
 
@@ -504,3 +504,4 @@ What are we choosing?
 
 What improves, what becomes harder, and what follow-up is required?
 ```
+

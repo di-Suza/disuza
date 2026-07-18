@@ -1,13 +1,13 @@
 # DevLoopFeed Debugging Guide
 
-This guide is the practical troubleshooting baseline for DevLoopFeed v2. Use it with `DevLoopFeed-Architecture-Guide.md`, which defines ownership and system flow, and `ARCHITECTURE-DECISIONS.md`, which explains durable technical choices.
+This guide is the practical troubleshooting baseline for DevLoopFeed. Use it with `DevLoopFeed-Architecture-Guide.md`, which defines ownership and system flow, and `ARCHITECTURE-DECISIONS.md`, which explains durable technical choices.
 
 The guide describes the current TypeScript API and web application. Sections for realtime, workers, rooms, and code execution are explicitly marked as planned and must not be treated as implemented behavior.
 
 ## 1. Debugging Rules
 
 1. Reproduce the smallest failing user flow before changing code.
-2. Record expected behavior from v1 or the accepted v2 decision before deciding that current behavior is wrong.
+2. Record expected behavior from v1 or the accepted accepted decision before deciding that current behavior is wrong.
 3. Follow the request through its owning layers instead of patching the first visible symptom.
 4. Change the layer that owns the defect.
 5. Verify adjacent views and caches affected by the same data.
@@ -56,7 +56,7 @@ First failing layer:
 Reproduction frequency:
 ```
 
-For v1 parity defects, also record the matching v1 page, modal, endpoint, or business rule. V1 behavior is the parity baseline; v2 code remains the implementation source of truth.
+For v1 parity defects, also record the matching v1 page, modal, endpoint, or business rule. V1 behavior is the parity baseline; current code remains the implementation source of truth.
 
 ## 4. Symptom Triage
 
@@ -359,3 +359,4 @@ What test, alert, reconciliation, or architecture change prevents recurrence?
 ## 16. Maintenance Rule
 
 Update this guide whenever a new runtime, provider, high-risk domain invariant, verification command, or recurring failure mode is introduced. Feature-specific implementation detail should remain near the owning module; this document owns the cross-system debugging path.
+

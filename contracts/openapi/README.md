@@ -1,6 +1,6 @@
 # OpenAPI Contract
 
-`devloopfeed.v2.yaml` is the starting REST contract.
+`devloopfeed.yaml` is the starting REST contract.
 
 Keep it small and correct. Add endpoints as modules are revisited instead of dumping an unverified full API description.
 

@@ -97,6 +97,44 @@ class PostService {
     return Math.min(Math.max(limit, 1), max);
   }
 
+  private getFeedRotationKey(userId: string, type: string, page: number): string {
+    const date = new Date();
+    const dayKey = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
+    return `${userId}:${type}:${page}:${dayKey}`;
+  }
+
+  private getSeededScore(seed: string): number {
+    let hash = 2166136261;
+
+    for (let index = 0; index < seed.length; index += 1) {
+      hash ^= seed.charCodeAt(index);
+      hash = Math.imul(hash, 16777619);
+    }
+
+    return hash >>> 0;
+  }
+
+  private shouldRotateFeedPosts(posts: Array<{ createdAt?: Date | string }>, page: number): boolean {
+    if (posts.length < 2) return false;
+    if (page > 1) return true;
+
+    const newestPostTime = Math.max(...posts.map((post) => new Date(post.createdAt || 0).getTime()));
+    const staleThresholdMs = 24 * 60 * 60 * 1000;
+
+    return Date.now() - newestPostTime > staleThresholdMs;
+  }
+
+  private rotateFeedPosts<T extends { _id?: unknown; createdAt?: Date | string }>(posts: T[], userId: string, type: string, page: number): T[] {
+    if (!this.shouldRotateFeedPosts(posts, page)) return posts;
+
+    const seed = this.getFeedRotationKey(userId, type, page);
+
+    return [...posts].sort((first, second) => (
+      this.getSeededScore(`${seed}:${String(first._id || '')}`)
+      - this.getSeededScore(`${seed}:${String(second._id || '')}`)
+    ));
+  }
+
   private normalizeAnalyticsSection(sectionInput: unknown): AnalyticsSection {
     if (sectionInput === 'comments' || sectionInput === 'reposts' || sectionInput === 'feedbacks') return sectionInput;
     return 'likes';
@@ -760,7 +798,7 @@ class PostService {
       filter.user = { $nin: blockedUserIds };
     }
 
-    const posts = await this.posts.findFeedPosts(filter, page, limit);
+    const posts = this.rotateFeedPosts(await this.posts.findFeedPosts(filter, page, limit), userId, type, page);
     const postIds = posts.map((post) => post._id);
     const [likedPostIds, savedPostIds, repostedPostIds] = await Promise.all([
       this.likes.findLikedPostIds(userId, postIds),

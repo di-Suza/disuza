@@ -1,6 +1,6 @@
 # DevLoopFeed Architecture Guide
 
-This document is the architecture source of truth for DevLoopFeed v2. It records the product behavior inherited from DevLoopFeed v1, the structure already implemented in v2, and the boundaries that future work must preserve.
+This document is the architecture source of truth for DevLoopFeed. It records the product behavior inherited from DevLoopFeed v1, the structure already implemented in the current implementation, and the boundaries that future work must preserve.
 
 Snapshot date: 2026-07-12
 
@@ -8,15 +8,15 @@ Snapshot date: 2026-07-12
 
 DevLoopFeed is being migrated feature by feature, so architecture and delivery status are separate concerns.
 
-- `Implemented`: present and wired in DevLoopFeed v2.
-- `Partial`: a useful subset exists in v2, but the complete v1 flow is not migrated yet.
-- `Planned`: accepted as part of the product architecture, but not implemented in v2 yet.
+- `Implemented`: present and wired in DevLoopFeed.
+- `Partial`: a useful subset exists in the current implementation, but the complete v1 flow is not migrated yet.
+- `Planned`: accepted as part of the product architecture, but not implemented in the current implementation yet.
 - `Deferred`: intentionally postponed until its dependencies or product rules are ready.
 
 The sources used for this baseline are:
 
-1. The live v2 code, which is the implementation source of truth.
-2. The v2 development log in `docs.md`, which explains when and why work was added.
+1. The live code, which is the implementation source of truth.
+2. The development log in `docs.md`, which explains when and why work was added.
 3. The v1 root, backend, and frontend documentation, which define existing product behavior that must be preserved during migration.
 4. `Collabify-Architecture-Guide.md`, used only as inspiration for documentation discipline, module boundaries, and public APIs.
 
@@ -45,7 +45,7 @@ Discover developer or post
   -> solve and track problems together
 ```
 
-This journey is more important than copying v1 source code. V2 may improve implementation quality, but it must not silently change user-visible flow or business rules.
+This journey is more important than copying v1 source code. The current implementation may improve implementation quality, but it must not silently change user-visible flow or business rules.
 
 ## 3. High-Level System Map
 
@@ -82,7 +82,7 @@ The deployment unit is currently a modular monolith, not a microservice system. 
 
 ### 4.1 Preserve product behavior, improve implementation
 
-V1 is the baseline for product flow and exact UI where parity has been requested. V2 replaces weak coupling, duplicated logic, and unsafe configuration with typed modules and explicit boundaries.
+V1 is the baseline for product flow and exact UI where parity has been requested. The current implementation replaces weak coupling, duplicated logic, and unsafe configuration with typed modules and explicit boundaries.
 
 ### 4.2 Organize around business capabilities
 
@@ -117,7 +117,7 @@ The frontend may hide unavailable actions for good UX, but authorization, owners
 
 ### 4.6 Prefer explicit status over misleading completeness
 
-Planned Socket.IO, BullMQ, Redis, Yjs, Judge0, tests, Docker, and OpenAPI work must be documented as planned until it is present and verified in v2.
+Planned Socket.IO, BullMQ, Redis, Yjs, Judge0, tests, Docker, and OpenAPI work must be documented as planned until it is present and verified in the current implementation.
 
 ## 5. Repository Map
 
@@ -142,7 +142,7 @@ The root scripts are the normal entry point for local checks and builds. API and
 
 ## 6. Backend Architecture
 
-### 6.1 Verified v2 stack
+### 6.1 Verified stack
 
 - Node.js and Express 5
 - TypeScript
@@ -256,7 +256,7 @@ Small modules may omit unnecessary files. The layer pattern is a responsibility 
 
 ### 6.5 Backend module status
 
-| Domain | V2 status | Ownership |
+| Domain | Status | Ownership |
 | --- | --- | --- |
 | Health | Implemented | Runtime health endpoint |
 | Auth and sessions | Implemented | OTP, password/Google login, refresh rotation, current/all-session revocation |
@@ -279,7 +279,7 @@ Small modules may omit unnecessary files. The layer pattern is a responsibility 
 
 External providers must be behind adapters owned by `config`, `infrastructure`, or a focused service. Business services should ask for an operation such as `uploadMedia`, `sendOtp`, or `executeCode`; provider-specific request shapes must not spread across modules.
 
-As infrastructure grows, v2 may add:
+As infrastructure grows, The current implementation may add:
 
 ```txt
 api/src/infrastructure/
@@ -298,7 +298,7 @@ This move is evolutionary. Existing working code should migrate only when an ada
 
 ## 7. Frontend Architecture
 
-### 7.1 Verified v2 stack
+### 7.1 Verified stack
 
 - React 19 and TypeScript
 - Vite
@@ -435,7 +435,7 @@ Components own:
 - Protected app pages use the shared sidebar shell.
 - Heavy pages are lazy-loaded at route level.
 - Feed, post card, dashboard, modals, navigation, and responsive behavior preserve exact v1 UX where parity has been requested.
-- V2 can improve accessibility, loading behavior, error handling, and component structure without inventing a different product flow.
+- The current implementation can improve accessibility, loading behavior, error handling, and component structure without inventing a different product flow.
 - Desktop, tablet, and mobile states are all part of feature completion.
 
 ## 8. Domain Rules And Invariants
@@ -523,7 +523,7 @@ Rules:
 
 ### 8.9 Collaborative rooms
 
-The accepted v1 behavior is planned for v2:
+The accepted v1 behavior is planned for the current implementation:
 
 - a collaboration request begins from conversation context;
 - accepting creates or reuses the shared room;
@@ -602,7 +602,7 @@ Authorized delete request
   -> reconciliation detects permanently failed cleanup
 ```
 
-V2 currently has direct cleanup behavior for migrated flows. BullMQ process separation and reconciliation remain planned before production-scale destructive operations.
+the current implementation currently has direct cleanup behavior for migrated flows. BullMQ process separation and reconciliation remain planned before production-scale destructive operations.
 
 ## 10. Data And Consistency Strategy
 
@@ -631,7 +631,7 @@ V2 currently has direct cleanup behavior for migrated flows. BullMQ process sepa
 
 ## 12. Realtime And Background Work
 
-Before realtime modules are migrated, v2 must define:
+Before realtime modules are migrated, current implementation must define:
 
 - authenticated Socket.IO handshake and reconnect behavior;
 - stable event names and payload schemas;
@@ -657,7 +657,7 @@ Current rules:
 - frontend request/response types must match actual API behavior;
 - breaking changes require an explicit decision and migration plan.
 
-OpenAPI now has a draft baseline in `contracts/openapi/devloopfeed.v2.yaml`. It is not complete endpoint coverage yet. It should document auth, cookies, schemas, pagination, errors, and rate-limit responses as modules are verified. GraphQL is not required merely because the reference architecture uses it.
+OpenAPI now has a draft baseline in `contracts/openapi/devloopfeed.yaml`. It is not complete endpoint coverage yet. It should document auth, cookies, schemas, pagination, errors, and rate-limit responses as modules are verified. GraphQL is not required merely because the reference architecture uses it.
 
 ## 14. Quality And Delivery Gates
 
@@ -762,3 +762,4 @@ For every meaningful feature or architecture change:
 ## 18. One-Line Mental Model
 
 DevLoopFeed is a TypeScript modular monolith where React feature flows call an Express REST API, domain services enforce product rules, repositories own MongoDB access, and realtime or background runtimes reuse those same rules through explicit infrastructure boundaries.
+

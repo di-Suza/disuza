@@ -2,7 +2,7 @@ openapi: 3.1.0
 info:
   title: DevLoopFeed API
   version: 0.2.0
-  summary: DevLoopFeed v2 REST API contract baseline
+  summary: DevLoopFeed REST API contract baseline
   description: >
     Draft contract for the TypeScript modular monolith. Endpoint coverage is
     added incrementally as modules are verified.

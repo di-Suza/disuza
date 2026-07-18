@@ -1,6 +1,6 @@
 # Cache Adapter
 
-Redis is active in v2 for distributed locks and job infrastructure.
+Redis is active for distributed locks and job infrastructure.
 
 Keep Redis clients, cache key builders, distributed locks, and future pub/sub connections here. Domain services should ask this boundary for product operations instead of using raw Redis clients directly.
 

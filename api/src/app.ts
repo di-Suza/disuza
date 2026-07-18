@@ -8,6 +8,7 @@ import { httpRouteRegistry } from './modules/index.js';
 import requestLogger from './shared/middleware/requestLogger.js';
 import errorHandler from './shared/middleware/errorHandler.js';
 import notFoundHandler from './shared/middleware/notFoundHandler.js';
+import { apiRateLimiter } from './shared/middleware/rateLimiter.js';
 
 class App {
   private readonly app: Express;
@@ -41,6 +42,7 @@ class App {
         credentials: true,
       }),
     );
+    this.app.use(apiRateLimiter);
     this.app.use(express.json({ limit: '2mb' }));
     this.app.use(express.urlencoded({ extended: true, limit: '2mb' }));
     this.app.use(cookieParser());

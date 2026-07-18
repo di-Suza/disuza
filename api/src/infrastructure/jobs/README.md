@@ -1,6 +1,6 @@
 # Jobs Adapter
 
-BullMQ workers are active in v2 for destructive cleanup parity with v1.
+BullMQ workers are active for destructive cleanup and background maintenance.
 
 Worker process types should live here or register through this boundary. HTTP requests should enqueue idempotent work instead of performing expensive destructive cleanup inline.
 

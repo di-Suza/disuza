@@ -1,6 +1,6 @@
 # DevLoopFeed
 
-DevLoopFeed v2 is a TypeScript-first rewrite with a modular Express API and React web app.
+DevLoopFeed is a TypeScript-first real-time social platform with a modular Express API and React web app.
 
 ## Documentation
 
@@ -9,6 +9,8 @@ DevLoopFeed v2 is a TypeScript-first rewrite with a modular Express API and Reac
 - [Debugging guide](./DEBUGGING-GUIDE.md)
 - [API contracts](./contracts/README.md)
 - [Testing strategy](./tests/README.md)
+- [Deployment guide](./DEPLOYMENT.md)
+- [Future plan](./FUTUREPLAN.md)
 - [Development journey](./docs.md)
 
 ## Structure
@@ -26,6 +28,7 @@ devloopfeed/
 ```bash
 npm run dev:api
 npm run dev:web
+npm test
 npm run check
 npm run verify
 ```

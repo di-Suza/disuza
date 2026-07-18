@@ -1,10 +1,10 @@
-# DevLoopFeed v2 Development Docs
+# DevLoopFeed Development Docs
 
-This document tracks how DevLoopFeed v2 is being built step by step. The goal is to keep the project history, architecture decisions, and reasoning clear from the beginning so future features do not become random patches.
+This document tracks how DevLoopFeed is being built step by step. The goal is to keep the project history, architecture decisions, and reasoning clear from the beginning so future features do not become random patches.
 
 ## Project Goal
 
-DevLoopFeed v2 is a clean TypeScript rewrite of the original DevLoopFeed project. The plan is to rebuild the same core product with better structure, stronger boundaries, safer configuration, and a workflow that looks professional on GitHub and on a resume.
+DevLoopFeed is a clean TypeScript rewrite of the original DevLoopFeed project. The plan is to rebuild the same core product with better structure, stronger boundaries, safer configuration, and a workflow that looks professional on GitHub and on a resume.
 
 ## Development Workflow
 
@@ -179,7 +179,7 @@ V1 behavior preserved:
 - logout all devices
 - `/me` authenticated user endpoint
 
-Important v2 improvement:
+Important current implementation improvement:
 
 Access token is no longer saved in cookies. Only the refresh token uses cookies. Session management now uses a richer `auth_sessions` model with token hash, device metadata, expiry, revocation time, and revocation reason.
 
@@ -222,7 +222,7 @@ Refresh failure: clear auth state and stay unauthenticated
 
 Why:
 
-This follows the v2 backend auth strategy. The frontend does not store access tokens in `localStorage` or JS-readable cookies. RTK Query owns API calls and retries, while components stay focused on UI and hooks own page logic.
+This follows the current implementation backend auth strategy. The frontend does not store access tokens in `localStorage` or JS-readable cookies. RTK Query owns API calls and retries, while components stay focused on UI and hooks own page logic.
 
 V1 behavior preserved:
 
@@ -236,9 +236,9 @@ V1 behavior preserved:
 - logout current device
 - logout all devices
 
-Important v2 improvement:
+Important current implementation improvement:
 
-The old cookie-based access-token assumption was replaced with explicit Bearer token handling because v2 backend returns access tokens in response bodies and stores only refresh tokens in cookies.
+The old cookie-based access-token assumption was replaced with explicit Bearer token handling because current implementation backend returns access tokens in response bodies and stores only refresh tokens in cookies.
 
 Verification used:
 
@@ -284,7 +284,7 @@ Why:
 
 User/profile APIs are the next layer after auth because most product features depend on the authenticated user, profile data, relationship state, and block rules. The module keeps the same v1 behavior shape but moves database work into repositories and business rules into services.
 
-Important v2 improvements:
+Important current implementation improvements:
 
 - follow/block data has dedicated repositories
 - block visibility rules are centralized
@@ -345,7 +345,7 @@ V1 behavior preserved:
 - block/unblock
 - followers/following list access
 
-Important v2 improvements:
+Important current implementation improvements:
 
 - endpoint typing is centralized
 - route-level profile code is lazy-loaded
@@ -388,7 +388,7 @@ Why:
 
 Media upload/delete is a shared concern. Profile pictures, post images, saved collection covers, and future cleanup queues should not call the storage SDK directly from feature services. The media service becomes the single boundary around ImageKit, so future modules can reuse it safely.
 
-Important v2 improvements:
+Important current implementation improvements:
 
 - deprecated `imagekit` package was avoided in favor of `@imagekit/nodejs`
 - storage config is validated in production but lazy-loaded for local development
@@ -424,7 +424,7 @@ Media upgrade:
 
 ```txt
 V1: images only
-V2: ordered media carousel with images + videos
+current implementation: ordered media carousel with images + videos
 ```
 
 New post media shape:
@@ -453,7 +453,7 @@ Why:
 
 Posts are the core product surface after auth, users, and media storage. Adding videos now avoids locking the schema into image-only assumptions. Storing an ordered mixed-media array makes the frontend carousel simple and future-friendly.
 
-Important v2 improvements:
+Important current implementation improvements:
 
 - storage is centralized through the media service
 - videos use separate upload size limits
@@ -501,14 +501,14 @@ Media upgrade from v1:
 
 ```txt
 V1 frontend: image-only post assumptions
-V2 frontend: ordered carousel with images + videos
+current implementation frontend: ordered carousel with images + videos
 ```
 
 Why:
 
 The backend posts module is now mixed-media and order-aware, so the frontend needed a proper composer instead of an image-only UI. Keeping the composer logic in a custom hook keeps upload validation, order building, project-link validation, and API submission away from display components.
 
-Important v2 improvements:
+Important current implementation improvements:
 
 - API calls use RTK Query instead of ad hoc request helpers
 - post forms use `FormData` while keeping TypeScript models for response data
@@ -584,7 +584,7 @@ Rules and guards:
 
 Why:
 
-Comments are the next engagement layer after posts. Keeping the same v1 endpoint and response shape makes frontend migration easier, while the v2 implementation separates persistence, business rules, HTTP handling, and validation into clear module boundaries.
+Comments are the next engagement layer after posts. Keeping the same v1 endpoint and response shape makes frontend migration easier, while the current implementation implementation separates persistence, business rules, HTTP handling, and validation into clear module boundaries.
 
 Deferred until supporting modules exist:
 
@@ -641,7 +641,7 @@ Why:
 
 The backend comments module keeps the v1 API contract, so the frontend can preserve the same user-facing behavior while moving the implementation into typed RTK Query endpoints and focused React hooks/components.
 
-Important v2 improvements:
+Important current implementation improvements:
 
 - comments API typing is centralized
 - modal logic lives in `useCommentModal`
@@ -1057,7 +1057,7 @@ Behavior:
 
 Why:
 
-Notifications connect social actions across the app, so the backend module centralizes notification persistence and cleanup instead of scattering notification queries through likes and users. Realtime socket emit is intentionally deferred until the socket layer is rebuilt in v2.
+Notifications connect social actions across the app, so the backend module centralizes notification persistence and cleanup instead of scattering notification queries through likes and users. Realtime socket emit is intentionally deferred until the socket layer is rebuilt in current implementation.
 
 Deferred until later modules:
 
@@ -1121,7 +1121,7 @@ Deferred until later modules:
 - direct post-detail navigation after a post detail route exists
 - comment/reply notification UI deep links after comments UI is fully connected
 - collab request and accepted actions after collab modules exist
-- realtime socket updates after the v2 socket layer is rebuilt
+- realtime socket updates after the current implementation socket layer is rebuilt
 - notification preferences
 
 Verification used:
@@ -1314,7 +1314,7 @@ Behavior:
 
 Why:
 
-Issue reporting is a support flow rather than content moderation, so it lives in a dedicated issues feature instead of the reports feature. The dashboard exposes the action because it is account/app-level feedback, matching the v1 report-a-problem entry point while using v2 modal and hook patterns.
+Issue reporting is a support flow rather than content moderation, so it lives in a dedicated issues feature instead of the reports feature. The dashboard exposes the action because it is account/app-level feedback, matching the v1 report-a-problem entry point while using current implementation modal and hook patterns.
 
 Deferred until later modules:
 
@@ -1393,7 +1393,7 @@ Added:
 Frontend flow:
 
 ```txt
-Dashboard action -> dashboard modal/component -> RTK Query hook -> existing v2 API endpoint
+Dashboard action -> dashboard modal/component -> RTK Query hook -> existing current implementation API endpoint
 Portfolio editor -> useDashboardPage -> updateProfessionalInfo -> /api/user/updateProfessionalInfo
 ```
 
@@ -1410,7 +1410,7 @@ Behavior:
 
 Why:
 
-The dashboard is the user's account control surface, so it needs more than profile edit fields. This step brings the useful v1 dashboard/More Settings flows into v2 while keeping network state in RTK Query, page logic in hooks, and modal UI in focused components.
+The dashboard is the user's account control surface, so it needs more than profile edit fields. This step brings the useful v1 dashboard/More Settings flows into current implementation while keeping network state in RTK Query, page logic in hooks, and modal UI in focused components.
 
 Deferred until later modules:
 
@@ -1460,7 +1460,7 @@ Delete account -> password verify for password users OR OTP for Google users -> 
 
 Why:
 
-This branch exists specifically to close missed v1 behavior gaps without changing the product flow. The implementation keeps the v2 architecture standards already chosen for the rebuild: TypeScript modules, repositories/services/controllers on the backend, RTK Query on the frontend, focused hooks/components, and clean route-level wiring.
+This branch exists specifically to close missed v1 behavior gaps without changing the product flow. The implementation keeps the current implementation architecture standards already chosen for the rebuild: TypeScript modules, repositories/services/controllers on the backend, RTK Query on the frontend, focused hooks/components, and clean route-level wiring.
 
 Verification used:
 
@@ -1496,7 +1496,7 @@ Post card options -> edit/delete/report modal flow
 
 Why:
 
-The v2 frontend had the right feature wiring, but the dashboard and feed had too many actions visible in a single surface and no longer matched the v1 app experience. This step brings the familiar v1 layout back while keeping the v2 implementation style: TypeScript, feature folders, RTK Query, shared UI primitives, and local page/component state.
+The current implementation frontend had the right feature wiring, but the dashboard and feed had too many actions visible in a single surface and no longer matched the v1 app experience. This step brings the familiar v1 layout back while keeping the current implementation implementation style: TypeScript, feature folders, RTK Query, shared UI primitives, and local page/component state.
 
 Deferred until later modules:
 
@@ -1518,7 +1518,7 @@ Tightened the frontend parity pass on `feature/web-v1-ui-parity` after comparing
 Corrected in this step:
 
 - removed the extra feed navbar action so the home feed navbar matches v1: logo plus All/Following dropdown only
-- copied the v1 logo asset into the v2 web assets and wired the feed navbar to use it
+- copied the v1 logo asset into the current implementation web assets and wired the feed navbar to use it
 - rebuilt the feed page spacing, fixed auto-hide navbar, centered 640px post column, inline recommendations, and desktop rail to match v1
 - rebuilt the post card structure around v1 dimensions, radii, media height, carousel controls, action labels/counts, project links, caption ordering, and options menu
 - removed the permanent saved-collections text under post cards and kept save management behind the v1-style transient save popover
@@ -1537,7 +1537,7 @@ Dashboard posts -> gallery preview grid -> post detail route
 
 Why:
 
-The first UI parity pass was close, but it still had v2 design decisions mixed in. This correction treats v1 as the visual source of truth and maps its Tailwind/CSS values into the v2 TypeScript component structure without changing the product flow.
+The first UI parity pass was close, but it still had current implementation design decisions mixed in. This correction treats v1 as the visual source of truth and maps its Tailwind/CSS values into the current implementation TypeScript component structure without changing the product flow.
 
 Verification used:
 
@@ -1567,7 +1567,7 @@ Preserved implementation boundaries:
 
 ```txt
 Dashboard UI -> existing useDashboardPage handlers -> existing RTK Query mutations
-Dashboard modals -> existing RTK Query hooks -> existing v2 API endpoints
+Dashboard modals -> existing RTK Query hooks -> existing current implementation API endpoints
 ```
 
 No backend endpoint, repository, service, request payload, or authentication behavior was changed during this UI parity pass.
@@ -1590,7 +1590,7 @@ Added:
 - `DevLoopFeed-Architecture-Guide.md` as the high-level system and product architecture source of truth
 - `ARCHITECTURE-DECISIONS.md` as a durable decision register with separate decision and delivery states
 - README links so architecture, decisions, and the chronological development journey are discoverable from the repository entry point
-- verified current maps for the v2 API and web applications
+- verified current maps for the current implementation API and web applications
 - domain rules inherited from v1 for auth, social relationships, posts, media, comments, contributions, saves, reports, notifications, messaging, blocking, and collaborative rooms
 - current request, auth refresh, post, comment, feedback, and cleanup flows
 - explicit infrastructure boundaries for future Redis, Socket.IO, BullMQ, Yjs, Judge0, TURN, OpenAPI, testing, CI, and Docker work
@@ -1601,19 +1601,19 @@ Documentation sources:
 - v1 backend `devloop-feed-api/docs.md`
 - v1 frontend `devloop-feed-web/docs.md`
 - v1 `futureFixes.md` risk backlog
-- live v2 code and this development journal
+- live current implementation code and this development journal
 - the Collabify architecture guide for documentation and boundary inspiration only
 
 Important status rule:
 
-- `Implemented`: present and verified in v2.
-- `Partial`: a usable subset exists in v2.
+- `Implemented`: present and verified in current implementation.
+- `Partial`: a usable subset exists in current implementation.
 - `Planned`: accepted architecture, not delivered yet.
 - `Deferred`: intentionally waiting for dependencies or product decisions.
 
 Why:
 
-V2 already had good feature-level implementation history, but it did not yet have one system-level document explaining product boundaries, module ownership, cross-domain rules, current delivery status, and accepted future direction. This foundation prevents planned v1 capabilities from being mistaken for completed v2 work and gives future branches a stable place to record architecture changes.
+current implementation already had good feature-level implementation history, but it did not yet have one system-level document explaining product boundaries, module ownership, cross-domain rules, current delivery status, and accepted future direction. This foundation prevents planned v1 capabilities from being mistaken for completed current implementation work and gives future branches a stable place to record architecture changes.
 
 No runtime behavior or product flow changed in this step.
 
@@ -1623,7 +1623,7 @@ Verification used:
 git diff --check
 ```
 
-The documented repository maps, module statuses, product rules, and source-of-truth hierarchy were also cross-checked against the live v2 code and the v1 product documentation.
+The documented repository maps, module statuses, product rules, and source-of-truth hierarchy were also cross-checked against the live current implementation code and the v1 product documentation.
 
 ## Step 31: Architecture Foundation Integrity And Debugging Playbook
 
@@ -1682,7 +1682,7 @@ Deferred intentionally:
 
 Why:
 
-The app had working v2 modules, but the product-level folder boundaries were still mostly documentation. This step makes the accepted architecture visible in the repo without changing v1 product flow: modules keep their current behavior, routes remain REST-first, the web UI still renders through existing feature pages, and future migrations now have clear places for public APIs, contracts, adapters, tests, and large page composition.
+The app had working current implementation modules, but the product-level folder boundaries were still mostly documentation. This step makes the accepted architecture visible in the repo without changing v1 product flow: modules keep their current behavior, routes remain REST-first, the web UI still renders through existing feature pages, and future migrations now have clear places for public APIs, contracts, adapters, tests, and large page composition.
 
 Verification used:
 
@@ -1721,7 +1721,7 @@ Deferred:
 
 Why:
 
-The existing v2 chat module already covered most v1 HTTP behavior, but message reports and a stricter conversation membership guard were needed before the full v1-style messages UI could safely rely on these APIs.
+The existing current implementation chat module already covered most v1 HTTP behavior, but message reports and a stricter conversation membership guard were needed before the full v1-style messages UI could safely rely on these APIs.
 
 Verification used:
 
@@ -1748,7 +1748,7 @@ Completed:
 
 Preserved:
 
-- message data still comes from the v2 HTTP chat module
+- message data still comes from the current implementation HTTP chat module
 - message reports use the generic reports module with `onModel: "Message"`
 - blocked and deleted-user conversations remain visible but unavailable for new messages
 - chat route state can open a conversation/user from notifications, search, profile, or future entry points
@@ -1761,7 +1761,7 @@ Deferred:
 
 Why:
 
-Messaging is a core v1 flow and should not remain as a placeholder while the rest of the product modules migrate. This step keeps the UI and interaction model aligned with v1 while moving the implementation to typed hooks, RTK Query cache boundaries, feature-local helpers, and the current v2 route/store structure.
+Messaging is a core v1 flow and should not remain as a placeholder while the rest of the product modules migrate. This step keeps the UI and interaction model aligned with v1 while moving the implementation to typed hooks, RTK Query cache boundaries, feature-local helpers, and the current current implementation route/store structure.
 
 Verification used:
 
@@ -1854,7 +1854,7 @@ Web completed:
 Preserved:
 
 - existing comments, feedback, report, save collection, edit, and delete flows
-- v2 TypeScript module boundaries, RTK Query API slices, and feature-local hooks
+- current implementation TypeScript module boundaries, RTK Query API slices, and feature-local hooks
 - existing media carousel ordering for image/video posts
 - existing project post live/GitHub link rules, now alongside optional extra links
 
@@ -1882,23 +1882,23 @@ Fixed:
 - warmed authenticated conversation and notification caches from the protected layout so sidebar badges stay available outside those pages
 - split sidebar unread counts so Messages uses unread conversations and Notifications keeps unread notifications
 - restored dashboard Rooms from a placeholder to real room data with personal-room entry and retry/loading/empty states
-- reshaped the dashboard Add Post/Edit Post modal to the v1 modal flow while preserving v2 ordered image/video media support
+- reshaped the dashboard Add Post/Edit Post modal to the v1 modal flow while preserving current implementation ordered image/video media support
 - fixed dashboard/profile heatmap layout so the six-month grid uses its full row without the narrow profile scrollbar issue
-- restored the landing page to the v1 product-section structure using v2 CSS instead of Tailwind classes
+- restored the landing page to the v1 product-section structure using current implementation CSS instead of Tailwind classes
 - tightened public profile parity by adding Posts to stats, hiding empty sections, restoring experience/education sections, and showing post/project sections only when content exists
 - added notification action buttons for accepting collaboration requests and entering accepted rooms
 
 Preserved:
 
-- v2 typed RTK Query and feature-based folder boundaries
+- current implementation typed RTK Query and feature-based folder boundaries
 - existing REST request/response contracts
 - existing auth/session flow and protected layout behavior
-- existing post composer validation and the v2 media ordering upgrade
+- existing post composer validation and the current implementation media ordering upgrade
 - existing collab room route and HTTP room endpoints
 
 Why:
 
-The previous migration branches had the right core modules, but several visible surfaces still felt like generic v2 placeholders instead of the v1 product flow. This pass brings the dashboard, landing, profile, notifications, realtime cache behavior, unread badges, and composer modal closer to v1 while keeping the newer TypeScript, RTK Query, and module boundaries.
+The previous migration branches had the right core modules, but several visible surfaces still felt like generic current implementation placeholders instead of the v1 product flow. This pass brings the dashboard, landing, profile, notifications, realtime cache behavior, unread badges, and composer modal closer to v1 while keeping the newer TypeScript, RTK Query, and module boundaries.
 
 Verification used:
 
@@ -1922,7 +1922,7 @@ Fixed:
 - queued conversation cleanup when both participants hide a conversation or the other participant is already deleted
 - restored Redis-backed room-problem run locks so code execution is safe across multiple API processes
 - restored notification delete fan-out for bulk content cleanup so clients remove stale notification rows live
-- restored v1 problem seed data under the v2 scripts boundary
+- restored v1 problem seed data under the current implementation scripts boundary
 - restored v1 message notification observer, unread title manager, notification audio, and call ringtone behavior
 - restored v1 compact search post cards instead of full feed cards inside Search
 - restored the post detail back-button flow and richer saved-post tooltip presentation
@@ -1930,14 +1930,14 @@ Fixed:
 
 Preserved:
 
-- v2 TypeScript feature/module folder structure
+- current implementation TypeScript feature/module folder structure
 - RTK Query cache boundaries and existing REST contracts
 - existing socket auth/session lifecycle
-- v2 ordered mixed image/video media support
+- current implementation ordered mixed image/video media support
 
 Why:
 
-The app modules were mostly migrated, but several v1 operational behaviors and small UI states were still missing. This pass focuses on exact product feel and lifecycle parity without changing the agreed v2 architecture boundaries.
+The app modules were mostly migrated, but several v1 operational behaviors and small UI states were still missing. This pass focuses on exact product feel and lifecycle parity without changing the agreed current implementation architecture boundaries.
 
 Verification used:
 
@@ -1984,3 +1984,4 @@ npm run build:api
 npm run build:web
 git diff --check
 ```
+
