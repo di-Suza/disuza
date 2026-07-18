@@ -3325,6 +3325,39 @@
   box-shadow: 0 10px 24px rgba(14, 165, 233, 0.2);
 }
 
+:root[data-theme='light'] .rich-post-card__attachment-switcher {
+  border-color: var(--border-secondary);
+  background: var(--surface-muted);
+}
+
+:root[data-theme='light'] .rich-post-card__attachment-switcher button {
+  color: var(--text-soft);
+}
+
+:root[data-theme='light'] .rich-post-card__attachment-switcher button:hover {
+  color: var(--text-primary);
+}
+
+:root[data-theme='light'] .rich-post-card__attachment-switcher button.is-active {
+  color: white;
+}
+
+@media (max-width: 700px) {
+  .rich-post-card__attachment-switcher {
+    width: min(160px, 52vw);
+    margin-top: 10px;
+  }
+
+  .rich-post-card__attachment-switcher button {
+    min-height: 28px;
+    overflow: hidden;
+    padding: 0 8px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 11px;
+  }
+}
+
 .rich-post-card__inline-links {
   display: grid;
   gap: 8px;

@@ -2065,34 +2065,55 @@
   }
 
   .more-v1-shell {
-    grid-template-columns: 44px minmax(0, 1fr);
+    grid-template-columns: 40px minmax(0, 1fr);
     align-items: start;
-    gap: 8px;
+    gap: 10px;
   }
 
   .more-v1-menu {
     position: sticky;
     top: 8px;
-    display: grid;
-    width: 44px;
-    grid-auto-rows: 36px;
-    gap: 6px;
+    display: flex;
+    width: 40px;
+    align-self: start;
+    flex-direction: column;
+    gap: 8px;
     overflow: visible;
-    border-radius: 8px;
-    padding: 4px;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    padding: 0;
+    box-shadow: none;
   }
 
   .more-v1-menu__item {
-    width: 36px;
-    min-width: 36px;
-    min-height: 36px;
+    width: 40px;
+    min-width: 40px;
+    min-height: 40px;
     justify-content: center;
+    border: 1px solid var(--border-secondary);
+    border-radius: 8px;
+    background: var(--surface);
     padding: 0;
+    box-shadow: var(--shadow-media);
+  }
+
+  .more-v1-menu__item > span {
+    display: none !important;
   }
 
   .more-v1-menu__item svg {
+    display: block;
     width: 18px;
     height: 18px;
+    flex: 0 0 auto;
+    color: currentColor;
+  }
+
+  .more-v1-menu__item.is-active {
+    border-color: color-mix(in srgb, var(--accent) 38%, var(--border-secondary));
+    background: color-mix(in srgb, var(--accent) 12%, var(--surface));
+    color: var(--accent);
   }
 
   .more-v1-panel {

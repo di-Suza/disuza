@@ -405,6 +405,37 @@
   box-shadow: var(--shadow-media);
 }
 
+@media (max-width: 767px) {
+  .messages-v1-message__inner {
+    max-width: min(90%, 448px);
+    gap: 4px;
+  }
+
+  .messages-v1-message__actions {
+    margin-top: 2px;
+  }
+
+  .messages-v1-icon-button {
+    width: 22px;
+    height: 22px;
+    border-color: transparent;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  :root[data-theme='light'] .messages-v1-icon-button {
+    border-color: transparent;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .messages-v1-icon-button:hover,
+  :root[data-theme='light'] .messages-v1-icon-button:hover {
+    border-color: transparent;
+    background: transparent;
+  }
+}
+
 .messages-v1-delivery-status {
   display: inline-flex;
   align-items: center;
