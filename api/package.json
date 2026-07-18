@@ -10,7 +10,7 @@
     "start": "node dist/server.js",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "seed:problems": "tsx src/scripts/seedProblems.js",
-    "test": "npm run typecheck && tsc -p tsconfig.test.json && node --test --experimental-test-isolation=none dist-tests/tests/user.service.test.js dist-tests/tests/repost.service.test.js"
+    "test": "npm run typecheck && tsc -p tsconfig.test.json && node --test --experimental-test-isolation=none dist-tests/tests/*.test.js"
   },
   "dependencies": {
     "@imagekit/nodejs": "^7.9.1",
