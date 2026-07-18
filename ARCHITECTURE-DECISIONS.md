@@ -1,8 +1,8 @@
-# DevLoopFeed Architecture Decision Register
+# Disuza Architecture Decision Register
 
-This register records durable product and engineering decisions for DevLoopFeed. It starts with the behavior proven in v1 and the foundation already established in the current implementation.
+This register records durable product and engineering decisions for Disuza. It starts with the behavior proven in v1 and the foundation already established in the current implementation.
 
-The full system map lives in `DevLoopFeed-Architecture-Guide.md`.
+The full system map lives in `Disuza-Architecture-Guide.md`.
 
 ## Decision States
 
@@ -453,7 +453,7 @@ Decision:
 - Likely future extraction candidates are realtime collaboration, code execution, search, and workers.
 - Extraction requires a contract, data ownership plan, observability, and failure strategy.
 
-Consequence: DevLoopFeed can look and behave like a product without premature microservice complexity.
+Consequence: Disuza can look and behave like a product without premature microservice complexity.
 
 ### DLF-035: Admin moderation later
 
@@ -481,7 +481,7 @@ When a durable choice changes:
 2. Record context, decision, consequences, and delivery status.
 3. Mark the old decision `Superseded` rather than deleting history.
 4. Link the pull request or commit when available.
-5. Update `DevLoopFeed-Architecture-Guide.md` and `docs.md` if system flow changed.
+5. Update `Disuza-Architecture-Guide.md` and `docs.md` if system flow changed.
 
 Use this template for a larger future ADR:
 

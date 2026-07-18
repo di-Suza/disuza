@@ -1,6 +1,6 @@
-# DevLoopFeed Debugging Guide
+# Disuza Debugging Guide
 
-This guide is the practical troubleshooting baseline for DevLoopFeed. Use it with `DevLoopFeed-Architecture-Guide.md`, which defines ownership and system flow, and `ARCHITECTURE-DECISIONS.md`, which explains durable technical choices.
+This guide is the practical troubleshooting baseline for Disuza. Use it with `Disuza-Architecture-Guide.md`, which defines ownership and system flow, and `ARCHITECTURE-DECISIONS.md`, which explains durable technical choices.
 
 The guide describes the current TypeScript API and web application. Sections for realtime, workers, rooms, and code execution are explicitly marked as planned and must not be treated as implemented behavior.
 

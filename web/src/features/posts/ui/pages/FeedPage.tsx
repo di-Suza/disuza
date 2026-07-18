@@ -56,7 +56,7 @@ const UserRecommendations = ({ recommendations, variant = 'rail' }: { recommenda
           return (
             <Link key={item._id} to={`/profile/${item._id}`} className="recommendation-row">
               <span>{avatarUrl ? <img src={avatarUrl} alt="" /> : <UserRound size={18} aria-hidden="true" />}</span>
-              <span><strong>{item.userName}</strong><small>{item.headline || 'DevLoopFeed member'}</small></span>
+              <span><strong>{item.userName}</strong><small>{item.headline || 'Disuza member'}</small></span>
             </Link>
           );
         })}

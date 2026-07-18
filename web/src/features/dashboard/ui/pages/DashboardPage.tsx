@@ -44,7 +44,7 @@ type DashboardTab = 'heatmap' | 'posts' | 'portfolio' | 'rooms' | 'more';
 type MoreSection = 'display' | 'activities' | 'collections' | 'support' | 'privacy';
 type Theme = 'dark' | 'light';
 
-const THEME_STORAGE_KEY = 'devloop-theme';
+const THEME_STORAGE_KEY = 'disuza-theme';
 
 const ForgotPasswordModal = lazy(() => import('@/features/auth/ui/components/ForgotPasswordModal/ForgotPasswordModal'));
 const ReportAProblemModal = lazy(() => import('@/features/issues/ui/components/ReportAProblemModal'));
@@ -178,7 +178,7 @@ const DashboardPage = () => {
                 <span className="dashboard-v1-user__copy">
                   <small>Your Dashboard</small>
                   <span className="dashboard-v1-user__name-row">
-                    <h1>{user?.userName || 'DevLoopFeed user'}</h1>
+                    <h1>{user?.userName || 'Disuza user'}</h1>
                     <button type="button" className="dashboard-v1-edit-profile-button" onClick={() => setEditProfileOpen(true)} aria-label="Edit profile">
                       <UserPen size={17} aria-hidden="true" />
                     </button>
@@ -291,7 +291,7 @@ const DashboardPage = () => {
                 <section className="more-v1-panel">
                   {activeMoreSection === 'display' && (
                     <div className="more-v1-section">
-                      <div><h2>Display</h2><p>Customize how DevLoop looks on your device</p></div>
+                      <div><h2>Display</h2><p>Customize how Disuza looks on your device</p></div>
                       <button type="button" onClick={handleThemeToggle} className="settings-row">
                         <span className="settings-row__main"><span className="settings-row__icon">{isDarkMode ? <Moon size={20} /> : <Sun size={20} />}</span><span><strong>{isDarkMode ? 'Dark Mode' : 'Light Mode'}</strong><small>{isDarkMode ? 'Easy on the eyes in low light' : 'Bright and clear interface'}</small></span></span>
                         <span className={isDarkMode ? 'settings-toggle is-active' : 'settings-toggle'}><i /></span>
@@ -301,7 +301,7 @@ const DashboardPage = () => {
 
                   {activeMoreSection === 'activities' && (
                     <div className="more-v1-section">
-                      <div><h2>Activities History</h2><p>View your activity on DevLoop</p></div>
+                      <div><h2>Activities History</h2><p>View your activity on Disuza</p></div>
                       <div className="activity-card-grid">
                         <ActivityCard icon={Heart} title="Likes" description="Posts you've liked" onClick={() => setActivityModal('likes')} tone="danger" />
                         <ActivityCard icon={MessageCircle} title="Comments" description="Your comment history" onClick={() => setActivityModal('comments')} />

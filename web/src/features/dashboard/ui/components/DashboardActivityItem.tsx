@@ -95,7 +95,7 @@ const DashboardActivityItem = ({ activity, isLoading, onAction, onNavigate, type
     const content = (
       <>
         <i>{avatar ? <img src={avatar} alt="" /> : <UserRound size={20} aria-hidden="true" />}</i>
-        <span><strong>{text(following?.userName) || 'Developer'}</strong><small>{text(following?.headline) || 'DevLoopFeed member'}</small></span>
+        <span><strong>{text(following?.userName) || 'Developer'}</strong><small>{text(following?.headline) || 'Disuza member'}</small></span>
       </>
     );
     return (

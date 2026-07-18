@@ -86,7 +86,7 @@ const userSchema = new mongoose.Schema<User, UserModel>(
     profilePicture: {
       url: {
         type: String,
-        default: 'https://ik.imagekit.io/disuza/DevloopFeed/ProfilePictures/defaultpp.jpg',
+        default: 'https://ik.imagekit.io/disuza/Disuza/ProfilePictures/defaultpp.jpg',
       },
       fileId: {
         type: String,

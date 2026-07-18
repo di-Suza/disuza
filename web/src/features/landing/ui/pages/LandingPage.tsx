@@ -56,8 +56,8 @@ const LandingPage = () => (
     <nav className="landing-v1-nav">
       <div className="landing-v1-nav__inner">
         <Link to="/" className="landing-v1-brand">
-          <img src={logo} alt="DevLoopFeed" />
-          <span>DevLoopFeed</span>
+          <img src={logo} alt="Disuza" />
+          <span>Disuza</span>
         </Link>
 
         <div className="landing-v1-nav__links">
@@ -77,7 +77,7 @@ const LandingPage = () => (
           <SectionLabel>Developer workspace</SectionLabel>
           <h1>Social feed, portfolio, and pair coding in one loop.</h1>
           <p>
-            DevLoopFeed helps developers share progress, collect feedback, discover peers, and jump into
+            Disuza helps developers share progress, collect feedback, discover peers, and jump into
             collaborative coding rooms from the same product experience.
           </p>
           <div className="landing-v1-actions">
@@ -89,7 +89,7 @@ const LandingPage = () => (
           </div>
         </div>
 
-        <div className="landing-v1-code-card" aria-label="DevLoopFeed workflow preview">
+        <div className="landing-v1-code-card" aria-label="Disuza workflow preview">
           <div className="landing-v1-code-card__inner">
             <div className="landing-v1-code-card__dots">
               <span />
@@ -185,8 +185,8 @@ feed.post({
     <footer className="landing-v1-footer">
       <div className="landing-v1-container">
         <span>
-          <img src={logo} alt="DevLoopFeed" />
-          <strong>DevLoopFeed</strong>
+          <img src={logo} alt="Disuza" />
+          <strong>Disuza</strong>
         </span>
         <p>Built for focused developer growth.</p>
       </div>

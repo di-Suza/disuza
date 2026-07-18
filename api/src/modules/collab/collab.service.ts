@@ -7,7 +7,7 @@ import collabRepository, { type CollabRepository, type ConversationWithOtherUser
 import collabRoomAccessService, { type CollabRoomAccessService } from './collabRoomAccess.service.js';
 
 const DELETED_USER_PROFILE = {
-  url: 'https://ik.imagekit.io/disuza/DevloopFeed/ProfilePictures/defaultpp.jpg',
+  url: 'https://ik.imagekit.io/disuza/Disuza/ProfilePictures/defaultpp.jpg',
   fileId: '0',
 };
 

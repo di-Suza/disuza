@@ -113,7 +113,7 @@ const Sidebar = () => {
         aria-expanded={isFeedMenuOpen}
         aria-haspopup="menu"
       >
-        <img src={logo} alt="DevLoopFeed" />
+        <img src={logo} alt="Disuza" />
         <ChevronDown className={isFeedMenuOpen ? 'is-open' : undefined} size={16} aria-hidden="true" />
       </button>
 

@@ -85,7 +85,7 @@ const DashboardUserListModal = ({ isOpen, onClose, type, userId }: DashboardUser
               <span className="user-row__avatar">
                 {getAvatarUrl(profile.profilePicture?.url) ? <img src={profile.profilePicture?.url} alt="" /> : <UserRound size={18} aria-hidden="true" />}
               </span>
-              <span><strong>{profile.userName}</strong><small>{profile.headline || 'DevLoopFeed member'}</small></span>
+              <span><strong>{profile.userName}</strong><small>{profile.headline || 'Disuza member'}</small></span>
             </Link>
           ))}
 

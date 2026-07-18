@@ -12,7 +12,7 @@ import SocketLifecycle from './socket/SocketLifecycle';
 
 const AppProviders = () => (
   <ErrorBoundary
-    title="DevLoopFeed could not start."
+    title="Disuza could not start."
     description="Try again or refresh the app to restart the session."
   >
     <Provider store={store}>

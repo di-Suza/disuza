@@ -1,8 +1,8 @@
 {
-  "name": "devloopfeed",
+  "name": "disuza",
   "version": "0.1.0",
   "private": true,
-  "description": "DevLoopFeed full-stack TypeScript workspace.",
+  "description": "Disuza full-stack TypeScript workspace.",
   "type": "module",
   "scripts": {
     "dev:api": "npm --prefix api run dev",

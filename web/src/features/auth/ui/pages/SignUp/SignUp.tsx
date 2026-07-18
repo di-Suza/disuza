@@ -129,10 +129,10 @@ const SignUpPage = () => {
           </ErrorBoundary>
 
           <ErrorBoundary variant="section" title="Sign up overview could not be rendered." showReload={false}>
-            <section className="auth-story" aria-label="DevLoopFeed sign up overview">
+            <section className="auth-story" aria-label="Disuza sign up overview">
             <Link to="/" className="auth-brand">
               <span className="auth-brand__mark">DLF</span>
-              <span>DevLoopFeed</span>
+              <span>Disuza</span>
             </Link>
             <h1>Build a developer identity around real work.</h1>
             <p>

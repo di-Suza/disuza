@@ -4,7 +4,7 @@ import { useLocation } from 'react-router-dom';
 import useUnreadMessagesCount from '@/shared/hooks/useUnreadMessagesCount';
 import { useUnreadNotificationsCount } from '@/shared/hooks/useUnreadNotificationsCount';
 
-const APP_NAME = 'DevloopFeed';
+const APP_NAME = 'Disuza';
 
 const getBaseTitle = (pathname: string) => {
   if (pathname.startsWith('/home')) return 'Home';

@@ -31,7 +31,7 @@ import blockService, { type BlockService } from './block/block.service.js';
 import followRepository, { type FollowRepository } from './follow/follow.repository.js';
 
 const DEFAULT_PROFILE_PICTURE: ProfilePicture = {
-  url: 'https://ik.imagekit.io/disuza/DevloopFeed/ProfilePictures/defaultpp.jpg',
+  url: 'https://ik.imagekit.io/disuza/Disuza/ProfilePictures/defaultpp.jpg',
   fileId: '0',
 };
 

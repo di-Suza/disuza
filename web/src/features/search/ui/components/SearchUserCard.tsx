@@ -33,7 +33,7 @@ const SearchUserCard = ({ currentUserId, index, user }: SearchUserCardProps) => 
       </span>
       <span className="search-user-card__body">
         <strong>{user.userName}</strong>
-        <small>{user.headline || 'DevLoopFeed member'}</small>
+        <small>{user.headline || 'Disuza member'}</small>
       </span>
       <span className="search-user-card__score">
         <Award size={14} aria-hidden="true" />

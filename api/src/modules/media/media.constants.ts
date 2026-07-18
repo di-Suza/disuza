@@ -35,10 +35,10 @@ const ALLOWED_AUDIO_MIME_TYPES = Object.keys(AUDIO_MIME_EXTENSION_MAP);
 const ALLOWED_MEDIA_MIME_TYPES = Object.keys(MEDIA_MIME_EXTENSION_MAP);
 
 const MEDIA_FOLDERS = {
-  profilePictures: '/DevloopFeed/ProfilePictures',
-  postImages: (userId: string, postId: string) => `/DevloopFeed/Posts/${userId}/${postId}`,
-  postMedia: (userId: string, postId: string) => `/DevloopFeed/Posts/${userId}/${postId}`,
-  chatAttachments: (conversationId: string) => `/DevloopFeed/Chats/${conversationId}`,
+  profilePictures: '/Disuza/ProfilePictures',
+  postImages: (userId: string, postId: string) => `/Disuza/Posts/${userId}/${postId}`,
+  postMedia: (userId: string, postId: string) => `/Disuza/Posts/${userId}/${postId}`,
+  chatAttachments: (conversationId: string) => `/Disuza/Chats/${conversationId}`,
 } as const;
 
 const MEDIA_TAGS = {

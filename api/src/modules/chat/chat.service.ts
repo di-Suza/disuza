@@ -13,7 +13,7 @@ import blockService, { type BlockService } from '../users/block/block.service.js
 import chatRepository, { type ChatRepository, type SaveMessageInput } from './chat.repository.js';
 
 const deletedUserProfile = {
-  url: 'https://ik.imagekit.io/disuza/DevloopFeed/ProfilePictures/defaultpp.jpg',
+  url: 'https://ik.imagekit.io/disuza/Disuza/ProfilePictures/defaultpp.jpg',
   fileId: '0',
 };
 

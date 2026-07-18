@@ -55,7 +55,7 @@ const CommentReplies = ({ onDeleteComment, parentComment, userId }: CommentRepli
                 </span>
                 <div className="comment-item__body">
                   <div className="comment-item__meta">
-                    <strong>{reply.user?.userName || 'DevLoopFeed user'}</strong>
+                    <strong>{reply.user?.userName || 'Disuza user'}</strong>
                     <span>{formatCommentTime(reply.createdAt)}</span>
                   </div>
                   <p>{reply.comment}</p>

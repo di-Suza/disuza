@@ -30,7 +30,7 @@ const MessageItem = ({ message }: MessageItemProps) => {
   const feedbackMediaUrl = getFeedbackMediaUrl(message.feedbackDetails);
   const sharedPostMediaUrl = getSharedPostMediaUrl(message.sharedPostDetails);
   const isPostMessage = message.messageType === 'post' || Boolean(message.sharedPost || message.sharedPostDetails);
-  const sharedPostAuthor = message.sharedPostDetails?.user?.userName || 'DevLoopFeed';
+  const sharedPostAuthor = message.sharedPostDetails?.user?.userName || 'Disuza';
   const sharedPostCaption = message.sharedPostDetails?.caption || 'View shared post';
   const feedbackPostCaption = message.feedbackDetails?.caption?.trim() || '';
   const shouldShowText = Boolean(message.text?.trim()) && !(message.messageType === 'attachment' && message.text === 'Sent an attachment');

@@ -22,7 +22,7 @@ class HttpServer {
       startCleanupWorkers();
 
       this.server.listen(env.PORT, () => {
-        logger.info({ port: env.PORT }, 'DevLoopFeed API started');
+        logger.info({ port: env.PORT }, 'Disuza API started');
       });
     } catch (error) {
       logger.error({ error }, 'Failed to start API server');

@@ -8,7 +8,7 @@ describe('HealthService', () => {
     const health = new HealthService().getHealth();
 
     assert.equal(health.status, 'ok');
-    assert.equal(health.service, 'devloopfeed-api');
+    assert.equal(health.service, 'disuza-api');
     assert.ok(Date.parse(health.timestamp) > 0);
   });
 });

@@ -8,7 +8,7 @@ const NotFound = () => (
     <section className="state-panel">
       <p className="state-panel__eyebrow">404</p>
       <h1>Page not found</h1>
-      <p>This route is not available in DevLoopFeed.</p>
+      <p>This route is not available in Disuza.</p>
       <Link className="button button--primary state-panel__link" to="/">
         Go home
       </Link>

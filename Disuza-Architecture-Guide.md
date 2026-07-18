@@ -1,14 +1,14 @@
-# DevLoopFeed Architecture Guide
+# Disuza Architecture Guide
 
-This document is the architecture source of truth for DevLoopFeed. It records the product behavior inherited from DevLoopFeed v1, the structure already implemented in the current implementation, and the boundaries that future work must preserve.
+This document is the architecture source of truth for Disuza. It records the product behavior inherited from Disuza v1, the structure already implemented in the current implementation, and the boundaries that future work must preserve.
 
 Snapshot date: 2026-07-12
 
 ## 1. How To Read This Guide
 
-DevLoopFeed is being migrated feature by feature, so architecture and delivery status are separate concerns.
+Disuza is being migrated feature by feature, so architecture and delivery status are separate concerns.
 
-- `Implemented`: present and wired in DevLoopFeed.
+- `Implemented`: present and wired in Disuza.
 - `Partial`: a useful subset exists in the current implementation, but the complete v1 flow is not migrated yet.
 - `Planned`: accepted as part of the product architecture, but not implemented in the current implementation yet.
 - `Deferred`: intentionally postponed until its dependencies or product rules are ready.
@@ -20,11 +20,11 @@ The sources used for this baseline are:
 3. The v1 root, backend, and frontend documentation, which define existing product behavior that must be preserved during migration.
 4. `Collabify-Architecture-Guide.md`, used only as inspiration for documentation discipline, module boundaries, and public APIs.
 
-Collabify's exact stack is not a DevLoopFeed requirement. DevLoopFeed remains an Express REST API with MongoDB and a React client unless a future architecture decision explicitly changes that choice.
+Collabify's exact stack is not a Disuza requirement. Disuza remains an Express REST API with MongoDB and a React client unless a future architecture decision explicitly changes that choice.
 
 ## 2. Product Definition
 
-DevLoopFeed is a developer-focused social and collaboration product. It combines:
+Disuza is a developer-focused social and collaboration product. It combines:
 
 - a social feed for developer updates and projects;
 - profiles and portfolio information;
@@ -124,7 +124,7 @@ Planned Socket.IO, BullMQ, Redis, Yjs, Judge0, tests, Docker, and OpenAPI work m
 Current top-level structure:
 
 ```txt
-devloopfeed/
+disuza/
   api/                              Express and TypeScript backend
   web/                              React, Vite, and TypeScript frontend
   contracts/                        REST/OpenAPI contract baseline
@@ -132,7 +132,7 @@ devloopfeed/
   .github/workflows/ci.yml          Pull request typecheck and build gate
   README.md                         Quick project entry point
   docs.md                           Chronological development journal
-  DevLoopFeed-Architecture-Guide.md System architecture and product rules
+  Disuza-Architecture-Guide.md System architecture and product rules
   ARCHITECTURE-DECISIONS.md         Architecture decision register
   DEBUGGING-GUIDE.md                Operational troubleshooting playbook
   package.json                      Root development commands
@@ -647,7 +647,7 @@ The HTTP API, socket gateway, and workers may share domain services, but each is
 
 ## 13. API Contracts
 
-DevLoopFeed remains REST-first.
+Disuza remains REST-first.
 
 Current rules:
 
@@ -657,7 +657,7 @@ Current rules:
 - frontend request/response types must match actual API behavior;
 - breaking changes require an explicit decision and migration plan.
 
-OpenAPI now has a draft baseline in `contracts/openapi/devloopfeed.yaml`. It is not complete endpoint coverage yet. It should document auth, cookies, schemas, pagination, errors, and rate-limit responses as modules are verified. GraphQL is not required merely because the reference architecture uses it.
+OpenAPI now has a draft baseline in `contracts/openapi/disuza.yaml`. It is not complete endpoint coverage yet. It should document auth, cookies, schemas, pagination, errors, and rate-limit responses as modules are verified. GraphQL is not required merely because the reference architecture uses it.
 
 ## 14. Quality And Delivery Gates
 
@@ -761,5 +761,5 @@ For every meaningful feature or architecture change:
 
 ## 18. One-Line Mental Model
 
-DevLoopFeed is a TypeScript modular monolith where React feature flows call an Express REST API, domain services enforce product rules, repositories own MongoDB access, and realtime or background runtimes reuse those same rules through explicit infrastructure boundaries.
+Disuza is a TypeScript modular monolith where React feature flows call an Express REST API, domain services enforce product rules, repositories own MongoDB access, and realtime or background runtimes reuse those same rules through explicit infrastructure boundaries.
 

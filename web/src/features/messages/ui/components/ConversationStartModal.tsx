@@ -187,7 +187,7 @@ const ConversationStartModal = ({ isOpen, mode, onClose, onConversationReady }: 
                   </span>
                   <span>
                     <strong>{user.userName || getInitial(user)}</strong>
-                    <small>{user.headline || 'DevLoopFeed member'}</small>
+                    <small>{user.headline || 'Disuza member'}</small>
                   </span>
                   {selected && <Check size={16} aria-hidden="true" />}
                 </button>

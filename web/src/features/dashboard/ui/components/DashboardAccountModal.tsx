@@ -140,7 +140,7 @@ const DashboardAccountModal = ({ isOpen, mode, onClose }: DashboardAccountModalP
         ) : (
           <>
             <div className="dashboard-modal__policy">
-              <p>DevLoopFeed keeps authentication refresh tokens in secure cookies and keeps short-lived access tokens in app memory.</p>
+              <p>Disuza keeps authentication refresh tokens in secure cookies and keeps short-lived access tokens in app memory.</p>
               <p>Your profile, posts, saved collections, reports, and account actions are tied to your account so the app can keep ownership and moderation rules consistent.</p>
               <p>You can manage sessions, blocked users, reports, and saved collections from this dashboard.</p>
             </div>

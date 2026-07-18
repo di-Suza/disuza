@@ -21,7 +21,7 @@ class TokenService {
   private sign(payload: AppTokenPayload, secret: string, expiresIn: string): string {
     const options: SignOptions = {
       expiresIn: expiresIn as SignOptions['expiresIn'],
-      issuer: 'DevLoopFeed',
+      issuer: 'Disuza',
     };
 
     return jwt.sign(payload, secret, options);
@@ -30,7 +30,7 @@ class TokenService {
   private verify(token: string, secret: string, tokenType: TokenTypeValue): AppTokenPayload {
     try {
       const payload = jwt.verify(token, secret, {
-        issuer: 'DevLoopFeed',
+        issuer: 'Disuza',
       }) as AppTokenPayload;
 
       if (payload.tokenType !== tokenType) {

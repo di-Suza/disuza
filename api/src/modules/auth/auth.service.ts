@@ -291,7 +291,7 @@ class AuthService {
         userName: payload.name || email.split('@')[0],
         email,
         profilePicture: {
-          url: payload.picture || 'https://ik.imagekit.io/disuza/DevloopFeed/ProfilePictures/defaultpp.jpg',
+          url: payload.picture || 'https://ik.imagekit.io/disuza/Disuza/ProfilePictures/defaultpp.jpg',
           fileId: '0',
         },
         isGoogleUser: true,

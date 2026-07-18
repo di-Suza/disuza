@@ -1,10 +1,10 @@
-# DevLoopFeed
+# Disuza
 
-DevLoopFeed is a TypeScript-first real-time social platform with a modular Express API and React web app.
+Disuza is a TypeScript-first real-time social platform with a modular Express API and React web app.
 
 ## Documentation
 
-- [Architecture guide](./DevLoopFeed-Architecture-Guide.md)
+- [Architecture guide](./Disuza-Architecture-Guide.md)
 - [Architecture decision register](./ARCHITECTURE-DECISIONS.md)
 - [Debugging guide](./DEBUGGING-GUIDE.md)
 - [API contracts](./contracts/README.md)
@@ -16,7 +16,7 @@ DevLoopFeed is a TypeScript-first real-time social platform with a modular Expre
 ## Structure
 
 ```txt
-devloopfeed/
+disuza/
   api/        TypeScript Express backend
   web/        TypeScript React frontend
   contracts/  REST/OpenAPI contract baseline

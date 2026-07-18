@@ -1,10 +1,10 @@
-# DevLoopFeed Development Docs
+# Disuza Development Docs
 
-This document tracks how DevLoopFeed is being built step by step. The goal is to keep the project history, architecture decisions, and reasoning clear from the beginning so future features do not become random patches.
+This document tracks how Disuza is being built step by step. The goal is to keep the project history, architecture decisions, and reasoning clear from the beginning so future features do not become random patches.
 
 ## Project Goal
 
-DevLoopFeed is a clean TypeScript rewrite of the original DevLoopFeed project. The plan is to rebuild the same core product with better structure, stronger boundaries, safer configuration, and a workflow that looks professional on GitHub and on a resume.
+Disuza is a clean TypeScript rewrite of the original Disuza project. The plan is to rebuild the same core product with better structure, stronger boundaries, safer configuration, and a workflow that looks professional on GitHub and on a resume.
 
 ## Development Workflow
 
@@ -380,7 +380,7 @@ Preserved v1 behavior:
 ```txt
 PATCH /api/user/updateUserNameAndPP
 multipart field: profilePicture
-storage folder: /DevloopFeed/ProfilePictures
+storage folder: /Disuza/ProfilePictures
 old managed profile picture is cleaned up after successful DB update
 ```
 
@@ -1587,7 +1587,7 @@ Established the product architecture documentation baseline on `chore/product-ar
 
 Added:
 
-- `DevLoopFeed-Architecture-Guide.md` as the high-level system and product architecture source of truth
+- `Disuza-Architecture-Guide.md` as the high-level system and product architecture source of truth
 - `ARCHITECTURE-DECISIONS.md` as a durable decision register with separate decision and delivery states
 - README links so architecture, decisions, and the chronological development journey are discoverable from the repository entry point
 - verified current maps for the current implementation API and web applications
@@ -1598,8 +1598,8 @@ Added:
 Documentation sources:
 
 - v1 root `README.md` and `docs.md`
-- v1 backend `devloop-feed-api/docs.md`
-- v1 frontend `devloop-feed-web/docs.md`
+- v1 backend `disuza-api/docs.md`
+- v1 frontend `disuza-web/docs.md`
 - v1 `futureFixes.md` risk backlog
 - live current implementation code and this development journal
 - the Collabify architecture guide for documentation and boundary inspiration only
@@ -1970,7 +1970,7 @@ Web completed:
 
 Policy recorded:
 
-- `DevLoopFeed-Architecture-Guide.md` now records repost ownership, visibility, feed, and engagement rules
+- `Disuza-Architecture-Guide.md` now records repost ownership, visibility, feed, and engagement rules
 - `ARCHITECTURE-DECISIONS.md` now records DLF-037 for reposts as profile-visible references instead of feed fan-out
 
 Why:

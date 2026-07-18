@@ -53,7 +53,7 @@ const RepostPreviewCard = ({ className, repost }: RepostPreviewCardProps) => {
           </span>
           <span>
             <b>{repost.user?.userName || 'User'} reposted</b>
-            <small>Original by {originalAuthor?.userName || 'DevLoopFeed'}</small>
+            <small>Original by {originalAuthor?.userName || 'Disuza'}</small>
           </span>
         </span>
         <strong>{getPreviewText(repost)}</strong>

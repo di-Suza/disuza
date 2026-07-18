@@ -52,10 +52,10 @@ const SignInPage = () => {
         <div className="auth-grid-bg" />
         <div className="auth-layout auth-layout--signin">
           <ErrorBoundary variant="section" title="Sign in overview could not be rendered." showReload={false}>
-            <section className="auth-story" aria-label="DevLoopFeed sign in overview">
+            <section className="auth-story" aria-label="Disuza sign in overview">
             <Link to="/" className="auth-brand">
               <span className="auth-brand__mark">DLF</span>
-              <span>DevLoopFeed</span>
+              <span>Disuza</span>
             </Link>
             <h1>Pick up your dev loop exactly where you left it.</h1>
             <p>

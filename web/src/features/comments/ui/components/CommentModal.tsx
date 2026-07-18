@@ -85,7 +85,7 @@ const CommentModal = ({ isOpen, onClose, post }: CommentModalProps) => {
                       </span>
                       <div className="comment-item__body">
                         <div className="comment-item__meta">
-                          <strong>{comment.user?.userName || 'DevLoopFeed user'}</strong>
+                          <strong>{comment.user?.userName || 'Disuza user'}</strong>
                           <span>{formatCommentTime(comment.createdAt)}</span>
                         </div>
                         <p>{comment.comment}</p>

@@ -44,7 +44,7 @@ const ReportAProblemModal = ({ isOpen, onClose }: ReportAProblemModalProps) => {
         </header>
 
         <div className="report-modal__body">
-          <p>Help us improve DevLoopFeed by reporting any issues you encounter.</p>
+          <p>Help us improve Disuza by reporting any issues you encounter.</p>
 
           <label className="field">
             <span>Category</span>

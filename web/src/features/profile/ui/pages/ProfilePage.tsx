@@ -317,7 +317,7 @@ const ProfilePage = () => {
                       )}
                     </div>
                   </div>
-                  <div className="profile-preview-header__headline">{profileUser.headline || 'DevLoopFeed developer'}</div>
+                  <div className="profile-preview-header__headline">{profileUser.headline || 'Disuza developer'}</div>
                   {profileAddress && <div className="profile-preview-header__address"><MapPin size={14} aria-hidden="true" />{profileAddress}</div>}
                   {profileBlockedViewer && (
                     <div className="profile-hero__notice">
@@ -494,7 +494,7 @@ const ProfilePage = () => {
                 {relationshipList.map((user) => (
                   <Link to={`/profile/${user._id}`} className="user-row user-row__main" key={user._id} onClick={closeList}>
                     <span className="user-row__avatar">{avatarUrl(user.profilePicture?.url) ? <img src={user.profilePicture?.url} alt="" /> : <UserRound size={18} />}</span>
-                    <span><strong>{user.userName}</strong><small>{user.headline || 'DevLoopFeed member'}</small></span>
+                    <span><strong>{user.userName}</strong><small>{user.headline || 'Disuza member'}</small></span>
                   </Link>
                 ))}
               </div>

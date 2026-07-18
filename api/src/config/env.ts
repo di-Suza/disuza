@@ -26,7 +26,7 @@ const optionalBoolean = z.preprocess(stringToBoolean, z.boolean().optional());
 const rawEnvSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   PORT: z.coerce.number().int().min(1).max(65535).default(8080),
-  MONGODB_URI: z.string().trim().min(1).default('mongodb://localhost:27017/devloopfeed'),
+  MONGODB_URI: z.string().trim().min(1).default('mongodb://localhost:27017/disuza'),
   CORS_ORIGIN: z.string().trim().min(1).default('http://localhost:5173'),
   SOCKET_CORS_ORIGIN: optionalString,
   SOCKET_PING_TIMEOUT_MS: z.coerce.number().int().min(10_000).default(60_000),
@@ -40,8 +40,8 @@ const rawEnvSchema = z.object({
   REDIS_ENABLED: optionalBoolean,
   JOB_WORKERS_ENABLED: optionalBoolean,
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']).default('info'),
-  JWT_ACCESS_SECRET: z.string().trim().min(32).default('devloopfeed_access_secret_change_me_32_chars'),
-  JWT_REFRESH_SECRET: z.string().trim().min(32).default('devloopfeed_refresh_secret_change_me_32_chars'),
+  JWT_ACCESS_SECRET: z.string().trim().min(32).default('disuza_access_secret_change_me_32_chars'),
+  JWT_REFRESH_SECRET: z.string().trim().min(32).default('disuza_refresh_secret_change_me_32_chars'),
   ACCESS_TOKEN_EXPIRES_IN: z.string().trim().min(1).default('15m'),
   REFRESH_TOKEN_EXPIRES_IN: z.string().trim().min(1).default('7d'),
   REFRESH_COOKIE_NAME: z.string().trim().min(1).default('refreshToken'),
@@ -100,14 +100,14 @@ if (derivedEnv.NODE_ENV === 'production' && derivedEnv.CORS_ORIGIN === '*') {
 
 if (
   derivedEnv.NODE_ENV === 'production'
-  && derivedEnv.JWT_ACCESS_SECRET === 'devloopfeed_access_secret_change_me_32_chars'
+  && derivedEnv.JWT_ACCESS_SECRET === 'disuza_access_secret_change_me_32_chars'
 ) {
   validationErrors.push('JWT_ACCESS_SECRET must be configured in production');
 }
 
 if (
   derivedEnv.NODE_ENV === 'production'
-  && derivedEnv.JWT_REFRESH_SECRET === 'devloopfeed_refresh_secret_change_me_32_chars'
+  && derivedEnv.JWT_REFRESH_SECRET === 'disuza_refresh_secret_change_me_32_chars'
 ) {
   validationErrors.push('JWT_REFRESH_SECRET must be configured in production');
 }

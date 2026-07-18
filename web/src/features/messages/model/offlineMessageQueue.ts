@@ -1,6 +1,6 @@
 import type { SendMessageRequest } from './chat.types';
 
-const DB_NAME = 'devloopfeed-chat-outbox';
+const DB_NAME = 'disuza-chat-outbox';
 const DB_VERSION = 1;
 const STORE_NAME = 'messages';
 

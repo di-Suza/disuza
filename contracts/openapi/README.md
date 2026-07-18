@@ -1,6 +1,6 @@
 # OpenAPI Contract
 
-`devloopfeed.yaml` is the starting REST contract.
+`disuza.yaml` is the starting REST contract.
 
 Keep it small and correct. Add endpoints as modules are revisited instead of dumping an unverified full API description.
 
