@@ -1,12 +1,12 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
-import { AuthService } from '../src/modules/auth/auth.service.js';
-import { OtpService } from '../src/modules/auth/otp.service.js';
-import { AuthSessionService } from '../src/modules/auth/session/authSession.service.js';
-import { AppError, TooManyRequestsError, UnauthorizedError } from '../src/shared/errors/index.js';
-import emailService from '../src/shared/utils/email.js';
-import { userId } from './helpers/domain.js';
+import { AuthService } from '../../src/modules/auth/auth.service.js';
+import { OtpService } from '../../src/modules/auth/otp.service.js';
+import { AuthSessionService } from '../../src/modules/auth/session/authSession.service.js';
+import { AppError, TooManyRequestsError, UnauthorizedError } from '../../src/shared/errors/index.js';
+import emailService from '../../src/shared/utils/email.js';
+import { userId } from '../helpers/domain.js';
 
 describe('AuthService and AuthSessionService', () => {
   it('rejects missing refresh tokens and allows no-token logout', async () => {

@@ -1,9 +1,9 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
-import { PostService } from '../src/modules/posts/post.service.js';
-import { BadRequestError } from '../src/shared/errors/index.js';
-import { oid, otherUserId, postId, toObjectDocument, userId } from './helpers/domain.js';
+import { PostService } from '../../src/modules/posts/post.service.js';
+import { BadRequestError } from '../../src/shared/errors/index.js';
+import { oid, otherUserId, postId, toObjectDocument, userId } from '../helpers/domain.js';
 
 const createPostService = (overrides: Record<string, unknown> = {}) => {
   const cleanupJobs: unknown[] = [];

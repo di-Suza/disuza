@@ -1,9 +1,9 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
-import { ProblemService } from '../src/modules/problems/problem.service.js';
-import { BadRequestError } from '../src/shared/errors/index.js';
-import { oid, problemId, roomId, roomProblemId, toObjectDocument, userId } from './helpers/domain.js';
+import { ProblemService } from '../../src/modules/problems/problem.service.js';
+import { BadRequestError } from '../../src/shared/errors/index.js';
+import { oid, problemId, roomId, roomProblemId, toObjectDocument, userId } from '../helpers/domain.js';
 
 describe('ProblemService', () => {
   it('searches problems and annotates whether each problem is already added to the room', async () => {

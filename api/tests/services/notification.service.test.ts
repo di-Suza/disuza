@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
-import { NotificationService } from '../src/modules/notifications/notification.service.js';
-import { conversationId, oid, otherUserId, postId, userId } from './helpers/domain.js';
+import { NotificationService } from '../../src/modules/notifications/notification.service.js';
+import { conversationId, oid, otherUserId, postId, userId } from '../helpers/domain.js';
 
 describe('NotificationService', () => {
   it('cleans orphan notifications while returning unread counts', async () => {

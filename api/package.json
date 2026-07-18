@@ -11,7 +11,7 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "seed:problems": "tsx src/scripts/seedProblems.js",
     "clean:test": "node -e \"require('node:fs').rmSync('dist-tests', { recursive: true, force: true })\"",
-    "test": "npm run typecheck && npm run clean:test && tsc -p tsconfig.test.json && node --test --experimental-test-isolation=none dist-tests/tests/*.test.js"
+    "test": "npm run typecheck && npm run clean:test && tsc -p tsconfig.test.json && node --test --experimental-test-isolation=none dist-tests/tests/**/*.test.js"
   },
   "dependencies": {
     "@imagekit/nodejs": "^7.9.1",

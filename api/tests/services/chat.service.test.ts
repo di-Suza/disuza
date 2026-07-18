@@ -1,9 +1,9 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
-import { ChatService } from '../src/modules/chat/chat.service.js';
-import { BadRequestError, ForbiddenError } from '../src/shared/errors/index.js';
-import { conversationId, createConversation, oid, otherUserId, postId, userId } from './helpers/domain.js';
+import { ChatService } from '../../src/modules/chat/chat.service.js';
+import { BadRequestError, ForbiddenError } from '../../src/shared/errors/index.js';
+import { conversationId, createConversation, oid, otherUserId, postId, userId } from '../helpers/domain.js';
 
 describe('ChatService', () => {
   it('formats conversations with participants, unread counts, and pin state', async () => {

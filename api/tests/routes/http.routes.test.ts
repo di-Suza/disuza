@@ -3,8 +3,8 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { after, before, describe, it } from 'node:test';
 
-import app from '../src/app.js';
-import { createHttpClient, type TestHttpClient } from './helpers/http.js';
+import app from '../../src/app.js';
+import { createHttpClient, type TestHttpClient } from '../helpers/http.js';
 
 type Endpoint = {
   method: string;

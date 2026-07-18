@@ -3,15 +3,15 @@ import { describe, it } from 'node:test';
 
 import { body } from 'express-validator';
 
-import userRepository from '../src/modules/users/user.repository.js';
-import { AppError, ForbiddenError, NotFoundError, UnauthorizedError, ValidationError } from '../src/shared/errors/index.js';
-import { authenticate, authorize } from '../src/shared/middleware/auth.js';
-import { normalizeError } from '../src/shared/middleware/errorHandler.js';
-import notFoundHandler from '../src/shared/middleware/notFoundHandler.js';
-import validateRequest from '../src/shared/middleware/validateRequest.js';
-import { TokenType } from '../src/shared/constants/token.js';
-import tokenService from '../src/shared/utils/token.js';
-import { oid, userId } from './helpers/domain.js';
+import userRepository from '../../src/modules/users/user.repository.js';
+import { AppError, ForbiddenError, NotFoundError, UnauthorizedError, ValidationError } from '../../src/shared/errors/index.js';
+import { authenticate, authorize } from '../../src/shared/middleware/auth.js';
+import { normalizeError } from '../../src/shared/middleware/errorHandler.js';
+import notFoundHandler from '../../src/shared/middleware/notFoundHandler.js';
+import validateRequest from '../../src/shared/middleware/validateRequest.js';
+import { TokenType } from '../../src/shared/constants/token.js';
+import tokenService from '../../src/shared/utils/token.js';
+import { oid, userId } from '../helpers/domain.js';
 
 const invokeMiddleware = async (middleware: (...args: never[]) => unknown, req: Record<string, unknown>) => {
   let nextError: unknown;

@@ -1,9 +1,9 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
-import { BlockService } from '../src/modules/users/block/block.service.js';
-import { BadRequestError, ForbiddenError } from '../src/shared/errors/index.js';
-import { oid, otherUserId, thirdUserId, userId } from './helpers/domain.js';
+import { BlockService } from '../../src/modules/users/block/block.service.js';
+import { BadRequestError, ForbiddenError } from '../../src/shared/errors/index.js';
+import { oid, otherUserId, thirdUserId, userId } from '../helpers/domain.js';
 
 describe('BlockService', () => {
   it('returns neutral block status when either user id is missing', async () => {

@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
-import { MediaService } from '../src/modules/media/media.service.js';
+import { MediaService } from '../../src/modules/media/media.service.js';
 
 describe('MediaService', () => {
   it('identifies managed file ids and ignores external placeholders during deletes', async () => {

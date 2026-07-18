@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
-import { SearchService } from '../src/modules/search/search.service.js';
-import { oid, postId, thirdUserId, userId } from './helpers/domain.js';
+import { SearchService } from '../../src/modules/search/search.service.js';
+import { oid, postId, thirdUserId, userId } from '../helpers/domain.js';
 
 describe('SearchService', () => {
   it('returns search results with escaped query, pagination, viewer state, and blocked-user filters', async () => {

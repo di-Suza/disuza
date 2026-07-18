@@ -1,9 +1,9 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
-import { ReportService } from '../src/modules/reports/report.service.js';
-import { BadRequestError, ConflictError, ForbiddenError } from '../src/shared/errors/index.js';
-import { conversationId, oid, otherUserId, postId, userId } from './helpers/domain.js';
+import { ReportService } from '../../src/modules/reports/report.service.js';
+import { BadRequestError, ConflictError, ForbiddenError } from '../../src/shared/errors/index.js';
+import { conversationId, oid, otherUserId, postId, userId } from '../helpers/domain.js';
 
 describe('ReportService', () => {
   it('validates post, user, and message report targets before creating reports', async () => {

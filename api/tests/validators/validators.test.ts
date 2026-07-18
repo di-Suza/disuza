@@ -10,22 +10,22 @@ import {
   newPasswordAndTokenRules,
   sendOtpRules,
   verifyAndRegisterRules,
-} from '../src/modules/auth/validators/auth.validator.js';
-import { sendMessageRules, createGroupRules, pinConversationRules } from '../src/modules/chat/validators/chat.validator.js';
-import { conversationIdRules, roomIdRules } from '../src/modules/collab/validators/collab.validator.js';
-import { createCommentRules, deleteCommentRules, getCommentsRules } from '../src/modules/comments/validators/comment.validator.js';
-import { createIssueRules } from '../src/modules/issues/validators/issue.validator.js';
+} from '../../src/modules/auth/validators/auth.validator.js';
+import { sendMessageRules, createGroupRules, pinConversationRules } from '../../src/modules/chat/validators/chat.validator.js';
+import { conversationIdRules, roomIdRules } from '../../src/modules/collab/validators/collab.validator.js';
+import { createCommentRules, deleteCommentRules, getCommentsRules } from '../../src/modules/comments/validators/comment.validator.js';
+import { createIssueRules } from '../../src/modules/issues/validators/issue.validator.js';
 import {
   createPostRules,
   pageQueryRules as postPageQueryRules,
   postAnalyticsRules,
   trackPostLinkClickRules,
   updatePostRules,
-} from '../src/modules/posts/validators/post.validator.js';
-import { addProblemToRoomRules, runProblemRules, updateProblemLanguageRules } from '../src/modules/problems/validators/problem.validator.js';
-import { getMyReportsRules, postReportRules, reportRules } from '../src/modules/reports/validators/report.validator.js';
-import { collectionNameRules, savePostRules, savedCollectionPostsRules } from '../src/modules/saves/validators/save.validator.js';
-import { discoverRules, searchRules } from '../src/modules/search/validators/search.validator.js';
+} from '../../src/modules/posts/validators/post.validator.js';
+import { addProblemToRoomRules, runProblemRules, updateProblemLanguageRules } from '../../src/modules/problems/validators/problem.validator.js';
+import { getMyReportsRules, postReportRules, reportRules } from '../../src/modules/reports/validators/report.validator.js';
+import { collectionNameRules, savePostRules, savedCollectionPostsRules } from '../../src/modules/saves/validators/save.validator.js';
+import { discoverRules, searchRules } from '../../src/modules/search/validators/search.validator.js';
 import {
   analyticsRangeRules,
   passwordRules,
@@ -35,8 +35,8 @@ import {
   updateUserNameAndPPRules,
   verifyDeleteAccountOtpRules,
   verifyDeleteAccountPasswordRules,
-} from '../src/modules/users/validators/user.validator.js';
-import { getNotificationRules, notificationIdParamRules } from '../src/modules/notifications/validators/notification.validator.js';
+} from '../../src/modules/users/validators/user.validator.js';
+import { getNotificationRules, notificationIdParamRules } from '../../src/modules/notifications/validators/notification.validator.js';
 
 const objectId = '507f1f77bcf86cd799439011';
 const otherObjectId = '507f1f77bcf86cd799439012';

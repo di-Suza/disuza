@@ -1,12 +1,12 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
-import ConversationModel from '../src/modules/chat/conversation.model.js';
-import collabRoomAccessService from '../src/modules/collab/collabRoomAccess.service.js';
-import RoomProblemModel from '../src/modules/problems/roomProblem.model.js';
-import chatHandler from '../src/infrastructure/realtime/chatHandler.js';
-import collabHandler from '../src/infrastructure/realtime/collabHandler.js';
-import { oid, otherUserId, roomId, roomProblemId, userId } from './helpers/domain.js';
+import ConversationModel from '../../src/modules/chat/conversation.model.js';
+import collabRoomAccessService from '../../src/modules/collab/collabRoomAccess.service.js';
+import RoomProblemModel from '../../src/modules/problems/roomProblem.model.js';
+import chatHandler from '../../src/infrastructure/realtime/chatHandler.js';
+import collabHandler from '../../src/infrastructure/realtime/collabHandler.js';
+import { oid, otherUserId, roomId, roomProblemId, userId } from '../helpers/domain.js';
 
 type HandlerMap = Record<string, (payload?: unknown, ack?: () => void) => void>;
 

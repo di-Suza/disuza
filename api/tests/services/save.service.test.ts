@@ -1,9 +1,9 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
-import { SaveService } from '../src/modules/saves/save.service.js';
-import { BadRequestError, ConflictError } from '../src/shared/errors/index.js';
-import { oid, otherUserId, postId, userId } from './helpers/domain.js';
+import { SaveService } from '../../src/modules/saves/save.service.js';
+import { BadRequestError, ConflictError } from '../../src/shared/errors/index.js';
+import { oid, otherUserId, postId, userId } from '../helpers/domain.js';
 
 describe('SaveService', () => {
   it('saves, moves, unsaves posts, and refreshes collection cover state', async () => {

@@ -1,9 +1,9 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
-import { LikeService } from '../src/modules/likes/like.service.js';
-import { NotFoundError } from '../src/shared/errors/index.js';
-import { oid, otherUserId, postId, userId } from './helpers/domain.js';
+import { LikeService } from '../../src/modules/likes/like.service.js';
+import { NotFoundError } from '../../src/shared/errors/index.js';
+import { oid, otherUserId, postId, userId } from '../helpers/domain.js';
 
 describe('LikeService', () => {
   it('handles idempotent likes and unlikes without duplicate notifications', async () => {

@@ -1,11 +1,11 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
-import ContributionLogModel from '../src/modules/contributions/contributionLog.model.js';
-import DailyContributionModel from '../src/modules/contributions/dailyContribution.model.js';
-import { HeatmapService } from '../src/modules/contributions/heatmap.service.js';
-import UserModel from '../src/modules/users/user.model.js';
-import { postId, userId } from './helpers/domain.js';
+import ContributionLogModel from '../../src/modules/contributions/contributionLog.model.js';
+import DailyContributionModel from '../../src/modules/contributions/dailyContribution.model.js';
+import { HeatmapService } from '../../src/modules/contributions/heatmap.service.js';
+import UserModel from '../../src/modules/users/user.model.js';
+import { postId, userId } from '../helpers/domain.js';
 
 type MutableStatics = Record<string, unknown>;
 

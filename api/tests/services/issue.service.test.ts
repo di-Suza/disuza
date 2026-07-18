@@ -1,9 +1,9 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
-import { ISSUE_SUBMISSION_COOLDOWN_MS, IssueService } from '../src/modules/issues/issue.service.js';
-import { BadRequestError, TooManyRequestsError } from '../src/shared/errors/index.js';
-import { userId } from './helpers/domain.js';
+import { ISSUE_SUBMISSION_COOLDOWN_MS, IssueService } from '../../src/modules/issues/issue.service.js';
+import { BadRequestError, TooManyRequestsError } from '../../src/shared/errors/index.js';
+import { userId } from '../helpers/domain.js';
 
 describe('IssueService', () => {
   it('creates issues with default category and trimmed description', async () => {

@@ -1,9 +1,9 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
-import { CommentService } from '../src/modules/comments/comment.service.js';
-import { BadRequestError } from '../src/shared/errors/index.js';
-import { oid, otherUserId, postId, thirdUserId, userId } from './helpers/domain.js';
+import { CommentService } from '../../src/modules/comments/comment.service.js';
+import { BadRequestError } from '../../src/shared/errors/index.js';
+import { oid, otherUserId, postId, thirdUserId, userId } from '../helpers/domain.js';
 
 describe('CommentService', () => {
   it('creates comments and replies with notifications and contribution updates', async () => {

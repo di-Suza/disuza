@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
-import { CodeExecutionService } from '../src/modules/problems/codeExecution.service.js';
-import { AppError, BadRequestError } from '../src/shared/errors/index.js';
+import { CodeExecutionService } from '../../src/modules/problems/codeExecution.service.js';
+import { AppError, BadRequestError } from '../../src/shared/errors/index.js';
 
 describe('CodeExecutionService', () => {
   it('rejects missing test cases and unsupported C++ harness execution', async () => {

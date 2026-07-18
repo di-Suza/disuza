@@ -1,31 +1,31 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
-import AuthSessionModel from '../src/modules/auth/session/authSession.model.js';
-import OtpModel from '../src/modules/auth/otp.model.js';
-import ConversationModel from '../src/modules/chat/conversation.model.js';
-import MessageModel from '../src/modules/chat/message.model.js';
-import CollabRequestModel from '../src/modules/collab/collabRequest.model.js';
-import CollabRoomModel from '../src/modules/collab/collabRoom.model.js';
-import CommentModel from '../src/modules/comments/comment.model.js';
-import ContributionLogModel from '../src/modules/contributions/contributionLog.model.js';
-import DailyContributionModel from '../src/modules/contributions/dailyContribution.model.js';
-import IssueModel from '../src/modules/issues/issue.model.js';
-import LikeModel from '../src/modules/likes/like.model.js';
-import NotificationModel from '../src/modules/notifications/notification.model.js';
-import PostModel from '../src/modules/posts/post.model.js';
-import ProblemModel from '../src/modules/problems/problem.model.js';
-import RoomProblemModel from '../src/modules/problems/roomProblem.model.js';
-import ReportModel from '../src/modules/reports/report.model.js';
-import RepostModel from '../src/modules/reposts/repost.model.js';
-import SaveModel from '../src/modules/saves/save.model.js';
-import SavedCollectionModel from '../src/modules/saves/savedCollection.model.js';
-import AccountDeletionVerificationModel from '../src/modules/users/accountDeletionVerification.model.js';
-import BlockModel from '../src/modules/users/block/block.model.js';
-import FollowModel from '../src/modules/users/follow/follow.model.js';
-import ProfileViewModel from '../src/modules/users/profileView.model.js';
-import UserModel from '../src/modules/users/user.model.js';
-import { oid, otherUserId, postId, userId } from './helpers/domain.js';
+import AuthSessionModel from '../../src/modules/auth/session/authSession.model.js';
+import OtpModel from '../../src/modules/auth/otp.model.js';
+import ConversationModel from '../../src/modules/chat/conversation.model.js';
+import MessageModel from '../../src/modules/chat/message.model.js';
+import CollabRequestModel from '../../src/modules/collab/collabRequest.model.js';
+import CollabRoomModel from '../../src/modules/collab/collabRoom.model.js';
+import CommentModel from '../../src/modules/comments/comment.model.js';
+import ContributionLogModel from '../../src/modules/contributions/contributionLog.model.js';
+import DailyContributionModel from '../../src/modules/contributions/dailyContribution.model.js';
+import IssueModel from '../../src/modules/issues/issue.model.js';
+import LikeModel from '../../src/modules/likes/like.model.js';
+import NotificationModel from '../../src/modules/notifications/notification.model.js';
+import PostModel from '../../src/modules/posts/post.model.js';
+import ProblemModel from '../../src/modules/problems/problem.model.js';
+import RoomProblemModel from '../../src/modules/problems/roomProblem.model.js';
+import ReportModel from '../../src/modules/reports/report.model.js';
+import RepostModel from '../../src/modules/reposts/repost.model.js';
+import SaveModel from '../../src/modules/saves/save.model.js';
+import SavedCollectionModel from '../../src/modules/saves/savedCollection.model.js';
+import AccountDeletionVerificationModel from '../../src/modules/users/accountDeletionVerification.model.js';
+import BlockModel from '../../src/modules/users/block/block.model.js';
+import FollowModel from '../../src/modules/users/follow/follow.model.js';
+import ProfileViewModel from '../../src/modules/users/profileView.model.js';
+import UserModel from '../../src/modules/users/user.model.js';
+import { oid, otherUserId, postId, userId } from '../helpers/domain.js';
 
 describe('Mongoose model schemas', () => {
   it('loads every backend model with the expected collection names', () => {

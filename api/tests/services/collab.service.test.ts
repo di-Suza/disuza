@@ -1,10 +1,10 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
-import { CollabRoomAccessService } from '../src/modules/collab/collabRoomAccess.service.js';
-import { CollabService } from '../src/modules/collab/collab.service.js';
-import { ForbiddenError } from '../src/shared/errors/index.js';
-import { conversationId, oid, otherUserId, roomId, userId } from './helpers/domain.js';
+import { CollabRoomAccessService } from '../../src/modules/collab/collabRoomAccess.service.js';
+import { CollabService } from '../../src/modules/collab/collab.service.js';
+import { ForbiddenError } from '../../src/shared/errors/index.js';
+import { conversationId, oid, otherUserId, roomId, userId } from '../helpers/domain.js';
 
 describe('CollabService', () => {
   it('creates direct collab requests and notifications', async () => {
