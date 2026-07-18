@@ -6,6 +6,7 @@ import MessageItem from '@/features/messages/ui/components/MessageItem';
 import type { RoomChatPanelProps } from '@/features/collab/model/collab.types';
 import { useToast } from '@/shared/hooks/useToast';
 import Input from '@/shared/ui/Input';
+import LoadingSpinner from '@/shared/ui/LoadingSpinner';
 import { getErrorMessage } from '@/shared/utils/getErrorMessage';
 import './ChatPanel.css';
 
@@ -65,7 +66,7 @@ const ChatPanel = ({ conversationId, otherUser }: RoomChatPanelProps) => {
 
       <div className="collab-room-messages">
         {isLoading ? (
-          <div className="collab-modal-state">Loading messages...</div>
+          <LoadingSpinner className="collab-modal-state" label="Loading messages" />
         ) : isError ? (
           <div className="collab-modal-state">
             <p>{getErrorMessage(error, 'Messages could not be loaded')}</p>
@@ -78,7 +79,7 @@ const ChatPanel = ({ conversationId, otherUser }: RoomChatPanelProps) => {
           <>
             {hasMoreMessages && (
               <button type="button" className="collab-load-more" disabled={isFetching} onClick={() => setPage((currentPage) => currentPage + 1)}>
-                {isFetching ? 'Loading...' : 'Load more messages...'}
+                {isFetching ? <LoadingSpinner inline label="Loading messages" size={16} /> : 'Load more messages'}
               </button>
             )}
             {allMessages.map((item, index) => (

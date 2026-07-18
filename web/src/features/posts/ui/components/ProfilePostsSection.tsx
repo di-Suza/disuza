@@ -1,4 +1,4 @@
-import { Briefcase, Eye, Grid2X2, Heart, Loader2, MessageCircle, Play, Repeat2, type LucideIcon } from 'lucide-react';
+import { Briefcase, Eye, Grid2X2, Heart, MessageCircle, Play, Repeat2, type LucideIcon } from 'lucide-react';
 import { memo, useCallback, useMemo, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -6,6 +6,7 @@ import { useGetUserRepostsQuery } from '@/features/posts/api/post.api';
 import { getPostMedia, isVideoMedia } from '@/features/posts/model/post.helpers';
 import type { Post } from '@/features/posts/model/post.types';
 import type { UserProfile } from '@/features/users/model/user.types';
+import LoadingSpinner from '@/shared/ui/LoadingSpinner';
 import RepostPreviewCard from './RepostPreviewCard';
 import '../posts.css';
 
@@ -91,11 +92,11 @@ const ProfilePostsSection = ({ normalPosts, profileUser, projectPosts }: Profile
       {(hasReposts || isRepostsLoading) && (
         <ProfilePostSection icon={Repeat2} title="Reposts">
           {isRepostsLoading ? (
-            <div className="profile-posts-section__state"><Loader2 className="spin" size={20} aria-hidden="true" /><p>Loading reposts...</p></div>
+            <LoadingSpinner className="profile-posts-section__state" label="Loading reposts" />
           ) : (
             <>
               {reposts.map((repost) => <RepostPreviewCard repost={repost} key={repost._id} />)}
-              {isRepostsFetching && <div className="profile-posts-section__state is-inline"><Loader2 className="spin" size={18} aria-hidden="true" />Refreshing reposts...</div>}
+              {isRepostsFetching && <LoadingSpinner className="profile-posts-section__state is-inline" label="Refreshing reposts" size={18} />}
             </>
           )}
         </ProfilePostSection>

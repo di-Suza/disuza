@@ -1,4 +1,4 @@
-import { Loader2, MessageSquarePlus, MoreVertical, Pin, PinOff, Search, Trash2, Users, X } from 'lucide-react';
+import { MessageSquarePlus, MoreVertical, Pin, PinOff, Search, Trash2, Users, X } from 'lucide-react';
 import { memo, useEffect, useMemo, useState, type KeyboardEvent, type MouseEvent } from 'react';
 
 import { useAppDispatch } from '@/app/store/hooks';
@@ -8,6 +8,7 @@ import type { ChatConversation } from '@/features/messages/model/chat.types';
 import { clearSelectedChatFromState, setChatWindowClosed } from '@/features/messages/state/chatSlice';
 import { useToast } from '@/shared/hooks/useToast';
 import Input from '@/shared/ui/Input';
+import LoadingSpinner from '@/shared/ui/LoadingSpinner';
 import { getErrorMessage } from '@/shared/utils/getErrorMessage';
 import ChatAvatar from './ChatAvatar';
 import ConversationStartModal from './ConversationStartModal';
@@ -203,10 +204,7 @@ const Conversations = ({ conversations, getConversationsLoading, handleChatSelec
       </div>
 
       {getConversationsLoading ? (
-        <div className="messages-v1-state">
-          <Loader2 className="spin" size={22} aria-hidden="true" />
-          <p>Loading chats...</p>
-        </div>
+        <LoadingSpinner className="messages-v1-state" label="Loading chats" />
       ) : (
         <div className="messages-v1-list">
           {filteredConversations.length > 0 ? (

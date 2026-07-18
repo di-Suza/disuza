@@ -9,6 +9,7 @@ import { useGetUserAccountHistoryQuery, useUnfollowUserMutation } from '@/featur
 import { useLockBodyScroll } from '@/shared/hooks/useLockBodyScroll';
 import { useToast } from '@/shared/hooks/useToast';
 import Button from '@/shared/ui/Button';
+import LoadingSpinner from '@/shared/ui/LoadingSpinner';
 import { getErrorMessage } from '@/shared/utils/getErrorMessage';
 import DashboardActivityItem, { type DashboardActivityKind } from './DashboardActivityItem';
 
@@ -148,7 +149,7 @@ const DashboardActivitiesModal = ({ isOpen, onClose, type }: DashboardActivities
         </header>
 
         <div className="dashboard-modal__list">
-          {isInitialLoading && <p className="empty-copy">Loading activity...</p>}
+          {isInitialLoading && <LoadingSpinner className="empty-copy" label="Loading activity" />}
           {!isFetching && visibleActivities.length === 0 && activitiesType === type && <p className="empty-copy">{copy.empty}</p>}
           <div className="dashboard-activity-v1-list" aria-busy={isFetching}>
             {visibleActivities.map((activity, index) => (

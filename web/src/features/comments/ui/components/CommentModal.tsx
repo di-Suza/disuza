@@ -1,4 +1,4 @@
-import { ChevronDown, Loader2, MessageCircleReply, RefreshCw, Send, Trash2, UserRound, X } from 'lucide-react';
+import { ChevronDown, MessageCircleReply, RefreshCw, Send, Trash2, UserRound, X } from 'lucide-react';
 import { memo } from 'react';
 import { createPortal } from 'react-dom';
 
@@ -6,6 +6,7 @@ import { canDeleteComment, formatCommentTime, getCommentAvatarUrl } from '@/feat
 import type { Post } from '@/features/posts/model/post.types';
 import Button from '@/shared/ui/Button';
 import Input from '@/shared/ui/Input';
+import LoadingSpinner from '@/shared/ui/LoadingSpinner';
 import { cn } from '@/shared/utils/cn';
 import CommentReplies from './CommentReplies';
 import { useCommentModal } from '../hooks/useCommentModal';
@@ -58,10 +59,7 @@ const CommentModal = ({ isOpen, onClose, post }: CommentModalProps) => {
 
         <div className="comments-modal__body">
           {isLoading ? (
-            <div className="comment-state">
-              <Loader2 className="spin" aria-hidden="true" />
-              <p>Loading comments...</p>
-            </div>
+            <LoadingSpinner className="comment-state" label="Loading comments" />
           ) : isError ? (
             <div className="comment-state">
               <RefreshCw size={24} aria-hidden="true" />
@@ -112,8 +110,8 @@ const CommentModal = ({ isOpen, onClose, post }: CommentModalProps) => {
           {hasMore && (
             <div className="comments-load-more">
               <Button variant="secondary" onClick={handleLoadMore} disabled={isFetching}>
-                {isFetching ? <Loader2 className="spin" size={16} aria-hidden="true" /> : <ChevronDown size={16} aria-hidden="true" />}
-                {isFetching ? 'Loading...' : 'Load more comments'}
+                {isFetching ? <LoadingSpinner inline label="Loading comments" size={16} /> : <ChevronDown size={16} aria-hidden="true" />}
+                {!isFetching && 'Load more comments'}
               </Button>
             </div>
           )}

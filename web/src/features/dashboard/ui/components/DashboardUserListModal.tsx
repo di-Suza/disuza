@@ -7,6 +7,7 @@ import { useGetFollowersQuery, useGetFollowingQuery } from '@/features/users/api
 import type { UserProfile } from '@/features/users/model/user.types';
 import { useLockBodyScroll } from '@/shared/hooks/useLockBodyScroll';
 import Button from '@/shared/ui/Button';
+import LoadingSpinner from '@/shared/ui/LoadingSpinner';
 
 type DashboardUserListType = 'followers' | 'following';
 
@@ -77,7 +78,7 @@ const DashboardUserListModal = ({ isOpen, onClose, type, userId }: DashboardUser
         </header>
 
         <div className="dashboard-modal__list">
-          {activeQuery.isFetching && users.length === 0 && <p className="empty-copy">Loading {copy.title.toLowerCase()}...</p>}
+          {activeQuery.isFetching && users.length === 0 && <LoadingSpinner className="empty-copy" label={`Loading ${copy.title.toLowerCase()}`} />}
           {!activeQuery.isFetching && users.length === 0 && <p className="empty-copy">{copy.empty}</p>}
           {users.map((profile) => (
             <Link to={`/profile/${profile._id}`} className="dashboard-modal__row" key={profile._id} onClick={onClose}>

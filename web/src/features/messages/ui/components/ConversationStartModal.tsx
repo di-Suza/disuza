@@ -9,6 +9,7 @@ import { useGetFollowersQuery, useGetFollowingQuery } from '@/features/users/api
 import type { UserProfile } from '@/features/users/model/user.types';
 import Button from '@/shared/ui/Button';
 import Input from '@/shared/ui/Input';
+import LoadingSpinner from '@/shared/ui/LoadingSpinner';
 import { getErrorMessage } from '@/shared/utils/getErrorMessage';
 import { useToast } from '@/shared/hooks/useToast';
 
@@ -168,10 +169,7 @@ const ConversationStartModal = ({ isOpen, mode, onClose, onConversationReady }: 
 
         <div className="messages-v1-start-modal__list">
           {isFetchingFollowers || isFetchingFollowing ? (
-            <div className="messages-v1-start-modal__state">
-              <Loader2 className="spin" size={20} aria-hidden="true" />
-              <p>Loading people...</p>
-            </div>
+            <LoadingSpinner className="messages-v1-start-modal__state" label="Loading people" />
           ) : filteredUsers.length > 0 ? (
             filteredUsers.map((user) => {
               const selected = selectedIds.includes(user._id);

@@ -10,7 +10,6 @@ import {
   Heart,
   Languages,
   Link2,
-  Loader2,
   MapPin,
   MessageCircle,
   Play,
@@ -34,6 +33,7 @@ import type { Post } from '@/features/posts/model/post.types';
 import type { PortfolioHandle, UserProfile } from '@/features/users/model/user.types';
 import { useLockBodyScroll } from '@/shared/hooks/useLockBodyScroll';
 import Button from '@/shared/ui/Button';
+import LoadingSpinner from '@/shared/ui/LoadingSpinner';
 import ContributionHeatmap from './ContributionHeatmap';
 
 type DashboardPortfolioPreviewModalProps = {
@@ -161,7 +161,7 @@ const DashboardPortfolioPreviewModal = ({ isOpen, onClose, user }: DashboardPort
 
         <div className="portfolio-preview-v1__scroll">
           {isLoading ? (
-            <div className="portfolio-preview-v1__state"><Loader2 className="spin" size={22} aria-hidden="true" /><span>Loading preview...</span></div>
+            <LoadingSpinner className="portfolio-preview-v1__state" label="Loading preview" />
           ) : isError ? (
             <div className="portfolio-preview-v1__state">
               <p>Preview could not be loaded.</p>

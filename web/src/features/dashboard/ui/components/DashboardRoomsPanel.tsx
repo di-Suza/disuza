@@ -8,6 +8,7 @@ import {
 import type { CollabRoomListItem } from '@/features/collab/model/collab.types';
 import { useToast } from '@/shared/hooks/useToast';
 import Button from '@/shared/ui/Button';
+import LoadingSpinner from '@/shared/ui/LoadingSpinner';
 import { getErrorMessage } from '@/shared/utils/getErrorMessage';
 
 const getAvatarUrl = (url: unknown): string | null => (typeof url === 'string' && url.trim() ? url : null);
@@ -86,10 +87,7 @@ const DashboardRoomsPanel = () => {
       </header>
 
       {isLoading ? (
-        <div className="dashboard-room-state">
-          <Loader2 className="spin" size={22} aria-hidden="true" />
-          <p>Loading rooms...</p>
-        </div>
+        <LoadingSpinner className="dashboard-room-state" label="Loading rooms" />
       ) : isError ? (
         <div className="dashboard-room-state">
           <p>{getErrorMessage(error, 'Rooms could not be loaded')}</p>

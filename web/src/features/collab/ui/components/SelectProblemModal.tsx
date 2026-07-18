@@ -7,6 +7,7 @@ import problemSuggestions from '@/features/collab/model/problemSuggestions';
 import useDebounce from '@/shared/hooks/useDebounce';
 import { useLockBodyScroll } from '@/shared/hooks/useLockBodyScroll';
 import Input from '@/shared/ui/Input';
+import LoadingSpinner from '@/shared/ui/LoadingSpinner';
 import { getErrorMessage } from '@/shared/utils/getErrorMessage';
 import DSAProblemList from './DSAProblemList';
 
@@ -85,7 +86,7 @@ const SelectProblemModal = ({ isOpen, onClose, roomId, addedProblemIds = [] }: S
           {debouncedSearchQuery.length > 0 ? (
             <>
               {isFetching ? (
-                <div className="collab-modal-state">Loading Problems...</div>
+                <LoadingSpinner className="collab-modal-state" label="Loading problems" />
               ) : isError ? (
                 <div className="collab-modal-state">
                   <p>{getErrorMessage(error, 'Problems could not be loaded')}</p>

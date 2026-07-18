@@ -12,6 +12,7 @@ import { useLockBodyScroll } from '@/shared/hooks/useLockBodyScroll';
 import { useToast } from '@/shared/hooks/useToast';
 import Button from '@/shared/ui/Button';
 import Input from '@/shared/ui/Input';
+import LoadingSpinner from '@/shared/ui/LoadingSpinner';
 import { cn } from '@/shared/utils/cn';
 import { getErrorMessage } from '@/shared/utils/getErrorMessage';
 import './Saves.css';
@@ -125,10 +126,7 @@ const ManageSaveCollectionsModal = ({ isOpen, onClose, onSaved, postId }: Manage
           )}
 
           {isLoading || isFetching ? (
-            <div className="post-empty-state saves-modal__state">
-              <Loader2 className="spin" aria-hidden="true" />
-              <p>Loading collections...</p>
-            </div>
+            <LoadingSpinner className="post-empty-state saves-modal__state" label="Loading collections" />
           ) : isError ? (
             <div className="post-empty-state saves-modal__state">
               <FolderOpen size={22} aria-hidden="true" />

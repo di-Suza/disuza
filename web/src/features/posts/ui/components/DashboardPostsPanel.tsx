@@ -1,4 +1,4 @@
-import { Eye, Heart, Loader2, MessageCircle, Play, RefreshCw } from 'lucide-react';
+import { Eye, Heart, MessageCircle, Play, RefreshCw } from 'lucide-react';
 import { memo, useCallback, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -6,6 +6,7 @@ import { useAppSelector } from '@/app/store/hooks';
 import { useGetAllPostsQuery, useGetUserRepostsQuery } from '@/features/posts/api/post.api';
 import { getPostMedia, isVideoMedia } from '@/features/posts/model/post.helpers';
 import type { Post } from '@/features/posts/model/post.types';
+import LoadingSpinner from '@/shared/ui/LoadingSpinner';
 import RepostPreviewCard from './RepostPreviewCard';
 import '../posts.css';
 
@@ -87,7 +88,7 @@ const DashboardPostsPanel = (_props: DashboardPostsPanelProps) => {
 
       <div className="dashboard-posts-v1__grid">
         {isActiveLoading ? (
-          <div className="dashboard-posts-v1__state"><Loader2 className="spin" size={18} aria-hidden="true" />Loading {activeView === 'yours' ? 'posts' : 'reposts'}...</div>
+          <LoadingSpinner className="dashboard-posts-v1__state" label={activeView === 'yours' ? 'Loading posts' : 'Loading reposts'} />
         ) : activeView === 'yours' && posts.length > 0 ? (
           posts.map((post) => <PostPreviewCard post={post} key={post._id} />)
         ) : activeView === 'reposts' && reposts.length > 0 ? (
@@ -97,7 +98,7 @@ const DashboardPostsPanel = (_props: DashboardPostsPanelProps) => {
         )}
       </div>
 
-      {isActiveFetching && !isActiveLoading && <div className="dashboard-posts-v1__loading"><Loader2 className="spin" size={18} aria-hidden="true" />Loading more {activeView === 'yours' ? 'posts' : 'reposts'}...</div>}
+      {isActiveFetching && !isActiveLoading && <LoadingSpinner className="dashboard-posts-v1__loading" label={activeView === 'yours' ? 'Loading more posts' : 'Loading more reposts'} />}
     </div>
   );
 };

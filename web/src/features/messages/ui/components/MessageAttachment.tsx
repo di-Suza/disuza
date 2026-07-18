@@ -1,9 +1,10 @@
-import { Download, FileText, Loader2 } from 'lucide-react';
+import { Download, FileText } from 'lucide-react';
 import { memo, useEffect, useMemo, useState } from 'react';
 
 import { useAppSelector } from '@/app/store/hooks';
 import type { ChatAttachment } from '@/features/messages/model/chat.types';
 import env from '@/shared/config/env';
+import LoadingSpinner from '@/shared/ui/LoadingSpinner';
 import './MessageAttachment.css';
 
 type MessageAttachmentProps = {
@@ -68,8 +69,7 @@ const MessageAttachment = ({ attachment }: MessageAttachmentProps) => {
   if (isLoading || !attachment.downloadUrl) {
     return (
       <div className="messages-v1-attachment-card">
-        <Loader2 className="spin" size={16} aria-hidden="true" />
-        <span>{attachment.downloadUrl ? 'Loading attachment...' : 'Uploading attachment...'}</span>
+        <LoadingSpinner inline label={attachment.downloadUrl ? 'Loading attachment' : 'Uploading attachment'} size={16} />
       </div>
     );
   }

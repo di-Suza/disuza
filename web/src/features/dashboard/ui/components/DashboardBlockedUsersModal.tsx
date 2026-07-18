@@ -8,6 +8,7 @@ import type { BlockedUserItem } from '@/features/users/model/user.types';
 import { useLockBodyScroll } from '@/shared/hooks/useLockBodyScroll';
 import { useToast } from '@/shared/hooks/useToast';
 import Button from '@/shared/ui/Button';
+import LoadingSpinner from '@/shared/ui/LoadingSpinner';
 import { getErrorMessage } from '@/shared/utils/getErrorMessage';
 
 type DashboardBlockedUsersModalProps = {
@@ -72,7 +73,7 @@ const DashboardBlockedUsersModal = ({ isOpen, onClose }: DashboardBlockedUsersMo
         </header>
 
         <div className="dashboard-modal__list">
-          {isFetching && blockedUsers.length === 0 && <p className="empty-copy">Loading blocked users...</p>}
+          {isFetching && blockedUsers.length === 0 && <LoadingSpinner className="empty-copy" label="Loading blocked users" />}
           {!isFetching && blockedUsers.length === 0 && <p className="empty-copy">No blocked users.</p>}
           {blockedUsers.map((item) => item.blockedUser && (
             <article className="dashboard-modal__row dashboard-modal__row--action" key={item._id}>

@@ -1,4 +1,4 @@
-import { ArrowLeft, Code2, Loader2, MoreVertical, Paperclip, RefreshCw, Send, UserX, X } from 'lucide-react';
+import { ArrowLeft, Code2, MoreVertical, Paperclip, RefreshCw, Send, UserX, X } from 'lucide-react';
 import { lazy, memo, Suspense, useEffect, useMemo, useRef, useState, type MouseEvent } from 'react';
 
 import {
@@ -7,6 +7,7 @@ import {
   getConversationTitle,
 } from '@/features/messages/model/chat.helpers';
 import type { ChatConversation, ChatMessage } from '@/features/messages/model/chat.types';
+import LoadingSpinner from '@/shared/ui/LoadingSpinner';
 import { cn } from '@/shared/utils/cn';
 import ChatAvatar from './ChatAvatar';
 import MessageItem from './MessageItem';
@@ -176,10 +177,7 @@ const ChatWindow = ({
               </article>
             </div>
           ) : getMessagesLoading ? (
-            <div className="messages-v1-state">
-              <Loader2 className="spin" size={22} aria-hidden="true" />
-              <p>Loading messages...</p>
-            </div>
+            <LoadingSpinner className="messages-v1-state" label="Loading messages" />
           ) : isMessagesError ? (
             <div className="messages-v1-state">
               <RefreshCw size={22} aria-hidden="true" />
@@ -197,7 +195,7 @@ const ChatWindow = ({
               <div className="messages-v1-thread" ref={messagesContainerRef}>
                 {isFetchingMessages ? (
                   <div className="messages-v1-thread__loader">
-                    <Loader2 className="spin" size={18} aria-hidden="true" />
+                    <LoadingSpinner inline label="Loading messages" size={18} />
                   </div>
                 ) : hasMoreMessages ? (
                   <div className="messages-v1-load-more">

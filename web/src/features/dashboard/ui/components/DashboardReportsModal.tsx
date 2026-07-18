@@ -6,6 +6,7 @@ import { useGetMyReportsQuery } from '@/features/reports/api/report.api';
 import type { Report } from '@/features/reports/model/report.types';
 import { useLockBodyScroll } from '@/shared/hooks/useLockBodyScroll';
 import Button from '@/shared/ui/Button';
+import LoadingSpinner from '@/shared/ui/LoadingSpinner';
 
 type DashboardReportsModalProps = {
   isOpen: boolean;
@@ -65,7 +66,7 @@ const DashboardReportsModal = ({ isOpen, onClose }: DashboardReportsModalProps) 
 
         <div className="dashboard-reports-v1__scroll">
           {isFetching && reports.length === 0 ? (
-            <div className="dashboard-reports-v1__state"><Loader2 className="spin" size={22} /><strong>Loading reports...</strong></div>
+            <LoadingSpinner className="dashboard-reports-v1__state" label="Loading reports" />
           ) : isError ? (
             <div className="dashboard-reports-v1__state">
               <AlertTriangle size={24} /><strong>Reports could not be loaded</strong>

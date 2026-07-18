@@ -10,6 +10,7 @@ import type { Post } from '@/features/posts/model/post.types';
 import { useLockBodyScroll } from '@/shared/hooks/useLockBodyScroll';
 import { useToast } from '@/shared/hooks/useToast';
 import Button from '@/shared/ui/Button';
+import LoadingSpinner from '@/shared/ui/LoadingSpinner';
 import { getErrorMessage } from '@/shared/utils/getErrorMessage';
 import '../posts.css';
 
@@ -145,7 +146,7 @@ const SharePostModal = ({ isOpen, onClose, post }: SharePostModalProps) => {
               })}
             </div>
           ) : (
-            <p className="share-post-modal__empty">{isFetching ? 'Loading conversations...' : 'No conversations yet.'}</p>
+            isFetching ? <LoadingSpinner className="share-post-modal__empty" label="Loading conversations" /> : <p className="share-post-modal__empty">No conversations yet.</p>
           )}
         </section>
 

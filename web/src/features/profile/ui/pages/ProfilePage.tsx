@@ -31,6 +31,7 @@ import { Link } from 'react-router-dom';
 
 import ErrorBoundary from '@/shared/components/ErrorBoundary/ErrorBoundary';
 import Button from '@/shared/ui/Button';
+import LoadingSpinner from '@/shared/ui/LoadingSpinner';
 import { getErrorMessage } from '@/shared/utils/getErrorMessage';
 import { useProfilePage } from './useProfilePage';
 import './ProfilePage.css';
@@ -205,7 +206,7 @@ const ProfilePage = () => {
   if (isLoading) {
     return (
       <main className="dashboard-shell">
-        <section className="state-panel"><Loader2 className="spin" aria-hidden="true" /><h1>Loading profile</h1></section>
+        <LoadingSpinner className="state-panel" label="Loading profile" />
       </main>
     );
   }
@@ -484,7 +485,10 @@ const ProfilePage = () => {
         <ErrorBoundary variant="inline" title="Relationship list could not be rendered." resetKeys={[listMode, isListOpen]} showReload={false}>
           <div className="modal-backdrop" role="dialog" aria-modal="true" aria-label={`${listMode} list`}>
             <section className="modal-card relation-modal">
-              <div className="modal-card__header"><h1>{listMode === 'followers' ? 'Followers' : 'Following'}</h1><p>{isListFetching ? 'Loading...' : `${relationshipList.length} users`}</p></div>
+              <div className="modal-card__header">
+                <h1>{listMode === 'followers' ? 'Followers' : 'Following'}</h1>
+                {isListFetching ? <LoadingSpinner inline label="Loading users" size={16} /> : <p>{relationshipList.length} users</p>}
+              </div>
               <div className="user-list relation-modal__list">
                 {relationshipList.length === 0 && <p className="empty-copy">No users found.</p>}
                 {relationshipList.map((user) => (

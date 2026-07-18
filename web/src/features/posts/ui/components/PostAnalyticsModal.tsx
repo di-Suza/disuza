@@ -19,6 +19,7 @@ import type { PostAnalyticsItem, PostAnalyticsOverview, PostAnalyticsSection } f
 import { useLockBodyScroll } from '@/shared/hooks/useLockBodyScroll';
 import { useToast } from '@/shared/hooks/useToast';
 import Button from '@/shared/ui/Button';
+import LoadingSpinner from '@/shared/ui/LoadingSpinner';
 import { getErrorMessage } from '@/shared/utils/getErrorMessage';
 import '../posts.css';
 
@@ -223,8 +224,10 @@ const PostAnalyticsModal = ({ isOpen, onClose, postId }: PostAnalyticsModalProps
           <div className="post-analytics-modal__activity-list">
             {items.length > 0 ? (
               items.map((item) => <AnalyticsUserRow key={item._id} item={item} section={activeTab} />)
+            ) : isFetching ? (
+              <LoadingSpinner className="post-analytics-modal__empty" label="Loading activity" />
             ) : (
-              <p className="post-analytics-modal__empty">{isFetching ? 'Loading activity...' : 'No activity yet.'}</p>
+              <p className="post-analytics-modal__empty">No activity yet.</p>
             )}
           </div>
 

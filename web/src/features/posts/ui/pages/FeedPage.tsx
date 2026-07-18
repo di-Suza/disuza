@@ -1,4 +1,4 @@
-import { Eye, Loader2, RefreshCw, Sparkles, UserRound } from 'lucide-react';
+import { Eye, RefreshCw, Sparkles, UserRound } from 'lucide-react';
 import { Fragment, memo, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
@@ -6,6 +6,7 @@ import { useGetUserRecommendationsQuery } from '@/features/users/api/user.api';
 import type { UserProfile } from '@/features/users/model/user.types';
 import type { Post, PostAuthor } from '@/features/posts/model/post.types';
 import ErrorBoundary from '@/shared/components/ErrorBoundary/ErrorBoundary';
+import LoadingSpinner from '@/shared/ui/LoadingSpinner';
 import InlinePostComposer from '../components/InlinePostComposer';
 import PostCard from '../components/PostCard';
 import { useFeedPage } from './useFeedPage';
@@ -159,7 +160,7 @@ const FeedPage = () => {
             {!hasHiddenLoadedPosts && !hasMore && !isFetching && <p className="home-feed-exact__caught-up">You're all caught up</p>}
           </>
         )}
-        {isFetching && !isLoading && <div className="home-feed-exact__loader"><Loader2 className="spin" size={20} />Loading more posts...</div>}
+        {isFetching && !isLoading && <LoadingSpinner className="home-feed-exact__loader" label="Loading more posts" />}
       </main>
 
       {hasRecommendations && (

@@ -1,10 +1,11 @@
-import { ChevronDown, Loader2, MessageCircleReply, Trash2, UserRound } from 'lucide-react';
+import { ChevronDown, MessageCircleReply, Trash2, UserRound } from 'lucide-react';
 import { memo, useState } from 'react';
 
 import { useGetRepliesQuery } from '@/features/comments/api/comment.api';
 import { canDeleteComment, formatCommentTime, getCommentAvatarUrl } from '@/features/comments/model/comment.helpers';
 import type { CommentItem } from '@/features/comments/model/comment.types';
 import Button from '@/shared/ui/Button';
+import LoadingSpinner from '@/shared/ui/LoadingSpinner';
 
 type CommentRepliesProps = {
   parentComment: CommentItem;
@@ -37,7 +38,7 @@ const CommentReplies = ({ onDeleteComment, parentComment, userId }: CommentRepli
 
       {isOpen && (
         <div className="comment-replies__list">
-          {isLoading && <p className="empty-copy">Loading replies...</p>}
+          {isLoading && <LoadingSpinner label="Loading replies" />}
           {isError && (
             <div className="comment-inline-error">
               <p>{error && typeof error === 'object' && 'message' in error ? String(error.message) : 'Replies could not be loaded.'}</p>
@@ -70,8 +71,8 @@ const CommentReplies = ({ onDeleteComment, parentComment, userId }: CommentRepli
 
           {hasMore && (
             <button type="button" className="comment-replies__load" onClick={() => setPage((currentPage) => currentPage + 1)} disabled={isFetching}>
-              {isFetching ? <Loader2 className="spin" size={14} aria-hidden="true" /> : <ChevronDown size={14} aria-hidden="true" />}
-              {isFetching ? 'Loading...' : 'Load more replies'}
+              {isFetching ? <LoadingSpinner inline label="Loading replies" size={14} /> : <ChevronDown size={14} aria-hidden="true" />}
+              {!isFetching && 'Load more replies'}
             </button>
           )}
         </div>

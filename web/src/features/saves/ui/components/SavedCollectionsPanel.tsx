@@ -14,6 +14,7 @@ import { useToast } from '@/shared/hooks/useToast';
 import Button from '@/shared/ui/Button';
 import ConfirmDialog from '@/shared/ui/ConfirmDialog';
 import Input from '@/shared/ui/Input';
+import LoadingSpinner from '@/shared/ui/LoadingSpinner';
 import { cn } from '@/shared/utils/cn';
 import { getErrorMessage } from '@/shared/utils/getErrorMessage';
 import './Saves.css';
@@ -136,10 +137,7 @@ const SavedCollectionsPanel = ({ viewerId }: SavedCollectionsPanelProps) => {
       </form>
 
       {isLoading ? (
-        <div className="post-empty-state">
-          <Loader2 className="spin" aria-hidden="true" />
-          <p>Loading saved collections...</p>
-        </div>
+        <LoadingSpinner className="post-empty-state" label="Loading saved collections" />
       ) : isError ? (
         <div className="post-empty-state">
           <FolderOpen size={24} aria-hidden="true" />
@@ -208,10 +206,7 @@ const SavedCollectionsPanel = ({ viewerId }: SavedCollectionsPanelProps) => {
             </div>
 
             {isPostsLoading ? (
-              <div className="post-empty-state">
-                <Loader2 className="spin" aria-hidden="true" />
-                <p>Loading saved posts...</p>
-              </div>
+              <LoadingSpinner className="post-empty-state" label="Loading saved posts" />
             ) : isPostsError ? (
               <div className="post-empty-state">
                 <FolderOpen size={24} aria-hidden="true" />

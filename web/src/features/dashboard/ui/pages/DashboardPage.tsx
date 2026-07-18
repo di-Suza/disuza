@@ -12,7 +12,6 @@ import {
   HelpCircle,
   Lock,
   LogOut,
-  Loader2,
   MessageCircle,
   MessageSquare,
   Monitor,
@@ -30,6 +29,7 @@ import {
 } from 'lucide-react';
 
 import ErrorBoundary from '@/shared/components/ErrorBoundary/ErrorBoundary';
+import LoadingSpinner from '@/shared/ui/LoadingSpinner';
 import HeatmapRules from '../components/HeatmapRules';
 import type { DashboardAccountModalMode } from '../components/DashboardAccountModal';
 import type { DashboardActivityType } from '../components/DashboardActivitiesModal';
@@ -129,10 +129,7 @@ const ActivityCard = ({
 );
 
 const DashboardSectionLoader = () => (
-  <div className="dashboard-v1-section-loader">
-    <Loader2 className="spin" size={20} aria-hidden="true" />
-    <span>Loading section...</span>
-  </div>
+  <LoadingSpinner className="dashboard-v1-section-loader" label="Loading dashboard section" />
 );
 
 const DashboardPage = () => {

@@ -21,6 +21,7 @@ import { memo, useId, useState } from 'react';
 import type { Post } from '@/features/posts/model/post.types';
 import Button from '@/shared/ui/Button';
 import Input from '@/shared/ui/Input';
+import LoadingSpinner from '@/shared/ui/LoadingSpinner';
 import { cn } from '@/shared/utils/cn';
 import { type PostComposerMode, usePostComposer } from '../hooks/usePostComposer';
 import '../posts.css';
@@ -80,10 +81,7 @@ const PostComposerModal = ({ isOpen, isPostLoading = false, mode, onClose, post 
     <div className="modal-backdrop post-composer-v1-backdrop" role="dialog" aria-modal="true" aria-label={isEditMode ? 'Edit post' : 'Create post'}>
       <section className="post-composer-v1">
         {isPostLoading ? (
-          <div className="post-composer__loading">
-            <Loader2 className="spin" aria-hidden="true" />
-            <p>Loading post...</p>
-          </div>
+          <LoadingSpinner className="post-composer__loading" label="Loading post" />
         ) : (
           <form className="post-composer-v1__form" onSubmit={handleSubmit}>
             <Button variant="ghost" className="button--icon post-composer-v1__close" onClick={closeComposer} aria-label="Close composer">

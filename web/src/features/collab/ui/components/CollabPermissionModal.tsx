@@ -10,6 +10,7 @@ import {
 import { useDeleteNotificationMutation } from '@/features/notifications/api/notification.api';
 import { useToast } from '@/shared/hooks/useToast';
 import Button from '@/shared/ui/Button';
+import LoadingSpinner from '@/shared/ui/LoadingSpinner';
 import { getErrorMessage } from '@/shared/utils/getErrorMessage';
 import './CollabPermissionModal.css';
 
@@ -87,7 +88,7 @@ const CollabPermissionModal = ({ isOpen, onClose, otherUser = 'this user', conve
         </button>
 
         {isBusy ? (
-          <div className="collab-modal-state">Loading Status...</div>
+          <LoadingSpinner className="collab-modal-state" label="Loading collaboration status" />
         ) : isStatusError ? (
           <div className="collab-modal-state">
             <h3>Collab status could not be loaded</h3>

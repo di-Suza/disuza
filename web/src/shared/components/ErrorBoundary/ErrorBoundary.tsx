@@ -60,7 +60,7 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
       description = 'Try again. If the issue continues, refresh the page.',
       eyebrow = 'Render error',
       showReload,
-      title = 'Something broke while loading this area.',
+      title = 'Something broke in this area.',
       variant = 'page',
     } = this.props;
     const shouldShowReload = showReload ?? variant === 'page';

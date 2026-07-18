@@ -1,4 +1,4 @@
-import { Loader2, RefreshCw } from 'lucide-react';
+import { RefreshCw } from 'lucide-react';
 import { useParams, useSearchParams } from 'react-router-dom';
 
 import { useAppSelector } from '@/app/store/hooks';
@@ -8,6 +8,7 @@ import RepostDetailCard from '@/features/posts/ui/components/RepostDetailCard';
 import BackButton from '@/shared/components/BackButton/BackButton';
 import ErrorBoundary from '@/shared/components/ErrorBoundary/ErrorBoundary';
 import Button from '@/shared/ui/Button';
+import LoadingSpinner from '@/shared/ui/LoadingSpinner';
 import { getErrorMessage } from '@/shared/utils/getErrorMessage';
 import '../../posts.css';
 import './PostDetailPage.css';
@@ -32,7 +33,7 @@ const PostDetailPage = () => {
   if (isLoading) {
     return (
       <main className="dashboard-shell dashboard-shell--wide">
-        <section className="state-panel"><Loader2 className="spin" aria-hidden="true" /><h1>Loading post</h1></section>
+        <LoadingSpinner className="state-panel" label={isRepostDetail ? 'Loading repost' : 'Loading post'} />
       </main>
     );
   }

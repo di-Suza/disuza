@@ -8,6 +8,7 @@ import {
 import type { NotificationItem } from '@/features/notifications/model/notification.types';
 import ErrorBoundary from '@/shared/components/ErrorBoundary/ErrorBoundary';
 import Button from '@/shared/ui/Button';
+import LoadingSpinner from '@/shared/ui/LoadingSpinner';
 import { getErrorMessage } from '@/shared/utils/getErrorMessage';
 import { useNotificationsPage } from './useNotificationsPage';
 import './NotificationsPage.css';
@@ -87,10 +88,7 @@ const NotificationsPage = () => {
             <Button variant="secondary" onClick={() => refetch()}>Retry</Button>
           </section>
         ) : isLoading ? (
-          <section className="post-empty-state notifications-state">
-            <Loader2 className="spin" aria-hidden="true" />
-            <p>Loading notifications...</p>
-          </section>
+          <LoadingSpinner className="post-empty-state notifications-state" label="Loading notifications" />
         ) : notifications.length > 0 ? (
           <section className="notifications-list" aria-label="Notifications list">
             {notifications.map((notification) => {
