@@ -4,14 +4,14 @@ import { useState } from 'react';
 import { useGetDashboardAnalyticsQuery } from '@/features/users/api/user.api';
 import type { DashboardAnalyticsRange, DashboardAnalyticsTotals } from '@/features/users/model/user.types';
 import '../pages/DashboardPage.css';
-
-type ContributionDay = {
-  date?: string;
-  totalCount?: number;
-  postsCount?: number;
-  commentsCount?: number;
-  feedbackCount?: number;
-};
+import {
+  formatDate,
+  formatMetric,
+  getAnalyticsBarHeight,
+  getIntensityClass,
+  getSixMonthDays,
+  toContributionDays,
+} from './ContributionHeatmap.helpers';
 
 type ContributionHeatmapProps = {
   heatmap?: unknown;
@@ -37,48 +37,6 @@ const analyticsMetrics: Array<{ key: AnalyticsMetricKey; label: string; icon: ty
   { key: 'feedbacks', label: 'Feedbacks', icon: MessageSquareText },
   { key: 'reposts', label: 'Reposts', icon: Repeat2 },
 ];
-
-const formatMetric = (value: number) => new Intl.NumberFormat(undefined, { notation: value >= 10000 ? 'compact' : 'standard' }).format(value);
-
-const toContributionDays = (value: unknown): ContributionDay[] => (
-  Array.isArray(value) ? value.filter((item): item is ContributionDay => typeof item === 'object' && item !== null) : []
-);
-
-const getIntensityClass = (count: number): string => {
-  if (count <= 0) return 'color-empty';
-  if (count <= 2) return 'color-scale-1';
-  if (count <= 5) return 'color-scale-2';
-  if (count <= 8) return 'color-scale-3';
-  return 'color-scale-4';
-};
-
-const toDateKey = (date: Date): string => {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-};
-
-const getSixMonthDays = (values: ContributionDay[]): ContributionDay[] => {
-  const byDate = new Map(values.filter((day) => day.date).map((day) => [day.date, day]));
-  const today = new Date();
-  const startDate = new Date(today);
-  startDate.setMonth(today.getMonth() - 6);
-  const result: ContributionDay[] = [];
-
-  for (const cursor = new Date(startDate); cursor <= today; cursor.setDate(cursor.getDate() + 1)) {
-    const date = toDateKey(cursor);
-    result.push(byDate.get(date) || { date, totalCount: 0 });
-  }
-
-  return result;
-};
-
-const formatDate = (value?: string) => {
-  if (!value) return '';
-  const date = new Date(`${value}T00:00:00`);
-  return Number.isNaN(date.getTime()) ? value : date.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
-};
 
 const ContributionHeatmap = ({ heatmap, showAnalytics = false }: ContributionHeatmapProps) => {
   const [analyticsRange, setAnalyticsRange] = useState<DashboardAnalyticsRange>('30d');
@@ -154,7 +112,7 @@ const ContributionHeatmap = ({ heatmap, showAnalytics = false }: ContributionHea
           <div className="dashboard-analytics-v1__chart">
             {series.map((day) => {
               const reach = Number(day.reach || 0);
-              const height = reach > 0 ? Math.max(8, Math.round((reach / maxReach) * 100)) : 4;
+              const height = getAnalyticsBarHeight(reach, maxReach);
 
               return (
                 <span

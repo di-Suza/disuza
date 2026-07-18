@@ -12,7 +12,10 @@
     "start:api": "npm --prefix api run start",
     "check:api": "npm --prefix api run typecheck",
     "check:web": "npm --prefix web run typecheck",
+    "test:api": "npm --prefix api run test",
+    "test:web": "npm --prefix web run test",
+    "test": "npm run test:api && npm run test:web",
     "check": "npm run check:api && npm run check:web",
-    "verify": "npm run check && npm run build:api && npm run build:web"
+    "verify": "npm run test && npm run check && npm run build:api && npm run build:web"
   }
 }

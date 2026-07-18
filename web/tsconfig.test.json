@@ -1,0 +1,12 @@
+{
+  "extends": "./tsconfig.app.json",
+  "compilerOptions": {
+    "allowImportingTsExtensions": false,
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "noEmit": false,
+    "outDir": "dist-tests",
+    "rootDir": "src"
+  },
+  "include": ["src/features/dashboard/ui/components/ContributionHeatmap.helpers.ts"]
+}
