@@ -1,5 +1,5 @@
-import { Bell, ChevronUp, Earth, Home, LogOut, Menu, SendHorizonal, SquarePen, UserRound } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { Bell, ChevronDown, ChevronUp, Earth, Home, LogOut, Menu, SendHorizonal, SquarePen, UserRound } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
 import { useAppSelector } from '@/app/store/hooks';
@@ -19,11 +19,19 @@ const sidebarItems = [
   { id: 'notifications', label: 'Notifications', icon: Bell, path: '/notifications' },
 ] as const;
 
+const feedOptions = [
+  { label: 'All', value: 'all' },
+  { label: 'Following', value: 'following' },
+] as const;
+
 const Sidebar = () => {
   const { pathname, search } = useLocation();
   const [isExpanded, setExpanded] = useState(false);
   const [isComposerOpen, setComposerOpen] = useState(false);
+  const [isFeedMenuOpen, setFeedMenuOpen] = useState(false);
   const [isProfileMenuOpen, setProfileMenuOpen] = useState(false);
+  const mobileFeedSelectorRef = useRef<HTMLDivElement | null>(null);
+  const sidebarFeedSelectorRef = useRef<HTMLDivElement | null>(null);
   const user = useAppSelector((state) => state.auth.user);
   const [logout, { isLoading: isLoggingOut }] = useLogoutMutation();
   const { showError, showSuccess } = useToast();
@@ -36,8 +44,15 @@ const Sidebar = () => {
 
   const handleOpenComposer = () => {
     setExpanded(false);
+    setFeedMenuOpen(false);
     setProfileMenuOpen(false);
     setComposerOpen(true);
+  };
+
+  const handleToggleFeedMenu = () => {
+    setExpanded(false);
+    setProfileMenuOpen(false);
+    setFeedMenuOpen((current) => !current);
   };
 
   const handleLogout = async () => {
@@ -51,22 +66,78 @@ const Sidebar = () => {
 
   useEffect(() => {
     setExpanded(false);
+    setFeedMenuOpen(false);
     setProfileMenuOpen(false);
   }, [pathname]);
 
   useEffect(() => {
-    if (!isExpanded && !isProfileMenuOpen) return;
+    if (!isExpanded && !isFeedMenuOpen && !isProfileMenuOpen) return;
 
     const handleEscape = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         setExpanded(false);
+        setFeedMenuOpen(false);
         setProfileMenuOpen(false);
       }
     };
 
     window.addEventListener('keydown', handleEscape);
     return () => window.removeEventListener('keydown', handleEscape);
-  }, [isExpanded, isProfileMenuOpen]);
+  }, [isExpanded, isFeedMenuOpen, isProfileMenuOpen]);
+
+  useEffect(() => {
+    if (!isFeedMenuOpen) return undefined;
+
+    const handlePointerDown = (event: PointerEvent) => {
+      const target = event.target as Node;
+
+      if (mobileFeedSelectorRef.current?.contains(target) || sidebarFeedSelectorRef.current?.contains(target)) return;
+
+      setFeedMenuOpen(false);
+    };
+
+    document.addEventListener('pointerdown', handlePointerDown);
+    return () => document.removeEventListener('pointerdown', handlePointerDown);
+  }, [isFeedMenuOpen]);
+
+  const renderFeedSelector = (variant: 'mobile' | 'sidebar') => (
+    <div
+      className={`app-feed-selector app-feed-selector--${variant}`}
+      ref={variant === 'mobile' ? mobileFeedSelectorRef : sidebarFeedSelectorRef}
+    >
+      <button
+        type="button"
+        className="app-feed-selector__trigger"
+        onClick={handleToggleFeedMenu}
+        aria-label="Choose feed"
+        aria-expanded={isFeedMenuOpen}
+        aria-haspopup="menu"
+      >
+        <img src={logo} alt="DevLoopFeed" />
+        <ChevronDown className={isFeedMenuOpen ? 'is-open' : undefined} size={16} aria-hidden="true" />
+      </button>
+
+      {isFeedMenuOpen && (
+        <div className="app-feed-selector__menu" role="menu">
+          {feedOptions.map((option) => (
+            <Link
+              key={option.value}
+              to={`/home?type=${option.value}`}
+              className={activeFeedType === option.value ? 'is-active' : undefined}
+              onClick={() => {
+                setExpanded(false);
+                setFeedMenuOpen(false);
+              }}
+              role="menuitem"
+            >
+              <span />
+              {option.label}
+            </Link>
+          ))}
+        </div>
+      )}
+    </div>
+  );
 
   return (
     <>
@@ -84,9 +155,9 @@ const Sidebar = () => {
           <Menu size={22} aria-hidden="true" />
         </button>
 
-        <Link to="/home" className="app-mobile-navbar__brand" aria-label="DevLoopFeed home">
-          <img src={logo} alt="DevLoopFeed" />
-        </Link>
+        <div className="app-mobile-navbar__brand">
+          {renderFeedSelector('mobile')}
+        </div>
 
         <div className="app-mobile-navbar__profile">
           <Link
@@ -144,20 +215,7 @@ const Sidebar = () => {
         </header>
 
         <div className="app-sidebar__feed-switcher" aria-label="Feed filter">
-          <Link
-            to="/home?type=all"
-            className={activeFeedType === 'all' ? 'is-active' : ''}
-            onClick={() => setExpanded(false)}
-          >
-            All
-          </Link>
-          <Link
-            to="/home?type=following"
-            className={activeFeedType === 'following' ? 'is-active' : ''}
-            onClick={() => setExpanded(false)}
-          >
-            Following
-          </Link>
+          {renderFeedSelector('sidebar')}
         </div>
 
         <nav className="app-sidebar__panel" aria-label="Main navigation">
