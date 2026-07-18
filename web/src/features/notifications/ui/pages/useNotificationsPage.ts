@@ -69,7 +69,7 @@ export const useNotificationsPage = () => {
       return;
     }
 
-    if (notification.type === 'LIKE' || notification.type === 'COMMENT' || notification.type === 'COMMENT_REPLY') {
+    if (notification.type === 'LIKE' || notification.type === 'COMMENT' || notification.type === 'COMMENT_REPLY' || notification.type === 'REPOST') {
       const postId = getNotificationPostId(notification);
       navigate(postId ? `/post/${postId}` : '/home');
       return;

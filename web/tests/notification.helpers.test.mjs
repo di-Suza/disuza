@@ -30,6 +30,10 @@ describe('Notification helpers', () => {
       '<strong>Samar</strong> commented: nice work',
     );
     assert.equal(
+      renderToStaticMarkup(getNotificationText(makeNotification({ type: 'REPOST' }))),
+      '<strong>Samar</strong> reposted your post',
+    );
+    assert.equal(
       renderToStaticMarkup(getNotificationText(makeNotification({ type: 'GROUP_INVITE', contentId: { groupName: 'Pair Room' } }))),
       '<strong>Samar</strong> invited you to <strong>Pair Room</strong>',
     );
