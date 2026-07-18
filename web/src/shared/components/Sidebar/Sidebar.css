@@ -231,9 +231,20 @@
 }
 
 .app-feed-selector--sidebar .app-feed-selector__trigger {
-  border-color: var(--border-primary);
-  background: var(--surface);
-  box-shadow: var(--shadow-media);
+  min-height: 62px;
+  border-color: transparent;
+  background: transparent;
+  box-shadow: none;
+}
+
+.app-feed-selector--sidebar .app-feed-selector__trigger:hover,
+.app-feed-selector--sidebar .app-feed-selector__trigger[aria-expanded='true'] {
+  border-color: transparent;
+  background: transparent;
+}
+
+.app-feed-selector--sidebar .app-feed-selector__trigger img {
+  height: 51px;
 }
 
 .app-feed-selector__trigger svg {
@@ -265,6 +276,16 @@
   background: var(--surface);
   padding: 6px;
   box-shadow: var(--shadow-elevated);
+}
+
+.app-feed-selector--sidebar .app-feed-selector__menu {
+  left: calc(50% + 34px);
+  right: auto;
+  width: 220px;
+  transform: translateX(-50%);
+  border-color: rgba(59, 99, 255, 0.34);
+  background: color-mix(in srgb, var(--surface) 88%, var(--accent) 12%);
+  box-shadow: 0 22px 46px rgba(0, 0, 0, 0.34), 0 0 0 1px rgba(59, 99, 255, 0.08);
 }
 
 .app-feed-selector__menu a {
