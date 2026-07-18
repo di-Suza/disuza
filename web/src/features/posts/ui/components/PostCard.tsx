@@ -238,7 +238,7 @@ const PostCard = ({ className, fallbackAuthor, hideFeedbackAction = false, post,
       await navigator.clipboard.writeText(code);
       showSuccess('Code copied.');
     } catch {
-      showError('Code copy nahi ho paya.');
+      showError('Code could not be copied.');
     }
   }, [code, showError, showSuccess]);
 

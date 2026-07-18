@@ -78,10 +78,10 @@ const createPeer = () => new Promise<{ peer: Peer; peerId: string }>((resolve, r
 
 const getMediaErrorMessage = (error: unknown) => {
   const name = error instanceof DOMException ? error.name : '';
-  if (name === 'NotAllowedError') return 'Mic permission denied. Browser me microphone allow karna padega.';
-  if (name === 'NotFoundError') return 'Microphone device nahi mila.';
-  if (!navigator.mediaDevices?.getUserMedia) return 'Ye browser audio calling support nahi kar raha.';
-  return 'Mic permission ya call setup fail ho gaya.';
+  if (name === 'NotAllowedError') return 'Mic permission denied. Please allow microphone access in your browser.';
+  if (name === 'NotFoundError') return 'No microphone device was found.';
+  if (!navigator.mediaDevices?.getUserMedia) return 'This browser does not support audio calling.';
+  return 'Mic permission or call setup failed.';
 };
 
 type UseAudioCallArgs = {

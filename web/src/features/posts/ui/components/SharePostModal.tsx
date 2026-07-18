@@ -50,7 +50,7 @@ const SharePostModal = ({ isOpen, onClose, post }: SharePostModalProps) => {
       showSuccess('Post link copied.');
       window.setTimeout(() => setCopied(false), 1800);
     } catch {
-      showError('Post link copy nahi ho paya.');
+      showError('Post link could not be copied.');
     }
   }, [postUrl, showError, showSuccess]);
 
@@ -58,7 +58,7 @@ const SharePostModal = ({ isOpen, onClose, post }: SharePostModalProps) => {
     event.preventDefault();
 
     if (!selectedConversation) {
-      showError('Conversation select karo.');
+      showError('Select a conversation.');
       return;
     }
 
@@ -82,7 +82,7 @@ const SharePostModal = ({ isOpen, onClose, post }: SharePostModalProps) => {
         },
       });
     } catch (error) {
-      showError(getErrorMessage(error, 'Post share nahi ho paya.'));
+      showError(getErrorMessage(error, 'Post could not be shared.'));
     }
   }, [message, navigate, onClose, post._id, selectedConversation, sendMessage, showError, showSuccess]);
 

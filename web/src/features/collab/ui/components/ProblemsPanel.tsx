@@ -42,7 +42,7 @@ const ProblemsPanel = ({ selectedProblem, problems, roomId, onCollapse }: Proble
     try {
       await selectProblem({ roomId, roomProblemId }).unwrap();
     } catch {
-      showError('Problem select nahi ho payi. Please try again.');
+      showError('Problem could not be selected. Please try again.');
     }
   };
 

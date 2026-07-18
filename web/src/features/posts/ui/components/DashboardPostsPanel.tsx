@@ -74,10 +74,7 @@ const DashboardPostsPanel = (_props: DashboardPostsPanelProps) => {
   return (
     <div className="dashboard-posts-v1">
       <div className="dashboard-posts-v1__header">
-        <div>
-          <p>Gallery</p>
-          <h2>{activeView === 'yours' ? 'Your Posts' : 'Your Reposts'}</h2>
-        </div>
+        <h2>{activeView === 'yours' ? 'Your Posts' : 'Your Reposts'}</h2>
         <div className="dashboard-posts-v1__switcher" aria-label="Dashboard post view">
           <button type="button" className={activeView === 'yours' ? 'is-active' : ''} onClick={() => setActiveView('yours')}>Yours</button>
           <button type="button" className={activeView === 'reposts' ? 'is-active' : ''} onClick={() => setActiveView('reposts')}>Reposts</button>

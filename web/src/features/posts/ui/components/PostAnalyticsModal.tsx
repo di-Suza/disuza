@@ -136,7 +136,7 @@ const PostAnalyticsModal = ({ isOpen, onClose, postId }: PostAnalyticsModalProps
       setHasMore(result.hasMore);
       setPage(result.page);
     } catch (error) {
-      showError(getErrorMessage(error, 'Analytics load nahi ho payi.'));
+      showError(getErrorMessage(error, 'Analytics could not be loaded.'));
     }
   }, [loadAnalytics, postId, showError]);
 

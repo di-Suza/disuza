@@ -199,7 +199,7 @@ const DashboardPage = () => {
 
           {activeTab === 'more' && (
             <div className="more-page-v1">
-              <header className="more-page-v1__heading"><p>Preferences</p><h1>More Settings</h1></header>
+              <header className="more-page-v1__heading"><h1>More</h1></header>
 
               <div className="more-v1-shell">
                 <aside className="more-v1-menu">

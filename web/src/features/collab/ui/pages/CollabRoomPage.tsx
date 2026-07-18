@@ -352,7 +352,7 @@ const CollabRoomPage = () => {
     try {
       await updateProblemLanguage({ roomId, roomProblemId: selectedRoomProblem._id, language }).unwrap();
     } catch (error) {
-      showError(getErrorMessage(error, 'Language update nahi ho payi. Please try again.'));
+      showError(getErrorMessage(error, 'Language could not be updated. Please try again.'));
     }
   };
 
@@ -381,7 +381,7 @@ const CollabRoomPage = () => {
     try {
       await unselectProblem({ roomId }).unwrap();
     } catch (error) {
-      showError(getErrorMessage(error, 'Problem unselect nahi ho payi. Please try again.'));
+      showError(getErrorMessage(error, 'Problem could not be unselected. Please try again.'));
     }
   };
 

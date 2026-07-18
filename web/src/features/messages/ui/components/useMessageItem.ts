@@ -60,7 +60,7 @@ export const useMessageItem = ({ message }: UseMessageItemArgs) => {
         conversationId: message.conversationId,
       }).unwrap();
     } catch (error) {
-      showError(getErrorMessage(error, 'Message unsend nahi ho paya.'));
+      showError(getErrorMessage(error, 'Message could not be unsent.'));
     }
   }, [message._id, message.conversationId, senderIsMe, showError, unsendMessage]);
 

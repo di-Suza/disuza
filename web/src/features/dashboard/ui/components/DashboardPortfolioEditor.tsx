@@ -2,6 +2,7 @@ import {
   BookOpen,
   Briefcase,
   Calendar,
+  ChevronDown,
   ExternalLink,
   FileText,
   GraduationCap,
@@ -112,6 +113,7 @@ const DashboardPortfolioEditor = ({
   user,
 }: DashboardPortfolioEditorProps) => {
   const [activeTab, setActiveTab] = useState<PortfolioTab>('info');
+  const [isTabMenuOpen, setTabMenuOpen] = useState(false);
   const [isPreviewOpen, setPreviewOpen] = useState(false);
   const [focusedGeneralField, setFocusedGeneralField] = useState<'headline' | 'about' | 'city' | 'state' | 'country' | null>(null);
   const [addingExperienceIndex, setAddingExperienceIndex] = useState<number | null>(null);
@@ -185,6 +187,7 @@ const DashboardPortfolioEditor = ({
   const addingHandle = addingHandleIndex === null
     ? null
     : professionalForm.handles[addingHandleIndex];
+  const activeTabLabel = portfolioTabs.find((tab) => tab.id === activeTab)?.label || 'Info';
 
   const finishAddingExperience = () => {
     if (!addingExperience?.companyName.trim() || !addingExperience.timePeriod.trim()) return;
@@ -208,18 +211,37 @@ const DashboardPortfolioEditor = ({
     <div className="portfolio-builder-v1">
       <div className="portfolio-builder-v1__inner">
         <section className="portfolio-header-v1 portfolio-header-v1--compact">
-          <nav className="portfolio-header-v1__nav" aria-label="Portfolio sections">
-            {portfolioTabs.map((tab) => (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => setActiveTab(tab.id)}
-                className={activeTab === tab.id ? 'is-active' : ''}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </nav>
+          <div className={isTabMenuOpen ? 'portfolio-section-select-v1 is-open' : 'portfolio-section-select-v1'}>
+            <button
+              type="button"
+              className="portfolio-section-select-v1__trigger"
+              onClick={() => setTabMenuOpen((current) => !current)}
+              aria-expanded={isTabMenuOpen}
+              aria-haspopup="listbox"
+            >
+              <span>{activeTabLabel}</span>
+              <ChevronDown size={16} aria-hidden="true" />
+            </button>
+            {isTabMenuOpen && (
+              <div className="portfolio-section-select-v1__menu" role="listbox" aria-label="Portfolio sections">
+                {portfolioTabs.map((tab) => (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    role="option"
+                    aria-selected={activeTab === tab.id}
+                    onClick={() => {
+                      setActiveTab(tab.id);
+                      setTabMenuOpen(false);
+                    }}
+                    className={activeTab === tab.id ? 'is-active' : ''}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
           <Button variant="secondary" className="button--icon portfolio-preview-button-v1" onClick={() => setPreviewOpen(true)} aria-label="Preview portfolio">
             <Presentation size={17} aria-hidden="true" />
           </Button>

@@ -61,8 +61,7 @@ const ContributionHeatmap = ({ heatmap }: ContributionHeatmapProps) => {
     <section className="dashboard-heatmap-v1">
       <header className="dashboard-heatmap-v1__header">
         <div>
-          <p>Contribution Activity</p>
-          <h2>Last 6 months</h2>
+          <h2>Activity</h2>
         </div>
         <span>{total} total</span>
       </header>

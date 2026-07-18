@@ -69,7 +69,7 @@ const DashboardRoomsPanel = () => {
       const response = await getPersonalRoom().unwrap();
       openRoom(response?.data?._id);
     } catch (apiError) {
-      showError(getErrorMessage(apiError, 'Personal room open nahi ho paya.'));
+      showError(getErrorMessage(apiError, 'Personal room could not be opened.'));
     }
   };
 
@@ -78,9 +78,8 @@ const DashboardRoomsPanel = () => {
       <header>
         <div>
           <h2>Your Rooms</h2>
-          <p>Continue shared rooms or practice privately.</p>
         </div>
-        <Button onClick={handleOpenPersonalRoom} disabled={isPersonalLoading}>
+        <Button className="dashboard-rooms-v1__personal-button" onClick={handleOpenPersonalRoom} disabled={isPersonalLoading}>
           {isPersonalLoading ? <Loader2 className="spin" size={16} aria-hidden="true" /> : <Code2 size={16} aria-hidden="true" />}
           {isPersonalLoading ? 'Opening...' : 'Open Personal Room'}
         </Button>
