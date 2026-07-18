@@ -1,0 +1,1987 @@
+# Disuza Development Docs
+
+This document tracks how Disuza is being built step by step. The goal is to keep the project history, architecture decisions, and reasoning clear from the beginning so future features do not become random patches.
+
+## Project Goal
+
+Disuza is a clean TypeScript rewrite of the original Disuza project. The plan is to rebuild the same core product with better structure, stronger boundaries, safer configuration, and a workflow that looks professional on GitHub and on a resume.
+
+## Development Workflow
+
+- `main` stays stable and commit-ready.
+- `develop` is the integration branch.
+- Feature branches are created from `develop`.
+- Each feature branch should focus on one clear piece of work.
+- Commits should stay small, readable, and meaningful.
+
+Current branch style example:
+
+```txt
+main
+  develop
+    feature/backend-core-utilities
+```
+
+## Architecture Direction
+
+The backend will use Express with TypeScript, but it will follow a disciplined modular architecture inspired by larger frameworks.
+
+Planned backend flow:
+
+```txt
+route -> validator -> controller -> service -> repository -> model
+```
+
+Reason:
+
+- Routes only define endpoints and middleware.
+- Validators protect API input before business logic runs.
+- Controllers handle HTTP request and response shape.
+- Services contain business rules.
+- Repositories isolate database queries.
+- Models define database schema.
+
+This keeps the code easier to test, easier to change, and easier to scale feature by feature.
+
+## Step 1: Initial TypeScript Monorepo Setup
+
+Created the first stable project skeleton.
+
+Added:
+
+- root `package.json` with workspace-style helper scripts
+- `api/` backend folder
+- `web/` frontend folder
+- TypeScript setup for both backend and frontend
+- Express app bootstrap
+- HTTP server bootstrap
+- MongoDB connection bootstrap
+- Zod-based environment validation
+- central logger setup
+- global error and not-found middleware
+- health API at `/api/health`
+- blank React + Vite + TypeScript frontend
+- empty frontend architecture folders
+
+Why:
+
+The first version should be commit-ready even before real features exist. A working health API and blank frontend prove that both apps can run, typecheck, and build from the root scripts.
+
+Verification used:
+
+```bash
+npm run check
+npm run build:api
+npm run build:web
+```
+
+## Step 2: Backend Core Utilities
+
+Created shared backend helpers before adding product features.
+
+Added error classes:
+
+- `AppError`
+- `BadRequestError`
+- `UnauthorizedError`
+- `ForbiddenError`
+- `NotFoundError`
+- `ConflictError`
+- `ValidationError`
+- `TooManyRequestsError`
+
+Added middleware/utilities:
+
+- improved `errorHandler`
+- `notFoundHandler` using `NotFoundError`
+- `validateRequest` using `express-validator`
+- `asyncHandler`
+- `passwordService` using `bcryptjs`
+- `tokenService` using `jsonwebtoken`
+- `mongoIdParam` common validator
+- shared HTTP status constants
+- token type constants
+
+Added environment config:
+
+- `JWT_ACCESS_SECRET`
+- `JWT_REFRESH_SECRET`
+- `ACCESS_TOKEN_EXPIRES_IN`
+- `REFRESH_TOKEN_EXPIRES_IN`
+
+Why:
+
+These utilities will be reused across auth, users, posts, comments, chat, notifications, and future modules. Creating them early prevents every module from inventing its own error style, validation style, token logic, or password hashing logic.
+
+API request validation will use `express-validator` because it fits Express middleware naturally. Environment validation will continue to use Zod because startup config should fail fast before the server runs.
+
+Verification used:
+
+```bash
+npm run check:api
+npm run build:api
+```
+
+## Upcoming Steps
+
+Likely next backend steps:
+
+- auth module skeleton
+- user model and repository
+- register/login/refresh/logout flow
+- cookie helper for refresh tokens
+- auth middleware for protected routes
+- role constants and authorization middleware
+
+Each future feature should update this file with:
+
+- what was added
+- why it was added
+- how it fits the architecture
+- what command was used to verify it
+
+## Step 3: Backend Auth Module
+
+Built the backend auth module on a dedicated feature branch.
+
+Added:
+
+- `users` module with `User` model and repository
+- `auth` module with route, controller, service, validators, and repository wiring
+- `AuthSession` model for device/session-level refresh token tracking
+- OTP model, repository, and service
+- email OTP sending through Resend
+- Google OAuth login/register support
+- auth middleware for Bearer access tokens
+- auth rate limiter for sensitive auth endpoints
+- refresh-token cookie helper
+
+Auth strategy:
+
+```txt
+Access token: returned in API response body
+Refresh token: stored in HttpOnly cookie
+Refresh token hash: stored in auth_sessions collection
+```
+
+Why:
+
+This keeps the short-lived access token out of persistent browser storage while still allowing secure refresh through an HttpOnly cookie. The DB-backed session model lets the app revoke one device session, revoke all sessions, and rotate refresh tokens during refresh.
+
+V1 behavior preserved:
+
+- signup OTP flow
+- verify OTP and register
+- login with failed-attempt lockout
+- Google login/register
+- forgot-password OTP flow
+- logout current device
+- logout all devices
+- `/me` authenticated user endpoint
+
+Important current implementation improvement:
+
+Access token is no longer saved in cookies. Only the refresh token uses cookies. Session management now uses a richer `auth_sessions` model with token hash, device metadata, expiry, revocation time, and revocation reason.
+
+Verification used:
+
+```bash
+npm run check:api
+npm run build:api
+```
+
+## Step 4: Frontend Auth Flow
+
+Built the frontend auth foundation on `feature/web-auth-module`.
+
+Added:
+
+- Vite alias and frontend env typing
+- RTK Query API foundation with `baseQueryWithAuthGuard`
+- refresh-token retry flow guarded by `async-mutex`
+- Bearer access-token attachment from in-memory Redux state
+- auth slice for user, access token, auth status, and logout state
+- typed Redux store hooks
+- reusable UI primitives, toast provider, loader, error boundary, and lock-scroll hook
+- Sign In page with email/password and Google OAuth flow
+- Sign Up page with OTP registration flow
+- OTP verification modal with paste support, arrow navigation, resend timer, and remaining attempts
+- forgot-password modal with email, OTP, and reset-password steps
+- auth initializer that restores sessions through `/auth/me` + refresh cookie
+- public/protected route guards
+- lazy-loaded route pages for auth, landing, and protected dashboard shell
+
+Frontend auth strategy:
+
+```txt
+Access token: kept in Redux memory only
+Refresh token: sent by browser through HttpOnly cookie
+401 response: try /auth/refresh once, save new access token, retry original request
+Refresh failure: clear auth state and stay unauthenticated
+```
+
+Why:
+
+This follows the current implementation backend auth strategy. The frontend does not store access tokens in `localStorage` or JS-readable cookies. RTK Query owns API calls and retries, while components stay focused on UI and hooks own page logic.
+
+V1 behavior preserved:
+
+- base auth guard refresh flow
+- signup OTP send/verify flow
+- login flow
+- Google auth flow
+- forgot-password OTP/reset flow
+- public route redirect when already authenticated
+- protected route redirect when unauthenticated
+- logout current device
+- logout all devices
+
+Important current implementation improvement:
+
+The old cookie-based access-token assumption was replaced with explicit Bearer token handling because current implementation backend returns access tokens in response bodies and stores only refresh tokens in cookies.
+
+Verification used:
+
+```bash
+npm run check:web
+npm run build:web
+```
+
+## Step 5: Backend User Profile and Social Module
+
+Built the first backend user/profile module on `feature/api-user-profile-module`.
+
+Added:
+
+- `Follow` model and repository
+- `Block` model and repository
+- block service for block-status checks and interaction guards
+- expanded user repository for profile, identity, portfolio, recommendations, and counter updates
+- user service layer for profile updates, password updates, follow/unfollow, block/unblock, blocked users, followers/following, recommendations, and public profile fetch
+- user controller, route, and `express-validator` validation rules
+- `/api/user` route mount
+
+Preserved v1 endpoint names:
+
+```txt
+POST   /api/user/updatePassword
+PATCH  /api/user/updateUserNameAndPP
+PATCH  /api/user/updateGeneralInfo
+PATCH  /api/user/updateProfessionalInfo
+GET    /api/user/getProfileUser/:id
+GET    /api/user/getUserAccountHistory
+GET    /api/user/blockedUsers
+GET    /api/user/recommendations
+POST   /api/user/followUser/:id
+DELETE /api/user/unfollowUser/:id
+POST   /api/user/blockUser/:id
+DELETE /api/user/unblockUser/:id
+GET    /api/user/getFollowers/:id
+GET    /api/user/getFollowing/:id
+```
+
+Why:
+
+User/profile APIs are the next layer after auth because most product features depend on the authenticated user, profile data, relationship state, and block rules. The module keeps the same v1 behavior shape but moves database work into repositories and business rules into services.
+
+Important current implementation improvements:
+
+- follow/block data has dedicated repositories
+- block visibility rules are centralized
+- self-follow and self-block checks are explicit
+- follow cleanup runs when a user is blocked
+- recommendations exclude self, blocked users, and already-followed users
+- validators use Express middleware instead of ad hoc checks
+
+Deferred until supporting modules exist:
+
+- profile picture binary upload/storage integration
+- profile posts/project posts loading
+- notification side effects for follows
+- full account deletion cleanup queue
+- real activity history from posts/comments/messages
+
+Verification used:
+
+```bash
+npm run check:api
+npm run build:api
+```
+
+## Step 6: Frontend User Profile and Dashboard Flow
+
+Built the frontend layer for the backend user/profile module on `feature/web-user-profile-module`.
+
+Added:
+
+- typed user/profile models for portfolio, relationships, recommendations, and blocked users
+- RTK Query `userApi` with the same v1-style `/api/user/*` endpoint names
+- cache tags for profile users, followers, following, blocked users, recommendations, and account history
+- dashboard hook for identity, general info, portfolio, password, recommendations, blocked users, and logout flows
+- profile hook for public profile fetch, follow/unfollow, block/unblock, followers/following lists, and own-profile redirect handling
+- dashboard UI for editable identity, headline/about, skills/interests/languages, password update, recommendations, blocked users, and session actions
+- profile page UI for public profile details, relationship actions, block controls, stats, and followers/following modal
+- protected route for `/profile/:id`
+
+Frontend flow:
+
+```txt
+Dashboard edits -> userApi mutation -> backend /api/user/* -> auth user state refresh
+Profile page -> getProfileUser -> follow/block mutations -> invalidate profile/list caches
+```
+
+Why:
+
+The backend user/profile module is only useful once the frontend can call it. This step wires the module into RTK Query while keeping page logic in custom hooks and keeping components focused on rendering and interaction.
+
+V1 behavior preserved:
+
+- dashboard profile updates
+- password update
+- user recommendations
+- blocked users management
+- public profile fetch
+- follow/unfollow
+- block/unblock
+- followers/following list access
+
+Important current implementation improvements:
+
+- endpoint typing is centralized
+- route-level profile code is lazy-loaded
+- API cache invalidation is explicit through RTK Query tags
+- page logic lives in custom hooks instead of large components
+- access tokens continue to flow through the shared auth guard
+
+Verification used:
+
+```bash
+npm run check:web
+npm --prefix web run build
+```
+
+## Step 7: Backend Media Storage Module
+
+Built the backend media/storage foundation on `feature/api-media-storage-module`.
+
+Added:
+
+- ImageKit storage integration through the modern `@imagekit/nodejs` SDK
+- multer memory-upload middleware for image-only multipart requests
+- centralized media service for upload, single delete, safe cleanup, bulk delete, post images, and profile pictures
+- media constants for allowed image MIME types, ImageKit folders, and storage tags
+- `/api/media/upload-auth` endpoint for future direct client-side ImageKit uploads
+- environment validation for ImageKit keys, URL endpoint, upload size, and post image count
+- Multer error normalization inside the global error handler
+- profile picture upload support in the existing `/api/user/updateUserNameAndPP` endpoint
+
+Preserved v1 behavior:
+
+```txt
+PATCH /api/user/updateUserNameAndPP
+multipart field: profilePicture
+storage folder: /Disuza/ProfilePictures
+old managed profile picture is cleaned up after successful DB update
+```
+
+Why:
+
+Media upload/delete is a shared concern. Profile pictures, post images, saved collection covers, and future cleanup queues should not call the storage SDK directly from feature services. The media service becomes the single boundary around ImageKit, so future modules can reuse it safely.
+
+Important current implementation improvements:
+
+- deprecated `imagekit` package was avoided in favor of `@imagekit/nodejs`
+- storage config is validated in production but lazy-loaded for local development
+- uploaded profile pictures are not swapped in the database until storage upload succeeds
+- newly uploaded files are cleaned up if the database update fails
+- old profile pictures are cleaned up safely after the new profile state is saved
+- file validation and upload limits are centralized
+
+Verification used:
+
+```bash
+npm run check:api
+```
+
+## Step 8: Backend Posts Module With Mixed Media
+
+Built the backend posts module on `feature/api-posts-module`.
+
+Added:
+
+- `Post` model with ordered `media` array instead of image-only storage
+- post repository, service, controller, validators, and routes
+- `/api/post` route mount
+- create post flow with multipart media uploads
+- dashboard posts fetch through `/api/post/getAllPosts`
+- single post fetch through `/api/post/getPost/:postId`
+- update post flow through `/api/post/updatePost/:postId`
+- delete post flow through `/api/post/deletePost/:postId`
+- feed fetch through `/api/post/feed`
+- profile response integration so public profiles can include normal and project posts
+
+Media upgrade:
+
+```txt
+V1: images only
+current implementation: ordered media carousel with images + videos
+```
+
+New post media shape:
+
+```txt
+media[] -> url, fileId, mediaType, order, thumbnailUrl, width, height, size, mime
+```
+
+Create flow:
+
+- accepts multipart media through `media` field
+- keeps upload order by default
+- supports optional `mediaOrder` for explicit carousel order
+- supports project posts with required `liveDemoUrl` and `repositoryUrl`
+
+Update flow:
+
+- accepts new media uploads during edit
+- supports preserving existing media by `fileId`
+- supports mixing existing media and new uploads in one `mediaOrder`
+- saves final carousel sequence by normalized `order`
+- cleans newly uploaded files if validation or DB update fails
+- safely removes old storage files when they are removed from the carousel
+
+Why:
+
+Posts are the core product surface after auth, users, and media storage. Adding videos now avoids locking the schema into image-only assumptions. Storing an ordered mixed-media array makes the frontend carousel simple and future-friendly.
+
+Important current implementation improvements:
+
+- storage is centralized through the media service
+- videos use separate upload size limits
+- post media supports both image and video MIME types
+- carousel order is persisted explicitly
+- post counters update through the user repository
+- block rules are applied when viewing posts and feed data
+- profile posts are now loaded from the posts repository
+
+Verification used:
+
+```bash
+npm run check:api
+npm run build:api
+```
+
+
+
+## Step 9: Frontend Posts Feed and Composer Module
+
+Built the frontend posts module on `feature/web-posts-module`.
+
+Added:
+
+- typed RTK Query `postApi` for create, update, delete, single post, dashboard posts, and feed posts
+- shared post models for authors, counts, settings, project links, and ordered image/video media
+- post helper utilities for media ordering, author fallback, and video detection
+- reusable post media carousel for mixed image/video posts
+- create/edit post composer modal with multipart uploads
+- media reorder controls so the final carousel sequence is saved through `mediaOrder`
+- owner-only edit/delete actions with full post fetch before editing partial dashboard/profile results
+- dashboard posts panel with create post and recent own posts
+- `/home` feed page with all/following segmented view
+- profile posts section for normal posts and project posts
+- responsive CSS for feed, cards, composer, carousel, modals, and empty states
+
+Frontend flow:
+
+```txt
+Create/Edit modal -> FormData(media + settings + mediaOrder) -> postApi -> backend /api/post/*
+Feed/Profile/Dashboard -> postApi queries -> RTK Query cache tags -> UI refresh
+```
+
+Media upgrade from v1:
+
+```txt
+V1 frontend: image-only post assumptions
+current implementation frontend: ordered carousel with images + videos
+```
+
+Why:
+
+The backend posts module is now mixed-media and order-aware, so the frontend needed a proper composer instead of an image-only UI. Keeping the composer logic in a custom hook keeps upload validation, order building, project-link validation, and API submission away from display components.
+
+Important current implementation improvements:
+
+- API calls use RTK Query instead of ad hoc request helpers
+- post forms use `FormData` while keeping TypeScript models for response data
+- edit flow fetches the full post before editing so summary cards do not accidentally drop hidden media items
+- project posts keep required live demo and repository URLs
+- access-token retry still goes through the shared `baseQueryWithAuthGuard`
+- feed/dashboard/profile reuse the same post card/list primitives
+
+```bash
+npm --prefix web run typecheck
+npm --prefix web run build
+```
+
+## Step 10: Backend Comments and Replies Module
+
+Built the backend comments module on `feature/api-comments-module`.
+
+Added:
+
+- `Comment` model with post, post owner, author, parent comment, reply target, and reply count fields
+- comments repository for create, top-level comments, replies, delete, and reply-count updates
+- post repository helpers for comment-target lookup and post comment-count updates
+- comments service with v1-compatible comment/reply business rules
+- comments controller, route, and `express-validator` validation rules
+- `/api/comment` route mount
+
+Preserved v1 endpoint names:
+
+```txt
+POST   /api/comment/postComment
+GET    /api/comment/getAllComments/:postId
+GET    /api/comment/getReplies/:commentId
+DELETE /api/comment/deleteComment
+```
+
+Preserved v1 response keys:
+
+```txt
+newComment
+allComments
+replies
+currentPage
+hasMore
+commentId
+deletedCount
+parentCommentId
+```
+
+Comment flow:
+
+- users can create top-level comments on visible posts
+- users can reply to top-level comments only
+- comments are blocked when the post author disables commenting
+- post comment count increments for both comments and replies
+- parent comment `replyCount` increments when a reply is added
+- top-level comments are paginated newest-first, with the viewer's own comments prioritized
+- replies are paginated oldest-first under their parent comment
+
+Delete flow:
+
+- comment author can delete their own comment or reply
+- post owner can delete any comment or reply on their post
+- deleting a reply removes only that reply and decrements parent `replyCount`
+- deleting a top-level comment removes the comment plus its replies
+- post comment count is decremented by the number of removed comment records
+
+Rules and guards:
+
+- all routes require auth
+- post existence ignores posts currently being deleted
+- block rules protect commenting, replying, viewing comments, and viewing replies
+- validators enforce MongoDB IDs, page/limit bounds, and non-empty comment text
+
+Why:
+
+Comments are the next engagement layer after posts. Keeping the same v1 endpoint and response shape makes frontend migration easier, while the current implementation implementation separates persistence, business rules, HTTP handling, and validation into clear module boundaries.
+
+Deferred until supporting modules exist:
+
+- comment notifications
+- contribution heatmap side effects
+- user activity history integration
+- post cleanup queue integration for comments
+
+Verification used:
+
+```bash
+npm run build:api
+```
+
+## Step 11: Frontend Comments and Replies Module
+
+Built the frontend comments module on `feature/web-comments-module`.
+
+Added:
+
+- typed comments models for comment author, comment item, requests, and responses
+- RTK Query `commentApi` with v1-compatible endpoint names
+- paginated comments query with cache merge by post
+- paginated replies query with cache merge by parent comment
+- post comment mutation for top-level comments and replies
+- delete comment mutation for comments and replies
+- reusable comments modal with loading, error, empty, pagination, and composer states
+- lazy-loaded replies UI under each parent comment
+- reply target state with cancel behavior
+- owner/comment-author delete controls
+- PostCard comment button wiring
+- responsive CSS for comments modal, comment items, replies, and composer
+
+Preserved v1 endpoint flow:
+
+```txt
+POST   /api/comment/postComment
+GET    /api/comment/getAllComments/:postId
+GET    /api/comment/getReplies/:commentId
+DELETE /api/comment/deleteComment
+```
+
+Frontend flow:
+
+```txt
+PostCard comment button -> CommentModal -> commentApi -> /api/comment/*
+Top-level comment -> comments cache insert -> post/feed/profile tags refresh
+Reply -> replies cache insert + parent replyCount update -> post/feed/profile tags refresh
+Delete reply -> replies cache remove + parent replyCount update -> post/feed/profile tags refresh
+Delete parent comment -> comments cache remove -> backend deletes replies too -> post/feed/profile tags refresh
+```
+
+Why:
+
+The backend comments module keeps the v1 API contract, so the frontend can preserve the same user-facing behavior while moving the implementation into typed RTK Query endpoints and focused React hooks/components.
+
+Important current implementation improvements:
+
+- comments API typing is centralized
+- modal logic lives in `useCommentModal`
+- replies are loaded only when the user opens them
+- cache updates are scoped to comments/replies and post list invalidation is explicit
+- delete buttons follow the backend rule: comment author or post owner
+- PostCard remains focused and delegates discussion UI to the comments feature
+
+Verification used:
+
+```bash
+npm --prefix web run typecheck
+npm --prefix web run build
+```
+
+## Step 12: Backend Likes Module
+
+Built the backend likes module on `feature/api-likes-module`.
+
+Added:
+
+- `Like` model with unique `{ post, user }` index
+- likes repository for create-once, delete, existence checks, and liked-post lookup
+- likes service for like/unlike business rules
+- likes controller for v1-compatible responses
+- post repository helpers for action target lookup and likes count updates
+- `/api/post/likePost/:postId` route
+- `/api/post/unlikePost/:postId` route
+- real `isLiked` state in single post and feed responses
+
+Preserved v1 endpoint flow:
+
+```txt
+POST /api/post/likePost/:postId
+POST /api/post/unlikePost/:postId
+```
+
+Behavior:
+
+- liking a visible post creates one like per user/post
+- repeated like requests stay idempotent and return success
+- unliking removes the user's like if it exists
+- repeated unlike requests stay idempotent and return success
+- post `counts.likes` increments/decrements when the stored like state changes
+- like actions respect block rules through the post author interaction guard
+- single post and feed responses now return real `isLiked` values
+
+Why:
+
+Likes are a simple post interaction and should be separated from saved collections. This keeps the likes branch focused while leaving the larger saved-posts/collections flow for its own module.
+
+Deferred until supporting modules exist:
+
+- like notifications
+- contribution/activity history for likes
+- frontend like button wiring (completed in Step 13)
+
+Verification used:
+
+```bash
+npm run build:api
+```
+
+## Step 13: Frontend Likes Module
+
+Built the frontend likes flow on `feature/web-likes-module`.
+
+Added:
+
+- typed `PostLikeResponse` for like/unlike API responses
+- `likePost` RTK Query mutation for `POST /api/post/likePost/:postId`
+- `unlikePost` RTK Query mutation for `POST /api/post/unlikePost/:postId`
+- optimistic cache updates for `getPost`, `getFeed`, and `getAllPosts`
+- profile/user activity invalidation after successful like state changes
+- `usePostLike` hook for PostCard like state, mutation calls, rollback, and error toast handling
+- interactive PostCard like button with pressed, loading, hidden-count, and active states
+- footer button CSS for accessible hover, focus, disabled, and active styles
+
+Preserved v1 endpoint flow:
+
+```txt
+POST /api/post/likePost/:postId
+POST /api/post/unlikePost/:postId
+```
+
+Frontend flow:
+
+```txt
+PostCard like button -> usePostLike -> postApi like/unlike mutation -> optimistic RTK cache patch
+Success -> keep patched post/feed/all-post caches + refresh profile/activity tags
+Failure -> rollback optimistic patches + restore local PostCard state + show toast
+```
+
+Behavior:
+
+- likes update instantly in the UI
+- repeated clicks are blocked while a like/unlike request is in flight
+- failed like/unlike requests rollback the button state and count
+- hidden like counts still keep the like action visible as `Like`/`Liked`
+- feed, all-posts, and single-post caches stay in sync after like/unlike
+- profile post cards are refreshed through `ProfileUser` invalidation
+
+Why:
+
+The backend likes module already preserves the v1 API contract, so the frontend only needs typed RTK Query mutations, predictable cache updates, and a focused hook instead of spreading like logic directly inside PostCard.
+
+Deferred until supporting modules exist:
+
+- saved collections frontend wiring
+- liked-posts activity screen wiring
+- real-time like notifications
+
+Verification used:
+
+```bash
+npm --prefix web run typecheck
+npm --prefix web run build
+```
+
+## Step 14: Backend Saves And Collections Module
+
+Built the backend saves/collections module on `feature/api-saves-module`.
+
+Added:
+
+- `Save` model for user/post saved relations
+- `SavedPostsCollection` model for user-owned save collections
+- saves constants for the default collection name and default cover image
+- save repository for save relation CRUD, lookup, and saved-post pagination aggregations
+- saved collection repository for collection CRUD, selected collection management, and cover updates
+- save service for save/unsave, collection CRUD, move-to-collection, cover refresh, and blocked-user filtering
+- save controller with v1-compatible response messages
+- save validators using `express-validator`
+- v1-compatible post routes for save and collection APIs
+- post repository helpers for save action targets and cover media
+- real `isSaved` state in single post and feed responses
+
+Preserved v1 endpoint flow:
+
+```txt
+POST   /api/post/savePost
+DELETE /api/post/unsavePost/:postId
+GET    /api/post/getSavedPostsCollections
+POST   /api/post/createCollection
+PATCH  /api/post/updateCollection/:id
+DELETE /api/post/deleteCollection/:id
+GET    /api/post/savedCollections/:id/posts
+PATCH  /api/post/changeSavedPostCollection
+```
+
+Behavior:
+
+- saving a post uses the requested collection when it belongs to the user
+- if no requested collection is available, the selected collection is used
+- if no collection exists, `All Saved` is created as the default system collection
+- only one collection stays selected for the user
+- moving a saved post refreshes source and target collection cover metadata
+- unsaving refreshes the affected collection cover
+- system generated collections cannot be renamed or deleted
+- saved collection post lists hide deleted posts and posts from blocked users
+- saved collection post responses include `isSaved: true` and real `isLiked`
+- feed and single-post responses now return real `isSaved` values
+
+Why:
+
+Saves have collection management, selected-state behavior, and cover metadata, so they are kept separate from likes. This makes the larger save flow easier to reason about and gives the frontend a stable typed API surface.
+
+Deferred until frontend branch:
+
+- save button wiring (completed in Step 15)
+- manage collections modal (completed in Step 15)
+- saved collections list UI (completed in Step 15)
+- saved collection posts UI (completed in Step 15)
+
+Verification used:
+
+```bash
+npm run build:api
+```
+
+## Step 15: Frontend Saves And Collections Module
+
+Built the frontend saves/collections flow on `feature/web-saves-module`.
+
+Added:
+
+- saved collection RTK Query tag types
+- typed save/collection request and response models
+- `savePost` mutation for `POST /api/post/savePost`
+- `unsavePost` mutation for `DELETE /api/post/unsavePost/:postId`
+- saved collection list query
+- saved collection posts query
+- create, update, delete, and change-collection mutations
+- optimistic `isSaved` cache patches for single post, feed, dashboard posts, and saved collection posts
+- `usePostSave` hook for PostCard save state, mutation calls, rollback, and error handling
+- PostCard save/unsave button
+- PostCard manage collections button when a post is saved
+- manage collections modal for selecting or creating a collection for a post
+- dashboard saved collections panel for collection CRUD and saved-post browsing
+- responsive CSS for save controls, save modal, collection cards, and saved dashboard panel
+
+Preserved v1 endpoint flow:
+
+```txt
+POST   /api/post/savePost
+DELETE /api/post/unsavePost/:postId
+GET    /api/post/getSavedPostsCollections
+POST   /api/post/createCollection
+PATCH  /api/post/updateCollection/:id
+DELETE /api/post/deleteCollection/:id
+GET    /api/post/savedCollections/:id/posts
+PATCH  /api/post/changeSavedPostCollection
+```
+
+Frontend flow:
+
+```txt
+PostCard save button -> usePostSave -> save/unsave mutation -> optimistic isSaved patch
+Saved PostCard manage button -> ManageSaveCollectionsModal -> collection query/create/change mutation
+Dashboard -> SavedCollectionsPanel -> collection query/create/update/delete + saved collection posts query
+```
+
+Behavior:
+
+- save/unsave updates the PostCard immediately
+- failed save/unsave requests rollback local and RTK Query cache state
+- saved posts can be moved to another collection from the manage modal
+- users can create collections while saving a post
+- dashboard shows saved collections, collection covers, post counts, and saved posts
+- non-system collections can be renamed or deleted from the dashboard panel
+- saved collection post cards reuse the existing PostCard flow, including likes, comments, and save controls
+
+Why:
+
+The saves feature has more state than likes because it includes collection ownership, selected collections, and saved-post browsing. The frontend keeps direct post interactions in focused hooks while collection management lives in dedicated saves components.
+
+Verification used:
+
+```bash
+npm --prefix web run typecheck
+npm --prefix web run build
+```
+## Step 16: Backend Reports Module
+
+Built the backend reports module on `feature/api-reports-module`.
+
+Added:
+
+- `Report` model with `Post`, `User`, and future `Message` target support
+- report repository for duplicate checks, create, and current-user report history
+- report service for target validation, self-report prevention, block-rule checks, duplicate prevention, and paginated report history
+- report controller for generic reports, post-report compatibility, and my-reports
+- report route mounted at `/api/report`
+- v1-compatible post report route at `/api/post/reportPost`
+- report validators using `express-validator`
+
+Preserved v1 endpoint flow:
+
+```txt
+POST /api/report
+GET  /api/report/my-reports
+POST /api/post/reportPost
+```
+
+Behavior:
+
+- post reports are fully supported now
+- user/profile reports are supported by the same module for future UI wiring
+- message reports are intentionally guarded until the messaging module exists
+- users cannot report their own post/profile
+- users cannot report the same target more than once
+- report creation respects block interaction rules
+- report history returns current user's reports with target preview data
+
+Why:
+
+Reports should be a generic moderation module because posts, profiles, and later messages all share the same report lifecycle. The current implementation focuses on post reports while keeping the target model structure ready for profile reports later.
+
+Deferred until later modules:
+
+- profile report UI wiring (completed in Step 18)
+- message report support with conversation membership checks
+- admin moderation/review workflow
+
+Verification used:
+
+```bash
+npm run build:api
+```
+
+## Step 17: Frontend Post Reports Module
+
+Built the frontend post-report flow on `feature/web-post-reports-module`.
+
+Added:
+
+- reports RTK Query API layer for creating reports and fetching current-user report history
+- typed report models and shared report reason list
+- reusable `ReportModal` component that supports `Post`, `User`, and future `Message` targets
+- `useReportModal` hook for local form state, validation, submit handling, body scroll lock, and toast feedback
+- PostCard report action for non-owner posts
+- responsive report modal styling aligned with the existing modal system
+
+Frontend flow:
+
+```txt
+PostCard report button -> ReportModal -> useReportModal -> createReport mutation -> POST /api/report
+```
+
+Behavior:
+
+- post owners continue to see edit/delete actions instead of report
+- non-owner posts show a report action in the card header
+- report submit requires a reason and details before hitting the API
+- successful report submit closes the modal and shows server feedback
+- failed report submit shows normalized API errors, including duplicate-report responses
+- the modal is target-model aware, so profile reports can reuse it later without rebuilding the UI flow
+
+Why:
+
+Reports are part of moderation, not post ownership, so the UI keeps report form state in a focused reports feature instead of mixing it into PostCard. PostCard only decides when to open the modal.
+
+Deferred until later modules:
+
+- profile report trigger wiring (completed in Step 18)
+- message report flow with conversation membership rules
+- admin moderation/review dashboard
+
+Verification used:
+
+```bash
+npm --prefix web run typecheck
+npm --prefix web run build
+```
+
+## Step 18: Frontend Profile Reports Trigger
+
+Built the profile report trigger on `feature/web-profile-reports-module`.
+
+Added:
+
+- profile page report modal state in `useProfilePage`
+- profile hero report button for reportable profiles
+- `ReportModal` reuse with `onModel="User"`
+- profile report visibility guard for blocked profile states
+
+Frontend flow:
+
+```txt
+ProfilePage report button -> ReportModal -> useReportModal -> createReport mutation -> POST /api/report
+```
+
+Behavior:
+
+- own profile still redirects to dashboard, so self-report is not exposed in the UI
+- visible unblocked profiles can be reported through the shared report modal
+- blocked profiles do not show report action because backend report creation respects block interaction rules
+- profile reports reuse the same validation, duplicate-report handling, toast feedback, and API layer as post reports
+
+Why:
+
+The reports module was designed as a generic moderation flow, so profile reporting only needs a trigger and target model wiring. Keeping form logic in the shared report modal prevents duplicate report UI state across posts and profiles.
+
+Deferred until later modules:
+
+- message report flow with conversation membership rules
+- admin moderation/review dashboard
+
+Verification used:
+
+```bash
+npm --prefix web run typecheck
+npm --prefix web run build
+```
+
+## Step 19: Backend Notifications Module
+
+Built the backend notifications flow on `feature/api-notifications-module`.
+
+Added:
+
+- `Notification` model with v1 notification types: `LIKE`, `FOLLOW`, `COMMENT`, `COMMENT_REPLY`, `COLLAB_REQUEST`, and `COLLAB_ACCEPTED`
+- `expiresAt` field and TTL index for future expiring collab request notifications
+- notification repository for create, populated reads, unread counts, mark-read, delete-one, delete-all, and metadata-based cleanup
+- notification service for pagination, blocked-user filtering, orphan cleanup, self-notification prevention, blocked-interaction prevention, send, remove, and lookup helpers
+- notification controller and route mounted at `/api/notification`
+- request validators for pagination and notification id params
+- like notification creation/removal from like/unlike post flow
+- follow notification creation/removal from follow/unfollow flow
+- follow notification cleanup when blocking removes follow relationships
+
+Preserved v1 endpoint flow:
+
+```txt
+GET    /api/notification/getNotifications
+PATCH  /api/notification/markAllAsRead
+DELETE /api/notification/deleteNotification/:notificationId
+DELETE /api/notification/deleteAllNotifications
+```
+
+Behavior:
+
+- liking a post creates a `LIKE` notification for the post owner
+- unliking removes the matching `LIKE` notification
+- following a user creates a `FOLLOW` notification for the followed user
+- unfollowing removes the matching `FOLLOW` notification
+- blocking a user removes follow relationships and related follow notifications
+- users do not receive notifications from themselves
+- notifications are not created across blocked relationships
+- notification listing hides senders blocked by either side
+- orphaned content-backed notifications are cleaned when fetched
+- `User` target notifications hide `contentId` in the response, matching v1 behavior
+
+Why:
+
+Notifications connect social actions across the app, so the backend module centralizes notification persistence and cleanup instead of scattering notification queries through likes and users. Realtime socket emit is intentionally deferred until the socket layer is rebuilt in current implementation.
+
+Deferred until later modules:
+
+- comment and reply notification hooks after comments backend is present in the active branch chain
+- collab request and accepted notification hooks after collab module exists
+- realtime socket emit for `new_notification` and `delete_notification`
+- notification preferences
+
+Verification used:
+
+```bash
+npm run build:api
+```
+
+## Step 20: Frontend Notifications Module
+
+Built the frontend notifications flow on `feature/web-notifications-module`.
+
+Added:
+
+- notifications RTK Query API layer for listing, mark-all-read, delete-one, and delete-all actions
+- typed notification models for v1 notification types and populated sender/content data
+- notification helper utilities for rendering icons, action text, thumbnails, and safe content previews
+- notifications page at `/notifications`
+- `useNotificationsPage` hook for pagination, navigation decisions, optimistic actions, delayed mark-read, and toast handling
+- dashboard and feed navigation entry points for notifications
+- responsive notification list styling aligned with the current dashboard/feed UI
+
+Preserved v1 endpoint flow:
+
+```txt
+GET    /api/notification/getNotifications
+PATCH  /api/notification/markAllAsRead
+DELETE /api/notification/deleteNotification/:notificationId
+DELETE /api/notification/deleteAllNotifications
+```
+
+Frontend flow:
+
+```txt
+NotificationsPage -> useNotificationsPage -> notification RTK Query API -> /api/notification/*
+```
+
+Behavior:
+
+- notifications are fetched with paginated RTK Query cache merging
+- unread notifications are marked read after a short delay with timeout cleanup
+- users can delete a single notification or clear all notifications
+- follow notifications navigate to the sender profile
+- like/comment/reply notifications currently navigate to the feed until a post-detail route exists
+- collab notification actions are deferred until collab modules exist
+- load more preserves already loaded notifications while fetching the next page
+- dashboard and feed pages expose notifications navigation
+
+Why:
+
+Notifications are a cross-feature activity surface, so the UI keeps API state in RTK Query and page interaction logic in a dedicated hook. This keeps rendering focused while preserving the v1 notification behavior and fixing the old delayed mark-read cleanup risk.
+
+Deferred until later modules:
+
+- direct post-detail navigation after a post detail route exists
+- comment/reply notification UI deep links after comments UI is fully connected
+- collab request and accepted actions after collab modules exist
+- realtime socket updates after the current implementation socket layer is rebuilt
+- notification preferences
+
+Verification used:
+
+```bash
+npm --prefix web run typecheck
+npm --prefix web run build
+```
+
+## Step 21: Backend Search And Discover Module
+
+Built the backend search and discover flow on `feature/api-search-module`.
+
+Added:
+
+- search repository for user search, post search, top contributors, trending posts, and result counts
+- search service for safe pagination, limit normalization, blocked-user filtering, regex escaping, and viewer state enrichment
+- search controller and route mounted at `/api/search`
+- request validators using `express-validator`
+- liked/saved viewer state on returned posts so search results can reuse post cards safely
+
+Preserved v1 endpoint flow:
+
+```txt
+GET /api/search?q=&userPage=&postPage=&limit=
+GET /api/search/discover?page=&limit=
+```
+
+Behavior:
+
+- search matches active users by username or email
+- search matches visible posts by caption
+- blocked users are hidden from both user and post results
+- deleted/deleting posts are excluded
+- discover returns top contributors and trending posts
+- trending posts are ordered by likes count and recent activity
+- pagination returns `hasMoreUsers`, `hasMorePosts`, and `hasMoreTrendingPosts`
+- post results include `isLiked` and `isSaved` for the current viewer
+
+Why:
+
+Search and discover depend on already migrated users, posts, likes, saves, and block rules, so this is a clean next module after notifications. Keeping DB queries in the repository and interaction rules in the service preserves v1 behavior while avoiding unsafe regex input and keeping frontend result rendering reusable.
+
+Deferred until later modules:
+
+- full-text indexes after production search needs are clearer
+- richer ranking using contributions, follows, and engagement signals
+- search analytics/history
+
+Verification used:
+
+```bash
+npm run build:api
+```
+
+## Step 22: Frontend Search And Discover Module
+
+Built the frontend search and discover flow on `feature/web-search-module`.
+
+Added:
+
+- search RTK Query API layer for `/search` and `/search/discover`
+- typed search and discover response models
+- shared `useDebounce` hook for delayed search queries with cleanup
+- `/search` route with lazy-loaded page
+- `useSearchPage` hook for discover pagination, debounced search, result merging, loading/error state, and current-user navigation rules
+- reusable `SearchUserCard` for top contributors and matched users
+- search page UI with top contributors, trending posts, users, posts, and load-more actions
+- dashboard and feed navigation entry points for search
+- responsive search styling aligned with the current dashboard/feed UI
+
+Preserved v1 endpoint flow:
+
+```txt
+GET /api/search?q=&userPage=&postPage=&limit=
+GET /api/search/discover?page=&limit=
+```
+
+Frontend flow:
+
+```txt
+SearchPage -> useSearchPage -> search RTK Query API -> /api/search/*
+```
+
+Behavior:
+
+- discover view shows top contributors and trending posts when the search input is empty
+- search input is debounced before calling the API
+- changing the query resets user and post pagination safely
+- search results merge paginated users/posts without duplicates
+- users navigate to their profile, while the current user navigates to dashboard
+- posts reuse the existing compact post card flow, including current like/save/comment/report behaviors
+- load-more actions are split for users, search posts, and trending posts
+- search errors and loading states are isolated from the inactive discover/search mode
+
+Why:
+
+Search is a read-heavy cross-feature surface, so the frontend keeps network state in RTK Query and interaction state in a dedicated page hook. Reusing existing post cards keeps social actions consistent while the module preserves v1 discover/search behavior.
+
+Deferred until later modules:
+
+- direct post-detail navigation after a post detail route exists
+- advanced search filters and sorting
+- dedicated search history or recent searches
+- full-text/autocomplete UX after backend search ranking matures
+
+Verification used:
+
+```bash
+npm --prefix web run typecheck
+npm --prefix web run build
+```
+
+## Step 23: Backend Issues Module
+
+Built the backend issue/report-a-problem flow on `feature/api-issues-module`.
+
+Added:
+
+- `Issue` model with v1 categories: `Bug`, `Spam`, `Abuse`, `Technical`, and `Other`
+- issue statuses: `Pending`, `In-Progress`, `Resolved`, and `Dismissed`
+- issue repository for latest-report lookup and issue creation
+- issue service for category validation, description validation, cooldown enforcement, and creation
+- issue controller and route mounted at `/api/issue`
+- request validators using `express-validator`
+
+Preserved v1 endpoint flow:
+
+```txt
+POST /api/issue
+```
+
+Behavior:
+
+- authenticated users can submit a support/problem issue
+- category defaults to `Bug` if not provided
+- description is required and capped at 1000 characters
+- each user can submit only one issue every 5 minutes
+- cooldown violations return a 429 error
+- successful submission returns the v1-style category success message
+
+Why:
+
+Issues are app-support reports, separate from moderation reports for posts/users/messages. Keeping this module separate avoids mixing user-facing support tickets with content moderation reports while preserving the existing v1 report-a-problem flow.
+
+Deferred until later modules:
+
+- admin issue review dashboard
+- issue status update APIs
+- user-facing issue history
+
+Verification used:
+
+```bash
+npm run build:api
+```
+
+## Step 24: Frontend Issues Module
+
+Built the frontend report-a-problem flow on `feature/web-issues-module`.
+
+Added:
+
+- issues RTK Query API layer for submitting support/problem reports
+- typed issue category/status models
+- `ReportAProblemModal` component using the existing modal system
+- `useReportAProblemModal` hook for category state, description state, validation, submit handling, body scroll lock, and toast feedback
+- dashboard trigger button for opening the report-a-problem modal
+
+Preserved v1 endpoint flow:
+
+```txt
+POST /api/issue
+```
+
+Frontend flow:
+
+```txt
+Dashboard report button -> ReportAProblemModal -> useReportAProblemModal -> submitIssue mutation -> POST /api/issue
+```
+
+Behavior:
+
+- category defaults to `Bug`
+- description is required before submit
+- description is capped at 1000 characters
+- successful submit shows the server success message and closes the modal
+- failed submit shows normalized API errors, including the 5-minute cooldown response
+- failed submit keeps the modal open so the user does not lose their typed description
+
+Why:
+
+Issue reporting is a support flow rather than content moderation, so it lives in a dedicated issues feature instead of the reports feature. The dashboard exposes the action because it is account/app-level feedback, matching the v1 report-a-problem entry point while using current implementation modal and hook patterns.
+
+Deferred until later modules:
+
+- issue history for users
+- admin issue review dashboard
+- issue status update UI
+
+Verification used:
+
+```bash
+npm --prefix web run typecheck
+npm --prefix web run build
+```
+
+## Step 25: Backend Dashboard Activity Support
+
+Built backend dashboard activity support on `feature/api-dashboard-module`.
+
+Added:
+
+- liked-post activity query support in the likes repository
+- following activity query support in the follow repository
+- async account-history controller handling with page-aware service call
+- dashboard account-history service logic for `likes` and `follows`
+- blocked-user filtering for liked-post and follow activity results
+
+Preserved v1 endpoint flow:
+
+```txt
+GET /api/user/getUserAccountHistory?type=likes&page=1
+GET /api/user/getUserAccountHistory?type=follows&page=1
+GET /api/user/getUserAccountHistory?type=comments&page=1
+GET /api/user/getUserAccountHistory?type=feedbacks&page=1
+```
+
+Behavior:
+
+- `likes` returns recent liked posts with a cover media item and caption
+- `follows` returns recent followed users
+- blocked users are hidden from activity results
+- `comments` and `feedbacks` remain valid activity types but return empty lists until their dependent modules are active in this branch chain
+- invalid activity types still return validation/business errors
+
+Why:
+
+The dashboard activity modal needs real backend data. Likes and follows are already migrated, so they can be wired now. Comments and feedback depend on modules that are intentionally not part of the current active dashboard chain, so they are kept safe and non-breaking until those modules are ready.
+
+Deferred until later modules:
+
+- comment activity after comments backend is active in the dashboard branch chain
+- feedback activity after messaging/feedback modules are rebuilt
+- contribution heatmap persistence and APIs
+- account deletion cleanup queue flow
+
+Verification used:
+
+```bash
+npm run build:api
+```
+
+## Step 26: Frontend Dashboard Management Module
+
+Built the frontend dashboard management layer on `feature/web-dashboard-module`.
+
+Added:
+
+- clickable followers and following stats with paginated user-list modals
+- dashboard activity modal for likes, follows, comments, and feedback history
+- reports history modal backed by the reports RTK Query API
+- blocked-users management modal with unblock support
+- privacy/account modal and delete-account OTP flow wiring
+- richer portfolio editor for experiences and educations alongside skills, interests, and languages
+- activity/settings action panel on the dashboard
+- responsive dashboard modal, settings, and portfolio editor styles
+
+Frontend flow:
+
+```txt
+Dashboard action -> dashboard modal/component -> RTK Query hook -> existing current implementation API endpoint
+Portfolio editor -> useDashboardPage -> updateProfessionalInfo -> /api/user/updateProfessionalInfo
+```
+
+Behavior:
+
+- followers/following lists use the existing user social APIs
+- activity history uses `/api/user/getUserAccountHistory` from the backend dashboard support step
+- likes and follows show real activity data now
+- comments and feedback remain valid activity tabs but depend on their later backend modules for real data
+- report history reads the current user's submitted reports
+- blocked users can be unblocked from either the inline dashboard panel or modal
+- paginated modals keep already loaded rows when loading more
+- portfolio experience and education rows can be added, edited, removed, and submitted through the existing professional-info endpoint
+
+Why:
+
+The dashboard is the user's account control surface, so it needs more than profile edit fields. This step brings the useful v1 dashboard/More Settings flows into current implementation while keeping network state in RTK Query, page logic in hooks, and modal UI in focused components.
+
+Deferred until later modules:
+
+- real comment activity after comments are active in the dashboard branch chain
+- feedback activity with messaging/chat modules
+- contribution heatmap persistence and APIs
+- final account deletion cleanup queue behavior after backend cleanup is rebuilt
+
+Verification used:
+
+```bash
+npm run check:web
+```
+
+## Step 27: V1 Flow Parity Missing Fixes
+
+Built the missed v1 parity fixes on `fix/v1-flow-parity-missing-modules`.
+
+Added and restored:
+
+- backend comments module mounting and dashboard comment-history support
+- backend chat/feedback flow for user and post feedback messages
+- conversation and message persistence for feedback-style messaging
+- contribution heatmap persistence and API shaping for auth, profile, and dashboard user data
+- account deletion verification flow for password users and Google users
+- account cleanup behavior for sessions, user posts, and related account state
+- dashboard activity actions for unlike, delete comment, unsend feedback, and unfollow
+- post/profile feedback modals connected to the restored chat APIs
+- post detail page route for notification/activity navigation
+- notification navigation to direct post details for post-related actions
+- profile and dashboard heatmap UI
+- dashboard profile-picture file upload and remove flow
+
+Corrected earlier deferred notes:
+
+- Step 25/26 had comments, feedback, heatmap, and final account-deletion cleanup marked as deferred because those modules were not active in that branch chain yet.
+- After this step, those flows are no longer intentionally empty/deferred in the v1-parity branch: comments, feedback, heatmap, and account deletion are wired through the rebuilt backend/frontend modules.
+
+Preserved v1 flow intent:
+
+```txt
+Dashboard activity -> account history API -> item-specific action
+Post/Profile feedback -> chat feedback API -> dashboard feedback history
+Notification item -> direct post detail route when post context exists
+Delete account -> password verify for password users OR OTP for Google users -> delete account
+```
+
+Why:
+
+This branch exists specifically to close missed v1 behavior gaps without changing the product flow. The implementation keeps the current implementation architecture standards already chosen for the rebuild: TypeScript modules, repositories/services/controllers on the backend, RTK Query on the frontend, focused hooks/components, and clean route-level wiring.
+
+Verification used:
+
+```bash
+npm run build:api
+npm run build:web
+git diff --check
+```
+
+## Step 28: Frontend V1 UI Parity Pass
+
+Reworked the frontend UI parity layer on `feature/web-v1-ui-parity`.
+
+Added and restored:
+
+- v1-style protected app shell with fixed desktop sidebar and mobile bottom navigation
+- sidebar route nesting through a dedicated `SidebarLayout`
+- `/messages` route shell so the v1 navigation item no longer falls through to 404 before the full messaging module
+- v1-style dashboard header, stats, section tabs, and focused content panels
+- dashboard More Settings structure with display, activities, collections, support, and privacy sections
+- dashboard add-post action connected to the existing post composer modal
+- v1-style feed layout with fixed feed switcher, centered feed column, inline recommendations, and desktop recommendations rail
+- v1-style post card interactions with three-dot options menu, vertical action bar labels/counts, media containment, and caption ordering
+
+Preserved flow intent:
+
+```txt
+Protected route -> SidebarLayout -> page content
+Dashboard header -> dashboard tab -> focused section content
+Feed switcher -> feed query -> centered post list + recommendations
+Post card options -> edit/delete/report modal flow
+```
+
+Why:
+
+The current implementation frontend had the right feature wiring, but the dashboard and feed had too many actions visible in a single surface and no longer matched the v1 app experience. This step brings the familiar v1 layout back while keeping the current implementation implementation style: TypeScript, feature folders, RTK Query, shared UI primitives, and local page/component state.
+
+Deferred until later modules:
+
+- full realtime `/messages` page implementation
+- collab rooms UI and socket flow
+- problem/admin/gen-AI flows
+
+Verification used:
+
+```bash
+npm run build:web
+git diff --check
+```
+
+## Step 29: Exact V1 Feed, Post Card, and Dashboard UI Correction
+
+Tightened the frontend parity pass on `feature/web-v1-ui-parity` after comparing directly against the v1 JSX/CSS values.
+
+Corrected in this step:
+
+- removed the extra feed navbar action so the home feed navbar matches v1: logo plus All/Following dropdown only
+- copied the v1 logo asset into the current implementation web assets and wired the feed navbar to use it
+- rebuilt the feed page spacing, fixed auto-hide navbar, centered 640px post column, inline recommendations, and desktop rail to match v1
+- rebuilt the post card structure around v1 dimensions, radii, media height, carousel controls, action labels/counts, project links, caption ordering, and options menu
+- removed the permanent saved-collections text under post cards and kept save management behind the v1-style transient save popover
+- restored the dashboard posts tab from full feed cards back to the v1 gallery preview grid with post count
+- added exact dashboard shell/header/tabs/content CSS values for v1-style spacing, shadows, borders, and responsive behavior
+
+Preserved flow intent:
+
+```txt
+Feed navbar -> All/Following dropdown only
+Feed page -> centered v1 post list -> inline/rail recommendations
+Post card -> media -> actions -> project links -> caption
+Dashboard -> v1 header -> tabs -> focused v1 content panels
+Dashboard posts -> gallery preview grid -> post detail route
+```
+
+Why:
+
+The first UI parity pass was close, but it still had current implementation design decisions mixed in. This correction treats v1 as the visual source of truth and maps its Tailwind/CSS values into the current implementation TypeScript component structure without changing the product flow.
+
+Verification used:
+
+```bash
+npm run build:web
+git diff --check
+```
+
+### Dashboard completion pass
+
+Completed the remaining dashboard parity work on the same `feature/web-v1-ui-parity` branch by treating the v1 dashboard JSX and CSS as the visual source of truth.
+
+Restored and corrected:
+
+- exact dashboard header composition with Posts, Followers, Following, and the contribution badge
+- v1 Edit Profile modal, avatar update/remove UI, password accordion, and forgot-password handoff
+- all six portfolio editor tabs: Info, Skills, Experience, Education, Interests, and Language
+- v1 tag editors, suggestions, helper copy, timeline cards, add forms, and responsive states
+- full portfolio preview structure with profile stats, contribution heatmap, profile sections, post/project galleries, and preview-only actions
+- contribution heatmap framing and Activity Rules popover
+- compact Rooms empty state matching the current v1 dashboard presentation
+- More Settings navigation and Display, Activities History, Collections, Support & Legal, and Privacy & Security panels
+- v1-style activity history, followers/following, and reports modal presentation
+- original mobile, tablet, and desktop breakpoints for header stats, actions, tabs, portfolio forms, preview, and settings layout
+
+Preserved implementation boundaries:
+
+```txt
+Dashboard UI -> existing useDashboardPage handlers -> existing RTK Query mutations
+Dashboard modals -> existing RTK Query hooks -> existing current implementation API endpoints
+```
+
+No backend endpoint, repository, service, request payload, or authentication behavior was changed during this UI parity pass.
+
+Verification used:
+
+```bash
+npm run build:web
+git diff --check
+```
+
+Desktop and mobile dashboard/portfolio smoke screenshots were also inspected for clipping, overflow, and breakpoint parity.
+
+## Step 30: Product Architecture Documentation Foundation
+
+Established the product architecture documentation baseline on `chore/product-architecture-foundation`.
+
+Added:
+
+- `Disuza-Architecture-Guide.md` as the high-level system and product architecture source of truth
+- `ARCHITECTURE-DECISIONS.md` as a durable decision register with separate decision and delivery states
+- README links so architecture, decisions, and the chronological development journey are discoverable from the repository entry point
+- verified current maps for the current implementation API and web applications
+- domain rules inherited from v1 for auth, social relationships, posts, media, comments, contributions, saves, reports, notifications, messaging, blocking, and collaborative rooms
+- current request, auth refresh, post, comment, feedback, and cleanup flows
+- explicit infrastructure boundaries for future Redis, Socket.IO, BullMQ, Yjs, Judge0, TURN, OpenAPI, testing, CI, and Docker work
+
+Documentation sources:
+
+- v1 root `README.md` and `docs.md`
+- v1 backend `disuza-api/docs.md`
+- v1 frontend `disuza-web/docs.md`
+- v1 `futureFixes.md` risk backlog
+- live current implementation code and this development journal
+- the Collabify architecture guide for documentation and boundary inspiration only
+
+Important status rule:
+
+- `Implemented`: present and verified in current implementation.
+- `Partial`: a usable subset exists in current implementation.
+- `Planned`: accepted architecture, not delivered yet.
+- `Deferred`: intentionally waiting for dependencies or product decisions.
+
+Why:
+
+current implementation already had good feature-level implementation history, but it did not yet have one system-level document explaining product boundaries, module ownership, cross-domain rules, current delivery status, and accepted future direction. This foundation prevents planned v1 capabilities from being mistaken for completed current implementation work and gives future branches a stable place to record architecture changes.
+
+No runtime behavior or product flow changed in this step.
+
+Verification used:
+
+```bash
+git diff --check
+```
+
+The documented repository maps, module statuses, product rules, and source-of-truth hierarchy were also cross-checked against the live current implementation code and the v1 product documentation.
+
+## Step 31: Architecture Foundation Integrity And Debugging Playbook
+
+Completed the architecture-documentation foundation on `fix/architecture-foundation-integrity` and repaired merge artifacts discovered while verifying the latest `develop` branch.
+
+Added:
+
+- `DEBUGGING-GUIDE.md` as the repository-wide troubleshooting source of truth
+- a first-response workflow and safe evidence-record template
+- symptom-to-layer triage and complete frontend, backend, auth/session, persistence, and provider checklists
+- product-specific checks for profiles, social relationships, posts, ordered media, comments, replies, contributions, saves, reports, issues, notifications, search, and contextual feedback
+- clearly labelled future checklists for Socket.IO, Redis, BullMQ, Yjs, rooms, code execution, and calls
+- a verification matrix and reusable bug/incident note template
+- README, architecture map, and documentation-governance links for the debugging guide
+
+Corrected:
+
+- restored the missing `incrementFeedbacksCount` repository method closure left by conflict resolution
+- removed duplicate comment route registration and duplicate post repository comment methods left by the same merge chain
+- moved dashboard build and screenshot verification back under the Step 29 dashboard completion pass
+- restored Step 30 to documentation-only architecture verification
+
+Why:
+
+Debugging discipline belongs in the architecture foundation because it defines how engineers trace ownership boundaries, gather safe evidence, and prove a fix across the product. The guide starts now with the current HTTP application and grows alongside future realtime and worker runtimes without claiming those planned systems already exist.
+
+Verification used:
+
+```bash
+npm run check
+npm run build:api
+npm run build:web
+git diff --check
+```
+
+## Step 32: Product Structure Foundation
+
+Built the first product-architecture structure pass on `chore/product-structure-foundation`.
+
+Completed the first eight foundation modifications before the remaining v1 module migration continues:
+
+- backend module public APIs with `api/src/modules/<domain>/index.ts`
+- centralized API route registry in `api/src/modules/index.ts`
+- backend `core` boundary for provider-neutral HTTP contracts, domain events, and policy decisions
+- backend `infrastructure` boundary for database, observability, storage, email, OAuth, cache, jobs, realtime, and future code execution adapters
+- frontend route-level `pages` layer so the router lazy-loads page entries instead of feature internals
+- frontend public feature/shared exports, plus reserved `entities` and `widgets` layers for gradual Feature-Sliced growth
+- root `contracts` folder with a draft OpenAPI baseline and REST contract rules
+- testing/CI foundation with test-layout docs, `npm run verify`, and a GitHub Actions typecheck/build workflow
+
+Deferred intentionally:
+
+- Docker/local infrastructure packaging and production deployment manifests remain for the final hardening phase after the app modules are complete.
+- Redis, BullMQ, Socket.IO, Yjs, Judge0, and TURN folders are structure targets only until real implementation branches add and verify those runtimes.
+- Full endpoint OpenAPI coverage, lint-enforced boundaries, and automated unit/integration/component/E2E tests are planned follow-up work on top of this foundation.
+
+Why:
+
+The app had working current implementation modules, but the product-level folder boundaries were still mostly documentation. This step makes the accepted architecture visible in the repo without changing v1 product flow: modules keep their current behavior, routes remain REST-first, the web UI still renders through existing feature pages, and future migrations now have clear places for public APIs, contracts, adapters, tests, and large page composition.
+
+Verification used:
+
+```bash
+npm run verify
+git diff --check
+```
+
+Conflict-marker scan was also clean.
+
+## Step 33: Backend Messaging And Chat HTTP Parity
+
+Built the backend messaging/chat HTTP parity pass on `feature/api-messaging-chat-module`.
+
+Completed:
+
+- tightened conversation send authorization so a user can only send through conversations they participate in
+- preserved v1 conversation resume behavior for visible/hidden conversations through the existing chat repository flow
+- added `currentPage` to the messages response for frontend pagination parity with the v1 RTK Query merge behavior
+- enabled message reports through the generic reports module
+- message reports now verify that the reported message exists and belongs to one of the reporter's conversations
+- self-reporting and block-aware report restrictions remain enforced for message targets
+
+Preserved:
+
+- normal messages and feedback messages share the same conversation/message persistence
+- feedback messages keep post/profile context and contribution links
+- feedback deletion reverses contribution state and post feedback count where applicable
+- conversation hiding remains per participant instead of deleting the other user's history
+
+Deferred:
+
+- realtime Socket.IO message delivery, reconnect handling, and notification fan-out
+- collab request/room creation from chat
+- BullMQ conversation cleanup when both participants hide a conversation
+
+Why:
+
+The existing current implementation chat module already covered most v1 HTTP behavior, but message reports and a stricter conversation membership guard were needed before the full v1-style messages UI could safely rely on these APIs.
+
+Verification used:
+
+```bash
+npm run check:api
+```
+
+## Step 34: Frontend Messaging And Chat UI Parity
+
+Built the frontend messaging/chat parity pass on `feature/web-messaging-chat-module`.
+
+Completed:
+
+- added typed chat RTK Query endpoints for conversations, messages, send, unsend, mark-as-read, and delete conversation
+- restored v1-style message pagination cache merging with older messages prepended by page
+- added optimistic send, unsend, mark-as-read, and delete-conversation cache updates
+- added the chat slice for selected conversation, active window state, and future realtime notification handoff
+- rebuilt the messages page as the v1 two-pane inbox/chat layout
+- restored conversation search, unread indicators, active chat highlighting, delete-chat menu, and mobile back behavior
+- restored chat header profile navigation, right-click close-chat menu, blocked/deleted user states, message composer, and load-older control
+- restored message menus with sender unsend and receiver report behavior through the generic report modal
+- restored feedback preview cards for post/profile feedback messages
+- translated the v1 visual system into CSS classes for the inbox, chat window, bubbles, menus, feedback cards, date dividers, composer, and responsive states
+
+Preserved:
+
+- message data still comes from the current implementation HTTP chat module
+- message reports use the generic reports module with `onModel: "Message"`
+- blocked and deleted-user conversations remain visible but unavailable for new messages
+- chat route state can open a conversation/user from notifications, search, profile, or future entry points
+
+Deferred:
+
+- realtime Socket.IO cache listeners and reconnect resync
+- live message notifications and unread fan-out
+- collab permission modal and room creation from the Start Collab button
+
+Why:
+
+Messaging is a core v1 flow and should not remain as a placeholder while the rest of the product modules migrate. This step keeps the UI and interaction model aligned with v1 while moving the implementation to typed hooks, RTK Query cache boundaries, feature-local helpers, and the current current implementation route/store structure.
+
+Verification used:
+
+```bash
+npm run check:web
+npm run build:web
+```
+
+## Step 35: Realtime Socket And Collab Room Module
+
+Built the realtime socket and collaborative room flow across `feature/api-realtime-collab-module` and `feature/web-realtime-collab-module`.
+
+API completed:
+
+- added an authenticated Socket.IO infrastructure boundary under `api/src/infrastructure/realtime`
+- sockets now connect only with a valid access token and join the authenticated user's private room
+- logout/no-token web state can disconnect the socket cleanly from the client side
+- configured socket CORS, credentials, reconnect transport support, ping interval, and ping timeout through validated env values
+- added realtime chat fan-out for received messages and unsent messages while preserving the existing HTTP chat persistence flow
+- added collab room/request APIs for personal rooms, conversation-based requests, accepts, room status, room lists, and room details
+- added problem/room-problem APIs for adding, selecting, unselecting, language updates, code persistence, and code execution
+- added room presence, code sync, Yjs update relay, audio-call signaling, and debounced room-code persistence through the socket layer
+
+Web completed:
+
+- added a socket client service with token-based auth, reconnect settings, and a login/logout-aware lifecycle provider
+- added heartbeat pings while authenticated so idle browser sessions can keep the realtime connection alive
+- wired message RTK Query caches to socket events for live received messages, unsent messages, conversation ordering, unread state, and cache invalidation
+- added collab and problem RTK Query APIs for room requests, room loading, problem selection, language changes, and code runs
+- added the messages Start Collab flow with a permission/request modal and room navigation
+- added notification handling for collab requests and accepted-room navigation
+- rebuilt the v1-style collab room workspace with a left problems panel, center problem/editor/results area, and right users/audio/chat panel
+- added local hooks for room socket joins, room-sync handling, code changes, execution updates, user presence, and audio-call signaling
+
+Preserved:
+
+- collab starts from the messaging/conversation flow instead of being a detached new product path
+- chat message creation still goes through the existing HTTP API before realtime fan-out
+- room access is validated on both HTTP APIs and socket room joins
+- selected room problem, code, language, execution result, users panel, room chat, and audio-call interaction follow the v1 product flow
+
+Deferred:
+
+- TURN/STUN production hardening beyond browser defaults and basic peer signaling
+- Redis-backed socket presence, multi-node room state, and distributed code execution locks
+- admin-managed problem catalog and GenAI problem assistance
+- deeper E2E coverage for multiple browsers in the same room
+
+Why:
+
+Messaging and collaborative rooms depend on realtime infrastructure, so this step establishes the socket boundary before continuing with room-heavy product modules. The implementation keeps the v1 interaction model while moving socket auth, room authorization, cache updates, and UI state into typed services, RTK Query cache hooks, and feature-local React hooks.
+
+Verification used:
+
+```bash
+npm --prefix api run typecheck
+npm --prefix api run build
+npm --prefix web run typecheck
+npm --prefix web run build
+git diff --check
+```
+
+## Step 38: Rich Post Content And Sharing Upgrade
+
+Upgraded the post module on `feature/post-rich-content-sharing`.
+
+API completed:
+
+- allowed text-only posts instead of requiring image/video media
+- added structured extra links with label and URL
+- kept project posts stricter by requiring live demo and GitHub repository links
+- added code snippet and caption-derived hashtag fields to the post model, validators, service normalization, and search indexing
+- added repost persistence with optimistic-safe repost/unrepost endpoints and post count updates
+- extended chat messages with a `post` message type so shared posts can be sent inside conversations
+- updated post cleanup so repost records and shared-post chat references are handled with post deletion
+
+Web completed:
+
+- added an inline feed composer with Image, Code, Project, and Link tools while removing Poll/Everyone from the new post flow
+- updated the post modal composer to support optional media, code snippets, extra links, and project links
+- rebuilt post cards for text-first rich content with code blocks, link chips, inline highlighted hashtags, mixed media, repost, feedback, save, and share actions
+- added hashtag navigation to `/search?q=#tag` so explore/search opens with the selected hashtag already applied
+- added a share-post modal with copy-link support and conversation selection
+- rendered shared post messages inside chat with a clickable post preview and conversation preview text
+- added RTK Query optimistic repost cache updates and post-message chat cache metadata
+- refined the feed composer into icon-only tools with code/link/more popovers, fixed-height text input, and project/settings controls under More
+- fixed create validation so text-only, code-only, link-only, and image-only posts are accepted while project posts still require both project links
+- clamped post captions to two lines by default with more/less expansion, including newline-heavy text
+
+Preserved:
+
+- existing comments, feedback, report, save collection, edit, and delete flows
+- current implementation TypeScript module boundaries, RTK Query API slices, and feature-local hooks
+- existing media carousel ordering for image/video posts
+- existing project post live/GitHub link rules, now alongside optional extra links
+
+Why:
+
+The old post flow forced every post to include media, which blocked LinkedIn/Twitter-style text posts, code snippets, link sharing, hashtags, reposts, and chat sharing. This step turns posts into a richer product surface while keeping the existing module architecture and interaction contracts stable.
+
+Verification used:
+
+```bash
+npm --prefix api run typecheck
+npm --prefix web run build
+git diff --check
+```
+
+## Step 36: V1 UI And Realtime Parity Cleanup
+
+Completed the v1 parity cleanup pass on `fix/v1-parity-ui-realtime-cleanup`.
+
+Fixed:
+
+- restored realtime notification fan-out from the API notification service for `new_notification` and `delete_notification`
+- wired notification RTK Query cache listeners for live insert/delete updates and reconnect invalidation
+- added chat conversation/message reconnect invalidation so stale socket state resyncs through HTTP
+- warmed authenticated conversation and notification caches from the protected layout so sidebar badges stay available outside those pages
+- split sidebar unread counts so Messages uses unread conversations and Notifications keeps unread notifications
+- restored dashboard Rooms from a placeholder to real room data with personal-room entry and retry/loading/empty states
+- reshaped the dashboard Add Post/Edit Post modal to the v1 modal flow while preserving current implementation ordered image/video media support
+- fixed dashboard/profile heatmap layout so the six-month grid uses its full row without the narrow profile scrollbar issue
+- restored the landing page to the v1 product-section structure using current implementation CSS instead of Tailwind classes
+- tightened public profile parity by adding Posts to stats, hiding empty sections, restoring experience/education sections, and showing post/project sections only when content exists
+- added notification action buttons for accepting collaboration requests and entering accepted rooms
+
+Preserved:
+
+- current implementation typed RTK Query and feature-based folder boundaries
+- existing REST request/response contracts
+- existing auth/session flow and protected layout behavior
+- existing post composer validation and the current implementation media ordering upgrade
+- existing collab room route and HTTP room endpoints
+
+Why:
+
+The previous migration branches had the right core modules, but several visible surfaces still felt like generic current implementation placeholders instead of the v1 product flow. This pass brings the dashboard, landing, profile, notifications, realtime cache behavior, unread badges, and composer modal closer to v1 while keeping the newer TypeScript, RTK Query, and module boundaries.
+
+Verification used:
+
+```bash
+npm run check:web
+npm run check:api
+npm run build:web
+npm run build:api
+```
+
+## Step 37: Complete V1 Flow Parity Cleanup
+
+Completed the final v1 parity cleanup pass on `fix/v1-complete-parity-cleanup`.
+
+Fixed:
+
+- restored Redis as an active infrastructure adapter for distributed locks and job runtime support
+- restored BullMQ cleanup queues/workers for post, user, and hidden-for-everyone conversation cleanup
+- moved post deletion back to the v1 mark-and-queue flow instead of doing partial inline cleanup in the request
+- moved account deletion back to the v1 deactivation, session revoke, mark-posts-deleting, and queued cleanup flow
+- queued conversation cleanup when both participants hide a conversation or the other participant is already deleted
+- restored Redis-backed room-problem run locks so code execution is safe across multiple API processes
+- restored notification delete fan-out for bulk content cleanup so clients remove stale notification rows live
+- restored v1 problem seed data under the current implementation scripts boundary
+- restored v1 message notification observer, unread title manager, notification audio, and call ringtone behavior
+- restored v1 compact search post cards instead of full feed cards inside Search
+- restored the post detail back-button flow and richer saved-post tooltip presentation
+- aligned collab problem suggestion chips with v1 constants
+
+Preserved:
+
+- current implementation TypeScript feature/module folder structure
+- RTK Query cache boundaries and existing REST contracts
+- existing socket auth/session lifecycle
+- current implementation ordered mixed image/video media support
+
+Why:
+
+The app modules were mostly migrated, but several v1 operational behaviors and small UI states were still missing. This pass focuses on exact product feel and lifecycle parity without changing the agreed current implementation architecture boundaries.
+
+Verification used:
+
+```bash
+npm --prefix api run build
+npm --prefix web run build
+git diff --check
+```
+
+## Step 38: Repost Policy And Profile Surfacing
+
+Updated the rich post branch repost behavior on `feature/post-rich-content-sharing`.
+
+API completed:
+
+- enforced the backend domain rule that users cannot repost their own posts
+- added repost list and repost detail endpoints under the post API surface
+- kept reposts as durable user-post relations instead of feed fan-out posts
+- applied block visibility checks to repost list/detail reads
+- enriched reposted original posts with viewer like/save/repost state
+
+Web completed:
+
+- hid the repost action on the viewer's own posts
+- added a Yours/Reposts switcher to the dashboard posts panel
+- added a Reposts section to public profile activity
+- added clickable repost preview cards that route to repost detail
+- added a repost detail layout that shows reposter context, hides feedback, and keeps original post engagement actions on the original post
+- kept original post detail available through a `See original post` action
+
+Policy recorded:
+
+- `Disuza-Architecture-Guide.md` now records repost ownership, visibility, feed, and engagement rules
+- `ARCHITECTURE-DECISIONS.md` now records DLF-037 for reposts as profile-visible references instead of feed fan-out
+
+Why:
+
+Reposts should help users show activity on their dashboard/profile without creating duplicate posts in follower feeds or letting users artificially repost their own content. Keeping reposts as a relation preserves the original post as the engagement source while giving reposts their own profile/detail presentation.
+
+Verification used:
+
+```bash
+npm run build:api
+npm run build:web
+git diff --check
+```
+

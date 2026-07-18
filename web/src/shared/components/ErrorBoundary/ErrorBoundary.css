@@ -1,0 +1,81 @@
+.error-boundary {
+  color: var(--text-primary);
+}
+
+.error-boundary--page {
+  display: grid;
+  min-height: 100dvh;
+  place-items: center;
+  background: var(--bg-main);
+  padding: 24px;
+}
+
+.error-boundary--section,
+.error-boundary--inline {
+  display: grid;
+  width: 100%;
+  min-width: 0;
+}
+
+.error-boundary__panel {
+  display: grid;
+  width: min(100%, 420px);
+  gap: 10px;
+  border: 1px solid var(--border-secondary);
+  border-radius: 8px;
+  background: var(--surface);
+  padding: 22px;
+  box-shadow: var(--shadow-media);
+}
+
+.error-boundary--section .error-boundary__panel,
+.error-boundary--inline .error-boundary__panel {
+  width: 100%;
+  background: var(--surface-deep);
+}
+
+.error-boundary--inline .error-boundary__panel {
+  gap: 8px;
+  padding: 14px;
+}
+
+.error-boundary__eyebrow,
+.error-boundary__panel h1,
+.error-boundary__panel p {
+  margin: 0;
+}
+
+.error-boundary__eyebrow {
+  color: var(--accent);
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.error-boundary__panel h1 {
+  font-size: 20px;
+  line-height: 1.2;
+}
+
+.error-boundary--inline .error-boundary__panel h1 {
+  font-size: 15px;
+}
+
+.error-boundary__panel p {
+  color: var(--text-secondary);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.error-boundary__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.error-boundary__actions .button {
+  min-height: 36px;
+  border-radius: 6px;
+}

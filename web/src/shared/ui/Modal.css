@@ -1,0 +1,31 @@
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 9000;
+  display: grid;
+  place-items: center;
+  overflow: auto;
+  background: rgba(5, 8, 13, 0.72);
+  padding: 20px;
+}
+
+.modal-card {
+  width: min(100%, 620px);
+  border: 1px solid var(--border-primary);
+  border-radius: 12px;
+  background: var(--surface);
+  padding: 22px;
+  box-shadow: var(--shadow-elevated);
+}
+
+.modal-card__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.modal-card__header h1 {
+  margin: 4px 0 0;
+  font-size: 28px;
+}

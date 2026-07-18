@@ -1,0 +1,81 @@
+.collab-chat-panel {
+  display: flex;
+  height: 100%;
+  min-height: 0;
+  flex-direction: column;
+  background: var(--surface);
+}
+
+.collab-chat-panel header {
+  display: flex;
+  flex: 0 0 auto;
+  min-width: 0;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 12px;
+  border-bottom: 1px solid var(--border-secondary);
+  background: var(--surface);
+  padding: 12px 16px;
+}
+
+.collab-chat-panel header svg {
+  color: var(--accent);
+}
+
+.collab-chat-panel h3 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.collab-room-messages {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 12px;
+  overflow-y: auto;
+  background: var(--surface-deep);
+  padding: 12px;
+}
+
+:root:not([data-theme='light']) .collab-room-messages {
+  background: rgba(7, 10, 16, 0.45);
+}
+
+.collab-chat-panel footer {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 8px;
+  border-top: 1px solid var(--border-secondary);
+  background: var(--surface);
+  padding: 16px;
+}
+
+.collab-chat-panel footer .input {
+  min-height: 42px;
+  border-radius: 999px;
+  padding: 0 14px;
+}
+
+.collab-chat-panel footer button {
+  display: inline-flex;
+  width: 42px;
+  height: 42px;
+  min-width: 0;
+  flex: 0 0 42px;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: var(--accent);
+  color: white;
+  padding: 0;
+  font-size: 12px;
+  font-weight: 800;
+  transition: background 160ms ease, border-color 160ms ease, opacity 160ms ease;
+}
+
+.collab-chat-panel footer button:disabled {
+  opacity: 0.6;
+}

@@ -1,0 +1,98 @@
+.toast-stack {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  z-index: 10000;
+  display: grid;
+  width: min(360px, calc(100vw - 32px));
+  gap: 10px;
+  pointer-events: none;
+}
+
+.toast {
+  display: grid;
+  grid-template-columns: 34px 1fr 30px;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid var(--border-primary);
+  border-radius: 10px;
+  background: rgba(9, 13, 20, 0.96);
+  padding: 12px;
+  box-shadow: 0 16px 42px rgba(0, 0, 0, 0.34);
+  pointer-events: auto;
+  animation: toast-in 180ms ease-out;
+}
+
+.toast__body {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.toast__body strong {
+  color: var(--text-primary);
+  font-size: 13px;
+  line-height: 1.15;
+}
+
+.toast p {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.45;
+}
+
+.toast button {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--surface-deep);
+  color: var(--text-secondary);
+}
+
+.toast__icon {
+  width: 22px;
+  height: 22px;
+}
+
+.toast__avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  object-fit: cover;
+}
+
+.toast--success .toast__icon {
+  color: var(--accent);
+}
+
+.toast--error .toast__icon {
+  color: var(--danger);
+}
+
+.toast--warning .toast__icon {
+  color: var(--warning);
+}
+
+.toast--info .toast__icon {
+  color: #94a3b8;
+}
+
+.toast--notify {
+  border-color: rgba(59, 99, 255, 0.34);
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translate3d(18px, -10px, 0) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}

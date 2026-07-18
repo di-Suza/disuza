@@ -1,0 +1,195 @@
+/* Centered product shell */
+:root {
+  --app-shell-max: 1360px;
+  --app-sidebar-width: 264px;
+  --app-sidebar-gap: 20px;
+  --app-column-top-gap: 16px;
+  --app-content-max: calc(var(--app-shell-max) - var(--app-sidebar-width) - var(--app-sidebar-gap));
+  --app-rail-width: 320px;
+  --app-feed-width: calc(var(--app-content-max) - var(--app-sidebar-gap) - var(--app-rail-width));
+}
+
+.sidebar-layout .home-feed-exact {
+  display: grid;
+  grid-template-columns: 1fr;
+  width: min(100%, var(--app-feed-width));
+  max-width: var(--app-feed-width);
+  min-height: 80vh;
+  align-items: start;
+  gap: 16px;
+  margin: 0 auto 0 0;
+  padding: var(--app-column-top-gap) 0 64px;
+}
+
+.sidebar-layout .home-feed-exact.has-recommendations {
+  max-width: var(--app-feed-width);
+}
+
+.sidebar-layout .home-feed-exact__main,
+.sidebar-layout .home-feed-exact .inline-post-composer,
+.sidebar-layout .home-feed-exact .feed-post-skeleton,
+.sidebar-layout .home-feed-exact .v1-post-card-outer,
+.sidebar-layout .home-feed-exact .recommendation-slider {
+  min-width: 0;
+  width: 100%;
+  max-width: var(--app-feed-width);
+}
+
+.sidebar-layout .home-feed-exact .inline-post-composer,
+.sidebar-layout .home-feed-exact .feed-post-skeleton,
+.sidebar-layout .home-feed-exact .v1-post-card-outer,
+.sidebar-layout .home-feed-exact .recommendation-slider {
+  margin-right: 0;
+  margin-left: 0;
+}
+
+.sidebar-layout .home-feed-exact .inline-post-composer {
+  margin-top: 0;
+  padding: 16px 18px;
+}
+
+.sidebar-layout .home-feed-exact .v1-post-card-outer {
+  padding-right: 0;
+  padding-left: 0;
+}
+
+.sidebar-layout .home-feed-exact__rail {
+  align-self: start;
+  min-width: 0;
+}
+
+.sidebar-layout .home-feed-exact .recommendation-rail {
+  top: var(--app-column-top-gap);
+}
+
+.dashboard-v1-container,
+.dashboard-panel--wide,
+.messages-v1-page,
+.repost-detail-card {
+  max-width: var(--app-content-max);
+}
+
+.dashboard-shell--wide,
+.dashboard-v1-shell,
+.search-shell,
+.notifications-shell {
+  padding-top: 24px;
+}
+
+.messages-v1-page {
+  width: 100%;
+  margin: 0 auto;
+}
+
+@media (min-width: 993px) {
+  :root {
+    --app-shell-offset: max(0px, calc((100vw - var(--app-shell-max)) / 2));
+  }
+
+  .sidebar-layout > .sidebar-layout__content {
+    width: min(var(--app-content-max), calc(100vw - var(--app-sidebar-width) - var(--app-sidebar-gap)));
+    margin-left: calc(var(--app-shell-offset) + var(--app-sidebar-width) + var(--app-sidebar-gap));
+    padding-top: 0;
+  }
+
+  .sidebar-layout .dashboard-shell--wide,
+  .sidebar-layout .dashboard-v1-shell,
+  .sidebar-layout .search-shell,
+  .sidebar-layout .notifications-shell,
+  .sidebar-layout .messages-v1-page {
+    padding-top: var(--app-column-top-gap);
+    padding-right: 0;
+    padding-left: 0;
+  }
+
+  .app-sidebar,
+  .app-sidebar.is-expanded {
+    left: var(--app-shell-offset);
+  }
+
+  .app-sidebar__toggle {
+    display: none;
+  }
+
+  .app-sidebar__header,
+  .app-sidebar.is-expanded .app-sidebar__header {
+    display: none;
+  }
+}
+
+@media (min-width: 1200px) {
+  .sidebar-layout .home-feed-exact.has-recommendations {
+    width: min(100%, calc(var(--app-feed-width) + var(--app-sidebar-gap) + var(--app-rail-width)));
+    max-width: calc(var(--app-feed-width) + var(--app-sidebar-gap) + var(--app-rail-width));
+    grid-template-columns: minmax(0, var(--app-feed-width)) var(--app-rail-width);
+    column-gap: var(--app-sidebar-gap);
+  }
+
+  .sidebar-layout .home-feed-exact.has-recommendations > .home-feed-exact__rail {
+    display: block;
+  }
+
+  .sidebar-layout .home-feed-exact.has-recommendations .recommendation-slider {
+    display: none;
+  }
+}
+
+@media (max-width: 1199px) {
+  .sidebar-layout .home-feed-exact {
+    padding-right: 12px;
+    padding-left: 12px;
+  }
+}
+
+@media (max-width: 992px) {
+  .sidebar-layout > .sidebar-layout__content {
+    width: 100%;
+    margin-left: 0;
+    padding-top: var(--app-mobile-content-top, 80px);
+  }
+
+  .sidebar-layout .home-feed-exact,
+  .sidebar-layout .home-feed-exact.has-recommendations {
+    width: min(100%, 720px);
+    max-width: 720px;
+    grid-template-columns: 1fr;
+    margin-right: auto;
+    margin-left: auto;
+    padding-top: 12px;
+    padding-right: clamp(12px, 3vw, 20px);
+    padding-left: clamp(12px, 3vw, 20px);
+  }
+
+  .sidebar-layout .home-feed-exact__main,
+  .sidebar-layout .home-feed-exact .inline-post-composer,
+  .sidebar-layout .home-feed-exact .feed-post-skeleton,
+  .sidebar-layout .home-feed-exact .v1-post-card-outer,
+  .sidebar-layout .home-feed-exact .recommendation-slider {
+    max-width: 100%;
+  }
+
+  .sidebar-layout .home-feed-exact.has-recommendations > .home-feed-exact__rail {
+    display: none;
+  }
+
+  .sidebar-layout .home-feed-exact.has-recommendations .recommendation-slider {
+    display: grid;
+  }
+
+  .dashboard-shell--wide,
+  .dashboard-v1-shell,
+  .search-shell,
+  .notifications-shell {
+    padding-top: 16px;
+  }
+
+  .messages-v1-page {
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 767px) {
+  .sidebar-layout .home-feed-exact {
+    padding-top: 0;
+  }
+}

@@ -1,0 +1,63 @@
+services:
+  mongo:
+    image: mongo:7
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+
+  api:
+    build:
+      context: .
+      dockerfile: api/Dockerfile
+      target: development
+    restart: unless-stopped
+    environment:
+      NODE_ENV: development
+      PORT: 8080
+      MONGODB_URI: mongodb://mongo:27017/disuza
+      CORS_ORIGIN: http://localhost:5173
+      SOCKET_CORS_ORIGIN: http://localhost:5173
+      REDIS_ENABLED: "true"
+      JOB_WORKERS_ENABLED: "true"
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      JWT_ACCESS_SECRET: disuza_access_secret_change_me_32_chars
+      JWT_REFRESH_SECRET: disuza_refresh_secret_change_me_32_chars
+    ports:
+      - "8080:8080"
+    volumes:
+      - .:/app
+      - api-node-modules:/app/api/node_modules
+    depends_on:
+      - mongo
+      - redis
+
+  web:
+    build:
+      context: .
+      dockerfile: web/Dockerfile
+      target: development
+    restart: unless-stopped
+    environment:
+      VITE_API_BASE_URL: http://localhost:8080/api
+      VITE_SOCKET_URL: http://localhost:8080
+    ports:
+      - "5173:5173"
+    volumes:
+      - .:/app
+      - web-node-modules:/app/web/node_modules
+    depends_on:
+      - api
+
+volumes:
+  mongo-data:
+  api-node-modules:
+  web-node-modules:

@@ -1,0 +1,113 @@
+.post-detail-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 42px;
+  margin-bottom: 16px;
+}
+
+.post-detail-header span {
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.repost-detail-card {
+  width: min(100%, 720px);
+  margin: 0 auto;
+}
+
+.repost-detail-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin: 0 auto 12px;
+  border: 1px solid var(--border-secondary);
+  border-radius: 12px;
+  background: rgba(15, 23, 42, 0.48);
+  padding: 12px 14px;
+}
+
+.repost-detail-card__user {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 10px;
+  border: 0;
+  background: transparent;
+  color: var(--text-primary);
+  padding: 0;
+  text-align: left;
+}
+
+.repost-detail-card__user > span:first-child {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  flex: 0 0 auto;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid var(--border-secondary);
+  border-radius: 999px;
+  background: var(--surface-muted);
+}
+
+.repost-detail-card__user img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.repost-detail-card__user > span:last-child {
+  display: grid;
+  min-width: 0;
+  gap: 3px;
+}
+
+.repost-detail-card__user strong,
+.repost-detail-card__user small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.repost-detail-card__user small,
+.repost-detail-card__original {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.repost-detail-card__original {
+  flex: 0 0 auto;
+  border: 1px solid var(--border-secondary);
+  border-radius: 999px;
+  background: var(--surface-deep);
+  padding: 8px 12px;
+}
+
+.repost-detail-card__original:hover {
+  border-color: rgba(59, 99, 255, 0.44);
+  color: var(--text-primary);
+}
+
+.repost-detail-card__post.v1-post-card-outer {
+  width: 100%;
+  max-width: 100%;
+  margin-top: 0;
+}
+
+@media (max-width: 620px) {
+  .repost-detail-card__header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .repost-detail-card__original {
+    justify-content: center;
+  }
+}

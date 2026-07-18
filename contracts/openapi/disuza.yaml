@@ -1,0 +1,91 @@
+openapi: 3.1.0
+info:
+  title: Disuza API
+  version: 0.2.0
+  summary: Disuza REST API contract baseline
+  description: >
+    Draft contract for the TypeScript modular monolith. Endpoint coverage is
+    added incrementally as modules are verified.
+servers:
+  - url: http://localhost:5000
+    description: Local API server
+tags:
+  - name: Health
+    description: Runtime health checks
+  - name: Auth
+    description: Authentication, refresh, and session management
+  - name: Users
+    description: Profiles, portfolio, social graph, blocking, and account lifecycle
+  - name: Posts
+    description: Feed, post detail, media, likes, saves, comments, and reports
+  - name: Chat
+    description: Feedback and future messaging endpoints
+paths:
+  /api/health:
+    get:
+      tags:
+        - Health
+      summary: Check API health
+      responses:
+        '200':
+          description: API is reachable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    refreshCookie:
+      type: apiKey
+      in: cookie
+      name: refreshToken
+  schemas:
+    SuccessResponse:
+      type: object
+      required:
+        - success
+      properties:
+        success:
+          type: boolean
+          const: true
+        message:
+          type: string
+    ErrorResponse:
+      type: object
+      required:
+        - success
+        - message
+      properties:
+        success:
+          type: boolean
+          const: false
+        message:
+          type: string
+        details:
+          nullable: true
+    PaginationMeta:
+      type: object
+      required:
+        - page
+        - hasMore
+      properties:
+        page:
+          type: integer
+          minimum: 1
+        hasMore:
+          type: boolean
+    HealthResponse:
+      allOf:
+        - $ref: '#/components/schemas/SuccessResponse'
+        - type: object
+          properties:
+            status:
+              type: string
+              example: ok
+            uptime:
+              type: number
+              minimum: 0

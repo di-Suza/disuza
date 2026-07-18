@@ -2,7 +2,7 @@ class HealthService {
   getHealth() {
     return {
       status: 'ok',
-      service: 'devloopfeed-api',
+      service: 'disuza-api',
       timestamp: new Date().toISOString(),
     };
   }

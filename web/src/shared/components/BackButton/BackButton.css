@@ -1,0 +1,28 @@
+.back-button {
+  display: inline-grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border: 1px solid var(--border-secondary);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--text-primary);
+  transition: border-color 180ms ease, background 180ms ease, transform 180ms ease;
+}
+
+.back-button:hover {
+  border-color: var(--accent);
+  background: var(--bg-main);
+}
+
+.back-button:hover svg {
+  transform: translateX(-2px);
+}
+
+.back-button:active {
+  transform: scale(0.96);
+}
+
+.back-button svg {
+  transition: transform 180ms ease;
+}

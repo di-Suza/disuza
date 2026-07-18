@@ -1,0 +1,63 @@
+.messages-v1-attachment-card,
+.messages-v1-attachment-file,
+.messages-v1-attachment-audio {
+  display: flex;
+  min-width: min(260px, 68vw);
+  max-width: 100%;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 10px;
+  background: rgba(7, 10, 16, 0.24);
+  color: inherit;
+  padding: 10px;
+  text-decoration: none;
+}
+
+.messages-v1-attachment-card.is-error {
+  color: #fca5a5;
+}
+
+.messages-v1-attachment-card span,
+.messages-v1-attachment-file span,
+.messages-v1-attachment-audio span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.messages-v1-attachment-file svg:last-child {
+  margin-left: auto;
+}
+
+.messages-v1-attachment-media {
+  display: block;
+  max-width: min(320px, 70vw);
+  overflow: hidden;
+  border-radius: 10px;
+  background: rgba(7, 10, 16, 0.46);
+}
+
+a.messages-v1-attachment-media {
+  line-height: 0;
+}
+
+.messages-v1-attachment-media img,
+video.messages-v1-attachment-media {
+  display: block;
+  width: 100%;
+  max-height: 320px;
+  object-fit: cover;
+}
+
+.messages-v1-attachment-audio {
+  display: grid;
+  gap: 8px;
+}
+
+.messages-v1-attachment-audio audio {
+  width: min(260px, 64vw);
+}

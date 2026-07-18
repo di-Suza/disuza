@@ -1,0 +1,16 @@
+.full-page-loader {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: grid;
+  place-items: center;
+  min-height: 100vh;
+  overflow: hidden;
+  background: var(--bg-main);
+  color: var(--text-primary);
+  padding: 24px;
+}
+
+.full-page-loader .app-spinner-state {
+  min-height: 0;
+}

@@ -4,10 +4,11 @@ import express, { type Express } from 'express';
 import helmet from 'helmet';
 
 import env from './config/env.js';
+import { httpRouteRegistry } from './modules/index.js';
 import requestLogger from './shared/middleware/requestLogger.js';
 import errorHandler from './shared/middleware/errorHandler.js';
 import notFoundHandler from './shared/middleware/notFoundHandler.js';
-import healthRoutes from './modules/health/health.route.js';
+import { apiRateLimiter } from './shared/middleware/rateLimiter.js';
 
 class App {
   private readonly app: Express;
@@ -41,13 +42,16 @@ class App {
         credentials: true,
       }),
     );
+    this.app.use(apiRateLimiter);
     this.app.use(express.json({ limit: '2mb' }));
     this.app.use(express.urlencoded({ extended: true, limit: '2mb' }));
     this.app.use(cookieParser());
   }
 
   private registerRoutes(): void {
-    this.app.use('/api/health', healthRoutes);
+    httpRouteRegistry.forEach((route) => {
+      this.app.use(route.path, route.router);
+    });
   }
 
   private registerErrorMiddleware(): void {
