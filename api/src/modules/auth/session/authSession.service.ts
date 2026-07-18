@@ -62,6 +62,7 @@ class AuthSessionService {
     const nextRefreshToken = tokenService.signRefreshToken({
       ...subject,
       sessionId: payload.sessionId,
+      rotationId: crypto.randomUUID(),
     });
 
     await this.repository.updateRefreshToken(

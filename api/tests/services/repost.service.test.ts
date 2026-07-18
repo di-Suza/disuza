@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
-import { ConflictError } from '../src/shared/errors/index.js';
-import { RepostService } from '../src/modules/reposts/repost.service.js';
+import { ConflictError } from '../../src/shared/errors/index.js';
+import { RepostService } from '../../src/modules/reposts/repost.service.js';
 
 const createRepostService = (overrides: Record<string, unknown> = {}) => {
   const sentNotifications: unknown[] = [];
