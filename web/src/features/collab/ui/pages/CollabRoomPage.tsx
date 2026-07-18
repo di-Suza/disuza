@@ -19,6 +19,7 @@ import useAudioCall from '@/features/collab/ui/hooks/useAudioCall';
 import useCollabRoom from '@/features/collab/ui/hooks/useCollabRoom';
 import type { CodeExecutionPayload, CodeRunResult, ProblemLanguage, RoomSyncPayload } from '@/features/collab/model/collab.types';
 import { useAppSelector } from '@/app/store/hooks';
+import ErrorBoundary from '@/shared/components/ErrorBoundary/ErrorBoundary';
 import FullPageLoader from '@/shared/components/FullPageLoader/FullPageLoader';
 import { useToast } from '@/shared/hooks/useToast';
 import { getSocket } from '@/shared/services/socket';
@@ -411,7 +412,9 @@ const CollabRoomPage = () => {
         ) : (
           <>
             <div className="collab-left-panel" style={{ width: clamp(leftPanelWidth, 220, getAvailableSideWidth('left')) }}>
-              <ProblemsPanel problems={problems} selectedProblem={selectedRoomProblem} roomId={roomId} onCollapse={() => setIsLeftPanelCollapsed(true)} />
+              <ErrorBoundary variant="section" title="Problems panel could not be rendered." resetKeys={[roomId, selectedRoomProblem?._id]} showReload={false}>
+                <ProblemsPanel problems={problems} selectedProblem={selectedRoomProblem} roomId={roomId} onCollapse={() => setIsLeftPanelCollapsed(true)} />
+              </ErrorBoundary>
             </div>
             <div role="separator" aria-orientation="vertical" className="collab-resize-handle is-vertical" onPointerDown={(event) => startHorizontalResize('left', event)} />
           </>
@@ -429,22 +432,28 @@ const CollabRoomPage = () => {
                     {isUnselecting ? 'Unselecting...' : 'Unselect Problem'}
                   </button>
                 </header>
-                <ProblemStatement problem={selectedRoomProblem} />
+                <ErrorBoundary variant="section" title="Problem details could not be rendered." resetKeys={[selectedRoomProblem._id]} showReload={false}>
+                  <ProblemStatement problem={selectedRoomProblem} />
+                </ErrorBoundary>
               </section>
               <div role="separator" aria-orientation="horizontal" className="collab-resize-handle is-horizontal" onPointerDown={(event) => startVerticalResize('problem', event)} />
               <section className="collab-editor-region">
-                <CodeEditor
-                  code={code}
-                  language={selectedRoomProblem.language || 'javascript'}
-                  onCodeChange={handleCodeChange}
-                  onLanguageChange={handleLanguageChange}
-                  onRun={handleRunCode}
-                  isRunning={runState.isRunning}
-                />
+                <ErrorBoundary variant="section" title="Code editor could not be rendered." resetKeys={[selectedRoomProblem._id]} showReload={false}>
+                  <CodeEditor
+                    code={code}
+                    language={selectedRoomProblem.language || 'javascript'}
+                    onCodeChange={handleCodeChange}
+                    onLanguageChange={handleLanguageChange}
+                    onRun={handleRunCode}
+                    isRunning={runState.isRunning}
+                  />
+                </ErrorBoundary>
               </section>
               <div role="separator" aria-orientation="horizontal" className="collab-resize-handle is-horizontal" onPointerDown={(event) => startVerticalResize('results', event)} />
               <section className="collab-results-region" style={{ height: resultsPanelHeight }}>
-                <ResultsPanel results={results} isRunning={runState.isRunning} />
+                <ErrorBoundary variant="section" title="Run results could not be rendered." resetKeys={[selectedRoomProblem._id, results?.status]} showReload={false}>
+                  <ResultsPanel results={results} isRunning={runState.isRunning} />
+                </ErrorBoundary>
               </section>
             </>
           ) : (
@@ -467,9 +476,13 @@ const CollabRoomPage = () => {
           <>
             <div role="separator" aria-orientation="vertical" className="collab-resize-handle is-vertical" onPointerDown={(event) => startHorizontalResize('right', event)} />
             <aside className="collab-right-panel" style={{ width: clamp(rightPanelWidth, 220, getAvailableSideWidth('right')) }}>
-              <UsersPanel usersData={audioCall.usersWithVoice} onCollapse={() => setIsRightPanelCollapsed(true)} {...audioCall} />
+              <ErrorBoundary variant="section" title="Participants panel could not be rendered." resetKeys={[roomId]} showReload={false}>
+                <UsersPanel usersData={audioCall.usersWithVoice} onCollapse={() => setIsRightPanelCollapsed(true)} {...audioCall} />
+              </ErrorBoundary>
               <div className="collab-chat-region">
-                <ChatPanel conversationId={roomDetails?.conversationId?._id || null} otherUser={otherUser} roomId={roomId} />
+                <ErrorBoundary variant="section" title="Room chat could not be rendered." resetKeys={[roomDetails?.conversationId?._id, roomId]} showReload={false}>
+                  <ChatPanel conversationId={roomDetails?.conversationId?._id || null} otherUser={otherUser} roomId={roomId} />
+                </ErrorBoundary>
               </div>
             </aside>
           </>

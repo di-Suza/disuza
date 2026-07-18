@@ -33,6 +33,7 @@ import ReportAProblemModal from '@/features/issues/ui/components/ReportAProblemM
 import DashboardPostsPanel from '@/features/posts/ui/components/DashboardPostsPanel';
 import PostComposerModal from '@/features/posts/ui/components/PostComposerModal';
 import SavedCollectionsPanel from '@/features/saves/ui/components/SavedCollectionsPanel';
+import ErrorBoundary from '@/shared/components/ErrorBoundary/ErrorBoundary';
 import DashboardAccountModal, { type DashboardAccountModalMode } from '../components/DashboardAccountModal';
 import DashboardActivitiesModal, { type DashboardActivityType } from '../components/DashboardActivitiesModal';
 import DashboardBlockedUsersModal from '../components/DashboardBlockedUsersModal';
@@ -150,92 +151,113 @@ const DashboardPage = () => {
   return (
     <main className="dashboard-v1-shell">
       <div className="dashboard-v1-container">
-        <section className="dashboard-v1-header">
-          <div className="dashboard-v1-header__top">
-            <div className="dashboard-v1-user">
-              <span className="dashboard-v1-avatar-wrap">
-                <span className="dashboard-v1-avatar">
-                  {avatarUrl ? <img src={avatarUrl} alt={user?.userName || 'Profile'} /> : <UserRound size={34} aria-hidden="true" />}
+        <ErrorBoundary variant="section" title="Dashboard header could not be rendered." resetKeys={[user?._id]} showReload={false}>
+          <section className="dashboard-v1-header">
+            <div className="dashboard-v1-header__top">
+              <div className="dashboard-v1-user">
+                <span className="dashboard-v1-avatar-wrap">
+                  <span className="dashboard-v1-avatar">
+                    {avatarUrl ? <img src={avatarUrl} alt={user?.userName || 'Profile'} /> : <UserRound size={34} aria-hidden="true" />}
+                  </span>
                 </span>
-              </span>
-              <span className="dashboard-v1-user__copy">
-                <small>Your Dashboard</small>
-                <span className="dashboard-v1-user__name-row">
-                  <h1>{user?.userName || 'DevLoopFeed user'}</h1>
-                  <button type="button" className="dashboard-v1-edit-profile-button" onClick={() => setEditProfileOpen(true)} aria-label="Edit profile">
-                    <UserPen size={17} aria-hidden="true" />
-                  </button>
+                <span className="dashboard-v1-user__copy">
+                  <small>Your Dashboard</small>
+                  <span className="dashboard-v1-user__name-row">
+                    <h1>{user?.userName || 'DevLoopFeed user'}</h1>
+                    <button type="button" className="dashboard-v1-edit-profile-button" onClick={() => setEditProfileOpen(true)} aria-label="Edit profile">
+                      <UserPen size={17} aria-hidden="true" />
+                    </button>
+                  </span>
+                  <em><UserStar size={16} aria-hidden="true" />{Number(user?.profileContributions || 0)} contributions</em>
                 </span>
-                <em><UserStar size={16} aria-hidden="true" />{Number(user?.profileContributions || 0)} contributions</em>
-              </span>
+              </div>
+
+              <div className="dashboard-v1-stats" aria-label="Your profile stats">
+                <button type="button"><strong>{Number(user?.postsCount || 0)}</strong><span>Posts</span></button>
+                <button type="button" onClick={() => setUserListModal('followers')}><strong>{Number(user?.followersCount || 0)}</strong><span>Followers</span></button>
+                <button type="button" onClick={() => setUserListModal('following')}><strong>{Number(user?.followingCount || 0)}</strong><span>Following</span></button>
+              </div>
             </div>
+          </section>
+        </ErrorBoundary>
 
-            <div className="dashboard-v1-stats" aria-label="Your profile stats">
-              <button type="button"><strong>{Number(user?.postsCount || 0)}</strong><span>Posts</span></button>
-              <button type="button" onClick={() => setUserListModal('followers')}><strong>{Number(user?.followersCount || 0)}</strong><span>Followers</span></button>
-              <button type="button" onClick={() => setUserListModal('following')}><strong>{Number(user?.followingCount || 0)}</strong><span>Following</span></button>
-            </div>
-          </div>
-        </section>
+        <ErrorBoundary variant="section" title="Dashboard navigation could not be rendered." resetKeys={[activeTab]} showReload={false}>
+          <section className="dashboard-v1-tabs" aria-label="Dashboard sections">
+            {dashboardTabs.map((tab) => {
+              const Icon = tab.icon;
+              const isActive = activeTab === tab.id;
 
-        <section className="dashboard-v1-tabs" aria-label="Dashboard sections">
-          {dashboardTabs.map((tab) => {
-            const Icon = tab.icon;
-            const isActive = activeTab === tab.id;
-
-            return (
-              <button key={tab.id} type="button" onClick={() => setActiveTab(tab.id)} className={isActive ? 'dashboard-v1-tab is-active' : 'dashboard-v1-tab'}>
-                <Icon size={17} aria-hidden="true" />
-                <span>{tab.label}</span>
-                {tab.id === 'heatmap' && <HeatmapRules />}
-              </button>
-            );
-          })}
-        </section>
+              return (
+                <button key={tab.id} type="button" onClick={() => setActiveTab(tab.id)} className={isActive ? 'dashboard-v1-tab is-active' : 'dashboard-v1-tab'}>
+                  <Icon size={17} aria-hidden="true" />
+                  <span>{tab.label}</span>
+                  {tab.id === 'heatmap' && <HeatmapRules />}
+                </button>
+              );
+            })}
+          </section>
+        </ErrorBoundary>
 
         <section className="dashboard-v1-content">
-          {activeTab === 'heatmap' && <ContributionHeatmap heatmap={user?.heatmap} showAnalytics />}
-          {activeTab === 'posts' && <DashboardPostsPanel user={user} />}
-          {activeTab === 'portfolio' && <DashboardPortfolioEditor {...dashboard} />}
+          {activeTab === 'heatmap' && (
+            <ErrorBoundary variant="section" title="Activity could not be rendered." resetKeys={[activeTab, user?._id]} showReload={false}>
+              <ContributionHeatmap heatmap={user?.heatmap} showAnalytics />
+            </ErrorBoundary>
+          )}
+          {activeTab === 'posts' && (
+            <ErrorBoundary variant="section" title="Posts panel could not be rendered." resetKeys={[activeTab, user?._id]} showReload={false}>
+              <DashboardPostsPanel user={user} />
+            </ErrorBoundary>
+          )}
+          {activeTab === 'portfolio' && (
+            <ErrorBoundary variant="section" title="Portfolio editor could not be rendered." resetKeys={[activeTab, user?._id]} showReload={false}>
+              <DashboardPortfolioEditor {...dashboard} />
+            </ErrorBoundary>
+          )}
 
-          {activeTab === 'rooms' && <DashboardRoomsPanel />}
+          {activeTab === 'rooms' && (
+            <ErrorBoundary variant="section" title="Rooms panel could not be rendered." resetKeys={[activeTab, user?._id]} showReload={false}>
+              <DashboardRoomsPanel />
+            </ErrorBoundary>
+          )}
 
           {activeTab === 'more' && (
-            <div className="more-page-v1">
-              <header className="more-page-v1__heading"><h1>More</h1></header>
+            <ErrorBoundary variant="section" title="More settings could not be rendered." resetKeys={[activeTab, activeMoreSection]} showReload={false}>
+              <div className="more-page-v1">
+                <header className="more-page-v1__heading"><h1>More</h1></header>
 
-              <div className="more-v1-shell">
-                <div className={isMoreMenuOpen ? 'more-v1-select is-open' : 'more-v1-select'}>
-                  <button
-                    type="button"
-                    className="more-v1-select__trigger"
-                    onClick={() => setMoreMenuOpen((current) => !current)}
-                    aria-expanded={isMoreMenuOpen}
-                    aria-haspopup="listbox"
-                  >
-                    <span>{activeMoreSectionLabel}</span>
-                    <ChevronDown size={16} aria-hidden="true" />
-                  </button>
-                  {isMoreMenuOpen && (
-                    <div className="more-v1-select__menu" role="listbox" aria-label="More sections">
-                      {moreSections.map((section) => (
-                        <button
-                          key={section.id}
-                          type="button"
-                          role="option"
-                          aria-selected={activeMoreSection === section.id}
-                          onClick={() => {
-                            setActiveMoreSection(section.id);
-                            setMoreMenuOpen(false);
-                          }}
-                          className={activeMoreSection === section.id ? 'is-active' : ''}
-                        >
-                          {section.label}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                <div className="more-v1-shell">
+                  <div className={isMoreMenuOpen ? 'more-v1-select is-open' : 'more-v1-select'}>
+                    <button
+                      type="button"
+                      className="more-v1-select__trigger"
+                      onClick={() => setMoreMenuOpen((current) => !current)}
+                      aria-expanded={isMoreMenuOpen}
+                      aria-haspopup="listbox"
+                    >
+                      <span>{activeMoreSectionLabel}</span>
+                      <ChevronDown size={16} aria-hidden="true" />
+                    </button>
+                    {isMoreMenuOpen && (
+                      <div className="more-v1-select__menu" role="listbox" aria-label="More sections">
+                        {moreSections.map((section) => (
+                          <button
+                            key={section.id}
+                            type="button"
+                            role="option"
+                            aria-selected={activeMoreSection === section.id}
+                            onClick={() => {
+                              setActiveMoreSection(section.id);
+                              setMoreMenuOpen(false);
+                            }}
+                            className={activeMoreSection === section.id ? 'is-active' : ''}
+                          >
+                            {section.label}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
 
                 <aside className="more-v1-menu">
                   {moreSections.map((section) => {
@@ -295,29 +317,48 @@ const DashboardPage = () => {
                     </div>
                   )}
                 </section>
+                </div>
               </div>
-            </div>
+            </ErrorBoundary>
           )}
         </section>
       </div>
 
-      <PostComposerModal isOpen={isComposerOpen} mode="create" onClose={() => setComposerOpen(false)} />
-      <DashboardEditProfileModal
-        {...dashboard}
-        isOpen={isEditProfileOpen}
-        onClose={() => setEditProfileOpen(false)}
-        onForgotPassword={() => {
-          setEditProfileOpen(false);
-          setForgotPasswordOpen(true);
-        }}
-      />
-      <ForgotPasswordModal isOpen={isForgotPasswordOpen} onClose={() => setForgotPasswordOpen(false)} />
-      <ReportAProblemModal isOpen={isProblemModalOpen} onClose={() => setProblemModalOpen(false)} />
-      <DashboardUserListModal isOpen={Boolean(userListModal)} type={userListModal || 'followers'} userId={user?._id} onClose={() => setUserListModal(null)} />
-      <DashboardActivitiesModal isOpen={Boolean(activityModal)} type={activityModal || 'likes'} onClose={() => setActivityModal(null)} />
-      <DashboardReportsModal isOpen={isReportsModalOpen} onClose={() => setReportsModalOpen(false)} />
-      <DashboardBlockedUsersModal isOpen={isBlockedUsersModalOpen} onClose={() => setBlockedUsersModalOpen(false)} />
-      <DashboardAccountModal isOpen={Boolean(accountModal)} mode={accountModal || 'privacy'} onClose={() => setAccountModal(null)} />
+      <ErrorBoundary variant="inline" title="Post modal could not be rendered." resetKeys={[isComposerOpen]} showReload={false}>
+        <PostComposerModal isOpen={isComposerOpen} mode="create" onClose={() => setComposerOpen(false)} />
+      </ErrorBoundary>
+      <ErrorBoundary variant="inline" title="Edit profile modal could not be rendered." resetKeys={[isEditProfileOpen]} showReload={false}>
+        <DashboardEditProfileModal
+          {...dashboard}
+          isOpen={isEditProfileOpen}
+          onClose={() => setEditProfileOpen(false)}
+          onForgotPassword={() => {
+            setEditProfileOpen(false);
+            setForgotPasswordOpen(true);
+          }}
+        />
+      </ErrorBoundary>
+      <ErrorBoundary variant="inline" title="Forgot password modal could not be rendered." resetKeys={[isForgotPasswordOpen]} showReload={false}>
+        <ForgotPasswordModal isOpen={isForgotPasswordOpen} onClose={() => setForgotPasswordOpen(false)} />
+      </ErrorBoundary>
+      <ErrorBoundary variant="inline" title="Problem report modal could not be rendered." resetKeys={[isProblemModalOpen]} showReload={false}>
+        <ReportAProblemModal isOpen={isProblemModalOpen} onClose={() => setProblemModalOpen(false)} />
+      </ErrorBoundary>
+      <ErrorBoundary variant="inline" title="User list modal could not be rendered." resetKeys={[userListModal]} showReload={false}>
+        <DashboardUserListModal isOpen={Boolean(userListModal)} type={userListModal || 'followers'} userId={user?._id} onClose={() => setUserListModal(null)} />
+      </ErrorBoundary>
+      <ErrorBoundary variant="inline" title="Activity modal could not be rendered." resetKeys={[activityModal]} showReload={false}>
+        <DashboardActivitiesModal isOpen={Boolean(activityModal)} type={activityModal || 'likes'} onClose={() => setActivityModal(null)} />
+      </ErrorBoundary>
+      <ErrorBoundary variant="inline" title="Reports modal could not be rendered." resetKeys={[isReportsModalOpen]} showReload={false}>
+        <DashboardReportsModal isOpen={isReportsModalOpen} onClose={() => setReportsModalOpen(false)} />
+      </ErrorBoundary>
+      <ErrorBoundary variant="inline" title="Blocked users modal could not be rendered." resetKeys={[isBlockedUsersModalOpen]} showReload={false}>
+        <DashboardBlockedUsersModal isOpen={isBlockedUsersModalOpen} onClose={() => setBlockedUsersModalOpen(false)} />
+      </ErrorBoundary>
+      <ErrorBoundary variant="inline" title="Account modal could not be rendered." resetKeys={[accountModal]} showReload={false}>
+        <DashboardAccountModal isOpen={Boolean(accountModal)} mode={accountModal || 'privacy'} onClose={() => setAccountModal(null)} />
+      </ErrorBoundary>
     </main>
   );
 };

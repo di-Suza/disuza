@@ -5,6 +5,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useGetUserRecommendationsQuery } from '@/features/users/api/user.api';
 import type { UserProfile } from '@/features/users/model/user.types';
 import type { Post, PostAuthor } from '@/features/posts/model/post.types';
+import ErrorBoundary from '@/shared/components/ErrorBoundary/ErrorBoundary';
 import InlinePostComposer from '../components/InlinePostComposer';
 import PostCard from '../components/PostCard';
 import { useFeedPage } from './useFeedPage';
@@ -101,7 +102,9 @@ const FeedPage = () => {
   return (
     <div className={hasRecommendations ? 'home-feed-exact has-recommendations' : 'home-feed-exact'}>
       <main className="home-feed-exact__main">
-        <InlinePostComposer />
+        <ErrorBoundary variant="section" title="Post composer could not be rendered." showReload={false}>
+          <InlinePostComposer />
+        </ErrorBoundary>
         {isLoading ? (
           <><PostCardSkeleton /><PostCardSkeleton /></>
         ) : isError ? (
@@ -112,8 +115,14 @@ const FeedPage = () => {
           <>
             {posts.map((post, index) => (
               <Fragment key={post._id}>
-                <FeedPostItem post={post} viewerId={user?._id} fallbackAuthor={fallbackAuthor} />
-                {hasRecommendations && inlineRecommendationIndex === index + 1 && <UserRecommendations recommendations={recommendations} variant="slider" />}
+                <ErrorBoundary variant="section" title="This post could not be rendered." resetKeys={[post._id]} showReload={false}>
+                  <FeedPostItem post={post} viewerId={user?._id} fallbackAuthor={fallbackAuthor} />
+                </ErrorBoundary>
+                {hasRecommendations && inlineRecommendationIndex === index + 1 && (
+                  <ErrorBoundary variant="section" title="Recommendations could not be rendered." showReload={false}>
+                    <UserRecommendations recommendations={recommendations} variant="slider" />
+                  </ErrorBoundary>
+                )}
               </Fragment>
             ))}
             {hasMore && (
@@ -127,7 +136,13 @@ const FeedPage = () => {
         {isFetching && !isLoading && <div className="home-feed-exact__loader"><Loader2 className="spin" size={20} />Loading more posts...</div>}
       </main>
 
-      {hasRecommendations && <div className="home-feed-exact__rail"><UserRecommendations recommendations={recommendations} variant="rail" /></div>}
+      {hasRecommendations && (
+        <div className="home-feed-exact__rail">
+          <ErrorBoundary variant="section" title="Recommendations could not be rendered." showReload={false}>
+            <UserRecommendations recommendations={recommendations} variant="rail" />
+          </ErrorBoundary>
+        </div>
+      )}
     </div>
   );
 };

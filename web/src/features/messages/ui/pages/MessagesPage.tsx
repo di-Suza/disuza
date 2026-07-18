@@ -2,6 +2,7 @@ import { RefreshCw } from 'lucide-react';
 
 import ChatWindow from '@/features/messages/ui/components/ChatWindow';
 import Conversations from '@/features/messages/ui/components/Conversations';
+import ErrorBoundary from '@/shared/components/ErrorBoundary/ErrorBoundary';
 import Button from '@/shared/ui/Button';
 import { getErrorMessage } from '@/shared/utils/getErrorMessage';
 import { useMessagesPage } from './useMessagesPage';
@@ -42,25 +43,29 @@ const MessagesPage = () => {
 
   return (
     <main className="messages-v1-page">
-      <Conversations
-        conversations={allConversations}
-        getConversationsLoading={getConversationsLoading}
-        handleChatSelect={handleChatSelect}
-        selectedChat={selectedChat}
-      />
+      <ErrorBoundary variant="section" title="Conversation list could not be rendered." resetKeys={[selectedChat?._id]} showReload={false}>
+        <Conversations
+          conversations={allConversations}
+          getConversationsLoading={getConversationsLoading}
+          handleChatSelect={handleChatSelect}
+          selectedChat={selectedChat}
+        />
+      </ErrorBoundary>
 
-      <ChatWindow
-        allMessages={allMessages}
-        getMessagesLoading={getMessagesLoading}
-        handleChatSelect={handleChatSelect}
-        hasMoreMessages={hasMoreMessages}
-        isFetchingMessages={isFetching}
-        isMessagesError={isMessagesError}
-        loadMore={loadMore}
-        messagesErrorMessage={messagesErrorMessage}
-        refetchMessages={refetchMessages}
-        selectedChat={selectedChat}
-      />
+      <ErrorBoundary variant="section" title="Chat window could not be rendered." resetKeys={[selectedChat?._id]} showReload={false}>
+        <ChatWindow
+          allMessages={allMessages}
+          getMessagesLoading={getMessagesLoading}
+          handleChatSelect={handleChatSelect}
+          hasMoreMessages={hasMoreMessages}
+          isFetchingMessages={isFetching}
+          isMessagesError={isMessagesError}
+          loadMore={loadMore}
+          messagesErrorMessage={messagesErrorMessage}
+          refetchMessages={refetchMessages}
+          selectedChat={selectedChat}
+        />
+      </ErrorBoundary>
     </main>
   );
 };

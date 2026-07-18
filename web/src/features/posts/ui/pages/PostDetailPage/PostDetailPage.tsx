@@ -6,6 +6,7 @@ import { useGetPostQuery, useGetRepostQuery } from '@/features/posts/api/post.ap
 import PostCard from '@/features/posts/ui/components/PostCard';
 import RepostDetailCard from '@/features/posts/ui/components/RepostDetailCard';
 import BackButton from '@/shared/components/BackButton/BackButton';
+import ErrorBoundary from '@/shared/components/ErrorBoundary/ErrorBoundary';
 import Button from '@/shared/ui/Button';
 import { getErrorMessage } from '@/shared/utils/getErrorMessage';
 import '../../posts.css';
@@ -59,11 +60,13 @@ const PostDetailPage = () => {
           <BackButton />
           {isFetching ? <span>Refreshing {isRepostDetail ? 'repost' : 'post'}...</span> : null}
         </header>
-        {isRepostDetail && repost ? (
-          <RepostDetailCard repost={repost} viewerId={viewerId} />
-        ) : post ? (
-          <PostCard post={post} viewerId={viewerId} />
-        ) : null}
+        <ErrorBoundary variant="section" title="Post content could not be rendered." resetKeys={[postId, repostId]} showReload={false}>
+          {isRepostDetail && repost ? (
+            <RepostDetailCard repost={repost} viewerId={viewerId} />
+          ) : post ? (
+            <PostCard post={post} viewerId={viewerId} />
+          ) : null}
+        </ErrorBoundary>
       </section>
     </main>
   );

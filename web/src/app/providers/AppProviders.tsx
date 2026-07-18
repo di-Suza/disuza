@@ -11,7 +11,10 @@ import { ToastProvider } from './toast/ToastProvider';
 import SocketLifecycle from './socket/SocketLifecycle';
 
 const AppProviders = () => (
-  <ErrorBoundary>
+  <ErrorBoundary
+    title="DevLoopFeed could not start."
+    description="Try again or refresh the app to restart the session."
+  >
     <Provider store={store}>
       <GoogleOAuthProvider clientId={env.googleClientId || 'missing-google-client-id'}>
         <ToastProvider>

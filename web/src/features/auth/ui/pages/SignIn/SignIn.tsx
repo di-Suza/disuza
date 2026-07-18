@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 
 import ForgotPasswordModal from '@/features/auth/ui/components/ForgotPasswordModal/ForgotPasswordModal';
 import GoogleIcon from '@/features/auth/ui/components/GoogleIcon';
+import ErrorBoundary from '@/shared/components/ErrorBoundary/ErrorBoundary';
 import Button from '@/shared/ui/Button';
 import Input from '@/shared/ui/Input';
 import { useSignIn } from './useSignIn';
@@ -50,7 +51,8 @@ const SignInPage = () => {
       <main className="auth-page">
         <div className="auth-grid-bg" />
         <div className="auth-layout auth-layout--signin">
-          <section className="auth-story" aria-label="DevLoopFeed sign in overview">
+          <ErrorBoundary variant="section" title="Sign in overview could not be rendered." showReload={false}>
+            <section className="auth-story" aria-label="DevLoopFeed sign in overview">
             <Link to="/" className="auth-brand">
               <span className="auth-brand__mark">DLF</span>
               <span>DevLoopFeed</span>
@@ -71,8 +73,10 @@ const SignInPage = () => {
               ))}
             </div>
           </section>
+          </ErrorBoundary>
 
-          <section className="auth-card" aria-label="Sign in form">
+          <ErrorBoundary variant="section" title="Sign in form could not be rendered." showReload={false}>
+            <section className="auth-card" aria-label="Sign in form">
             <div className="auth-card__header">
               <Link to="/" className="auth-logo">DLF</Link>
               <h2>Welcome back</h2>
@@ -140,10 +144,13 @@ const SignInPage = () => {
               {isGoogleLoading ? 'Connecting...' : 'Continue with Google'}
             </Button>
           </section>
+          </ErrorBoundary>
         </div>
       </main>
 
-      <ForgotPasswordModal isOpen={isForgotPasswordModalOpen} onClose={closeForgotPasswordModal} />
+      <ErrorBoundary variant="inline" title="Forgot password modal could not be rendered." resetKeys={[isForgotPasswordModalOpen]} showReload={false}>
+        <ForgotPasswordModal isOpen={isForgotPasswordModalOpen} onClose={closeForgotPasswordModal} />
+      </ErrorBoundary>
     </>
   );
 };

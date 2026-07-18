@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 
 import GoogleIcon from '@/features/auth/ui/components/GoogleIcon';
 import OtpVerificationModal from '@/features/auth/ui/components/OtpVerificationModal/OtpVerificationModal';
+import ErrorBoundary from '@/shared/components/ErrorBoundary/ErrorBoundary';
 import Button from '@/shared/ui/Button';
 import Input from '@/shared/ui/Input';
 import { useSignUp } from './useSignUp';
@@ -45,7 +46,8 @@ const SignUpPage = () => {
       <main className="auth-page">
         <div className="auth-grid-bg" />
         <div className="auth-layout auth-layout--signup">
-          <section className="auth-card" aria-label="Create account form">
+          <ErrorBoundary variant="section" title="Sign up form could not be rendered." showReload={false}>
+            <section className="auth-card" aria-label="Create account form">
             <div className="auth-card__header">
               <Link to="/" className="auth-logo">DLF</Link>
               <h2>Create account</h2>
@@ -124,8 +126,10 @@ const SignUpPage = () => {
               {isGoogleLoading ? 'Connecting...' : 'Continue with Google'}
             </Button>
           </section>
+          </ErrorBoundary>
 
-          <section className="auth-story" aria-label="DevLoopFeed sign up overview">
+          <ErrorBoundary variant="section" title="Sign up overview could not be rendered." showReload={false}>
+            <section className="auth-story" aria-label="DevLoopFeed sign up overview">
             <Link to="/" className="auth-brand">
               <span className="auth-brand__mark">DLF</span>
               <span>DevLoopFeed</span>
@@ -143,19 +147,22 @@ const SignUpPage = () => {
               ))}
             </div>
           </section>
+          </ErrorBoundary>
         </div>
       </main>
 
-      <OtpVerificationModal
-        email={formData.email.trim()}
-        initialFormDataReset={resetForm}
-        isOpen={isOtpVerificationModalOpen}
-        onClose={closeOtpVerificationModal}
-        otpResponse={otpResponse}
-        password={formData.password}
-        setOtpResponse={setOtpResponse}
-        userName={formData.userName.trim()}
-      />
+      <ErrorBoundary variant="inline" title="OTP modal could not be rendered." resetKeys={[isOtpVerificationModalOpen]} showReload={false}>
+        <OtpVerificationModal
+          email={formData.email.trim()}
+          initialFormDataReset={resetForm}
+          isOpen={isOtpVerificationModalOpen}
+          onClose={closeOtpVerificationModal}
+          otpResponse={otpResponse}
+          password={formData.password}
+          setOtpResponse={setOtpResponse}
+          userName={formData.userName.trim()}
+        />
+      </ErrorBoundary>
     </>
   );
 };

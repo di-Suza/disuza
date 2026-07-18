@@ -2,6 +2,7 @@ import { Crown, Loader2, RefreshCw, Search, Sparkles, TrendingUp, X } from 'luci
 
 import SearchPostCard from '@/features/search/ui/components/SearchPostCard';
 import SearchUserCard from '@/features/search/ui/components/SearchUserCard';
+import ErrorBoundary from '@/shared/components/ErrorBoundary/ErrorBoundary';
 import Button from '@/shared/ui/Button';
 import Input from '@/shared/ui/Input';
 import { getErrorMessage } from '@/shared/utils/getErrorMessage';
@@ -100,7 +101,9 @@ const SearchPage = () => {
                     </div>
                     <div className="search-user-grid">
                       {matchedUsers.map((user, index) => (
-                        <SearchUserCard key={user._id} user={user} index={index} currentUserId={currentUserId} />
+                        <ErrorBoundary key={user._id} variant="section" title="User result could not be rendered." resetKeys={[user._id]} showReload={false}>
+                          <SearchUserCard user={user} index={index} currentUserId={currentUserId} />
+                        </ErrorBoundary>
                       ))}
                     </div>
                     {hasMoreSearchUsers && (
@@ -122,7 +125,9 @@ const SearchPage = () => {
                     </div>
                     <div className="search-post-grid">
                       {matchedPosts.map((post) => (
-                        <SearchPostCard key={post._id} post={post} />
+                        <ErrorBoundary key={post._id} variant="section" title="Post result could not be rendered." resetKeys={[post._id]} showReload={false}>
+                          <SearchPostCard post={post} />
+                        </ErrorBoundary>
                       ))}
                     </div>
                     {hasMoreSearchPosts && (
@@ -147,7 +152,9 @@ const SearchPage = () => {
               </div>
               <div className="search-user-grid">
                 {topContributors.map((user, index) => (
-                  <SearchUserCard key={user._id} user={user} index={index} currentUserId={currentUserId} />
+                  <ErrorBoundary key={user._id} variant="section" title="Contributor card could not be rendered." resetKeys={[user._id]} showReload={false}>
+                    <SearchUserCard user={user} index={index} currentUserId={currentUserId} />
+                  </ErrorBoundary>
                 ))}
               </div>
             </section>
@@ -160,7 +167,9 @@ const SearchPage = () => {
               {trendingPosts.length > 0 ? (
                 <div className="search-post-grid">
                   {trendingPosts.map((post) => (
-                    <SearchPostCard key={post._id} post={post} />
+                    <ErrorBoundary key={post._id} variant="section" title="Trending post could not be rendered." resetKeys={[post._id]} showReload={false}>
+                      <SearchPostCard post={post} />
+                    </ErrorBoundary>
                   ))}
                 </div>
               ) : (

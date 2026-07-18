@@ -1,5 +1,5 @@
 import { lazy, Suspense, type ReactElement } from 'react';
-import { createBrowserRouter } from 'react-router-dom';
+import { createBrowserRouter, useLocation } from 'react-router-dom';
 
 import ProtectedLayout from '@/app/layouts/ProtectedLayout';
 import PublicLayout from '@/app/layouts/PublicLayout';
@@ -20,13 +20,23 @@ const SearchPage = lazy(() => import('@/pages/search'));
 const SignInPage = lazy(() => import('@/pages/sign-in'));
 const SignUpPage = lazy(() => import('@/pages/sign-up'));
 
-const withSuspense = (element: ReactElement) => (
-  <ErrorBoundary>
-    <Suspense fallback={<FullPageLoader />}>
-      {element}
-    </Suspense>
-  </ErrorBoundary>
-);
+const RouteBoundary = ({ children, name }: { children: ReactElement; name: string }) => {
+  const location = useLocation();
+
+  return (
+    <ErrorBoundary
+      resetKeys={[location.pathname, location.search]}
+      title={`${name} could not be loaded.`}
+      description="Try again or refresh the page if this keeps happening."
+    >
+      <Suspense fallback={<FullPageLoader />}>
+        {children}
+      </Suspense>
+    </ErrorBoundary>
+  );
+};
+
+const withSuspense = (element: ReactElement, name: string) => <RouteBoundary name={name}>{element}</RouteBoundary>;
 
 export const router = createBrowserRouter([
   {
@@ -34,15 +44,15 @@ export const router = createBrowserRouter([
     children: [
       {
         path: '/',
-        element: withSuspense(<LandingPage />),
+        element: withSuspense(<LandingPage />, 'Landing page'),
       },
       {
         path: '/auth/signin',
-        element: withSuspense(<SignInPage />),
+        element: withSuspense(<SignInPage />, 'Sign in page'),
       },
       {
         path: '/auth/signup',
-        element: withSuspense(<SignUpPage />),
+        element: withSuspense(<SignUpPage />, 'Sign up page'),
       },
     ],
   },
@@ -51,38 +61,38 @@ export const router = createBrowserRouter([
     children: [
       {
         path: '/collab/:roomId',
-        element: withSuspense(<CollabRoomPage />),
+        element: withSuspense(<CollabRoomPage />, 'Collaboration room'),
       },
       {
         element: <SidebarLayout />,
         children: [
           {
             path: '/dashboard',
-            element: withSuspense(<DashboardPage />),
+            element: withSuspense(<DashboardPage />, 'Dashboard'),
           },
           {
             path: '/home',
-            element: withSuspense(<FeedPage />),
+            element: withSuspense(<FeedPage />, 'Feed'),
           },
           {
             path: '/messages',
-            element: withSuspense(<MessagesPage />),
+            element: withSuspense(<MessagesPage />, 'Messages'),
           },
           {
             path: '/profile/:id',
-            element: withSuspense(<ProfilePage />),
+            element: withSuspense(<ProfilePage />, 'Profile'),
           },
           {
             path: '/post/:postId',
-            element: withSuspense(<PostDetailPage />),
+            element: withSuspense(<PostDetailPage />, 'Post detail'),
           },
           {
             path: '/notifications',
-            element: withSuspense(<NotificationsPage />),
+            element: withSuspense(<NotificationsPage />, 'Notifications'),
           },
           {
             path: '/search',
-            element: withSuspense(<SearchPage />),
+            element: withSuspense(<SearchPage />, 'Search'),
           },
         ],
       },

@@ -33,6 +33,7 @@ import ContributionHeatmap from '@/features/dashboard/ui/components/Contribution
 import SendFeedbackModal from '@/features/messages/ui/components/SendFeedbackModal';
 import ProfilePostsSection from '@/features/posts/ui/components/ProfilePostsSection';
 import ReportModal from '@/features/reports/ui/components/ReportModal';
+import ErrorBoundary from '@/shared/components/ErrorBoundary/ErrorBoundary';
 import Button from '@/shared/ui/Button';
 import { getErrorMessage } from '@/shared/utils/getErrorMessage';
 import { useProfilePage } from './useProfilePage';
@@ -78,13 +79,15 @@ const ProfileSection = ({
   spacious?: boolean;
   title: string;
 }) => (
-  <section className={spacious ? 'profile-preview-section is-spacious' : 'profile-preview-section'}>
-    <header>
-      <span><Icon size={20} aria-hidden="true" /></span>
-      <h2>{title}</h2>
-    </header>
-    {children}
-  </section>
+  <ErrorBoundary variant="section" title={`${title} section could not be rendered.`} resetKeys={[title]} showReload={false}>
+    <section className={spacious ? 'profile-preview-section is-spacious' : 'profile-preview-section'}>
+      <header>
+        <span><Icon size={20} aria-hidden="true" /></span>
+        <h2>{title}</h2>
+      </header>
+      {children}
+    </section>
+  </ErrorBoundary>
 );
 
 const ProfileStat = ({
@@ -351,7 +354,9 @@ const ProfilePage = () => {
           <ProfileSection icon={ShieldAlert} title="Blocked profile"><p className="profile-copy">Unblock this user to view their profile details.</p></ProfileSection>
         ) : (
           <div className="profile-preview-content">
-            <section className="profile-preview-heatmap"><ContributionHeatmap heatmap={profileUser.heatmap} /></section>
+            <ErrorBoundary variant="section" title="Profile activity could not be rendered." resetKeys={[profileUser._id]} showReload={false}>
+              <section className="profile-preview-heatmap"><ContributionHeatmap heatmap={profileUser.heatmap} /></section>
+            </ErrorBoundary>
 
             {profileUser.about && (
               <ProfileSection icon={User} title="About">
@@ -377,7 +382,9 @@ const ProfilePage = () => {
               </ProfileSection>
             )}
 
-            <ProfilePostsSection normalPosts={normalPosts} projectPosts={projectPosts} profileUser={profileUser} viewerId={currentUserId} />
+            <ErrorBoundary variant="section" title="Profile posts could not be rendered." resetKeys={[profileUser._id]} showReload={false}>
+              <ProfilePostsSection normalPosts={normalPosts} projectPosts={projectPosts} profileUser={profileUser} viewerId={currentUserId} />
+            </ErrorBoundary>
 
             {experiences.length > 0 && (
               <ProfileSection icon={Briefcase} spacious title="Experience">
@@ -425,49 +432,57 @@ const ProfilePage = () => {
       </section>
 
       {isReportOpen && canReportProfile && (
-        <ReportModal
-          isOpen={isReportOpen}
-          onClose={closeReport}
-          targetId={profileUser._id}
-          onModel="User"
-        />
+        <ErrorBoundary variant="inline" title="Report modal could not be rendered." resetKeys={[isReportOpen]} showReload={false}>
+          <ReportModal
+            isOpen={isReportOpen}
+            onClose={closeReport}
+            targetId={profileUser._id}
+            onModel="User"
+          />
+        </ErrorBoundary>
       )}
 
       {isFeedbackOpen && canSendFeedback && (
-        <SendFeedbackModal
-          isOpen={isFeedbackOpen}
-          onClose={() => setFeedbackOpen(false)}
-          feedbackOn="User"
-          receiverId={profileUser._id}
-          receiverName={profileUser.userName}
-          userId={profileUser._id}
-        />
+        <ErrorBoundary variant="inline" title="Feedback modal could not be rendered." resetKeys={[isFeedbackOpen]} showReload={false}>
+          <SendFeedbackModal
+            isOpen={isFeedbackOpen}
+            onClose={() => setFeedbackOpen(false)}
+            feedbackOn="User"
+            receiverId={profileUser._id}
+            receiverName={profileUser.userName}
+            userId={profileUser._id}
+          />
+        </ErrorBoundary>
       )}
 
-      <BlockConfirmModal
-        isOpen={isBlockConfirmOpen}
-        isLoading={isMutating}
-        onClose={() => setBlockConfirmOpen(false)}
-        onConfirm={handleConfirmBlock}
-        userName={profileUser.userName}
-      />
+      <ErrorBoundary variant="inline" title="Block confirmation could not be rendered." resetKeys={[isBlockConfirmOpen]} showReload={false}>
+        <BlockConfirmModal
+          isOpen={isBlockConfirmOpen}
+          isLoading={isMutating}
+          onClose={() => setBlockConfirmOpen(false)}
+          onConfirm={handleConfirmBlock}
+          userName={profileUser.userName}
+        />
+      </ErrorBoundary>
 
       {isListOpen && (
-        <div className="modal-backdrop" role="dialog" aria-modal="true" aria-label={`${listMode} list`}>
-          <section className="modal-card relation-modal">
-            <div className="modal-card__header"><h1>{listMode === 'followers' ? 'Followers' : 'Following'}</h1><p>{isListFetching ? 'Loading...' : `${relationshipList.length} users`}</p></div>
-            <div className="user-list relation-modal__list">
-              {relationshipList.length === 0 && <p className="empty-copy">No users found.</p>}
-              {relationshipList.map((user) => (
-                <Link to={`/profile/${user._id}`} className="user-row user-row__main" key={user._id} onClick={closeList}>
-                  <span className="user-row__avatar">{avatarUrl(user.profilePicture?.url) ? <img src={user.profilePicture?.url} alt="" /> : <UserRound size={18} />}</span>
-                  <span><strong>{user.userName}</strong><small>{user.headline || 'DevLoopFeed member'}</small></span>
-                </Link>
-              ))}
-            </div>
-            <Button variant="secondary" onClick={closeList}>Close</Button>
-          </section>
-        </div>
+        <ErrorBoundary variant="inline" title="Relationship list could not be rendered." resetKeys={[listMode, isListOpen]} showReload={false}>
+          <div className="modal-backdrop" role="dialog" aria-modal="true" aria-label={`${listMode} list`}>
+            <section className="modal-card relation-modal">
+              <div className="modal-card__header"><h1>{listMode === 'followers' ? 'Followers' : 'Following'}</h1><p>{isListFetching ? 'Loading...' : `${relationshipList.length} users`}</p></div>
+              <div className="user-list relation-modal__list">
+                {relationshipList.length === 0 && <p className="empty-copy">No users found.</p>}
+                {relationshipList.map((user) => (
+                  <Link to={`/profile/${user._id}`} className="user-row user-row__main" key={user._id} onClick={closeList}>
+                    <span className="user-row__avatar">{avatarUrl(user.profilePicture?.url) ? <img src={user.profilePicture?.url} alt="" /> : <UserRound size={18} />}</span>
+                    <span><strong>{user.userName}</strong><small>{user.headline || 'DevLoopFeed member'}</small></span>
+                  </Link>
+                ))}
+              </div>
+              <Button variant="secondary" onClick={closeList}>Close</Button>
+            </section>
+          </div>
+        </ErrorBoundary>
       )}
     </main>
   );
