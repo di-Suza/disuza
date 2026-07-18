@@ -10,6 +10,7 @@ type TokenSubject = {
   role?: string;
   sessionId?: string;
   purpose?: string;
+  rotationId?: string;
 };
 
 type AppTokenPayload = JwtPayload & TokenSubject & {
