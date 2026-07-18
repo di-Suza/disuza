@@ -7,6 +7,7 @@ import ReportModal from '@/features/reports/ui/components/ReportModal';
 import ChatAvatar from './ChatAvatar';
 import MessageAttachment from './MessageAttachment';
 import { useMessageItem } from './useMessageItem';
+import './MessageItem.css';
 
 type MessageItemProps = {
   message: ChatMessage;
