@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { Queue, type JobsOptions } from 'bullmq';
 
 import redisCache from '../cache/redis.js';
@@ -27,10 +28,16 @@ type ConversationCleanupData = {
   conversationId: string;
 };
 
+type MediaCleanupData = {
+  fileIds: string[];
+  reason?: string;
+};
+
 class CleanupQueue {
   private postQueue?: Queue;
   private userQueue?: Queue;
   private conversationQueue?: Queue;
+  private mediaQueue?: Queue;
 
   private getPostQueue() {
     this.postQueue ??= new Queue('post-cleanup', { connection: redisCache.getConnectionOptions() as never });
@@ -45,6 +52,19 @@ class CleanupQueue {
   private getConversationQueue() {
     this.conversationQueue ??= new Queue('conversation-cleanup', { connection: redisCache.getConnectionOptions() as never });
     return this.conversationQueue;
+  }
+
+  private getMediaQueue() {
+    this.mediaQueue ??= new Queue('media-cleanup', { connection: redisCache.getConnectionOptions() as never });
+    return this.mediaQueue;
+  }
+
+  private getMediaCleanupJobId(fileIds: string[]): string {
+    const hash = createHash('sha1')
+      .update([...fileIds].sort().join(':'))
+      .digest('hex');
+
+    return `media-cleanup-${hash}`;
   }
 
   private async addUnique(queue: Queue, name: string, jobId: string, data: unknown): Promise<boolean> {
@@ -80,6 +100,17 @@ class CleanupQueue {
       data,
     );
   }
+
+  enqueueMediaCleanup(data: MediaCleanupData) {
+    if (data.fileIds.length === 0) return Promise.resolve(false);
+
+    return this.addUnique(
+      this.getMediaQueue(),
+      'media-cleanup',
+      this.getMediaCleanupJobId(data.fileIds),
+      data,
+    );
+  }
 }
 
 const cleanupQueue = new CleanupQueue();
@@ -87,6 +118,7 @@ const cleanupQueue = new CleanupQueue();
 export {
   CleanupQueue,
   type ConversationCleanupData,
+  type MediaCleanupData,
   type PostCleanupData,
   type UserCleanupData,
 };

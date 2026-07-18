@@ -403,6 +403,14 @@ const cleanupConversation = async (conversationId: string) => {
   await Promise.all(attachmentFileIds.map((fileId) => mediaService.tryDeleteFile(fileId)));
 };
 
+const cleanupMediaFiles = async (fileIds: string[]) => {
+  const managedFileIds = [...new Set(fileIds.filter((fileId) => mediaService.isManagedFileId(fileId)))];
+
+  if (managedFileIds.length === 0) return;
+
+  await mediaService.deleteMany(managedFileIds);
+};
+
 const createWorker = <T>(
   queueName: string,
   processor: (data: T) => Promise<void>,
@@ -443,6 +451,11 @@ const startCleanupWorkers = () => {
       'conversation-cleanup',
       (data) => cleanupConversation(data.conversationId),
       2,
+    ),
+    createWorker<{ fileIds: string[]; reason?: string }>(
+      'media-cleanup',
+      (data) => cleanupMediaFiles(data.fileIds),
+      4,
     ),
   );
 

@@ -455,15 +455,30 @@ class PostService {
     return this.normalizeMediaOrder([...baseMedia, ...appendedMedia]);
   }
 
-  private async cleanupUploadedMedia(uploadedMedia: StoredMedia[]): Promise<void> {
-    await Promise.all(uploadedMedia.map((media) => this.media.tryDeleteFile(media.fileId)));
+  private async cleanupMediaFiles(fileIds: Array<string | undefined>, reason: string): Promise<void> {
+    const managedFileIds = fileIds.filter((fileId): fileId is string => this.media.isManagedFileId(fileId));
+
+    if (managedFileIds.length === 0) return;
+
+    try {
+      await this.cleanupJobs.enqueueMediaCleanup({ fileIds: managedFileIds, reason });
+      return;
+    } catch (error) {
+      logger.warn({ error, reason, fileIds: managedFileIds }, 'Media cleanup job enqueue failed');
+    }
+
+    await Promise.all(managedFileIds.map((fileId) => this.media.tryDeleteFile(fileId)));
+  }
+
+  private cleanupUploadedMedia(uploadedMedia: StoredMedia[]): Promise<void> {
+    return this.cleanupMediaFiles(uploadedMedia.map((media) => media.fileId), 'post-upload-rollback');
   }
 
   private async cleanupRemovedMedia(previousMedia: PostMedia[], nextMedia: PostMedia[]): Promise<void> {
     const nextFileIds = new Set(nextMedia.map((media) => media.fileId));
     const removedMedia = previousMedia.filter((media) => !nextFileIds.has(media.fileId));
 
-    await Promise.all(removedMedia.map((media) => this.media.tryDeleteFile(media.fileId)));
+    await this.cleanupMediaFiles(removedMedia.map((media) => media.fileId), 'post-media-replaced');
   }
 
   async createPost(userId: string, input: CreatePostInput, files: Express.Multer.File[]) {

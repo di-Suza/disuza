@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import type { Types } from 'mongoose';
 
+import logger from '../../config/logger.js';
 import cleanupQueue, { type CleanupQueue } from '../../infrastructure/jobs/cleanup.queue.js';
 import {
   BadRequestError,
@@ -181,6 +182,19 @@ class UserService {
       .map(({ item }) => item);
   }
 
+  private async cleanupMediaFile(fileId: string | undefined, reason: string): Promise<void> {
+    if (!this.media.isManagedFileId(fileId)) return;
+
+    try {
+      await this.cleanupJobs.enqueueMediaCleanup({ fileIds: [fileId], reason });
+      return;
+    } catch (error) {
+      logger.warn({ error, reason, fileId }, 'Media cleanup job enqueue failed');
+    }
+
+    await this.media.tryDeleteFile(fileId);
+  }
+
   async changePassword(userId: string, currentPassword: string, newPassword: string) {
     if (currentPassword === newPassword) {
       throw new BadRequestError('New password cannot be same as old password');
@@ -256,17 +270,17 @@ class UserService {
     try {
       updatedUser = await this.users.updateIdentity(userId, updateData);
     } catch (error) {
-      await this.media.tryDeleteFile(uploadedProfilePictureFileId);
+      await this.cleanupMediaFile(uploadedProfilePictureFileId, 'profile-picture-upload-rollback');
       throw error;
     }
 
     if (!updatedUser) {
-      await this.media.tryDeleteFile(uploadedProfilePictureFileId);
+      await this.cleanupMediaFile(uploadedProfilePictureFileId, 'profile-picture-upload-rollback');
       throw new NotFoundError('User Not Found!');
     }
 
     if (previousProfilePictureFileIdToDelete && previousProfilePictureFileIdToDelete !== updatedUser.profilePicture.fileId) {
-      await this.media.tryDeleteFile(previousProfilePictureFileIdToDelete);
+      await this.cleanupMediaFile(previousProfilePictureFileIdToDelete, 'profile-picture-replaced');
     }
 
     return {
