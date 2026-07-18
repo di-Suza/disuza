@@ -1,14 +1,33 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
+import jwt from 'jsonwebtoken';
+
 import { AuthService } from '../../src/modules/auth/auth.service.js';
 import { OtpService } from '../../src/modules/auth/otp.service.js';
 import { AuthSessionService } from '../../src/modules/auth/session/authSession.service.js';
+import { TokenType } from '../../src/shared/constants/token.js';
 import { AppError, TooManyRequestsError, UnauthorizedError } from '../../src/shared/errors/index.js';
 import emailService from '../../src/shared/utils/email.js';
+import tokenService from '../../src/shared/utils/token.js';
 import { userId } from '../helpers/domain.js';
 
 describe('AuthService and AuthSessionService', () => {
+  it('signs and verifies JWTs with RS256 keys', () => {
+    const token = tokenService.signAccessToken({
+      id: userId,
+      email: 'samar@example.com',
+      role: 'USER',
+    });
+    const decoded = jwt.decode(token, { complete: true }) as { header?: { alg?: string } } | null;
+    const payload = tokenService.verifyAccessToken(token);
+
+    assert.equal(decoded?.header?.alg, 'RS256');
+    assert.equal(payload.id, userId);
+    assert.equal(payload.email, 'samar@example.com');
+    assert.equal(payload.tokenType, TokenType.ACCESS);
+  });
+
   it('rejects missing refresh tokens and allows no-token logout', async () => {
     const service = new AuthService({} as never, {} as never, {} as never, {} as never);
 

@@ -29,8 +29,8 @@ services:
       JOB_WORKERS_ENABLED: "true"
       REDIS_HOST: redis
       REDIS_PORT: 6379
-      JWT_ACCESS_SECRET: disuza_access_secret_change_me_32_chars
-      JWT_REFRESH_SECRET: disuza_refresh_secret_change_me_32_chars
+      PRIVATE_JWT_KEY_BS64: ""
+      PUBLIC_JWT_KEY_BS64: ""
     ports:
       - "8080:8080"
     volumes:
