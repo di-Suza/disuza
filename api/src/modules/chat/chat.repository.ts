@@ -321,6 +321,46 @@ class ChatRepository {
       .lean();
   }
 
+  countFeedbacksReceivedByDay(userId: string | Types.ObjectId, startDate: Date) {
+    const ownerId = new mongoose.Types.ObjectId(userId.toString());
+
+    return MessageModel.aggregate<{ _id: string; count: number }>([
+      {
+        $match: {
+          isFeedback: true,
+          createdAt: { $gte: startDate },
+        },
+      },
+      {
+        $lookup: {
+          from: 'posts',
+          localField: 'feedbackOn._id',
+          foreignField: '_id',
+          as: 'postTarget',
+          pipeline: [
+            { $match: { user: ownerId, isDeleting: { $ne: true } } },
+            { $project: { _id: 1 } },
+          ],
+        },
+      },
+      {
+        $match: {
+          $or: [
+            { 'feedbackOn.type': 'User', 'feedbackOn._id': ownerId },
+            { 'feedbackOn.type': 'Post', 'postTarget.0': { $exists: true } },
+          ],
+        },
+      },
+      {
+        $group: {
+          _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
+          count: { $sum: 1 },
+        },
+      },
+      { $sort: { _id: 1 } },
+    ]);
+  }
+
   async populateFeedbackDetails(message: MessageDocument, receiverId?: string | Types.ObjectId | null) {
     let output = message.toObject() as Record<string, unknown>;
 

@@ -162,7 +162,15 @@ const recommendationRules = [
     .toInt(),
 ];
 
+const analyticsRangeRules = [
+  query('range')
+    .optional()
+    .isIn(['1d', '7d', '30d', '90d'])
+    .withMessage('Analytics range must be 1d, 7d, 30d, or 90d'),
+];
+
 export {
+  analyticsRangeRules,
   mongoIdParam,
   pageAndIdRules,
   pageQueryRules,

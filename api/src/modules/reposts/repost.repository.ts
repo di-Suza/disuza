@@ -146,6 +146,37 @@ class RepostRepository {
   deleteManyByPost(postId: string | Types.ObjectId) {
     return RepostModel.deleteMany({ post: postId });
   }
+
+  countReceivedByDay(userId: string | Types.ObjectId, startDate: Date) {
+    return RepostModel.aggregate<{ _id: string; count: number }>([
+      { $match: { createdAt: { $gte: startDate } } },
+      {
+        $lookup: {
+          from: 'posts',
+          localField: 'post',
+          foreignField: '_id',
+          as: 'post',
+          pipeline: [
+            {
+              $match: {
+                user: new mongoose.Types.ObjectId(userId.toString()),
+                ...visiblePostQuery,
+              },
+            },
+            { $project: { _id: 1 } },
+          ],
+        },
+      },
+      { $match: { 'post.0': { $exists: true } } },
+      {
+        $group: {
+          _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
+          count: { $sum: 1 },
+        },
+      },
+      { $sort: { _id: 1 } },
+    ]);
+  }
 }
 
 const repostRepository = new RepostRepository();

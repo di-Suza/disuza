@@ -191,7 +191,7 @@ const DashboardPage = () => {
         </section>
 
         <section className="dashboard-v1-content">
-          {activeTab === 'heatmap' && <ContributionHeatmap heatmap={user?.heatmap} />}
+          {activeTab === 'heatmap' && <ContributionHeatmap heatmap={user?.heatmap} showAnalytics />}
           {activeTab === 'posts' && <DashboardPostsPanel user={user} />}
           {activeTab === 'portfolio' && <DashboardPortfolioEditor {...dashboard} />}
 

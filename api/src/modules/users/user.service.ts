@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import type { Types } from 'mongoose';
 
 import cleanupQueue, { type CleanupQueue } from '../../infrastructure/jobs/cleanup.queue.js';
@@ -19,7 +20,9 @@ import mediaService, { type MediaService } from '../media/media.service.js';
 import likeRepository, { type LikeRepository } from '../likes/like.repository.js';
 import notificationService, { type NotificationService } from '../notifications/notification.service.js';
 import postRepository, { type PostRepository } from '../posts/post.repository.js';
+import repostRepository, { type RepostRepository } from '../reposts/repost.repository.js';
 import accountDeletionVerificationRepository, { type AccountDeletionVerificationRepository } from './accountDeletionVerification.repository.js';
+import profileViewRepository, { type ProfileViewRepository } from './profileView.repository.js';
 import type { ProfilePicture, UserAddress } from './user.model.js';
 import userRepository, { type ProfessionalInfoUpdate, type UserRepository } from './user.repository.js';
 import blockRepository, { type BlockRepository } from './block/block.repository.js';
@@ -43,6 +46,27 @@ type IdentityUpdateInput = {
 };
 
 type AddressInput = Partial<Record<keyof UserAddress, unknown>>;
+type DashboardAnalyticsRange = '1d' | '7d' | '30d' | '90d';
+type DailyCount = { _id: string; count: number };
+type DashboardAnalyticsDay = {
+  date: string;
+  followers: number;
+  profileViews: number;
+  posts: number;
+  likes: number;
+  comments: number;
+  feedbacks: number;
+  reposts: number;
+  reach: number;
+};
+
+const PROFILE_VIEW_RATE_LIMIT_MS = 20 * 1000;
+const DASHBOARD_ANALYTICS_RANGES: Record<DashboardAnalyticsRange, number> = {
+  '1d': 1,
+  '7d': 7,
+  '30d': 30,
+  '90d': 90,
+};
 
 class UserService {
   constructor(
@@ -53,6 +77,7 @@ class UserService {
     private readonly media: MediaService = mediaService,
     private readonly likes: LikeRepository = likeRepository,
     private readonly posts: PostRepository = postRepository,
+    private readonly reposts: RepostRepository = repostRepository,
     private readonly notifications: NotificationService = notificationService,
     private readonly comments: CommentRepository = commentRepository,
     private readonly chats: ChatRepository = chatRepository,
@@ -62,6 +87,7 @@ class UserService {
     private readonly sessions: AuthSessionService = authSessionService,
     private readonly accountDeletionVerifications: AccountDeletionVerificationRepository = accountDeletionVerificationRepository,
     private readonly cleanupJobs: CleanupQueue = cleanupQueue,
+    private readonly profileViews: ProfileViewRepository = profileViewRepository,
   ) {}
 
   private normalizePage(pageInput: unknown): number {
@@ -72,6 +98,64 @@ class UserService {
   private normalizeLimit(limitInput: unknown, fallback: number, max: number): number {
     const limit = Number(limitInput) || fallback;
     return Math.min(Math.max(limit, 1), max);
+  }
+
+  private normalizeAnalyticsRange(rangeInput: unknown): DashboardAnalyticsRange {
+    return typeof rangeInput === 'string' && rangeInput in DASHBOARD_ANALYTICS_RANGES
+      ? rangeInput as DashboardAnalyticsRange
+      : '30d';
+  }
+
+  private getDateKey(date: Date): string {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
+  private getAnalyticsStartDate(range: DashboardAnalyticsRange): Date {
+    const startDate = new Date();
+    startDate.setHours(0, 0, 0, 0);
+    startDate.setDate(startDate.getDate() - (DASHBOARD_ANALYTICS_RANGES[range] - 1));
+    return startDate;
+  }
+
+  private buildAnalyticsDays(startDate: Date): DashboardAnalyticsDay[] {
+    const days: DashboardAnalyticsDay[] = [];
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    for (const cursor = new Date(startDate); cursor <= today; cursor.setDate(cursor.getDate() + 1)) {
+      days.push({
+        date: this.getDateKey(cursor),
+        followers: 0,
+        profileViews: 0,
+        posts: 0,
+        likes: 0,
+        comments: 0,
+        feedbacks: 0,
+        reposts: 0,
+        reach: 0,
+      });
+    }
+
+    return days;
+  }
+
+  private applyDailyCounts(days: DashboardAnalyticsDay[], field: keyof Omit<DashboardAnalyticsDay, 'date' | 'reach'>, rows: DailyCount[]) {
+    const dayMap = new Map(days.map((day) => [day.date, day]));
+
+    rows.forEach((row) => {
+      const day = dayMap.get(row._id);
+      if (!day) return;
+      day[field] = Number(row.count || 0);
+    });
+  }
+
+  private createViewerKey(viewerUserId: string, clientIp: string, userAgent: string): string {
+    return createHash('sha256')
+      .update(`${viewerUserId}:${clientIp || 'unknown'}:${userAgent || 'unknown'}`)
+      .digest('hex');
   }
 
   private async getOtpWindowCount(email: string): Promise<number> {
@@ -332,6 +416,89 @@ class UserService {
       },
       normalPosts,
       projectPosts,
+    };
+  }
+
+  async recordProfileView(viewerUserId: string, profileUserId: string, clientIp: string, userAgent: string) {
+    if (viewerUserId.toString() === profileUserId.toString()) {
+      return { counted: false };
+    }
+
+    await this.blockRules.ensureUsersCanInteract(viewerUserId, profileUserId, 'view profile of');
+
+    const profileUser = await this.users.findById(profileUserId);
+
+    if (!profileUser) {
+      throw new NotFoundError('User not found!');
+    }
+
+    const viewerKey = this.createViewerKey(viewerUserId, clientIp, userAgent);
+    const recentWindowStart = new Date(Date.now() - PROFILE_VIEW_RATE_LIMIT_MS);
+    const recentView = await this.profileViews.findRecent(profileUserId, viewerKey, recentWindowStart);
+
+    if (recentView) {
+      return { counted: false };
+    }
+
+    await this.profileViews.create(profileUserId, viewerUserId, viewerKey);
+
+    return { counted: true };
+  }
+
+  async getDashboardAnalytics(userId: string, rangeInput: unknown) {
+    const range = this.normalizeAnalyticsRange(rangeInput);
+    const startDate = this.getAnalyticsStartDate(range);
+
+    const [
+      followers,
+      profileViews,
+      posts,
+      likes,
+      comments,
+      feedbacks,
+      reposts,
+    ] = await Promise.all([
+      this.follows.countFollowersByDay(userId, startDate),
+      this.profileViews.countByDay(userId, startDate),
+      this.posts.countCreatedByDay(userId, startDate),
+      this.likes.countReceivedByDay(userId, startDate),
+      this.comments.countReceivedByDay(userId, startDate),
+      this.chats.countFeedbacksReceivedByDay(userId, startDate),
+      this.reposts.countReceivedByDay(userId, startDate),
+    ]);
+
+    const days = this.buildAnalyticsDays(startDate);
+
+    this.applyDailyCounts(days, 'followers', followers);
+    this.applyDailyCounts(days, 'profileViews', profileViews);
+    this.applyDailyCounts(days, 'posts', posts);
+    this.applyDailyCounts(days, 'likes', likes);
+    this.applyDailyCounts(days, 'comments', comments);
+    this.applyDailyCounts(days, 'feedbacks', feedbacks);
+    this.applyDailyCounts(days, 'reposts', reposts);
+
+    const series = days.map((day) => ({
+      ...day,
+      reach: day.profileViews + day.likes + day.comments + day.feedbacks + day.reposts,
+    }));
+    const totals = series.reduce(
+      (summary, day) => ({
+        followers: summary.followers + day.followers,
+        profileViews: summary.profileViews + day.profileViews,
+        posts: summary.posts + day.posts,
+        likes: summary.likes + day.likes,
+        comments: summary.comments + day.comments,
+        feedbacks: summary.feedbacks + day.feedbacks,
+        reposts: summary.reposts + day.reposts,
+        reach: summary.reach + day.reach,
+      }),
+      { followers: 0, profileViews: 0, posts: 0, likes: 0, comments: 0, feedbacks: 0, reposts: 0, reach: 0 },
+    );
+
+    return {
+      range,
+      totals,
+      series,
     };
   }
 

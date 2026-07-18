@@ -1,5 +1,6 @@
-import type { Types } from 'mongoose';
+import mongoose, { type Types } from 'mongoose';
 
+import { visiblePostQuery } from '../posts/post.repository.js';
 import LikeModel from './like.model.js';
 
 const isDuplicateKeyError = (error: unknown): boolean => (
@@ -65,6 +66,37 @@ class LikeRepository {
       .lean();
 
     return new Set(likes.map((like) => like.post.toString()));
+  }
+
+  countReceivedByDay(userId: string | Types.ObjectId, startDate: Date) {
+    return LikeModel.aggregate<{ _id: string; count: number }>([
+      { $match: { createdAt: { $gte: startDate } } },
+      {
+        $lookup: {
+          from: 'posts',
+          localField: 'post',
+          foreignField: '_id',
+          as: 'post',
+          pipeline: [
+            {
+              $match: {
+                user: new mongoose.Types.ObjectId(userId.toString()),
+                ...visiblePostQuery,
+              },
+            },
+            { $project: { _id: 1 } },
+          ],
+        },
+      },
+      { $match: { 'post.0': { $exists: true } } },
+      {
+        $group: {
+          _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
+          count: { $sum: 1 },
+        },
+      },
+      { $sort: { _id: 1 } },
+    ]);
   }
 }
 

@@ -5,12 +5,21 @@ import userService, { type UserService } from './user.service.js';
 
 const getParamId = (req: Request): string => String(req.params.id);
 
+const getClientIp = (req: Request): string => {
+  const forwardedFor = req.headers['x-forwarded-for'];
+  const forwardedIp = Array.isArray(forwardedFor) ? forwardedFor[0] : forwardedFor;
+
+  return String(forwardedIp || req.ip || req.socket.remoteAddress || 'unknown').split(',')[0].trim();
+};
+
 class UserController {
   readonly updatePassword: RequestHandler;
   readonly updateUserNameAndPP: RequestHandler;
   readonly updateGeneralInfo: RequestHandler;
   readonly updateProfessionalInfo: RequestHandler;
   readonly getProfileUser: RequestHandler;
+  readonly getDashboardAnalytics: RequestHandler;
+  readonly trackProfileView: RequestHandler;
   readonly getUserAccountHistory: RequestHandler;
   readonly verifyAccountDeletePassword: RequestHandler;
   readonly sendAccountDeleteOtp: RequestHandler;
@@ -31,6 +40,8 @@ class UserController {
     this.updateGeneralInfo = asyncHandler(this.handleUpdateGeneralInfo.bind(this));
     this.updateProfessionalInfo = asyncHandler(this.handleUpdateProfessionalInfo.bind(this));
     this.getProfileUser = asyncHandler(this.handleGetProfileUser.bind(this));
+    this.getDashboardAnalytics = asyncHandler(this.handleGetDashboardAnalytics.bind(this));
+    this.trackProfileView = asyncHandler(this.handleTrackProfileView.bind(this));
     this.getUserAccountHistory = asyncHandler(this.handleGetUserAccountHistory.bind(this));
     this.verifyAccountDeletePassword = asyncHandler(this.handleVerifyAccountDeletePassword.bind(this));
     this.sendAccountDeleteOtp = asyncHandler(this.handleSendAccountDeleteOtp.bind(this));
@@ -88,6 +99,31 @@ class UserController {
   private async handleGetProfileUser(req: Request, res: Response) {
     const responseData = await this.service.getUserProfile(req.user!.id, getParamId(req));
     res.status(200).json(responseData);
+  }
+
+  private async handleGetDashboardAnalytics(req: Request, res: Response) {
+    const analytics = await this.service.getDashboardAnalytics(req.user!.id, req.query.range);
+
+    res.status(200).json({
+      success: true,
+      message: 'Dashboard analytics fetched successfully!',
+      analytics,
+    });
+  }
+
+  private async handleTrackProfileView(req: Request, res: Response) {
+    const data = await this.service.recordProfileView(
+      req.user!.id,
+      getParamId(req),
+      getClientIp(req),
+      String(req.headers['user-agent'] || ''),
+    );
+
+    res.status(200).json({
+      success: true,
+      message: data.counted ? 'Profile view tracked.' : 'Profile view already tracked recently.',
+      ...data,
+    });
   }
 
   private async handleGetUserAccountHistory(req: Request, res: Response) {

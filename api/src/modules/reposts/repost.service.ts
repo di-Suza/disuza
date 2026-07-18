@@ -1,5 +1,6 @@
 import { BadRequestError, ConflictError, NotFoundError } from '../../shared/errors/index.js';
 import likeRepository, { type LikeRepository } from '../likes/like.repository.js';
+import notificationService, { type NotificationService } from '../notifications/notification.service.js';
 import postRepository, { type PostRepository } from '../posts/post.repository.js';
 import saveRepository, { type SaveRepository } from '../saves/save.repository.js';
 import blockService, { type BlockService } from '../users/block/block.service.js';
@@ -14,6 +15,7 @@ class RepostService {
     private readonly blockRules: BlockService = blockService,
     private readonly likes: LikeRepository = likeRepository,
     private readonly saves: SaveRepository = saveRepository,
+    private readonly notifications: NotificationService = notificationService,
   ) {}
 
   private normalizePage(pageInput: unknown): number {
@@ -94,6 +96,13 @@ class RepostService {
 
     await this.reposts.create(userId, postId);
     await this.posts.incrementRepostsCount(postId, 1);
+    await this.notifications.send({
+      senderId: userId,
+      recipientId: post.user,
+      type: 'REPOST',
+      contentId: postId,
+      onModel: 'Post',
+    });
 
     return { reposted: true };
   }
@@ -106,6 +115,16 @@ class RepostService {
     }
 
     await this.posts.incrementRepostsCount(postId, -1);
+    const post = await this.posts.findVisibleActionTarget(postId);
+
+    if (post) {
+      await this.notifications.remove({
+        senderId: userId,
+        recipientId: post.user,
+        type: 'REPOST',
+        contentId: postId,
+      });
+    }
 
     return { reposted: false, alreadyUnreposted: false };
   }

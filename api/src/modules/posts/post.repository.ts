@@ -1,4 +1,5 @@
 import type { FilterQuery, Types } from 'mongoose';
+import mongoose from 'mongoose';
 
 import PostModel, {
   type CodeSnippet,
@@ -193,6 +194,25 @@ class PostRepository {
       .limit(limit)
       .populate('user', 'userName profilePicture headline')
       .lean();
+  }
+
+  countCreatedByDay(userId: string | Types.ObjectId, startDate: Date) {
+    return PostModel.aggregate<{ _id: string; count: number }>([
+      {
+        $match: {
+          user: new mongoose.Types.ObjectId(userId.toString()),
+          createdAt: { $gte: startDate },
+          ...visiblePostQuery,
+        },
+      },
+      {
+        $group: {
+          _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
+          count: { $sum: 1 },
+        },
+      },
+      { $sort: { _id: 1 } },
+    ]);
   }
 }
 

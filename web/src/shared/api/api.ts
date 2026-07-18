@@ -13,6 +13,7 @@ export const api = createApi({
     'BlockedUsers',
     'UserRecommendations',
     'UserAccountHistory',
+    'DashboardAnalytics',
     'Posts',
     'Post',
     'PostAnalytics',

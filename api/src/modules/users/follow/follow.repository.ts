@@ -1,4 +1,4 @@
-import type { Types } from 'mongoose';
+import mongoose, { type Types } from 'mongoose';
 
 import FollowModel, { type FollowDocument } from './follow.model.js';
 
@@ -108,6 +108,24 @@ class FollowRepository {
       .select('follower following')
       .limit(limit)
       .lean();
+  }
+
+  countFollowersByDay(userId: string | Types.ObjectId, startDate: Date) {
+    return FollowModel.aggregate<{ _id: string; count: number }>([
+      {
+        $match: {
+          following: new mongoose.Types.ObjectId(userId.toString()),
+          createdAt: { $gte: startDate },
+        },
+      },
+      {
+        $group: {
+          _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
+          count: { $sum: 1 },
+        },
+      },
+      { $sort: { _id: 1 } },
+    ]);
   }
 }
 

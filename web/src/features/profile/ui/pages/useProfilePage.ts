@@ -8,6 +8,7 @@ import {
   useGetFollowersQuery,
   useGetFollowingQuery,
   useGetProfileUserQuery,
+  useTrackProfileViewMutation,
   useUnblockUserMutation,
   useUnfollowUserMutation,
 } from '@/features/users/api/user.api';
@@ -76,9 +77,11 @@ export const useProfilePage = () => {
   const [unfollowUser, { isLoading: isUnfollowLoading }] = useUnfollowUserMutation();
   const [blockUser, { isLoading: isBlockLoading }] = useBlockUserMutation();
   const [unblockUser, { isLoading: isUnblockLoading }] = useUnblockUserMutation();
+  const [trackProfileView] = useTrackProfileViewMutation();
   const [followState, setFollowState] = useState<FollowState | null>(null);
   const debouncedFollowState = useDebounce(followState, FOLLOW_DEBOUNCE_MS);
   const originalFollowStateRef = useRef<FollowState | null>(null);
+  const lastTrackedProfileRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (!profileUser?._id) {
@@ -91,6 +94,29 @@ export const useProfilePage = () => {
     originalFollowStateRef.current = nextState;
     setFollowState(nextState);
   }, [profileUser?._id]);
+
+  useEffect(() => {
+    if (
+      !profileUser?._id
+      || isOwnProfile
+      || profileUser.blockedProfile
+      || profileUser.isBlocked
+      || profileUser.hasBlockedMe
+      || lastTrackedProfileRef.current === profileUser._id
+    ) {
+      return;
+    }
+
+    lastTrackedProfileRef.current = profileUser._id;
+    trackProfileView(profileUser._id).unwrap().catch(() => undefined);
+  }, [
+    isOwnProfile,
+    profileUser?._id,
+    profileUser?.blockedProfile,
+    profileUser?.hasBlockedMe,
+    profileUser?.isBlocked,
+    trackProfileView,
+  ]);
 
   useEffect(() => {
     if (!debouncedFollowState) return;

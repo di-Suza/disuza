@@ -91,6 +91,36 @@ export type ProfileUserResponse = {
   projectPosts?: Post[];
 };
 
+export type DashboardAnalyticsRange = '1d' | '7d' | '30d' | '90d';
+
+export type DashboardAnalyticsDay = {
+  date: string;
+  followers: number;
+  profileViews: number;
+  posts: number;
+  likes: number;
+  comments: number;
+  feedbacks: number;
+  reposts: number;
+  reach: number;
+};
+
+export type DashboardAnalyticsTotals = Omit<DashboardAnalyticsDay, 'date'>;
+
+export type DashboardAnalyticsResponse = {
+  success: boolean;
+  message: string;
+  analytics: {
+    range: DashboardAnalyticsRange;
+    totals: DashboardAnalyticsTotals;
+    series: DashboardAnalyticsDay[];
+  };
+};
+
+export type TrackProfileViewResponse = MessageResponse & {
+  counted: boolean;
+};
+
 export type UserListResponse = {
   success: boolean;
   message: string;

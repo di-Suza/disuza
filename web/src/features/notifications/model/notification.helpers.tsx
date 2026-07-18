@@ -1,4 +1,4 @@
-import { Bell, Code2, Heart, MessageCircle, MessageCircleReply, UserCheck, UserPlus, Users } from 'lucide-react';
+import { Bell, Code2, Heart, MessageCircle, MessageCircleReply, Repeat2, UserCheck, UserPlus, Users } from 'lucide-react';
 import type { ReactNode } from 'react';
 
 import type { NotificationCommentContent, NotificationContent, NotificationItem, NotificationType } from './notification.types';
@@ -58,6 +58,8 @@ export const getNotificationIcon = (type: NotificationType) => {
       return <MessageCircle size={18} aria-hidden="true" />;
     case 'COMMENT_REPLY':
       return <MessageCircleReply size={18} aria-hidden="true" />;
+    case 'REPOST':
+      return <Repeat2 size={18} aria-hidden="true" />;
     case 'COLLAB_REQUEST':
       return <Code2 size={18} aria-hidden="true" />;
     case 'COLLAB_ACCEPTED':
@@ -82,6 +84,8 @@ export const getNotificationText = (notification: NotificationItem): ReactNode =
       return <><strong>{senderName}</strong> commented{commentPreview ? `: ${commentPreview}` : ' on your post'}</>;
     case 'COMMENT_REPLY':
       return <><strong>{senderName}</strong> replied{commentPreview ? `: ${commentPreview}` : ' to your comment'}</>;
+    case 'REPOST':
+      return <><strong>{senderName}</strong> reposted your post</>;
     case 'COLLAB_REQUEST':
       return <><strong>{senderName}</strong> sent you a collab request</>;
     case 'COLLAB_ACCEPTED':

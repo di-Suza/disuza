@@ -125,6 +125,24 @@ class CommentRepository {
       .lean();
   }
 
+  countReceivedByDay(userId: string | Types.ObjectId, startDate: Date) {
+    return CommentModel.aggregate<{ _id: string; count: number }>([
+      {
+        $match: {
+          postOwner: new mongoose.Types.ObjectId(userId.toString()),
+          createdAt: { $gte: startDate },
+        },
+      },
+      {
+        $group: {
+          _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
+          count: { $sum: 1 },
+        },
+      },
+      { $sort: { _id: 1 } },
+    ]);
+  }
+
   getReplies(parentCommentId: string | Types.ObjectId, page: number, limit: number, blockedUserIds: Types.ObjectId[]) {
     const skip = (page - 1) * limit;
     const matchStage: Record<string, unknown> = {

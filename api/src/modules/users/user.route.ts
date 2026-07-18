@@ -11,6 +11,7 @@ import {
   passwordRules,
   queryTypeAndPageRules,
   recommendationRules,
+  analyticsRangeRules,
   updateGeneralInfoRules,
   updateProfessionalInfoRules,
   updateUserNameAndPPRules,
@@ -38,7 +39,9 @@ class UserRoutes {
     this.router.patch('/updateGeneralInfo', updateGeneralInfoRules, validateRequest, userController.updateGeneralInfo);
     this.router.patch('/updateProfessionalInfo', updateProfessionalInfoRules, validateRequest, userController.updateProfessionalInfo);
 
+    this.router.get('/dashboardAnalytics', analyticsRangeRules, validateRequest, userController.getDashboardAnalytics);
     this.router.get('/getProfileUser/:id', mongoIdParam('id'), validateRequest, userController.getProfileUser);
+    this.router.post('/trackProfileView/:id', mongoIdParam('id'), validateRequest, userController.trackProfileView);
     this.router.get('/getUserAccountHistory', queryTypeAndPageRules, validateRequest, userController.getUserAccountHistory);
     this.router.get('/blockedUsers', pageQueryRules, validateRequest, userController.getBlockedUsers);
     this.router.get('/recommendations', recommendationRules, validateRequest, userController.getUserRecommendations);
