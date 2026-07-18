@@ -3047,7 +3047,7 @@
 }
 
 .inline-post-composer__code {
-  min-height: 128px;
+  min-height: 240px;
   border: 1px solid var(--border-secondary);
   border-radius: 12px;
   background: var(--surface-deep);
@@ -3061,8 +3061,8 @@
 
 .inline-post-composer__link-row {
   display: grid;
-  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr) auto;
-  gap: 8px;
+  grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.35fr) auto;
+  gap: 10px;
   align-items: center;
 }
 
@@ -3083,14 +3083,14 @@
   left: 50%;
   z-index: 1400;
   display: grid;
-  width: min(430px, calc(100vw - 32px));
-  max-height: min(520px, calc(100vh - 32px));
-  gap: 12px;
+  width: min(640px, calc(100vw - 32px));
+  max-height: min(82vh, 760px);
+  gap: 16px;
   overflow-y: auto;
   border: 1px solid var(--border-secondary);
-  border-radius: 10px;
+  border-radius: 12px;
   background: var(--surface);
-  padding: 14px;
+  padding: 18px;
   box-shadow: var(--shadow-media);
   transform: translate(-50%, -50%);
 }
@@ -3098,10 +3098,10 @@
 .inline-post-composer__tool-modal header {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding-right: 34px;
+  gap: 10px;
+  padding-right: 38px;
   color: var(--text-primary);
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 950;
 }
 
@@ -3134,12 +3134,12 @@
 .inline-post-composer__project-block,
 .inline-post-composer__project-fields {
   display: grid;
-  gap: 10px;
+  gap: 12px;
 }
 
 .inline-post-composer__project-block {
   border-bottom: 1px solid var(--border-secondary);
-  padding-bottom: 12px;
+  padding-bottom: 14px;
 }
 
 .inline-post-composer__project-fields {
@@ -3154,7 +3154,7 @@
   border: 1px solid var(--border-secondary);
   border-radius: 12px;
   background: var(--bg-main);
-  padding: 10px;
+  padding: 14px;
 }
 
 .inline-post-composer__toggle-row > span:first-child {
@@ -4085,6 +4085,12 @@
   .inline-post-composer__tool-modal {
     width: calc(100vw - 24px);
     max-height: calc(100vh - 24px);
+    gap: 12px;
+    padding: 14px;
+  }
+
+  .inline-post-composer__code {
+    min-height: 180px;
   }
 
   .inline-post-composer__footer {
