@@ -211,6 +211,21 @@ const DashboardPortfolioEditor = ({
     <div className="portfolio-builder-v1">
       <div className="portfolio-builder-v1__inner">
         <section className="portfolio-header-v1 portfolio-header-v1--compact">
+          <nav className="portfolio-header-v1__nav" aria-label="Portfolio sections">
+            {portfolioTabs.map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => {
+                  setActiveTab(tab.id);
+                  setTabMenuOpen(false);
+                }}
+                className={activeTab === tab.id ? 'is-active' : ''}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </nav>
           <div className={isTabMenuOpen ? 'portfolio-section-select-v1 is-open' : 'portfolio-section-select-v1'}>
             <button
               type="button"

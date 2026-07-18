@@ -34,8 +34,12 @@
   flex-direction: column;
   gap: 12px;
   overflow-y: auto;
-  background: rgba(7, 10, 16, 0.45);
+  background: var(--surface-deep);
   padding: 12px;
+}
+
+:root:not([data-theme='light']) .collab-room-messages {
+  background: rgba(7, 10, 16, 0.45);
 }
 
 .collab-chat-panel footer {

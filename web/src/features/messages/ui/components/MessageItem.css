@@ -380,6 +380,31 @@
   color: var(--text-secondary);
 }
 
+:root[data-theme='light'] .messages-v1-icon-button {
+  border-color: var(--border-secondary);
+  background: var(--surface-muted);
+  color: var(--text-secondary);
+}
+
+:root[data-theme='light'] .messages-v1-icon-button:hover {
+  border-color: color-mix(in srgb, var(--accent) 42%, var(--border-secondary));
+  background: var(--surface-muted-hover);
+  color: var(--text-primary);
+}
+
+:root[data-theme='light'] .messages-v1-menu,
+:root[data-theme='light'] .messages-v1-feedback-card {
+  border-color: var(--border-primary);
+  background: var(--surface);
+}
+
+:root[data-theme='light'] .messages-v1-system-message span,
+:root[data-theme='light'] .messages-v1-message.is-theirs .messages-v1-bubble {
+  border-color: var(--border-secondary);
+  background: var(--surface);
+  box-shadow: var(--shadow-media);
+}
+
 .messages-v1-delivery-status {
   display: inline-flex;
   align-items: center;
