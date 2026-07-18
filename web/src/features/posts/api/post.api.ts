@@ -108,6 +108,25 @@ export const postApi = api.injectEndpoints({
     }),
     getFeed: builder.query<PostsListResponse, FeedQueryArgs | void>({
       query: (args) => `/post/feed?${toQueryString({ page: args?.page || 1, limit: args?.limit, type: args?.type || 'all' })}`,
+      serializeQueryArgs: ({ endpointName, queryArgs }) => `${endpointName}-${queryArgs?.type || 'all'}`,
+      merge: (currentCache, incoming, { arg }) => {
+        if (!arg?.page || arg.page <= 1) {
+          currentCache.posts = incoming.posts;
+        } else {
+          const existingPostIds = new Set(currentCache.posts.map((post) => post._id));
+          currentCache.posts.push(...incoming.posts.filter((post) => !existingPostIds.has(post._id)));
+        }
+
+        currentCache.success = incoming.success;
+        currentCache.message = incoming.message;
+        currentCache.page = incoming.page;
+        currentCache.hasMore = incoming.hasMore;
+      },
+      forceRefetch: ({ currentArg, previousArg }) => (
+        currentArg?.page !== previousArg?.page
+        || currentArg?.type !== previousArg?.type
+        || currentArg?.limit !== previousArg?.limit
+      ),
       providesTags: ['Feed'],
     }),
     likePost: builder.mutation<PostLikeResponse, string>({

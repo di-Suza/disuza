@@ -4,6 +4,7 @@ import { createBrowserRouter } from 'react-router-dom';
 import ProtectedLayout from '@/app/layouts/ProtectedLayout';
 import PublicLayout from '@/app/layouts/PublicLayout';
 import SidebarLayout from '@/app/layouts/SidebarLayout';
+import ErrorBoundary from '@/shared/components/ErrorBoundary/ErrorBoundary';
 import FullPageLoader from '@/shared/components/FullPageLoader/FullPageLoader';
 import NotFound from '@/shared/components/NotFound/NotFound';
 
@@ -20,9 +21,11 @@ const SignInPage = lazy(() => import('@/pages/sign-in'));
 const SignUpPage = lazy(() => import('@/pages/sign-up'));
 
 const withSuspense = (element: ReactElement) => (
-  <Suspense fallback={<FullPageLoader />}>
-    {element}
-  </Suspense>
+  <ErrorBoundary>
+    <Suspense fallback={<FullPageLoader />}>
+      {element}
+    </Suspense>
+  </ErrorBoundary>
 );
 
 export const router = createBrowserRouter([

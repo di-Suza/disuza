@@ -1,10 +1,10 @@
 import { Eye, Loader2, RefreshCw, Sparkles, UserRound } from 'lucide-react';
-import { Fragment, useMemo, useState } from 'react';
+import { Fragment, memo, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
 import { useGetUserRecommendationsQuery } from '@/features/users/api/user.api';
 import type { UserProfile } from '@/features/users/model/user.types';
-import type { PostAuthor } from '@/features/posts/model/post.types';
+import type { Post, PostAuthor } from '@/features/posts/model/post.types';
 import InlinePostComposer from '../components/InlinePostComposer';
 import PostCard from '../components/PostCard';
 import { useFeedPage } from './useFeedPage';
@@ -63,9 +63,18 @@ const UserRecommendations = ({ recommendations, variant = 'rail' }: { recommenda
   );
 };
 
+const FeedPostItem = memo(({ fallbackAuthor, post, viewerId }: { fallbackAuthor?: PostAuthor; post: Post; viewerId?: string }) => (
+  <div className="home-feed-exact__post-shell">
+    <PostCard post={post} viewerId={viewerId} fallbackAuthor={fallbackAuthor} />
+  </div>
+));
+
+FeedPostItem.displayName = 'FeedPostItem';
+
 const FeedPage = () => {
   const [recommendationInsertIndex] = useState(() => Math.floor(Math.random() * 3) + 2);
-  const { feedType, isError, isFetching, isLoading, posts, refetch, user } = useFeedPage();
+  const loadMoreRef = useRef<HTMLDivElement | null>(null);
+  const { feedType, hasMore, isError, isFetching, isLoading, loadMore, posts, refetch, user } = useFeedPage();
   const { data: recommendationsData } = useGetUserRecommendationsQuery({ limit: 12 });
   const recommendations = recommendationsData?.recommendations || [];
   const hasRecommendations = recommendations.length > 0;
@@ -75,6 +84,19 @@ const FeedPage = () => {
     if (!user) return undefined;
     return { _id: user._id, userName: user.userName, profilePicture: user.profilePicture, headline: user.headline };
   }, [user]);
+
+  useEffect(() => {
+    const sentinel = loadMoreRef.current;
+    if (!sentinel || !hasMore) return undefined;
+
+    const observer = new IntersectionObserver((entries) => {
+      if (entries[0]?.isIntersecting) loadMore();
+    }, { rootMargin: '720px 0px' });
+
+    observer.observe(sentinel);
+
+    return () => observer.disconnect();
+  }, [hasMore, loadMore]);
 
   return (
     <div className={hasRecommendations ? 'home-feed-exact has-recommendations' : 'home-feed-exact'}>
@@ -90,11 +112,16 @@ const FeedPage = () => {
           <>
             {posts.map((post, index) => (
               <Fragment key={post._id}>
-                <PostCard post={post} viewerId={user?._id} fallbackAuthor={fallbackAuthor} />
+                <FeedPostItem post={post} viewerId={user?._id} fallbackAuthor={fallbackAuthor} />
                 {hasRecommendations && inlineRecommendationIndex === index + 1 && <UserRecommendations recommendations={recommendations} variant="slider" />}
               </Fragment>
             ))}
-            {!isFetching && <p className="home-feed-exact__caught-up">You're all caught up</p>}
+            {hasMore && (
+              <div ref={loadMoreRef} className="home-feed-exact__sentinel">
+                <button type="button" onClick={loadMore} disabled={isFetching}>Load more</button>
+              </div>
+            )}
+            {!hasMore && !isFetching && <p className="home-feed-exact__caught-up">You're all caught up</p>}
           </>
         )}
         {isFetching && !isLoading && <div className="home-feed-exact__loader"><Loader2 className="spin" size={20} />Loading more posts...</div>}

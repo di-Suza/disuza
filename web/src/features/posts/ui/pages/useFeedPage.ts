@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
 import { useAppSelector } from '@/app/store/hooks';
@@ -9,7 +9,26 @@ export const useFeedPage = () => {
   const user = useAppSelector((state) => state.auth.user);
   const [searchParams] = useSearchParams();
   const feedType: FeedType = searchParams.get('type') === 'following' ? 'following' : 'all';
-  const { data, isError, isFetching, isLoading, refetch } = useGetFeedQuery({ page: 1, limit: 10, type: feedType });
+  const [page, setPage] = useState(1);
+  const { data, isError, isFetching, isLoading, refetch } = useGetFeedQuery({ page, limit: 10, type: feedType });
+
+  useEffect(() => {
+    setPage(1);
+  }, [feedType]);
+
+  const loadMore = useCallback(() => {
+    if (isFetching || !data?.hasMore) return;
+    setPage((currentPage) => currentPage + 1);
+  }, [data?.hasMore, isFetching]);
+
+  const refresh = useCallback(() => {
+    if (page === 1) {
+      refetch();
+      return;
+    }
+
+    setPage(1);
+  }, [page, refetch]);
 
   return useMemo(() => ({
     feedType,
@@ -17,8 +36,10 @@ export const useFeedPage = () => {
     isError,
     isFetching,
     isLoading,
+    loadMore,
+    page,
     posts: data?.posts || [],
-    refetch,
+    refetch: refresh,
     user,
-  }), [data?.hasMore, data?.posts, feedType, isError, isFetching, isLoading, refetch, user]);
+  }), [data?.hasMore, data?.posts, feedType, isError, isFetching, isLoading, loadMore, page, refresh, user]);
 };
