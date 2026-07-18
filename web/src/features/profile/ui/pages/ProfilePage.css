@@ -5,6 +5,13 @@
   margin-top: 24px;
 }
 
+.profile-section-loader {
+  display: grid;
+  min-height: 160px;
+  place-items: center;
+  color: var(--text-secondary);
+}
+
 .profile-stats article,
 .profile-stats button {
   min-height: 86px;

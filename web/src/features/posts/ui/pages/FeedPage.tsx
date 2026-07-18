@@ -72,14 +72,20 @@ const FeedPostItem = memo(({ fallbackAuthor, post, viewerId }: { fallbackAuthor?
 
 FeedPostItem.displayName = 'FeedPostItem';
 
+const FEED_RENDER_BATCH_SIZE = 8;
+
 const FeedPage = () => {
   const [recommendationInsertIndex] = useState(() => Math.floor(Math.random() * 3) + 2);
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
+  const renderMoreRef = useRef<HTMLDivElement | null>(null);
+  const [visiblePostCount, setVisiblePostCount] = useState(FEED_RENDER_BATCH_SIZE);
   const { feedType, hasMore, isError, isFetching, isLoading, loadMore, posts, refetch, user } = useFeedPage();
   const { data: recommendationsData } = useGetUserRecommendationsQuery({ limit: 12 });
   const recommendations = recommendationsData?.recommendations || [];
   const hasRecommendations = recommendations.length > 0;
   const inlineRecommendationIndex = posts.length >= 2 ? Math.min(recommendationInsertIndex, posts.length) : null;
+  const visiblePosts = useMemo(() => posts.slice(0, visiblePostCount), [posts, visiblePostCount]);
+  const hasHiddenLoadedPosts = visiblePostCount < posts.length;
 
   const fallbackAuthor = useMemo<PostAuthor | undefined>(() => {
     if (!user) return undefined;
@@ -87,17 +93,28 @@ const FeedPage = () => {
   }, [user]);
 
   useEffect(() => {
-    const sentinel = loadMoreRef.current;
-    if (!sentinel || !hasMore) return undefined;
+    setVisiblePostCount(FEED_RENDER_BATCH_SIZE);
+  }, [feedType]);
+
+  useEffect(() => {
+    const sentinel = hasHiddenLoadedPosts ? renderMoreRef.current : loadMoreRef.current;
+    if (!sentinel || (!hasHiddenLoadedPosts && !hasMore)) return undefined;
 
     const observer = new IntersectionObserver((entries) => {
-      if (entries[0]?.isIntersecting) loadMore();
+      if (!entries[0]?.isIntersecting) return;
+
+      if (hasHiddenLoadedPosts) {
+        setVisiblePostCount((current) => Math.min(posts.length, current + FEED_RENDER_BATCH_SIZE));
+        return;
+      }
+
+      loadMore();
     }, { rootMargin: '720px 0px' });
 
     observer.observe(sentinel);
 
     return () => observer.disconnect();
-  }, [hasMore, loadMore]);
+  }, [hasHiddenLoadedPosts, hasMore, loadMore, posts.length]);
 
   return (
     <div className={hasRecommendations ? 'home-feed-exact has-recommendations' : 'home-feed-exact'}>
@@ -113,7 +130,7 @@ const FeedPage = () => {
           <p className="home-feed-exact__empty">{feedType === 'following' ? 'No posts from people you follow yet' : 'No posts yet'}</p>
         ) : (
           <>
-            {posts.map((post, index) => (
+            {visiblePosts.map((post, index) => (
               <Fragment key={post._id}>
                 <ErrorBoundary variant="section" title="This post could not be rendered." resetKeys={[post._id]} showReload={false}>
                   <FeedPostItem post={post} viewerId={user?._id} fallbackAuthor={fallbackAuthor} />
@@ -125,12 +142,21 @@ const FeedPage = () => {
                 )}
               </Fragment>
             ))}
-            {hasMore && (
+            {hasHiddenLoadedPosts ? (
+              <div ref={renderMoreRef} className="home-feed-exact__sentinel">
+                <button
+                  type="button"
+                  onClick={() => setVisiblePostCount((current) => Math.min(posts.length, current + FEED_RENDER_BATCH_SIZE))}
+                >
+                  Show more posts
+                </button>
+              </div>
+            ) : hasMore && (
               <div ref={loadMoreRef} className="home-feed-exact__sentinel">
                 <button type="button" onClick={loadMore} disabled={isFetching}>Load more</button>
               </div>
             )}
-            {!hasMore && !isFetching && <p className="home-feed-exact__caught-up">You're all caught up</p>}
+            {!hasHiddenLoadedPosts && !hasMore && !isFetching && <p className="home-feed-exact__caught-up">You're all caught up</p>}
           </>
         )}
         {isFetching && !isLoading && <div className="home-feed-exact__loader"><Loader2 className="spin" size={20} />Loading more posts...</div>}

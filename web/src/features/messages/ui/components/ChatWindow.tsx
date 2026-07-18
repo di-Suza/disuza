@@ -1,5 +1,5 @@
 import { ArrowLeft, Code2, Loader2, MoreVertical, Paperclip, RefreshCw, Send, UserX, X } from 'lucide-react';
-import { memo, useEffect, useRef, useState, type MouseEvent } from 'react';
+import { lazy, memo, Suspense, useEffect, useMemo, useRef, useState, type MouseEvent } from 'react';
 
 import {
   formatChatDateDivider,
@@ -7,10 +7,8 @@ import {
   getConversationTitle,
 } from '@/features/messages/model/chat.helpers';
 import type { ChatConversation, ChatMessage } from '@/features/messages/model/chat.types';
-import CollabPermissionModal from '@/features/collab/ui/components/CollabPermissionModal';
 import { cn } from '@/shared/utils/cn';
 import ChatAvatar from './ChatAvatar';
-import GroupSettingsModal from './GroupSettingsModal';
 import MessageItem from './MessageItem';
 import { useChatWindow } from './useChatWindow';
 
@@ -31,6 +29,9 @@ type ContextMenu = {
   x: number;
   y: number;
 };
+
+const CollabPermissionModal = lazy(() => import('@/features/collab/ui/components/CollabPermissionModal'));
+const GroupSettingsModal = lazy(() => import('./GroupSettingsModal'));
 
 const ChatWindow = ({
   allMessages,
@@ -76,6 +77,13 @@ const ChatWindow = ({
   const headerAvatarUser = selectedChat?.isGroup
     ? { userName: getConversationTitle(selectedChat), profilePicture: selectedChat.groupAvatar }
     : selectedChat?.otherUser;
+  const threadedMessages = useMemo(() => allMessages.map((message, index) => {
+    const previousMessage = allMessages[index - 1];
+    const showDateDivider = index === 0
+      || getChatMessageDateKey(message.createdAt) !== getChatMessageDateKey(previousMessage?.createdAt);
+
+    return { message, showDateDivider };
+  }), [allMessages]);
 
   useEffect(() => {
     if (!contextMenu) return;
@@ -200,22 +208,16 @@ const ChatWindow = ({
                   </div>
                 ) : null}
 
-                {allMessages.map((message, index) => {
-                  const previousMessage = allMessages[index - 1];
-                  const showDateDivider = index === 0
-                    || getChatMessageDateKey(message.createdAt) !== getChatMessageDateKey(previousMessage?.createdAt);
-
-                  return (
-                    <div key={`${message._id}_${index}`}>
-                      {showDateDivider && (
-                        <div className="messages-v1-date-divider">
-                          <span>{formatChatDateDivider(message.createdAt)}</span>
-                        </div>
-                      )}
-                      <MessageItem message={message} />
-                    </div>
-                  );
-                })}
+                {threadedMessages.map(({ message, showDateDivider }, index) => (
+                  <div key={`${message._id}_${index}`}>
+                    {showDateDivider && (
+                      <div className="messages-v1-date-divider">
+                        <span>{formatChatDateDivider(message.createdAt)}</span>
+                      </div>
+                    )}
+                    <MessageItem message={message} />
+                  </div>
+                ))}
 
                 {typingLabel && (
                   <div className="messages-v1-typing">
@@ -293,24 +295,26 @@ const ChatWindow = ({
       )}
       </section>
 
-      {isCollabPermissionModalOpen && canSendMessages && selectedChat && !selectedChat.isGroup && (
-        <CollabPermissionModal
-          isOpen={isCollabPermissionModalOpen}
-          onClose={() => setIsCollabPermissionModalOpen(false)}
-          otherUser={selectedChat.otherUser?.userName}
-          conversationId={selectedChat._id}
-        />
-      )}
+      <Suspense fallback={null}>
+        {isCollabPermissionModalOpen && canSendMessages && selectedChat && !selectedChat.isGroup && (
+          <CollabPermissionModal
+            isOpen={isCollabPermissionModalOpen}
+            onClose={() => setIsCollabPermissionModalOpen(false)}
+            otherUser={selectedChat.otherUser?.userName}
+            conversationId={selectedChat._id}
+          />
+        )}
 
-      {isGroupSettingsOpen && selectedChat?.isGroup && (
-        <GroupSettingsModal
-          isOpen={isGroupSettingsOpen}
-          conversation={selectedChat}
-          onClose={() => setIsGroupSettingsOpen(false)}
-          onConversationUpdated={(conversation) => handleChatSelect(conversation)}
-          onLeftGroup={handleBackToChats}
-        />
-      )}
+        {isGroupSettingsOpen && selectedChat?.isGroup && (
+          <GroupSettingsModal
+            isOpen={isGroupSettingsOpen}
+            conversation={selectedChat}
+            onClose={() => setIsGroupSettingsOpen(false)}
+            onConversationUpdated={(conversation) => handleChatSelect(conversation)}
+            onLeftGroup={handleBackToChats}
+          />
+        )}
+      </Suspense>
     </>
   );
 };

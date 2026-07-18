@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Activity,
   AlertCircle,
@@ -12,6 +12,7 @@ import {
   HelpCircle,
   Lock,
   LogOut,
+  Loader2,
   MessageCircle,
   MessageSquare,
   Monitor,
@@ -28,22 +29,11 @@ import {
   UserX,
 } from 'lucide-react';
 
-import ForgotPasswordModal from '@/features/auth/ui/components/ForgotPasswordModal/ForgotPasswordModal';
-import ReportAProblemModal from '@/features/issues/ui/components/ReportAProblemModal';
-import DashboardPostsPanel from '@/features/posts/ui/components/DashboardPostsPanel';
-import PostComposerModal from '@/features/posts/ui/components/PostComposerModal';
-import SavedCollectionsPanel from '@/features/saves/ui/components/SavedCollectionsPanel';
 import ErrorBoundary from '@/shared/components/ErrorBoundary/ErrorBoundary';
-import DashboardAccountModal, { type DashboardAccountModalMode } from '../components/DashboardAccountModal';
-import DashboardActivitiesModal, { type DashboardActivityType } from '../components/DashboardActivitiesModal';
-import DashboardBlockedUsersModal from '../components/DashboardBlockedUsersModal';
-import DashboardEditProfileModal from '../components/DashboardEditProfileModal';
-import DashboardPortfolioEditor from '../components/DashboardPortfolioEditor';
-import DashboardReportsModal from '../components/DashboardReportsModal';
-import DashboardRoomsPanel from '../components/DashboardRoomsPanel';
-import DashboardUserListModal, { type DashboardUserListType } from '../components/DashboardUserListModal';
-import ContributionHeatmap from '../components/ContributionHeatmap';
 import HeatmapRules from '../components/HeatmapRules';
+import type { DashboardAccountModalMode } from '../components/DashboardAccountModal';
+import type { DashboardActivityType } from '../components/DashboardActivitiesModal';
+import type { DashboardUserListType } from '../components/DashboardUserListModal';
 import { useDashboardPage } from './useDashboardPage';
 import '@/features/reports/ui/components/ReportModal.css';
 import './DashboardLegacy.css';
@@ -55,6 +45,21 @@ type MoreSection = 'display' | 'activities' | 'collections' | 'support' | 'priva
 type Theme = 'dark' | 'light';
 
 const THEME_STORAGE_KEY = 'devloop-theme';
+
+const ForgotPasswordModal = lazy(() => import('@/features/auth/ui/components/ForgotPasswordModal/ForgotPasswordModal'));
+const ReportAProblemModal = lazy(() => import('@/features/issues/ui/components/ReportAProblemModal'));
+const DashboardPostsPanel = lazy(() => import('@/features/posts/ui/components/DashboardPostsPanel'));
+const PostComposerModal = lazy(() => import('@/features/posts/ui/components/PostComposerModal'));
+const SavedCollectionsPanel = lazy(() => import('@/features/saves/ui/components/SavedCollectionsPanel'));
+const DashboardAccountModal = lazy(() => import('../components/DashboardAccountModal'));
+const DashboardActivitiesModal = lazy(() => import('../components/DashboardActivitiesModal'));
+const DashboardBlockedUsersModal = lazy(() => import('../components/DashboardBlockedUsersModal'));
+const DashboardEditProfileModal = lazy(() => import('../components/DashboardEditProfileModal'));
+const DashboardPortfolioEditor = lazy(() => import('../components/DashboardPortfolioEditor'));
+const DashboardReportsModal = lazy(() => import('../components/DashboardReportsModal'));
+const DashboardRoomsPanel = lazy(() => import('../components/DashboardRoomsPanel'));
+const DashboardUserListModal = lazy(() => import('../components/DashboardUserListModal'));
+const ContributionHeatmap = lazy(() => import('../components/ContributionHeatmap'));
 
 const dashboardTabs: Array<{ id: DashboardTab; label: string; icon: typeof Activity }> = [
   { id: 'heatmap', label: 'Activity', icon: Activity },
@@ -123,6 +128,13 @@ const ActivityCard = ({
   </button>
 );
 
+const DashboardSectionLoader = () => (
+  <div className="dashboard-v1-section-loader">
+    <Loader2 className="spin" size={20} aria-hidden="true" />
+    <span>Loading section...</span>
+  </div>
+);
+
 const DashboardPage = () => {
   const dashboard = useDashboardPage();
   const { user } = dashboard;
@@ -141,7 +153,13 @@ const DashboardPage = () => {
   const avatarUrl = getAvatarUrl(user?.profilePicture?.url);
   const isDarkMode = theme === 'dark';
   const [isMoreMenuOpen, setMoreMenuOpen] = useState(false);
-  const activeMoreSectionLabel = moreSections.find((section) => section.id === activeMoreSection)?.label || 'Display';
+  const activeMoreSectionLabel = useMemo(
+    () => moreSections.find((section) => section.id === activeMoreSection)?.label || 'Display',
+    [activeMoreSection],
+  );
+  const handleThemeToggle = useCallback(() => {
+    setTheme((current) => current === 'dark' ? 'light' : 'dark');
+  }, []);
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
@@ -199,31 +217,32 @@ const DashboardPage = () => {
         </ErrorBoundary>
 
         <section className="dashboard-v1-content">
-          {activeTab === 'heatmap' && (
-            <ErrorBoundary variant="section" title="Activity could not be rendered." resetKeys={[activeTab, user?._id]} showReload={false}>
-              <ContributionHeatmap heatmap={user?.heatmap} showAnalytics />
-            </ErrorBoundary>
-          )}
-          {activeTab === 'posts' && (
-            <ErrorBoundary variant="section" title="Posts panel could not be rendered." resetKeys={[activeTab, user?._id]} showReload={false}>
-              <DashboardPostsPanel user={user} />
-            </ErrorBoundary>
-          )}
-          {activeTab === 'portfolio' && (
-            <ErrorBoundary variant="section" title="Portfolio editor could not be rendered." resetKeys={[activeTab, user?._id]} showReload={false}>
-              <DashboardPortfolioEditor {...dashboard} />
-            </ErrorBoundary>
-          )}
+          <Suspense fallback={<DashboardSectionLoader />}>
+            {activeTab === 'heatmap' && (
+              <ErrorBoundary variant="section" title="Activity could not be rendered." resetKeys={[activeTab, user?._id]} showReload={false}>
+                <ContributionHeatmap heatmap={user?.heatmap} showAnalytics />
+              </ErrorBoundary>
+            )}
+            {activeTab === 'posts' && (
+              <ErrorBoundary variant="section" title="Posts panel could not be rendered." resetKeys={[activeTab, user?._id]} showReload={false}>
+                <DashboardPostsPanel user={user} />
+              </ErrorBoundary>
+            )}
+            {activeTab === 'portfolio' && (
+              <ErrorBoundary variant="section" title="Portfolio editor could not be rendered." resetKeys={[activeTab, user?._id]} showReload={false}>
+                <DashboardPortfolioEditor {...dashboard} />
+              </ErrorBoundary>
+            )}
 
-          {activeTab === 'rooms' && (
-            <ErrorBoundary variant="section" title="Rooms panel could not be rendered." resetKeys={[activeTab, user?._id]} showReload={false}>
-              <DashboardRoomsPanel />
-            </ErrorBoundary>
-          )}
+            {activeTab === 'rooms' && (
+              <ErrorBoundary variant="section" title="Rooms panel could not be rendered." resetKeys={[activeTab, user?._id]} showReload={false}>
+                <DashboardRoomsPanel />
+              </ErrorBoundary>
+            )}
 
-          {activeTab === 'more' && (
-            <ErrorBoundary variant="section" title="More settings could not be rendered." resetKeys={[activeTab, activeMoreSection]} showReload={false}>
-              <div className="more-page-v1">
+            {activeTab === 'more' && (
+              <ErrorBoundary variant="section" title="More settings could not be rendered." resetKeys={[activeTab, activeMoreSection]} showReload={false}>
+                <div className="more-page-v1">
                 <header className="more-page-v1__heading"><h1>More</h1></header>
 
                 <div className="more-v1-shell">
@@ -276,7 +295,7 @@ const DashboardPage = () => {
                   {activeMoreSection === 'display' && (
                     <div className="more-v1-section">
                       <div><h2>Display</h2><p>Customize how DevLoop looks on your device</p></div>
-                      <button type="button" onClick={() => setTheme((current) => current === 'dark' ? 'light' : 'dark')} className="settings-row">
+                      <button type="button" onClick={handleThemeToggle} className="settings-row">
                         <span className="settings-row__main"><span className="settings-row__icon">{isDarkMode ? <Moon size={20} /> : <Sun size={20} />}</span><span><strong>{isDarkMode ? 'Dark Mode' : 'Light Mode'}</strong><small>{isDarkMode ? 'Easy on the eyes in low light' : 'Bright and clear interface'}</small></span></span>
                         <span className={isDarkMode ? 'settings-toggle is-active' : 'settings-toggle'}><i /></span>
                       </button>
@@ -319,46 +338,67 @@ const DashboardPage = () => {
                 </section>
                 </div>
               </div>
-            </ErrorBoundary>
-          )}
+              </ErrorBoundary>
+            )}
+          </Suspense>
         </section>
       </div>
 
-      <ErrorBoundary variant="inline" title="Post modal could not be rendered." resetKeys={[isComposerOpen]} showReload={false}>
-        <PostComposerModal isOpen={isComposerOpen} mode="create" onClose={() => setComposerOpen(false)} />
-      </ErrorBoundary>
-      <ErrorBoundary variant="inline" title="Edit profile modal could not be rendered." resetKeys={[isEditProfileOpen]} showReload={false}>
-        <DashboardEditProfileModal
-          {...dashboard}
-          isOpen={isEditProfileOpen}
-          onClose={() => setEditProfileOpen(false)}
-          onForgotPassword={() => {
-            setEditProfileOpen(false);
-            setForgotPasswordOpen(true);
-          }}
-        />
-      </ErrorBoundary>
-      <ErrorBoundary variant="inline" title="Forgot password modal could not be rendered." resetKeys={[isForgotPasswordOpen]} showReload={false}>
-        <ForgotPasswordModal isOpen={isForgotPasswordOpen} onClose={() => setForgotPasswordOpen(false)} />
-      </ErrorBoundary>
-      <ErrorBoundary variant="inline" title="Problem report modal could not be rendered." resetKeys={[isProblemModalOpen]} showReload={false}>
-        <ReportAProblemModal isOpen={isProblemModalOpen} onClose={() => setProblemModalOpen(false)} />
-      </ErrorBoundary>
-      <ErrorBoundary variant="inline" title="User list modal could not be rendered." resetKeys={[userListModal]} showReload={false}>
-        <DashboardUserListModal isOpen={Boolean(userListModal)} type={userListModal || 'followers'} userId={user?._id} onClose={() => setUserListModal(null)} />
-      </ErrorBoundary>
-      <ErrorBoundary variant="inline" title="Activity modal could not be rendered." resetKeys={[activityModal]} showReload={false}>
-        <DashboardActivitiesModal isOpen={Boolean(activityModal)} type={activityModal || 'likes'} onClose={() => setActivityModal(null)} />
-      </ErrorBoundary>
-      <ErrorBoundary variant="inline" title="Reports modal could not be rendered." resetKeys={[isReportsModalOpen]} showReload={false}>
-        <DashboardReportsModal isOpen={isReportsModalOpen} onClose={() => setReportsModalOpen(false)} />
-      </ErrorBoundary>
-      <ErrorBoundary variant="inline" title="Blocked users modal could not be rendered." resetKeys={[isBlockedUsersModalOpen]} showReload={false}>
-        <DashboardBlockedUsersModal isOpen={isBlockedUsersModalOpen} onClose={() => setBlockedUsersModalOpen(false)} />
-      </ErrorBoundary>
-      <ErrorBoundary variant="inline" title="Account modal could not be rendered." resetKeys={[accountModal]} showReload={false}>
-        <DashboardAccountModal isOpen={Boolean(accountModal)} mode={accountModal || 'privacy'} onClose={() => setAccountModal(null)} />
-      </ErrorBoundary>
+      <Suspense fallback={null}>
+        {isComposerOpen && (
+          <ErrorBoundary variant="inline" title="Post modal could not be rendered." resetKeys={[isComposerOpen]} showReload={false}>
+            <PostComposerModal isOpen={isComposerOpen} mode="create" onClose={() => setComposerOpen(false)} />
+          </ErrorBoundary>
+        )}
+        {isEditProfileOpen && (
+          <ErrorBoundary variant="inline" title="Edit profile modal could not be rendered." resetKeys={[isEditProfileOpen]} showReload={false}>
+            <DashboardEditProfileModal
+              {...dashboard}
+              isOpen={isEditProfileOpen}
+              onClose={() => setEditProfileOpen(false)}
+              onForgotPassword={() => {
+                setEditProfileOpen(false);
+                setForgotPasswordOpen(true);
+              }}
+            />
+          </ErrorBoundary>
+        )}
+        {isForgotPasswordOpen && (
+          <ErrorBoundary variant="inline" title="Forgot password modal could not be rendered." resetKeys={[isForgotPasswordOpen]} showReload={false}>
+            <ForgotPasswordModal isOpen={isForgotPasswordOpen} onClose={() => setForgotPasswordOpen(false)} />
+          </ErrorBoundary>
+        )}
+        {isProblemModalOpen && (
+          <ErrorBoundary variant="inline" title="Problem report modal could not be rendered." resetKeys={[isProblemModalOpen]} showReload={false}>
+            <ReportAProblemModal isOpen={isProblemModalOpen} onClose={() => setProblemModalOpen(false)} />
+          </ErrorBoundary>
+        )}
+        {userListModal && (
+          <ErrorBoundary variant="inline" title="User list modal could not be rendered." resetKeys={[userListModal]} showReload={false}>
+            <DashboardUserListModal isOpen={Boolean(userListModal)} type={userListModal} userId={user?._id} onClose={() => setUserListModal(null)} />
+          </ErrorBoundary>
+        )}
+        {activityModal && (
+          <ErrorBoundary variant="inline" title="Activity modal could not be rendered." resetKeys={[activityModal]} showReload={false}>
+            <DashboardActivitiesModal isOpen={Boolean(activityModal)} type={activityModal} onClose={() => setActivityModal(null)} />
+          </ErrorBoundary>
+        )}
+        {isReportsModalOpen && (
+          <ErrorBoundary variant="inline" title="Reports modal could not be rendered." resetKeys={[isReportsModalOpen]} showReload={false}>
+            <DashboardReportsModal isOpen={isReportsModalOpen} onClose={() => setReportsModalOpen(false)} />
+          </ErrorBoundary>
+        )}
+        {isBlockedUsersModalOpen && (
+          <ErrorBoundary variant="inline" title="Blocked users modal could not be rendered." resetKeys={[isBlockedUsersModalOpen]} showReload={false}>
+            <DashboardBlockedUsersModal isOpen={isBlockedUsersModalOpen} onClose={() => setBlockedUsersModalOpen(false)} />
+          </ErrorBoundary>
+        )}
+        {accountModal && (
+          <ErrorBoundary variant="inline" title="Account modal could not be rendered." resetKeys={[accountModal]} showReload={false}>
+            <DashboardAccountModal isOpen={Boolean(accountModal)} mode={accountModal} onClose={() => setAccountModal(null)} />
+          </ErrorBoundary>
+        )}
+      </Suspense>
     </main>
   );
 };

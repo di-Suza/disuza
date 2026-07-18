@@ -1,5 +1,5 @@
 import { Eye, Heart, Loader2, MessageCircle, Play, RefreshCw } from 'lucide-react';
-import { memo, useState } from 'react';
+import { memo, useCallback, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { useAppSelector } from '@/app/store/hooks';
@@ -13,14 +13,15 @@ type DashboardPostsPanelProps = {
   user?: unknown;
 };
 
-const PostPreviewCard = ({ post }: { post: Post }) => {
+const PostPreviewCard = memo(({ post }: { post: Post }) => {
   const navigate = useNavigate();
-  const media = getPostMedia(post);
+  const media = useMemo(() => getPostMedia(post), [post]);
   const firstMedia = media[0];
   const caption = post.caption || 'Untitled post';
+  const openPost = useCallback(() => navigate(`/post/${post._id}`), [navigate, post._id]);
 
   return (
-    <button type="button" onClick={() => navigate(`/post/${post._id}`)} className="dashboard-post-preview-card">
+    <button type="button" onClick={openPost} className="dashboard-post-preview-card">
       <span className="dashboard-post-preview-card__media">
         {firstMedia && isVideoMedia(firstMedia) ? (
           <>
@@ -41,7 +42,9 @@ const PostPreviewCard = ({ post }: { post: Post }) => {
       </span>
     </button>
   );
-};
+});
+
+PostPreviewCard.displayName = 'PostPreviewCard';
 
 type DashboardPostView = 'yours' | 'reposts';
 

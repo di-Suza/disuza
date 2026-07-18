@@ -26,13 +26,9 @@ import {
   Users,
   type LucideIcon,
 } from 'lucide-react';
-import { useState, type ReactNode } from 'react';
+import { lazy, Suspense, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 
-import ContributionHeatmap from '@/features/dashboard/ui/components/ContributionHeatmap';
-import SendFeedbackModal from '@/features/messages/ui/components/SendFeedbackModal';
-import ProfilePostsSection from '@/features/posts/ui/components/ProfilePostsSection';
-import ReportModal from '@/features/reports/ui/components/ReportModal';
 import ErrorBoundary from '@/shared/components/ErrorBoundary/ErrorBoundary';
 import Button from '@/shared/ui/Button';
 import { getErrorMessage } from '@/shared/utils/getErrorMessage';
@@ -67,6 +63,17 @@ const formatAddress = (address: unknown): string => {
     .filter(Boolean)
     .join(', ');
 };
+
+const ContributionHeatmap = lazy(() => import('@/features/dashboard/ui/components/ContributionHeatmap'));
+const SendFeedbackModal = lazy(() => import('@/features/messages/ui/components/SendFeedbackModal'));
+const ProfilePostsSection = lazy(() => import('@/features/posts/ui/components/ProfilePostsSection'));
+const ReportModal = lazy(() => import('@/features/reports/ui/components/ReportModal'));
+
+const ProfileSectionLoader = () => (
+  <div className="profile-section-loader">
+    <Loader2 className="spin" size={18} aria-hidden="true" />
+  </div>
+);
 
 const ProfileSection = ({
   children,
@@ -355,7 +362,9 @@ const ProfilePage = () => {
         ) : (
           <div className="profile-preview-content">
             <ErrorBoundary variant="section" title="Profile activity could not be rendered." resetKeys={[profileUser._id]} showReload={false}>
-              <section className="profile-preview-heatmap"><ContributionHeatmap heatmap={profileUser.heatmap} /></section>
+              <Suspense fallback={<ProfileSectionLoader />}>
+                <section className="profile-preview-heatmap"><ContributionHeatmap heatmap={profileUser.heatmap} /></section>
+              </Suspense>
             </ErrorBoundary>
 
             {profileUser.about && (
@@ -383,7 +392,9 @@ const ProfilePage = () => {
             )}
 
             <ErrorBoundary variant="section" title="Profile posts could not be rendered." resetKeys={[profileUser._id]} showReload={false}>
-              <ProfilePostsSection normalPosts={normalPosts} projectPosts={projectPosts} profileUser={profileUser} viewerId={currentUserId} />
+              <Suspense fallback={<ProfileSectionLoader />}>
+                <ProfilePostsSection normalPosts={normalPosts} projectPosts={projectPosts} profileUser={profileUser} viewerId={currentUserId} />
+              </Suspense>
             </ErrorBoundary>
 
             {experiences.length > 0 && (
@@ -432,27 +443,31 @@ const ProfilePage = () => {
       </section>
 
       {isReportOpen && canReportProfile && (
-        <ErrorBoundary variant="inline" title="Report modal could not be rendered." resetKeys={[isReportOpen]} showReload={false}>
-          <ReportModal
-            isOpen={isReportOpen}
-            onClose={closeReport}
-            targetId={profileUser._id}
-            onModel="User"
-          />
-        </ErrorBoundary>
+        <Suspense fallback={null}>
+          <ErrorBoundary variant="inline" title="Report modal could not be rendered." resetKeys={[isReportOpen]} showReload={false}>
+            <ReportModal
+              isOpen={isReportOpen}
+              onClose={closeReport}
+              targetId={profileUser._id}
+              onModel="User"
+            />
+          </ErrorBoundary>
+        </Suspense>
       )}
 
       {isFeedbackOpen && canSendFeedback && (
-        <ErrorBoundary variant="inline" title="Feedback modal could not be rendered." resetKeys={[isFeedbackOpen]} showReload={false}>
-          <SendFeedbackModal
-            isOpen={isFeedbackOpen}
-            onClose={() => setFeedbackOpen(false)}
-            feedbackOn="User"
-            receiverId={profileUser._id}
-            receiverName={profileUser.userName}
-            userId={profileUser._id}
-          />
-        </ErrorBoundary>
+        <Suspense fallback={null}>
+          <ErrorBoundary variant="inline" title="Feedback modal could not be rendered." resetKeys={[isFeedbackOpen]} showReload={false}>
+            <SendFeedbackModal
+              isOpen={isFeedbackOpen}
+              onClose={() => setFeedbackOpen(false)}
+              feedbackOn="User"
+              receiverId={profileUser._id}
+              receiverName={profileUser.userName}
+              userId={profileUser._id}
+            />
+          </ErrorBoundary>
+        </Suspense>
       )}
 
       <ErrorBoundary variant="inline" title="Block confirmation could not be rendered." resetKeys={[isBlockConfirmOpen]} showReload={false}>

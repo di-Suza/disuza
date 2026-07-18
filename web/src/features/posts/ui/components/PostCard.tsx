@@ -21,27 +21,19 @@ import {
   UserRound,
   X,
 } from 'lucide-react';
-import { memo, useCallback, useEffect, useMemo, useState, type CSSProperties, type ReactNode } from 'react';
+import { lazy, memo, Suspense, useCallback, useEffect, useMemo, useState, type CSSProperties, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import CommentModal from '@/features/comments/ui/components/CommentModal';
-import SendFeedbackModal from '@/features/messages/ui/components/SendFeedbackModal';
 import { useDeletePostMutation, useGetPostQuery, useTrackPostLinkClickMutation } from '@/features/posts/api/post.api';
 import { getPostAuthor, getPostImageUrl, getPostMedia, getPostOwnerId, isVideoMedia } from '@/features/posts/model/post.helpers';
 import type { Post, PostAuthor, PostLink } from '@/features/posts/model/post.types';
 import { usePostLike } from '@/features/posts/ui/hooks/usePostLike';
 import { usePostRepost } from '@/features/posts/ui/hooks/usePostRepost';
-import ReportModal from '@/features/reports/ui/components/ReportModal';
-import ManageSaveCollectionsModal from '@/features/saves/ui/components/ManageSaveCollectionsModal';
 import { usePostSave } from '@/features/saves/ui/hooks/usePostSave';
 import { useLockBodyScroll } from '@/shared/hooks/useLockBodyScroll';
 import { useToast } from '@/shared/hooks/useToast';
-import ConfirmDialog from '@/shared/ui/ConfirmDialog';
 import { cn } from '@/shared/utils/cn';
 import { getErrorMessage } from '@/shared/utils/getErrorMessage';
-import PostComposerModal from './PostComposerModal';
-import PostAnalyticsModal from './PostAnalyticsModal';
-import SharePostModal from './SharePostModal';
 import '../posts.css';
 
 type PostCardProps = {
@@ -58,6 +50,15 @@ type PostAttachmentPanel = 'code' | 'media';
 type PostDisplayLink = PostLink & {
   linkKey: string;
 };
+
+const CommentModal = lazy(() => import('@/features/comments/ui/components/CommentModal'));
+const SendFeedbackModal = lazy(() => import('@/features/messages/ui/components/SendFeedbackModal'));
+const ReportModal = lazy(() => import('@/features/reports/ui/components/ReportModal'));
+const ManageSaveCollectionsModal = lazy(() => import('@/features/saves/ui/components/ManageSaveCollectionsModal'));
+const ConfirmDialog = lazy(() => import('@/shared/ui/ConfirmDialog'));
+const PostComposerModal = lazy(() => import('./PostComposerModal'));
+const PostAnalyticsModal = lazy(() => import('./PostAnalyticsModal'));
+const SharePostModal = lazy(() => import('./SharePostModal'));
 
 const formatTime = (value?: string) => {
   if (!value) return '';
@@ -425,21 +426,25 @@ const PostCard = ({ className, fallbackAuthor, hideFeedbackAction = false, post,
         </section>
       </div>
 
-      {isEditOpen && <PostComposerModal isOpen={isEditOpen} mode="edit" onClose={() => setEditOpen(false)} post={editablePost || post} isPostLoading={isPostFetching && !editablePost} />}
-      {isCommentsOpen && <CommentModal isOpen={isCommentsOpen} onClose={() => setCommentsOpen(false)} post={post} />}
-      {isCollectionsOpen && <ManageSaveCollectionsModal isOpen={isCollectionsOpen} onClose={() => setCollectionsOpen(false)} postId={post._id} onSaved={markSaved} />}
-      {isReportOpen && <ReportModal isOpen={isReportOpen} onClose={() => setReportOpen(false)} targetId={post._id} onModel="Post" />}
-      {isShareOpen && <SharePostModal isOpen={isShareOpen} onClose={() => setShareOpen(false)} post={post} />}
-      {isAnalyticsOpen && <PostAnalyticsModal isOpen={isAnalyticsOpen} onClose={() => setAnalyticsOpen(false)} postId={post._id} />}
-      <ConfirmDialog
-        isOpen={isDeleteConfirmOpen}
-        isBusy={isDeleting}
-        title="Delete post?"
-        description="This post will be permanently removed from your profile, feed, saves, and related activity."
-        confirmLabel="Delete"
-        onCancel={() => setDeleteConfirmOpen(false)}
-        onConfirm={handleDelete}
-      />
+      <Suspense fallback={null}>
+        {isEditOpen && <PostComposerModal isOpen={isEditOpen} mode="edit" onClose={() => setEditOpen(false)} post={editablePost || post} isPostLoading={isPostFetching && !editablePost} />}
+        {isCommentsOpen && <CommentModal isOpen={isCommentsOpen} onClose={() => setCommentsOpen(false)} post={post} />}
+        {isCollectionsOpen && <ManageSaveCollectionsModal isOpen={isCollectionsOpen} onClose={() => setCollectionsOpen(false)} postId={post._id} onSaved={markSaved} />}
+        {isReportOpen && <ReportModal isOpen={isReportOpen} onClose={() => setReportOpen(false)} targetId={post._id} onModel="Post" />}
+        {isShareOpen && <SharePostModal isOpen={isShareOpen} onClose={() => setShareOpen(false)} post={post} />}
+        {isAnalyticsOpen && <PostAnalyticsModal isOpen={isAnalyticsOpen} onClose={() => setAnalyticsOpen(false)} postId={post._id} />}
+        {isDeleteConfirmOpen && (
+          <ConfirmDialog
+            isOpen={isDeleteConfirmOpen}
+            isBusy={isDeleting}
+            title="Delete post?"
+            description="This post will be permanently removed from your profile, feed, saves, and related activity."
+            confirmLabel="Delete"
+            onCancel={() => setDeleteConfirmOpen(false)}
+            onConfirm={handleDelete}
+          />
+        )}
+      </Suspense>
       {isMediaPreviewOpen && activeMedia && (
         <div className="v1-post-card__media-preview" role="dialog" aria-modal="true" aria-label="Media preview">
           <button type="button" className="v1-post-card__media-preview-backdrop" onClick={() => setMediaPreviewOpen(false)} aria-label="Close media preview" />
@@ -455,16 +460,18 @@ const PostCard = ({ className, fallbackAuthor, hideFeedbackAction = false, post,
           </button>
         </div>
       )}
-      {isFeedbackOpen && ownerId && (
-        <SendFeedbackModal
-          isOpen={isFeedbackOpen}
-          onClose={() => setFeedbackOpen(false)}
-          feedbackOn="Post"
-          receiverId={ownerId}
-          receiverName={userName}
-          postId={post._id}
-        />
-      )}
+      <Suspense fallback={null}>
+        {isFeedbackOpen && ownerId && (
+          <SendFeedbackModal
+            isOpen={isFeedbackOpen}
+            onClose={() => setFeedbackOpen(false)}
+            feedbackOn="Post"
+            receiverId={ownerId}
+            receiverName={userName}
+            postId={post._id}
+          />
+        )}
+      </Suspense>
     </article>
   );
 };

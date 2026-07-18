@@ -264,6 +264,16 @@
   box-shadow: var(--shadow-elevated);
 }
 
+.dashboard-v1-section-loader {
+  display: flex;
+  min-height: 220px;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
 .heatmap-rules-v1 {
   position: relative;
   display: inline-flex;

@@ -1,5 +1,5 @@
 import { Briefcase, Eye, Grid2X2, Heart, Loader2, MessageCircle, Play, Repeat2, type LucideIcon } from 'lucide-react';
-import { memo, type ReactNode } from 'react';
+import { memo, useCallback, useMemo, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { useGetUserRepostsQuery } from '@/features/posts/api/post.api';
@@ -16,14 +16,15 @@ type ProfilePostsSectionProps = {
   viewerId?: string;
 };
 
-const ProfilePostPreviewCard = ({ post }: { post: Post }) => {
+const ProfilePostPreviewCard = memo(({ post }: { post: Post }) => {
   const navigate = useNavigate();
-  const media = getPostMedia(post);
+  const media = useMemo(() => getPostMedia(post), [post]);
   const firstMedia = media[0];
   const caption = post.caption || 'Untitled post';
+  const openPost = useCallback(() => navigate(`/post/${post._id}`), [navigate, post._id]);
 
   return (
-    <button type="button" onClick={() => navigate(`/post/${post._id}`)} className="dashboard-post-preview-card profile-post-preview-card">
+    <button type="button" onClick={openPost} className="dashboard-post-preview-card profile-post-preview-card">
       <span className="dashboard-post-preview-card__media">
         {firstMedia && isVideoMedia(firstMedia) ? (
           <>
@@ -46,7 +47,9 @@ const ProfilePostPreviewCard = ({ post }: { post: Post }) => {
       </span>
     </button>
   );
-};
+});
+
+ProfilePostPreviewCard.displayName = 'ProfilePostPreviewCard';
 
 const ProfilePostSection = ({ children, icon: Icon, title }: { children: ReactNode; icon: LucideIcon; title: string }) => (
   <section className="profile-posts-section">

@@ -1,9 +1,8 @@
 import { Check, CheckCheck, Flag, MoreVertical, Undo2 } from 'lucide-react';
-import { memo, useEffect, useRef, useState } from 'react';
+import { lazy, memo, Suspense, useEffect, useRef, useState } from 'react';
 
 import { formatChatMessageTime, getFeedbackMediaUrl, getSharedPostMediaUrl } from '@/features/messages/model/chat.helpers';
 import type { ChatMessage } from '@/features/messages/model/chat.types';
-import ReportModal from '@/features/reports/ui/components/ReportModal';
 import ChatAvatar from './ChatAvatar';
 import MessageAttachment from './MessageAttachment';
 import { useMessageItem } from './useMessageItem';
@@ -12,6 +11,8 @@ import './MessageItem.css';
 type MessageItemProps = {
   message: ChatMessage;
 };
+
+const ReportModal = lazy(() => import('@/features/reports/ui/components/ReportModal'));
 
 const MessageItem = ({ message }: MessageItemProps) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -178,12 +179,16 @@ const MessageItem = ({ message }: MessageItemProps) => {
         </div>
       </div>
 
-      <ReportModal
-        isOpen={isReportModalOpen}
-        onClose={() => setIsReportModalOpen(false)}
-        targetId={message._id}
-        onModel="Message"
-      />
+      <Suspense fallback={null}>
+        {isReportModalOpen && (
+          <ReportModal
+            isOpen={isReportModalOpen}
+            onClose={() => setIsReportModalOpen(false)}
+            targetId={message._id}
+            onModel="Message"
+          />
+        )}
+      </Suspense>
     </>
   );
 };
