@@ -1,5 +1,6 @@
 import { ChevronDown, Loader2, MessageCircleReply, RefreshCw, Send, Trash2, UserRound, X } from 'lucide-react';
 import { memo } from 'react';
+import { createPortal } from 'react-dom';
 
 import { canDeleteComment, formatCommentTime, getCommentAvatarUrl } from '@/features/comments/model/comment.helpers';
 import type { Post } from '@/features/posts/model/post.types';
@@ -42,7 +43,7 @@ const CommentModal = ({ isOpen, onClose, post }: CommentModalProps) => {
 
   if (!isOpen) return null;
 
-  return (
+  return createPortal(
     <div className="modal-backdrop comments-backdrop" role="dialog" aria-modal="true" aria-label="Comments">
       <section className="modal-card comments-modal">
         <div className="modal-card__header comments-modal__header">
@@ -143,7 +144,8 @@ const CommentModal = ({ isOpen, onClose, post }: CommentModalProps) => {
           </div>
         </form>
       </section>
-    </div>
+    </div>,
+    document.body,
   );
 };
 
