@@ -5,7 +5,7 @@
 1. Create a new Render Web Service from the repository.
 2. Set the root directory to `api`.
 3. Use `npm install`, `npm run build`, and `npm run start`.
-4. Add environment variables for `MONGODB_URI`, `REDIS_ENABLED`, `REDIS_URL` or Redis host values, `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET`, `CORS_ORIGIN`, `SOCKET_CORS_ORIGIN`, ImageKit, Resend, and Google OAuth if enabled.
+4. Add environment variables for `MONGODB_URI`, `REDIS_ENABLED`, `REDIS_URL` or Redis host values, `PRIVATE_JWT_KEY_BS64`, `PUBLIC_JWT_KEY_BS64`, `CORS_ORIGIN`, `SOCKET_CORS_ORIGIN`, ImageKit, Resend, and Google OAuth if enabled.
 5. Restrict `CORS_ORIGIN` and `SOCKET_CORS_ORIGIN` to the Vercel domain.
 
 ## Vercel Web

@@ -18,18 +18,20 @@ type AppTokenPayload = JwtPayload & TokenSubject & {
 };
 
 class TokenService {
-  private sign(payload: AppTokenPayload, secret: string, expiresIn: string): string {
+  private sign(payload: AppTokenPayload, expiresIn: string): string {
     const options: SignOptions = {
+      algorithm: 'RS256',
       expiresIn: expiresIn as SignOptions['expiresIn'],
       issuer: 'Disuza',
     };
 
-    return jwt.sign(payload, secret, options);
+    return jwt.sign(payload, env.JWT_PRIVATE_KEY, options);
   }
 
-  private verify(token: string, secret: string, tokenType: TokenTypeValue): AppTokenPayload {
+  private verify(token: string, tokenType: TokenTypeValue): AppTokenPayload {
     try {
-      const payload = jwt.verify(token, secret, {
+      const payload = jwt.verify(token, env.JWT_PUBLIC_KEY, {
+        algorithms: ['RS256'],
         issuer: 'Disuza',
       }) as AppTokenPayload;
 
@@ -63,7 +65,6 @@ class TokenService {
         ...subject,
         tokenType: TokenType.ACCESS,
       },
-      env.JWT_ACCESS_SECRET,
       env.ACCESS_TOKEN_EXPIRES_IN,
     );
   }
@@ -74,7 +75,6 @@ class TokenService {
         ...subject,
         tokenType: TokenType.REFRESH,
       },
-      env.JWT_REFRESH_SECRET,
       env.REFRESH_TOKEN_EXPIRES_IN,
     );
   }
@@ -86,21 +86,20 @@ class TokenService {
         tokenType: TokenType.PASSWORD_RESET,
         purpose: 'forgot-password',
       },
-      env.JWT_ACCESS_SECRET,
       '5m',
     );
   }
 
   verifyAccessToken(token: string): AppTokenPayload {
-    return this.verify(token, env.JWT_ACCESS_SECRET, TokenType.ACCESS);
+    return this.verify(token, TokenType.ACCESS);
   }
 
   verifyRefreshToken(token: string): AppTokenPayload {
-    return this.verify(token, env.JWT_REFRESH_SECRET, TokenType.REFRESH);
+    return this.verify(token, TokenType.REFRESH);
   }
 
   verifyPasswordResetToken(token: string): AppTokenPayload {
-    return this.verify(token, env.JWT_ACCESS_SECRET, TokenType.PASSWORD_RESET);
+    return this.verify(token, TokenType.PASSWORD_RESET);
   }
 }
 

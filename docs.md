@@ -97,15 +97,15 @@ Added middleware/utilities:
 - `validateRequest` using `express-validator`
 - `asyncHandler`
 - `passwordService` using `bcryptjs`
-- `tokenService` using `jsonwebtoken`
+- `tokenService` using `jsonwebtoken` with RS256 private/public keys
 - `mongoIdParam` common validator
 - shared HTTP status constants
 - token type constants
 
 Added environment config:
 
-- `JWT_ACCESS_SECRET`
-- `JWT_REFRESH_SECRET`
+- `PRIVATE_JWT_KEY_BS64`
+- `PUBLIC_JWT_KEY_BS64`
 - `ACCESS_TOKEN_EXPIRES_IN`
 - `REFRESH_TOKEN_EXPIRES_IN`
 
