@@ -1,5 +1,6 @@
 import { useAppSelector } from '@/app/store/hooks';
 import { chatApi } from '@/features/messages/api/chat.api';
+import { getUnreadMessagesCount } from './unreadCount.helpers';
 
 const useUnreadMessagesCount = () => {
   const userId = useAppSelector((state) => state.auth.user?._id);
@@ -7,14 +8,7 @@ const useUnreadMessagesCount = () => {
 
   if (!userId) return 0;
 
-  return data?.conversations?.reduce((count, conversation) => {
-    const hasIncomingUnread = (conversation.isUnread || Number(conversation.unreadCount || 0) > 0)
-      && conversation.lastMessage?.sender !== userId;
-
-    if (!hasIncomingUnread) return count;
-
-    return count + Math.max(1, Number(conversation.unreadCount || 0));
-  }, 0) || 0;
+  return getUnreadMessagesCount(data?.conversations, userId);
 };
 
 export default useUnreadMessagesCount;

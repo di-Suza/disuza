@@ -2,11 +2,23 @@
   "extends": "./tsconfig.app.json",
   "compilerOptions": {
     "allowImportingTsExtensions": false,
-    "module": "NodeNext",
-    "moduleResolution": "NodeNext",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
     "noEmit": false,
     "outDir": "dist-tests",
     "rootDir": "src"
   },
-  "include": ["src/features/dashboard/ui/components/ContributionHeatmap.helpers.ts"]
+  "include": [
+    "src/features/comments/model/comment.helpers.ts",
+    "src/features/dashboard/ui/components/ContributionHeatmap.helpers.ts",
+    "src/features/messages/model/chat.helpers.ts",
+    "src/features/messages/model/offlineMessageQueue.ts",
+    "src/features/notifications/model/notification.helpers.tsx",
+    "src/features/posts/model/post.helpers.ts",
+    "src/shared/hooks/unreadCount.helpers.ts",
+    "src/shared/utils/authValidation.ts",
+    "src/shared/utils/cn.ts",
+    "src/shared/utils/getErrorMessage.ts",
+    "src/shared/utils/getOptimizedImage.ts"
+  ]
 }

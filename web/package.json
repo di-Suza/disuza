@@ -8,7 +8,7 @@
     "build": "tsc -p tsconfig.app.json --noEmit && vite build",
     "preview": "vite preview",
     "typecheck": "tsc -p tsconfig.app.json --noEmit",
-    "test": "npm run typecheck && tsc -p tsconfig.test.json && node --test --experimental-test-isolation=none tests/contributionHeatmap.helpers.test.mjs"
+    "test": "npm run typecheck && tsc -p tsconfig.test.json && node --test --experimental-test-isolation=none tests/run-tests.mjs"
   },
   "dependencies": {
     "@monaco-editor/react": "^4.7.0",

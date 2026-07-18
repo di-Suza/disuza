@@ -1,11 +1,12 @@
 import { notificationApi } from '@/features/notifications/api/notification.api';
+import { getUnreadNotificationsCount } from './unreadCount.helpers';
 
 const useUnreadNotificationsCount = () => {
   const { unreadCount } = notificationApi.endpoints.getNotifications.useQueryState(
     { page: 1, limit: 10 },
     {
       selectFromResult: ({ data }) => ({
-        unreadCount: data?.unreadCount || 0,
+        unreadCount: getUnreadNotificationsCount(data?.unreadCount),
       }),
     },
   );
