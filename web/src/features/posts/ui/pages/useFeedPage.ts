@@ -10,18 +10,27 @@ export const useFeedPage = () => {
   const [searchParams] = useSearchParams();
   const feedType: FeedType = searchParams.get('type') === 'following' ? 'following' : 'all';
   const [page, setPage] = useState(1);
-  const { data, isError, isFetching, isLoading, refetch } = useGetFeedQuery({ page, limit: 10, type: feedType });
+  const [loadedPostIds, setLoadedPostIds] = useState<string[]>([]);
+  const feedQueryArgs = useMemo(
+    () => ({ page, limit: 10, type: feedType, excludePostIds: page > 1 ? loadedPostIds : undefined }),
+    [feedType, loadedPostIds, page],
+  );
+  const { data, isError, isFetching, isLoading, refetch } = useGetFeedQuery(feedQueryArgs);
 
   useEffect(() => {
     setPage(1);
+    setLoadedPostIds([]);
   }, [feedType]);
 
   const loadMore = useCallback(() => {
     if (isFetching || !data?.hasMore) return;
+    setLoadedPostIds(data.posts.map((post) => post._id).filter(Boolean));
     setPage((currentPage) => currentPage + 1);
-  }, [data?.hasMore, isFetching]);
+  }, [data?.hasMore, data?.posts, isFetching]);
 
   const refresh = useCallback(() => {
+    setLoadedPostIds([]);
+
     if (page === 1) {
       refetch();
       return;
@@ -29,6 +38,21 @@ export const useFeedPage = () => {
 
     setPage(1);
   }, [page, refetch]);
+
+  useEffect(() => {
+    const ids = data?.posts?.map((post) => post._id).filter(Boolean) || [];
+    if (ids.length === 0 && loadedPostIds.length === 0) return;
+
+    setLoadedPostIds((currentIds) => {
+      const nextIds = page <= 1 ? ids : Array.from(new Set([...currentIds, ...ids]));
+
+      if (nextIds.length === currentIds.length && nextIds.every((postId, index) => postId === currentIds[index])) {
+        return currentIds;
+      }
+
+      return nextIds;
+    });
+  }, [data?.posts, loadedPostIds.length, page]);
 
   return useMemo(() => ({
     feedType,

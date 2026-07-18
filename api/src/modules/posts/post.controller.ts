@@ -118,7 +118,7 @@ class PostController {
   }
 
   private async handleGetFeed(req: Request, res: Response) {
-    const data = await this.service.getFeed(req.user!.id, req.query.page, req.query.limit, req.query.type);
+    const data = await this.service.getFeed(req.user!.id, req.query.page, req.query.limit, req.query.type, req.query.excludePostIds);
 
     res.status(200).json({
       success: true,

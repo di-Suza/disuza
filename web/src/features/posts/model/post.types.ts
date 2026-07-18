@@ -298,6 +298,7 @@ export type FeedQueryArgs = {
   page?: number;
   limit?: number;
   type?: FeedType;
+  excludePostIds?: string[];
 };
 
 export type PostsQueryArgs = {

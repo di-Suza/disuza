@@ -97,6 +97,24 @@ class PostService {
     return Math.min(Math.max(limit, 1), max);
   }
 
+  private normalizeSeenPostIds(input: unknown): string[] {
+    const rawIds = Array.isArray(input)
+      ? input
+      : typeof input === 'string'
+        ? input.split(',')
+        : [];
+    const seen = new Set<string>();
+
+    return rawIds
+      .map((postId) => String(postId).trim())
+      .filter((postId) => {
+        if (!mongoose.Types.ObjectId.isValid(postId) || seen.has(postId)) return false;
+        seen.add(postId);
+        return true;
+      })
+      .slice(0, 200);
+  }
+
   private getFeedRotationKey(userId: string, type: string, page: number): string {
     const date = new Date();
     const dayKey = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
@@ -790,10 +808,11 @@ class PostService {
     return { deleted: true, alreadyDeleting: false };
   }
 
-  async getFeed(userId: string, pageInput: unknown, limitInput: unknown, typeInput: unknown) {
+  async getFeed(userId: string, pageInput: unknown, limitInput: unknown, typeInput: unknown, seenPostIdsInput?: unknown) {
     const page = this.normalizePage(pageInput);
     const limit = this.normalizeLimit(limitInput, 10, 30);
     const type = typeInput === 'following' ? 'following' : 'all';
+    const seenPostIds = this.normalizeSeenPostIds(seenPostIdsInput);
     const blockedUserIds = await this.blockRules.getBlockedUserIds(userId);
     const filter: FilterQuery<Post> = {};
 
@@ -813,7 +832,7 @@ class PostService {
       filter.user = { $nin: blockedUserIds };
     }
 
-    const posts = this.rotateFeedPosts(await this.posts.findFeedPosts(filter, page, limit), userId, type, page);
+    const posts = this.rotateFeedPosts(await this.posts.findFeedPosts(filter, page, limit, seenPostIds), userId, type, page);
     const postIds = posts.map((post) => post._id);
     const [likedPostIds, savedPostIds, repostedPostIds] = await Promise.all([
       this.likes.findLikedPostIds(userId, postIds),

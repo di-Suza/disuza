@@ -107,7 +107,12 @@ export const postApi = api.injectEndpoints({
       providesTags: (_result, _error, repostId) => [{ type: 'Repost', id: repostId }],
     }),
     getFeed: builder.query<PostsListResponse, FeedQueryArgs | void>({
-      query: (args) => `/post/feed?${toQueryString({ page: args?.page || 1, limit: args?.limit, type: args?.type || 'all' })}`,
+      query: (args) => `/post/feed?${toQueryString({
+        page: args?.page || 1,
+        limit: args?.limit,
+        type: args?.type || 'all',
+        excludePostIds: args?.excludePostIds?.join(','),
+      })}`,
       serializeQueryArgs: ({ endpointName, queryArgs }) => `${endpointName}-${queryArgs?.type || 'all'}`,
       merge: (currentCache, incoming, { arg }) => {
         if (!arg?.page || arg.page <= 1) {

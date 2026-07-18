@@ -187,10 +187,19 @@ class PostRepository {
     );
   }
 
-  findFeedPosts(filter: FilterQuery<Post>, page: number, limit: number) {
-    return PostModel.find({ ...filter, ...visiblePostQuery })
+  findFeedPosts(filter: FilterQuery<Post>, page: number, limit: number, excludePostIds: string[] = []) {
+    const excludedObjectIds = excludePostIds
+      .filter((postId) => mongoose.Types.ObjectId.isValid(postId))
+      .map((postId) => new mongoose.Types.ObjectId(postId));
+    const query = {
+      ...filter,
+      ...visiblePostQuery,
+      ...(excludedObjectIds.length > 0 ? { _id: { $nin: excludedObjectIds } } : {}),
+    };
+
+    return PostModel.find(query)
       .sort({ createdAt: -1 })
-      .skip((page - 1) * limit)
+      .skip(excludedObjectIds.length > 0 ? 0 : (page - 1) * limit)
       .limit(limit)
       .populate('user', 'userName profilePicture headline')
       .lean();
