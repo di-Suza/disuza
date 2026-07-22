@@ -2,7 +2,7 @@
 
 This guide is the practical troubleshooting baseline for Disuza. Use it with `Disuza-Architecture-Guide.md`, which defines ownership and system flow, and `ARCHITECTURE-DECISIONS.md`, which explains durable technical choices.
 
-The guide describes the current TypeScript API and web application. Sections for realtime, workers, rooms, and code execution are explicitly marked as planned and must not be treated as implemented behavior.
+The guide describes the current TypeScript API and web application. Realtime, workers, rooms, and the code-execution adapter exist in the current codebase, but hosted/demo code execution remains dependent on a reliable external sandbox runner.
 
 ## 1. Debugging Rules
 
@@ -267,7 +267,7 @@ UI action
 - [ ] Confirm cleanup can identify the remote resource through its stored provider ID.
 - [ ] Distinguish local configuration failure from provider rejection or network failure.
 
-Current providers include ImageKit, Resend, and Google OAuth. Judge0, Redis, BullMQ, and TURN-related providers remain planned.
+Current providers include ImageKit, Resend, Google OAuth, Redis, BullMQ, Socket.IO, and the Piston-compatible code-execution adapter. The default public Piston endpoint is a demo fallback only; if execution fails with the generic client message, first confirm whether `PISTON_API_URL` points to a reliable paid or self-hosted runner before treating the room/editor flow as broken. TURN-related providers remain planned.
 
 ## 12. Realtime, Rooms, And Workers: Planned Baseline
 
@@ -282,6 +282,7 @@ Use this checklist when these runtimes are implemented:
 - [ ] Separate Yjs document updates from awareness/presence state.
 - [ ] Confirm worker process ownership, retry limit, dead-letter visibility, and reconciliation.
 - [ ] Confirm code execution limits, timeout, isolation, and result ownership.
+- [ ] Confirm code execution is backed by a reliable paid or self-hosted runner before claiming production execution support.
 - [ ] Confirm call signaling and TURN behavior without treating peer state as durable product state.
 
 Until implementation exists, debugging should stop at the documented HTTP/persistence boundary and record the missing capability as planned work.
