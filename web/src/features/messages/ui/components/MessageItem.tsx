@@ -10,11 +10,12 @@ import './MessageItem.css';
 
 type MessageItemProps = {
   message: ChatMessage;
+  senderName?: string;
 };
 
 const ReportModal = lazy(() => import('@/features/reports/ui/components/ReportModal'));
 
-const MessageItem = ({ message }: MessageItemProps) => {
+const MessageItem = ({ message, senderName }: MessageItemProps) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const menuRootRef = useRef<HTMLDivElement | null>(null);
@@ -112,6 +113,10 @@ const MessageItem = ({ message }: MessageItemProps) => {
           </div>
 
           <div className="messages-v1-message__content">
+            {senderName && (
+              <span className="messages-v1-message__sender">{senderName}</span>
+            )}
+
             {message.isFeedback && (
               <div className="messages-v1-feedback-card">
                 {message.feedbackOn?.type === 'Post' && (
