@@ -98,7 +98,7 @@ const LandingPage = () => (
             <pre>{`room.sync("two-sum", {
   code: "shared editor",
   status: "solving",
-  run: "Judge0 execution",
+  run: "Piston execution",
 });
 
 feed.post({

@@ -1,4 +1,5 @@
 import env from '../../config/env.js';
+import logger from '../../config/logger.js';
 import { AppError, BadRequestError } from '../../shared/errors/index.js';
 
 const SUPPORTED_CODE_LANGUAGES = ['javascript', 'python', 'cpp'] as const;
@@ -11,26 +12,34 @@ type CodeExecutionTestCase = {
   isHidden: boolean;
 };
 
-const languageIdMap: Record<CodeExecutionLanguage, number> = {
-  javascript: 63,
-  python: 71,
-  cpp: 54,
+const pistonLanguageMap: Record<CodeExecutionLanguage, { language: string; version: string; fileName: string }> = {
+  javascript: { language: 'javascript', version: '*', fileName: 'main.js' },
+  python: { language: 'python', version: '*', fileName: 'main.py' },
+  cpp: { language: 'cpp', version: '*', fileName: 'main.cpp' },
 };
 
-type Judge0Status = {
+type ExecutionStatus = {
   id?: number;
   description?: string;
+  code?: number | null;
+  signal?: string | null;
+  provider?: 'piston';
 };
 
-type Judge0Submission = {
-  token?: string;
+type PistonStage = {
   stdout?: string;
   stderr?: string;
-  compile_output?: string;
+  output?: string;
+  code?: number | null;
+  signal?: string | null;
+};
+
+type PistonExecutionResponse = {
+  language?: string;
+  version?: string;
+  run?: PistonStage;
+  compile?: PistonStage;
   message?: string;
-  status?: Judge0Status;
-  time?: string;
-  memory?: number;
 };
 
 type TestCaseResult = {
@@ -39,7 +48,7 @@ type TestCaseResult = {
   expectedOutput: string;
   output: string;
   error: string;
-  status?: Judge0Status;
+  status?: ExecutionStatus;
   time?: string;
   memory?: number;
   passed: boolean;
@@ -57,13 +66,13 @@ function normalizeOutput(value = '') {
   return value.toString().trim().replace(/\r\n/g, '\n');
 }
 
-function encodeBase64(value = '') {
-  return Buffer.from(value.toString(), 'utf8').toString('base64');
-}
-
-function decodeBase64(value = '') {
-  if (!value) return '';
-  return Buffer.from(value, 'base64').toString('utf8');
+async function readProviderError(response: Response) {
+  try {
+    const text = await response.text();
+    return text.length > 1200 ? `${text.slice(0, 1200)}...` : text;
+  } catch {
+    return 'Unable to read provider error body';
+  }
 }
 
 function parseTestValue(value: string) {
@@ -215,99 +224,117 @@ function buildExecutableSource(input: { sourceCode: string; language: CodeExecut
 }
 
 class CodeExecutionService {
-  private getJudge0Config() {
-    if (!env.RAPIDAPI_JUDGE0_KEY) {
-      throw new AppError('Code execution key is not configured', 500);
-    }
-
+  private getPistonConfig() {
     return {
-      apiUrl: env.JUDGE0_API_URL,
-      rapidApiHost: env.RAPIDAPI_JUDGE0_HOST,
-      rapidApiKey: env.RAPIDAPI_JUDGE0_KEY,
+      apiUrl: env.PISTON_API_URL.replace(/\/$/, ''),
+      apiKey: env.PISTON_API_KEY,
+      runTimeoutMs: env.PISTON_RUN_TIMEOUT_MS,
+      compileTimeoutMs: env.PISTON_COMPILE_TIMEOUT_MS,
     };
   }
 
-  private getJudge0Headers() {
-    const { apiUrl, rapidApiHost, rapidApiKey } = this.getJudge0Config();
+  private getPistonHeaders() {
+    const { apiUrl, apiKey, runTimeoutMs, compileTimeoutMs } = this.getPistonConfig();
+    const headers: Record<string, string> = {
+      'content-type': 'application/json',
+    };
+
+    if (apiKey) {
+      headers.Authorization = `Bearer ${apiKey}`;
+    }
 
     return {
       apiUrl,
-      headers: {
-        'content-type': 'application/json',
-        'x-rapidapi-host': rapidApiHost,
-        'x-rapidapi-key': rapidApiKey,
-      },
+      headers,
+      runTimeoutMs,
+      compileTimeoutMs,
     };
   }
 
-  private async createSubmission(input: { sourceCode: string; language: CodeExecutionLanguage; expectedOutput: string }) {
-    const { apiUrl, headers } = this.getJudge0Headers();
-    const languageId = languageIdMap[input.language];
+  private buildExecutionStatus(execution: PistonExecutionResponse): ExecutionStatus {
+    const compileFailed = execution.compile?.code !== undefined
+      && execution.compile.code !== null
+      && execution.compile.code !== 0;
+    const runFailed = execution.run?.code !== undefined
+      && execution.run.code !== null
+      && execution.run.code !== 0;
+    const signal = execution.compile?.signal || execution.run?.signal || null;
+    const failed = compileFailed || runFailed || Boolean(signal) || Boolean(execution.message);
 
-    if (!languageId) {
+    return {
+      id: failed ? 4 : 3,
+      description: failed ? 'Execution Error' : 'Accepted',
+      code: execution.compile?.code ?? execution.run?.code ?? null,
+      signal,
+      provider: 'piston',
+    };
+  }
+
+  private getExecutionError(execution: PistonExecutionResponse) {
+    const compileError = execution.compile?.stderr || execution.compile?.output;
+    const runError = execution.run?.stderr;
+    const runFailedOutput = execution.run?.code && execution.run.code !== 0 ? execution.run.output : '';
+
+    return normalizeOutput(compileError || runError || execution.message || runFailedOutput || '');
+  }
+
+  private async runSubmission(input: { sourceCode: string; language: CodeExecutionLanguage; expectedOutput: string }) {
+    const { apiUrl, headers, runTimeoutMs, compileTimeoutMs } = this.getPistonHeaders();
+    const runtime = pistonLanguageMap[input.language];
+
+    if (!runtime) {
       throw new BadRequestError('Unsupported language');
     }
 
-    const response = await fetch(`${apiUrl}/submissions?base64_encoded=true&wait=false&fields=*`, {
+    const response = await fetch(`${apiUrl}/execute`, {
       method: 'POST',
       headers,
       body: JSON.stringify({
-        source_code: encodeBase64(input.sourceCode),
-        language_id: languageId,
-        stdin: encodeBase64(''),
-        expected_output: encodeBase64(input.expectedOutput),
+        language: runtime.language,
+        version: runtime.version,
+        files: [
+          {
+            name: runtime.fileName,
+            content: input.sourceCode,
+          },
+        ],
+        stdin: '',
+        args: [],
+        compile_timeout: compileTimeoutMs,
+        run_timeout: runTimeoutMs,
+        compile_memory_limit: -1,
+        run_memory_limit: -1,
       }),
     });
 
     if (!response.ok) {
+      logger.error({
+        provider: 'piston',
+        phase: 'execute',
+        status: response.status,
+        statusText: response.statusText,
+        apiUrl,
+        language: runtime.language,
+        version: runtime.version,
+        body: await readProviderError(response),
+      }, 'Piston execution failed');
       throw new AppError('Code execution failed. Please try again.', 502);
     }
 
-    const submission = await response.json() as Judge0Submission;
-    if (!submission.token) {
-      throw new AppError('Code execution token not received', 502);
+    const execution = await response.json() as PistonExecutionResponse;
+    if (!execution.run && !execution.compile && !execution.message) {
+      logger.error({
+        provider: 'piston',
+        phase: 'execute',
+        apiUrl,
+        language: runtime.language,
+        version: runtime.version,
+        execution,
+      }, 'Piston returned an invalid execution response');
+      throw new AppError('Code execution returned an invalid response', 502);
     }
 
-    return submission.token;
-  }
-
-  private async getSubmission(token: string) {
-    const { apiUrl, headers } = this.getJudge0Headers();
-    const response = await fetch(`${apiUrl}/submissions/${token}?base64_encoded=true&fields=*`, {
-      method: 'GET',
-      headers,
-    });
-
-    if (!response.ok) {
-      throw new AppError('Code execution result fetch failed', 502);
-    }
-
-    return response.json() as Promise<Judge0Submission>;
-  }
-
-  private async waitForSubmission(token: string) {
-    const maxAttempts = 15;
-    const delayMs = 700;
-
-    for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
-      const submission = await this.getSubmission(token);
-      const statusId = submission.status?.id;
-
-      if (statusId && statusId !== 1 && statusId !== 2) {
-        return submission;
-      }
-
-      await new Promise((resolve) => {
-        setTimeout(resolve, delayMs);
-      });
-    }
-
-    throw new AppError('Code execution timed out', 504);
-  }
-
-  private async runSubmission(input: { sourceCode: string; language: CodeExecutionLanguage; expectedOutput: string }) {
-    const token = await this.createSubmission(input);
-    return this.waitForSubmission(token);
+    return execution;
   }
 
   async runTestCases(input: {
@@ -328,21 +355,17 @@ class CodeExecutionService {
         testInput: testCase.input,
       });
 
-      const submission = await this.runSubmission({
+      const execution = await this.runSubmission({
         sourceCode: executableSource,
         language: input.language,
         expectedOutput: normalizeExpectedValue(testCase.expectedOutput),
       });
 
-      const output = normalizeOutput(decodeBase64(submission.stdout || ''));
+      const output = normalizeOutput(execution.run?.stdout || '');
       const expectedOutput = normalizeOutput(normalizeExpectedValue(testCase.expectedOutput));
-      const errorOutput = normalizeOutput(
-        decodeBase64(submission.stderr || '')
-        || decodeBase64(submission.compile_output || '')
-        || submission.message
-        || '',
-      );
-      const passed = submission.status?.id === 3 && output === expectedOutput && !errorOutput;
+      const errorOutput = this.getExecutionError(execution);
+      const status = this.buildExecutionStatus(execution);
+      const passed = status.id === 3 && output === expectedOutput && !errorOutput;
 
       results.push({
         index: index + 1,
@@ -350,9 +373,7 @@ class CodeExecutionService {
         expectedOutput: testCase.isHidden ? 'Hidden expected output' : testCase.expectedOutput,
         output,
         error: errorOutput,
-        status: submission.status,
-        time: submission.time,
-        memory: submission.memory,
+        status,
         passed,
         isHidden: testCase.isHidden,
       });

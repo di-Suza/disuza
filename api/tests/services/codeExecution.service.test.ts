@@ -21,14 +21,16 @@ describe('CodeExecutionService', () => {
     }), BadRequestError);
   });
 
-  it('normalizes Judge0 output, hidden cases, and pass counts without external network calls', async () => {
+  it('normalizes Piston output, hidden cases, and pass counts without external network calls', async () => {
     const service = new CodeExecutionService();
     Object.assign(service, {
       runSubmission: async () => ({
-        stdout: Buffer.from('[1,2]\n', 'utf8').toString('base64'),
-        status: { id: 3, description: 'Accepted' },
-        time: '0.01',
-        memory: 1024,
+        run: {
+          stdout: '[1,2]\n',
+          stderr: '',
+          code: 0,
+          signal: null,
+        },
       }),
     });
 
@@ -52,8 +54,12 @@ describe('CodeExecutionService', () => {
       runSubmission: async (input: { sourceCode: string; expectedOutput: string }) => {
         submissions.push(input.sourceCode);
         return {
-          stdout: Buffer.from(input.expectedOutput, 'utf8').toString('base64'),
-          status: { id: 3, description: 'Accepted' },
+          run: {
+            stdout: input.expectedOutput,
+            stderr: '',
+            code: 0,
+            signal: null,
+          },
         };
       },
     });
