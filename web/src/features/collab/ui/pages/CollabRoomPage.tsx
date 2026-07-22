@@ -80,6 +80,7 @@ const syncYTextWithCode = (yText: Y.Text, nextCode: string, origin: 'local' | 'r
 
 const CollabRoomPage = () => {
   const [code, setCode] = useState('// Write your code here...');
+  const [activeLanguage, setActiveLanguage] = useState<ProblemLanguage>('javascript');
   const [results, setResults] = useState<CodeRunResult | null>(null);
   const [leftPanelWidth, setLeftPanelWidth] = useState(320);
   const [rightPanelWidth, setRightPanelWidth] = useState(320);
@@ -221,6 +222,7 @@ const CollabRoomPage = () => {
     pendingYUpdatesRef.current = [];
     codeRef.current = initialCode;
     setCode(initialCode);
+    setActiveLanguage(selectedRoomProblem.language || 'javascript');
     setResults(null);
     lastEmittedCodeRef.current = initialCode;
     yDoc.transact(() => {
@@ -253,6 +255,11 @@ const CollabRoomPage = () => {
       pendingYUpdatesRef.current = [];
     };
   }, [selectedRoomProblem?._id]);
+
+  useEffect(() => {
+    if (!selectedRoomProblem?.language) return;
+    setActiveLanguage(selectedRoomProblem.language);
+  }, [selectedRoomProblem?.language]);
 
   useEffect(() => {
     const socket = getSocket();
@@ -332,7 +339,7 @@ const CollabRoomPage = () => {
       roomProblemId: selectedRoomProblem._id,
       update: Array.from(mergedUpdate),
       code: codeToEmit,
-      language: selectedRoomProblem.language,
+      language: activeLanguage,
     });
   };
 
@@ -350,9 +357,13 @@ const CollabRoomPage = () => {
   const handleLanguageChange = async (language: ProblemLanguage) => {
     if (!roomId || !selectedRoomProblem?._id) return;
 
+    const previousLanguage = activeLanguage;
+    setActiveLanguage(language);
+
     try {
       await updateProblemLanguage({ roomId, roomProblemId: selectedRoomProblem._id, language }).unwrap();
     } catch (error) {
+      setActiveLanguage(previousLanguage);
       showError(getErrorMessage(error, 'Language could not be updated. Please try again.'));
     }
   };
@@ -366,7 +377,7 @@ const CollabRoomPage = () => {
         roomId,
         roomProblemId: selectedRoomProblem._id,
         code,
-        language: selectedRoomProblem.language || 'javascript',
+        language: activeLanguage,
       }).unwrap();
       setResults(response.data.result || null);
       setRunState({ isRunning: false, roomProblemId: null });
@@ -441,7 +452,7 @@ const CollabRoomPage = () => {
                 <ErrorBoundary variant="section" title="Code editor could not be rendered." resetKeys={[selectedRoomProblem._id]} showReload={false}>
                   <CodeEditor
                     code={code}
-                    language={selectedRoomProblem.language || 'javascript'}
+                    language={activeLanguage}
                     onCodeChange={handleCodeChange}
                     onLanguageChange={handleLanguageChange}
                     onRun={handleRunCode}

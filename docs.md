@@ -1470,6 +1470,33 @@ npm run build:web
 git diff --check
 ```
 
+## Step 39: Room Code Execution Parity
+
+Tightened the collaborative room code execution flow after comparing the original room module file-by-file with the current TypeScript implementation.
+
+Completed:
+
+- kept the existing `/api/problem/run` flow aligned with the original behavior: selected room problem, source code, language, stored test cases, Judge0 execution, persisted room-problem status, and `code_execution` realtime updates
+- moved the Judge0-compatible runner behind the `api/src/infrastructure/code-execution` adapter boundary while preserving the existing problem-module import path
+- documented Judge0 runtime configuration in `api/.env.example`, the deployment guide, and the code-execution adapter README
+- corrected architecture/ADR status labels so Socket.IO, Yjs, BullMQ, Redis, rooms, and Judge0 are no longer documented as only planned where active code exists
+- hardened the room editor language state so solo rooms update immediately and rollback on failed language changes
+- added a tested frontend result-summary helper so the results panel can render empty, running, completed, and partially malformed result payloads safely
+
+Why:
+
+Room execution was functionally present in the code, but configuration and architecture docs still described it as future work, and the frontend language/result state needed the same reliability expected from the original room flow.
+
+Verification used:
+
+```bash
+npm run test:api
+npm run test:web
+npm run build:api
+npm run build:web
+git diff --check
+```
+
 ## Step 28: Frontend V1 UI Parity Pass
 
 Reworked the frontend UI parity layer on `feature/web-v1-ui-parity`.

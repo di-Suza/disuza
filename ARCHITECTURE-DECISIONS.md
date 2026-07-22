@@ -44,9 +44,9 @@ Delivery is tracked separately:
 | DLF-021 | Enforce blocking as a backend cross-domain policy | Accepted | Partial |
 | DLF-022 | Persist notifications and add realtime delivery later | Accepted | Partial |
 | DLF-023 | Model post/profile feedback as contextual messages | Accepted | Partial |
-| DLF-024 | Use Socket.IO with shared state before multi-instance scale | Accepted | Planned |
-| DLF-025 | Use Yjs updates for collaborative code editing | Accepted | Planned |
-| DLF-026 | Move destructive cleanup to idempotent background jobs | Accepted | Planned |
+| DLF-024 | Use Socket.IO with shared state before multi-instance scale | Accepted | Partial |
+| DLF-025 | Use Yjs updates for collaborative code editing | Accepted | Partial |
+| DLF-026 | Move destructive cleanup to idempotent background jobs | Accepted | Partial |
 | DLF-027 | Hide external providers behind infrastructure adapters | Accepted | Partial |
 | DLF-028 | Preserve exact v1 UX on parity surfaces | Accepted | Partial |
 | DLF-029 | Lazy-load routes and define explicit cache update ownership | Accepted | Partial |
@@ -84,7 +84,7 @@ Decision:
 - The architecture guide records current boundaries and accepted targets.
 - Status labels must distinguish implemented, partial, planned, and deferred work.
 
-Consequence: documentation cannot claim Socket.IO, Redis, BullMQ, Yjs, Judge0, tests, or Docker are active before they exist and are verified in the current implementation.
+Consequence: documentation cannot claim Socket.IO, Redis, BullMQ, Yjs, Judge0, tests, or Docker are active before they exist and are verified in the current implementation, and must be updated when they become active.
 
 ### DLF-003: TypeScript modular monolith
 
@@ -382,6 +382,8 @@ Decision:
 
 Consequence: the first implementation can stay in the modular monolith without blocking horizontal scale later.
 
+Current delivery note: authenticated Socket.IO is active for chat, notifications, rooms, presence, code events, and call/voice signaling. Multi-instance socket scaling and externalized presence/call state remain planned.
+
 ### DLF-025: Yjs collaborative documents
 
 Decision:
@@ -392,6 +394,8 @@ Decision:
 
 Consequence: concurrent edits, cursor stability, and reconnect behavior have a stronger foundation.
 
+Current delivery note: room code now relays Yjs updates and persists debounced room-problem snapshots. Cursor awareness and deeper reconnect replay remain planned.
+
 ### DLF-026: Background cleanup jobs
 
 Decision:
@@ -401,6 +405,8 @@ Decision:
 - Workers run as separate process types with retry, dead-letter visibility, and reconciliation.
 
 Consequence: expensive external and relational cleanup does not block HTTP requests or run once per API replica accidentally.
+
+Current delivery note: BullMQ cleanup queues and workers exist for migrated destructive flows. Full reconciliation dashboards and production dead-letter handling remain planned.
 
 ### DLF-027: External provider adapters
 

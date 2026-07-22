@@ -1,6 +1,7 @@
 import { AlertCircle, CheckCircle, Clock, Loader, XCircle } from 'lucide-react';
 
 import type { CodeRunResult } from '@/features/collab/model/collab.types';
+import { getCodeRunSummary } from '../../model/codeExecution.helpers.js';
 
 type ResultsPanelProps = {
   results: CodeRunResult | null;
@@ -30,24 +31,26 @@ const ResultsPanel = ({ results, isRunning }: ResultsPanelProps) => {
     );
   }
 
-  const failedCount = results.totalCount - results.passedCount;
-  const totalTime = results.testCases
-    ?.map((testCase) => Number(testCase.time || 0))
-    .reduce((acc, time) => acc + time, 0);
+  const {
+    failedCount,
+    passedCount,
+    testCases,
+    totalTimeLabel,
+  } = getCodeRunSummary(results);
 
   return (
     <section className="collab-results-panel">
       <header>
         <h3>Test Results</h3>
         <div>
-          <span className="is-pass"><CheckCircle size={15} aria-hidden="true" />{results.passedCount} Passed</span>
+          <span className="is-pass"><CheckCircle size={15} aria-hidden="true" />{passedCount} Passed</span>
           <span className="is-fail"><XCircle size={15} aria-hidden="true" />{failedCount} Failed</span>
-          <span><Clock size={15} aria-hidden="true" />{totalTime.toFixed(3)}s</span>
+          <span><Clock size={15} aria-hidden="true" />{totalTimeLabel}</span>
         </div>
       </header>
 
       <div className="collab-results-list">
-        {results.testCases?.map((testCase) => (
+        {testCases.map((testCase) => (
           <article key={testCase.index} className={testCase.passed ? 'is-pass' : 'is-fail'}>
             <h4>
               {testCase.passed ? <CheckCircle size={16} aria-hidden="true" /> : <XCircle size={16} aria-hidden="true" />}

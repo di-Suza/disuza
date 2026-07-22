@@ -74,6 +74,7 @@ export const problemApi = api.injectEndpoints({
         method: 'PATCH',
         body: { roomId, roomProblemId, language },
       }),
+      invalidatesTags: (_result, _error, arg) => [{ type: 'CollabRoom', id: arg.roomId }],
     }),
     runProblem: builder.mutation<RunProblemResponse, RoomProblemArgs & { code: string; language: ProblemLanguage }>({
       query: ({ roomId, roomProblemId, code, language }) => ({
