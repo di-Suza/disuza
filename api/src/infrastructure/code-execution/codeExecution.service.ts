@@ -1,5 +1,4 @@
 import env from '../../config/env.js';
-import logger from '../../config/logger.js';
 import { AppError, BadRequestError } from '../../shared/errors/index.js';
 
 const SUPPORTED_CODE_LANGUAGES = ['javascript', 'python', 'cpp'] as const;
@@ -64,15 +63,6 @@ type ExecutionResult = {
 
 function normalizeOutput(value = '') {
   return value.toString().trim().replace(/\r\n/g, '\n');
-}
-
-async function readProviderError(response: Response) {
-  try {
-    const text = await response.text();
-    return text.length > 1200 ? `${text.slice(0, 1200)}...` : text;
-  } catch {
-    return 'Unable to read provider error body';
-  }
 }
 
 function parseTestValue(value: string) {
@@ -227,21 +217,16 @@ class CodeExecutionService {
   private getPistonConfig() {
     return {
       apiUrl: env.PISTON_API_URL.replace(/\/$/, ''),
-      apiKey: env.PISTON_API_KEY,
       runTimeoutMs: env.PISTON_RUN_TIMEOUT_MS,
       compileTimeoutMs: env.PISTON_COMPILE_TIMEOUT_MS,
     };
   }
 
   private getPistonHeaders() {
-    const { apiUrl, apiKey, runTimeoutMs, compileTimeoutMs } = this.getPistonConfig();
+    const { apiUrl, runTimeoutMs, compileTimeoutMs } = this.getPistonConfig();
     const headers: Record<string, string> = {
       'content-type': 'application/json',
     };
-
-    if (apiKey) {
-      headers.Authorization = `Bearer ${apiKey}`;
-    }
 
     return {
       apiUrl,
@@ -308,29 +293,11 @@ class CodeExecutionService {
     });
 
     if (!response.ok) {
-      logger.error({
-        provider: 'piston',
-        phase: 'execute',
-        status: response.status,
-        statusText: response.statusText,
-        apiUrl,
-        language: runtime.language,
-        version: runtime.version,
-        body: await readProviderError(response),
-      }, 'Piston execution failed');
       throw new AppError('Code execution failed. Please try again.', 502);
     }
 
     const execution = await response.json() as PistonExecutionResponse;
     if (!execution.run && !execution.compile && !execution.message) {
-      logger.error({
-        provider: 'piston',
-        phase: 'execute',
-        apiUrl,
-        language: runtime.language,
-        version: runtime.version,
-        execution,
-      }, 'Piston returned an invalid execution response');
       throw new AppError('Code execution returned an invalid response', 502);
     }
 

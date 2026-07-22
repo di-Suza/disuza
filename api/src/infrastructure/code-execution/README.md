@@ -7,7 +7,6 @@ The adapter receives source code, language, and stored problem test cases from t
 Provider configuration:
 
 - `PISTON_API_URL`
-- `PISTON_API_KEY` (optional for self-hosted/public endpoints that do not require auth)
 - `PISTON_RUN_TIMEOUT_MS`
 - `PISTON_COMPILE_TIMEOUT_MS`
 - `PROBLEM_RUN_LOCK_TTL_SECONDS`
