@@ -529,7 +529,7 @@ const CollabRoomPage = () => {
               </ErrorBoundary>
               <div className="collab-chat-region">
                 <ErrorBoundary variant="section" title="Room chat could not be rendered." resetKeys={[roomDetails?.conversationId?._id, roomId]} showReload={false}>
-                  <ChatPanel conversationId={roomDetails?.conversationId?._id || null} otherUser={otherUser} roomId={roomId} />
+                  <ChatPanel conversationId={roomDetails?.conversationId?._id || null} otherUser={otherUser} participants={usersData} roomId={roomId} />
                 </ErrorBoundary>
               </div>
             </aside>

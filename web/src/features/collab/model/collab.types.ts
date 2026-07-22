@@ -195,6 +195,7 @@ export type CodeExecutionPayload = {
 export type RoomChatPanelProps = {
   conversationId: string | null;
   otherUser: string | null;
+  participants?: CollabParticipant[];
   roomId?: string;
 };
 
