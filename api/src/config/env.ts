@@ -134,6 +134,10 @@ const rawEnvSchema = z.object({
   PISTON_RUN_TIMEOUT_MS: z.coerce.number().int().min(1000).max(30_000).default(5000),
   PISTON_COMPILE_TIMEOUT_MS: z.coerce.number().int().min(1000).max(30_000).default(10_000),
   PROBLEM_RUN_LOCK_TTL_SECONDS: z.coerce.number().int().min(5).max(300).default(60),
+  GEMINI_API_KEY: optionalString,
+  GEMINI_MODEL: z.string().trim().min(1).default('gemini-3.6-flash'),
+  GEMINI_API_BASE_URL: z.string().trim().url().default('https://generativelanguage.googleapis.com/v1beta'),
+  GEMINI_TIMEOUT_MS: z.coerce.number().int().min(3000).max(60_000).default(20_000),
 });
 
 const result = rawEnvSchema.safeParse(process.env);

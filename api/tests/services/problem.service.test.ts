@@ -19,6 +19,65 @@ describe('ProblemService', () => {
     assert.equal(problems[0].isAdded, true);
   });
 
+  it('separates manual and AI-generated problem search filters', async () => {
+    const filters: unknown[] = [];
+    const service = new ProblemService({
+      searchProblems: async (filter: unknown) => {
+        filters.push(filter);
+        return [];
+      },
+      existsInRoom: async () => false,
+    } as never, {
+      getRoomAccess: async () => ({ canUseRealtime: true }),
+    } as never, {} as never, {} as never);
+
+    await service.searchProblem('', '1', '8', roomId, userId);
+    await service.searchProblem('graph', '1', '8', roomId, userId, 'ai');
+    await service.searchProblem('all', '1', '8', roomId, userId, 'all');
+
+    assert.deepEqual(filters[0], { isAIGenerated: false });
+    assert.equal((filters[1] as { isAIGenerated: boolean }).isAIGenerated, true);
+    assert.equal((filters[1] as { $or: unknown[] }).$or.length, 2);
+    assert.equal((filters[2] as { isAIGenerated?: boolean }).isAIGenerated, undefined);
+  });
+
+  it('generates and saves AI problems after room access passes', async () => {
+    const generatedProblem = {
+      title: 'Custom Sliding Window Challenge',
+      description: 'Find the longest valid window in an array while respecting a generated constraint.',
+      difficulty: 'Medium' as const,
+      tags: ['Sliding Window', 'Array'],
+      constraints: ['1 <= n <= 100000'],
+      testCases: [
+        { input: 'nums=[1,2,3], limit=3', expectedOutput: '2', isHidden: false },
+        { input: 'nums=[4,1,1], limit=2', expectedOutput: '2', isHidden: true },
+      ],
+      boilerplate: {
+        javascript: 'function solution(nums, limit) {\n  return 0;\n}',
+        python: 'def solution(nums, limit):\n    return 0',
+        cpp: 'int main() { return 0; }',
+      },
+    };
+    const createdProblem = { _id: oid(problemId), ...generatedProblem, isAIGenerated: true };
+    let createdWith: unknown = null;
+    const service = new ProblemService({
+      findAIGeneratedProblemByTitle: async () => null,
+      createProblem: async (data: unknown) => {
+        createdWith = data;
+        return createdProblem;
+      },
+    } as never, {
+      getRoomAccess: async () => ({ canUseRealtime: true }),
+    } as never, {} as never, {} as never, {
+      generateProblem: async () => generatedProblem,
+    } as never);
+
+    const problem = await service.generateAIProblem(userId, roomId, 'Make a medium sliding window problem');
+
+    assert.equal(problem.isAIGenerated, true);
+    assert.equal((createdWith as { isAIGenerated: boolean }).isAIGenerated, true);
+  });
+
   it('adds, selects, unselects, and changes room problem language with realtime access status', async () => {
     const roomProblem = {
       _id: oid(roomProblemId),

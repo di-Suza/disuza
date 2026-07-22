@@ -84,6 +84,7 @@ const protectedEndpoints: Endpoint[] = [
   { method: 'PATCH', path: '/api/problem/updateLanguage' },
   { method: 'DELETE', path: '/api/problem/removeProblemFromRoom' },
   { method: 'POST', path: '/api/problem/run' },
+  { method: 'POST', path: '/api/problem/ai/generate' },
   { method: 'GET', path: `/api/problem/${objectId}` },
 
   { method: 'GET', path: '/api/report/my-reports' },
