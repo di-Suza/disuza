@@ -146,6 +146,19 @@
   align-items: flex-start;
 }
 
+.messages-v1-message__sender {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  color: var(--text-secondary);
+  padding: 0 4px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1.1;
+}
+
 .messages-v1-feedback-card {
   width: min(100%, 320px);
   max-width: 320px;
