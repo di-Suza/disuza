@@ -1,18 +1,29 @@
-import { CheckCircle, Clock, Code2, FileCode, PanelLeftClose, Plus, Sparkles } from 'lucide-react';
-import { useState } from 'react';
+import { CheckCircle, Clock, Code2, FileCode, Loader2, PanelLeftClose, Plus, Sparkles, Trash2 } from 'lucide-react';
+import { useEffect, useState, type MouseEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { useSelectProblemMutation } from '@/features/collab/api/problem.api';
+import { useRemoveProblemFromRoomMutation, useSelectProblemMutation } from '@/features/collab/api/problem.api';
 import type { RoomProblem } from '@/features/collab/model/collab.types';
 import { useToast } from '@/shared/hooks/useToast';
+import ConfirmDialog from '@/shared/ui/ConfirmDialog';
+import '@/shared/ui/Spinner.css';
 import { cn } from '@/shared/utils/cn';
+import { getErrorMessage } from '@/shared/utils/getErrorMessage';
 import SelectProblemModal from './SelectProblemModal';
 
 type ProblemsPanelProps = {
   selectedProblem: RoomProblem | null;
   problems: RoomProblem[];
   roomId?: string;
+  isSelectionLocked?: boolean;
   onCollapse: () => void;
+};
+
+type ProblemContextMenu = {
+  roomProblemId: string;
+  title: string;
+  x: number;
+  y: number;
 };
 
 const getDifficultyClass = (difficulty?: string) => {
@@ -22,27 +33,74 @@ const getDifficultyClass = (difficulty?: string) => {
   return '';
 };
 
-const getStatusIcon = (status?: string) => {
+const getStatusIcon = (status?: string, executionStatus?: string) => {
+  if (executionStatus === 'running') return <Loader2 className="spin" size={16} aria-hidden="true" />;
   if (status === 'solved') return <CheckCircle size={16} aria-hidden="true" />;
   if (status === 'attempted') return <Clock size={16} aria-hidden="true" />;
   if (status === 'solving') return <Code2 size={16} aria-hidden="true" />;
   return null;
 };
 
-const ProblemsPanel = ({ selectedProblem, problems, roomId, onCollapse }: ProblemsPanelProps) => {
+const ProblemsPanel = ({ selectedProblem, problems, roomId, isSelectionLocked = false, onCollapse }: ProblemsPanelProps) => {
   const navigate = useNavigate();
   const [isSelectProblemModalOpen, setIsSelectProblemModalOpen] = useState(false);
+  const [contextMenu, setContextMenu] = useState<ProblemContextMenu | null>(null);
+  const [problemToRemove, setProblemToRemove] = useState<ProblemContextMenu | null>(null);
   const [selectProblem, { isLoading: isSelecting }] = useSelectProblemMutation();
+  const [removeProblemFromRoom, { isLoading: isRemoving }] = useRemoveProblemFromRoomMutation();
   const { showError } = useToast();
   const addedProblemIds = problems.map((problem) => problem.problemId._id);
 
+  useEffect(() => {
+    if (!contextMenu) return;
+
+    const closeMenu = () => setContextMenu(null);
+    window.addEventListener('pointerdown', closeMenu);
+    window.addEventListener('scroll', closeMenu, true);
+
+    return () => {
+      window.removeEventListener('pointerdown', closeMenu);
+      window.removeEventListener('scroll', closeMenu, true);
+    };
+  }, [contextMenu]);
+
   const handleSelectProblem = async (roomProblemId: string) => {
     if (!roomId || !roomProblemId || isSelecting) return;
+    if (isSelectionLocked) {
+      showError('Code is running. Please wait before changing room problems.');
+      return;
+    }
 
     try {
       await selectProblem({ roomId, roomProblemId }).unwrap();
-    } catch {
-      showError('Problem could not be selected. Please try again.');
+    } catch (error) {
+      showError(getErrorMessage(error, 'Problem could not be selected. Please try again.'));
+    }
+  };
+
+  const handleContextMenu = (event: MouseEvent<HTMLButtonElement>, problem: RoomProblem) => {
+    event.preventDefault();
+    if (isSelectionLocked) {
+      showError('Code is running. Please wait before removing room problems.');
+      return;
+    }
+
+    setContextMenu({
+      roomProblemId: problem._id,
+      title: problem.problemId.title,
+      x: Math.min(event.clientX, window.innerWidth - 240),
+      y: Math.min(event.clientY, window.innerHeight - 72),
+    });
+  };
+
+  const handleConfirmRemove = async () => {
+    if (!roomId || !problemToRemove) return;
+
+    try {
+      await removeProblemFromRoom({ roomId, roomProblemId: problemToRemove.roomProblemId }).unwrap();
+      setProblemToRemove(null);
+    } catch (error) {
+      showError(getErrorMessage(error, 'Problem could not be removed. Please try again.'));
     }
   };
 
@@ -63,7 +121,7 @@ const ProblemsPanel = ({ selectedProblem, problems, roomId, onCollapse }: Proble
         </header>
 
         <div className="collab-problems-panel__actions">
-          <button type="button" onClick={() => setIsSelectProblemModalOpen(true)}>
+          <button type="button" onClick={() => setIsSelectProblemModalOpen(true)} disabled={isSelectionLocked}>
             <Plus size={16} aria-hidden="true" />
             <span>Add</span>
           </button>
@@ -82,15 +140,19 @@ const ProblemsPanel = ({ selectedProblem, problems, roomId, onCollapse }: Proble
               <button
                 key={problem._id}
                 type="button"
-                className={cn('collab-problem-card', isSelected && 'is-selected')}
+                className={cn('collab-problem-card', isSelected && 'is-selected', isSelectionLocked && 'is-locked')}
+                aria-disabled={isSelectionLocked}
                 onClick={() => handleSelectProblem(problem._id)}
+                onContextMenu={(event) => handleContextMenu(event, problem)}
               >
                 <FileCode size={20} aria-hidden="true" />
                 <span>
                   <strong>{problemDetails.title}</strong>
                   <em className={getDifficultyClass(problemDetails.difficulty)}>{problemDetails.difficulty}</em>
                 </span>
-                <i className={cn('collab-problem-card__status', problem.status)}>{getStatusIcon(problem.status)}</i>
+                <i className={cn('collab-problem-card__status', problem.status, problem.executionStatus)}>
+                  {getStatusIcon(problem.status, problem.executionStatus)}
+                </i>
               </button>
             );
           }) : (
@@ -108,6 +170,36 @@ const ProblemsPanel = ({ selectedProblem, problems, roomId, onCollapse }: Proble
         onClose={() => setIsSelectProblemModalOpen(false)}
         roomId={roomId}
         addedProblemIds={addedProblemIds}
+      />
+
+      {contextMenu && (
+        <div
+          className="collab-problem-context-menu"
+          style={{ left: contextMenu.x, top: contextMenu.y }}
+          onMouseDown={(event) => event.stopPropagation()}
+        >
+          <button
+            type="button"
+            onClick={() => {
+              setProblemToRemove(contextMenu);
+              setContextMenu(null);
+            }}
+          >
+            <Trash2 size={15} aria-hidden="true" />
+            Remove problem from this room
+          </button>
+        </div>
+      )}
+
+      <ConfirmDialog
+        cancelLabel="Cancel"
+        confirmLabel="Remove"
+        description="Are you sure you want to remove this problem permanently? Your solution and code for this room problem will also be removed permanently."
+        isBusy={isRemoving}
+        isOpen={Boolean(problemToRemove)}
+        onCancel={() => setProblemToRemove(null)}
+        onConfirm={handleConfirmRemove}
+        title={`Remove ${problemToRemove?.title || 'problem'}?`}
       />
     </>
   );

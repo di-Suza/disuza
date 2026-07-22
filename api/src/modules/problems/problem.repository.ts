@@ -52,6 +52,10 @@ class ProblemRepository {
     return RoomProblemModel.findOne({ _id: roomProblemId, roomId });
   }
 
+  findRunningRoomProblem(roomId: string | Types.ObjectId) {
+    return RoomProblemModel.findOne({ roomId, executionStatus: 'running' }).populate('problemId');
+  }
+
   updateRoomProblemLanguage(roomId: string | Types.ObjectId, roomProblemId: string | Types.ObjectId, language: ProblemLanguage) {
     return RoomProblemModel.findOneAndUpdate(
       { _id: roomProblemId, roomId },
@@ -70,6 +74,10 @@ class ProblemRepository {
       { status: 'attempted' },
       { new: true },
     ).populate('problemId');
+  }
+
+  deleteRoomProblem(roomId: string | Types.ObjectId, roomProblemId: string | Types.ObjectId) {
+    return RoomProblemModel.findOneAndDelete({ _id: roomProblemId, roomId }).populate('problemId');
   }
 }
 

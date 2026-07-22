@@ -67,10 +67,26 @@ function decodeBase64(value = '') {
 }
 
 function parseTestValue(value: string) {
+  const trimmedValue = value.trim();
+
+  if (/^(['"])(?:\\.|(?!\1).)*\1$/s.test(trimmedValue)) {
+    return trimmedValue.slice(1, -1);
+  }
+
+  if (/^-?\d+(\.\d+)?$/.test(trimmedValue)) {
+    return Number(trimmedValue);
+  }
+
+  if (trimmedValue === 'true') return true;
+  if (trimmedValue === 'false') return false;
+  if (trimmedValue === 'null') return null;
+
+  const jsonishValue = trimmedValue.replace(/'([^'\\]*(?:\\.[^'\\]*)*)'/g, (_, content: string) => JSON.stringify(content));
+
   try {
-    return JSON.parse(value) as unknown;
+    return JSON.parse(jsonishValue) as unknown;
   } catch {
-    return value;
+    return trimmedValue;
   }
 }
 
@@ -79,17 +95,82 @@ function normalizeExpectedValue(value: string) {
   return typeof parsed === 'string' ? parsed : JSON.stringify(parsed);
 }
 
+function splitTopLevel(value: string) {
+  const parts: string[] = [];
+  let buffer = '';
+  let depth = 0;
+  let quote: string | null = null;
+
+  for (let index = 0; index < value.length; index += 1) {
+    const character = value[index];
+    const previousCharacter = value[index - 1];
+
+    if ((character === '"' || character === "'") && previousCharacter !== '\\') {
+      quote = quote === character ? null : quote || character;
+    }
+
+    if (!quote) {
+      if (['[', '{', '('].includes(character)) depth += 1;
+      if ([']', '}', ')'].includes(character)) depth = Math.max(0, depth - 1);
+
+      if (character === ',' && depth === 0) {
+        parts.push(buffer.trim());
+        buffer = '';
+        continue;
+      }
+    }
+
+    buffer += character;
+  }
+
+  if (buffer.trim()) parts.push(buffer.trim());
+  return parts;
+}
+
+function stripNamedValue(value: string) {
+  const parts = value.split('=');
+  if (parts.length < 2 || !/^[a-zA-Z_$][\w$.\[\]]*\s*$/.test(parts[0])) return value;
+  return parts.slice(1).join('=').trim();
+}
+
 function getArgsFromInput(input: string) {
-  const parsed = parseTestValue(input);
-  return Array.isArray(parsed) ? parsed : [parsed];
+  const trimmedInput = input.trim();
+  const topLevelParts = splitTopLevel(trimmedInput);
+  const hasNamedParts = topLevelParts.some((part) => /^[a-zA-Z_$][\w$.\[\]]*\s*=/.test(part));
+
+  if (hasNamedParts) {
+    return topLevelParts.map((part) => parseTestValue(stripNamedValue(part)));
+  }
+
+  if (topLevelParts.length > 1 && !trimmedInput.startsWith('[') && !trimmedInput.startsWith('{')) {
+    return topLevelParts.map((part) => parseTestValue(part));
+  }
+
+  return [parseTestValue(trimmedInput)];
+}
+
+function getJavaScriptCallableName(sourceCode: string) {
+  const functionMatch = sourceCode.match(/function\s+([A-Za-z_$][\w$]*)\s*\(/);
+  const arrowMatch = sourceCode.match(/(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=\s*(?:async\s*)?(?:\([^)]*\)|[A-Za-z_$][\w$]*)\s*=>/);
+  return functionMatch?.[1] || arrowMatch?.[1] || 'solution';
+}
+
+function getPythonCallableName(sourceCode: string) {
+  return sourceCode.match(/def\s+([A-Za-z_]\w*)\s*\(/)?.[1] || 'solution';
 }
 
 function buildJavaScriptHarness(sourceCode: string, args: unknown[]) {
+  const callableName = getJavaScriptCallableName(sourceCode);
+
   return `
 ${sourceCode}
 
 const __args = ${JSON.stringify(args)};
-const __result = solution(...__args);
+const __candidate = typeof ${callableName} === "function" ? ${callableName} : (typeof solution === "function" ? solution : null);
+if (!__candidate) {
+  throw new Error("No callable function found. Define ${callableName}() or solution().");
+}
+const __result = __candidate(...__args);
 if (typeof __result === "undefined") {
   console.log("");
 } else if (typeof __result === "string") {
@@ -101,12 +182,17 @@ if (typeof __result === "undefined") {
 }
 
 function buildPythonHarness(sourceCode: string, args: unknown[]) {
+  const callableName = getPythonCallableName(sourceCode);
+
   return `
 ${sourceCode}
 
 import json
 __args = json.loads(${JSON.stringify(JSON.stringify(args))})
-__result = solution(*__args)
+__candidate = globals().get("${callableName}") or globals().get("solution")
+if __candidate is None:
+    raise Exception("No callable function found. Define ${callableName}() or solution().")
+__result = __candidate(*__args)
 if __result is None:
     print("")
 elif isinstance(__result, str):

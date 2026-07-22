@@ -27,6 +27,11 @@ const unselectProblemRules = [
   body('roomId').custom(objectId).withMessage('roomId must be a valid MongoDB ObjectId'),
 ];
 
+const removeProblemFromRoomRules = [
+  body('roomId').custom(objectId).withMessage('roomId must be a valid MongoDB ObjectId'),
+  body('roomProblemId').custom(objectId).withMessage('roomProblemId must be a valid MongoDB ObjectId'),
+];
+
 const updateProblemLanguageRules = [
   body('roomId').custom(objectId).withMessage('roomId must be a valid MongoDB ObjectId'),
   body('roomProblemId').custom(objectId).withMessage('roomProblemId must be a valid MongoDB ObjectId'),
@@ -42,6 +47,7 @@ const runProblemRules = [
 
 export {
   addProblemToRoomRules,
+  removeProblemFromRoomRules,
   roomIdParamRules,
   runProblemRules,
   selectProblemRules,

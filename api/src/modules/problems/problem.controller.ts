@@ -10,6 +10,7 @@ class ProblemController {
   readonly selectProblem: RequestHandler;
   readonly unselectProblem: RequestHandler;
   readonly updateProblemLanguage: RequestHandler;
+  readonly removeProblemFromRoom: RequestHandler;
   readonly runProblem: RequestHandler;
 
   constructor(
@@ -21,6 +22,7 @@ class ProblemController {
     this.selectProblem = asyncHandler(this.handleSelectProblem.bind(this));
     this.unselectProblem = asyncHandler(this.handleUnselectProblem.bind(this));
     this.updateProblemLanguage = asyncHandler(this.handleUpdateProblemLanguage.bind(this));
+    this.removeProblemFromRoom = asyncHandler(this.handleRemoveProblemFromRoom.bind(this));
     this.runProblem = asyncHandler(this.handleRunProblem.bind(this));
   }
 
@@ -129,6 +131,38 @@ class ProblemController {
       success: true,
       message: 'Language Updated Successfully',
       data: roomProblem,
+    });
+  }
+
+  private async handleRemoveProblemFromRoom(req: Request, res: Response) {
+    const { roomId, roomProblemId } = req.body as { roomId: string; roomProblemId: string };
+    const {
+      removedProblem,
+      removedProblemId,
+      unselectedProblem,
+      canUseRealtime,
+    } = await this.service.removeProblemFromRoom(req.user!.id, roomId, roomProblemId);
+
+    if (canUseRealtime) {
+      this.realtime.emitToRoom(roomId, 'room_sync', {
+        type: 'REMOVE_PROBLEM',
+        roomId,
+        data: {
+          removedProblem,
+          removedProblemId,
+          unselectedProblem,
+          removedBy: this.getRealtimeUser(req),
+        },
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Problem Removed From Room Successfully',
+      data: {
+        removedProblemId,
+        unselectedProblem,
+      },
     });
   }
 

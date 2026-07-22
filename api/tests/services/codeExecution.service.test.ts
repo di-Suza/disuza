@@ -44,6 +44,31 @@ describe('CodeExecutionService', () => {
     assert.equal(result.testCases[0].expectedOutput, 'Hidden expected output');
   });
 
+  it('wraps detected function names and named arguments from seeded problems', async () => {
+    const service = new CodeExecutionService();
+    const submissions: string[] = [];
+
+    Object.assign(service, {
+      runSubmission: async (input: { sourceCode: string; expectedOutput: string }) => {
+        submissions.push(input.sourceCode);
+        return {
+          stdout: Buffer.from(input.expectedOutput, 'utf8').toString('base64'),
+          status: { id: 3, description: 'Accepted' },
+        };
+      },
+    });
+
+    const result = await service.runTestCases({
+      sourceCode: 'function twoSum(nums, target) { return [0, 1]; }',
+      language: 'javascript',
+      testCases: [{ input: 'nums = [2,7,11,15], target = 9', expectedOutput: '[0,1]', isHidden: false }],
+    });
+
+    assert.equal(result.allPassed, true);
+    assert.match(submissions[0], /twoSum/);
+    assert.match(submissions[0], /\[\[2,7,11,15\],9\]/);
+  });
+
   it('surfaces upstream execution failures without waiting on real network', async () => {
     const service = new CodeExecutionService();
     const originalFetch = globalThis.fetch;

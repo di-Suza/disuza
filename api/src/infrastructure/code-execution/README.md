@@ -2,7 +2,7 @@
 
 Judge0-compatible code execution is active for room problems.
 
-The adapter receives source code, language, and stored problem test cases from the problems module, wraps JavaScript/Python submissions with the expected `solution` function harness, normalizes provider output, and returns per-test pass/fail details for the room results panel.
+The adapter receives source code, language, and stored problem test cases from the problems module, wraps JavaScript/Python submissions with the detected user function name or a `solution` fallback, normalizes provider output, and returns per-test pass/fail details for the room results panel.
 
 Required provider configuration:
 

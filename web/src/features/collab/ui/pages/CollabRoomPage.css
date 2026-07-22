@@ -217,6 +217,10 @@
   background: var(--bg-main);
 }
 
+.collab-problem-card.is-locked {
+  cursor: not-allowed;
+}
+
 .collab-problem-card.is-selected {
   border-color: var(--accent);
   background: rgba(59, 99, 255, 0.1);
@@ -273,8 +277,39 @@
 }
 
 .collab-problem-card__status.solved,
-.collab-problem-card__status.solving { color: var(--accent); }
+.collab-problem-card__status.solving,
+.collab-problem-card__status.running { color: var(--accent); }
 .collab-problem-card__status.attempted { color: var(--warning); }
+
+.collab-problem-context-menu {
+  position: fixed;
+  z-index: 10020;
+  min-width: 224px;
+  border: 1px solid var(--border-secondary);
+  border-radius: 10px;
+  background: var(--surface);
+  box-shadow: var(--shadow-elevated);
+  padding: 6px;
+}
+
+.collab-problem-context-menu button {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 8px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #fca5a5;
+  padding: 10px;
+  font-size: 12px;
+  font-weight: 800;
+  text-align: left;
+}
+
+.collab-problem-context-menu button:hover {
+  background: rgba(239, 68, 68, 0.12);
+}
 
 .collab-problems-panel__footer {
   border-top: 1px solid var(--border-secondary);

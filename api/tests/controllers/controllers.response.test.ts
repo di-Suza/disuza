@@ -203,6 +203,12 @@ describe('Controller response contracts', () => {
       selectProblem: async () => ({ selectedProblem: { _id: objectId }, previousProblem: null, canUseRealtime: true }),
       unselectProblem: async () => ({ unselectedProblem: { _id: objectId }, canUseRealtime: true }),
       updateProblemLanguage: async () => ({ roomProblem: { _id: objectId, language: 'javascript' }, canUseRealtime: true }),
+      removeProblemFromRoom: async () => ({
+        removedProblem: { _id: otherObjectId },
+        removedProblemId: otherObjectId,
+        unselectedProblem: null,
+        canUseRealtime: true,
+      }),
       getRoomRealtimeAccess: async () => true,
       runProblem: async () => ({ roomProblem: { _id: objectId }, result: { passed: true }, canUseRealtime: true }),
     } as never, realtime as never);
@@ -219,6 +225,7 @@ describe('Controller response contracts', () => {
     assert.equal((await invokeController(problemController.selectProblem, { body: { roomId: objectId, roomProblemId: otherObjectId } })).statusCode, 200);
     assert.equal((await invokeController(problemController.unselectProblem, { body: { roomId: objectId } })).statusCode, 200);
     assert.equal((await invokeController(problemController.updateProblemLanguage, { body: { roomId: objectId, roomProblemId: otherObjectId, language: 'javascript' } })).statusCode, 200);
+    assert.equal((await invokeController(problemController.removeProblemFromRoom, { body: { roomId: objectId, roomProblemId: otherObjectId } })).statusCode, 200);
     assert.equal((await invokeController(problemController.runProblem, { body: { roomId: objectId, roomProblemId: otherObjectId, code: 'console.log(1)', language: 'javascript' } })).statusCode, 200);
     assert.ok(emissions.some((entry) => entry.event === 'room_sync'));
     assert.ok(emissions.some((entry) => entry.event === 'code_execution'));

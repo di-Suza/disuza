@@ -29,6 +29,27 @@ const getRoomProblem = (value: unknown): RoomProblem | null => (
     : null
 );
 
+const updateRoomProblem = (
+  draft: CollabRoomResponse,
+  roomProblemId: string,
+  update: (roomProblem: RoomProblem) => void,
+) => {
+  draft.data.problems.forEach((problem) => {
+    if (problem._id === roomProblemId) update(problem);
+  });
+
+  const selectedProblem = draft.data.roomDetails.currentlySelectedProblem;
+  if (selectedProblem?._id === roomProblemId) update(selectedProblem);
+};
+
+const replaceRoomProblem = (draft: CollabRoomResponse, roomProblem: RoomProblem) => {
+  if (draft.data.roomDetails.currentlySelectedProblem?._id === roomProblem._id) {
+    draft.data.roomDetails.currentlySelectedProblem = roomProblem;
+  }
+
+  draft.data.problems = draft.data.problems.map((problem) => (problem._id === roomProblem._id ? roomProblem : problem));
+};
+
 export const collabApi = api.injectEndpoints({
   endpoints: (builder) => ({
     getCollabStatus: builder.query<CollabStatusResponse, string>({
@@ -103,31 +124,51 @@ export const collabApi = api.injectEndpoints({
               }
             }
 
+            if (payload.type === 'REMOVE_PROBLEM') {
+              const removedProblemId = typeof payload.data?.removedProblemId === 'string' ? payload.data.removedProblemId : null;
+              if (!removedProblemId) return;
+
+              draft.data.problems = draft.data.problems.filter((problem) => problem._id !== removedProblemId);
+              if (draft.data.roomDetails.currentlySelectedProblem?._id === removedProblemId) {
+                draft.data.roomDetails.currentlySelectedProblem = null;
+              }
+            }
+
             if (payload.type === 'LANG_CHANGE' || payload.type === 'RUN_COMPLETED') {
               const roomProblem = getRoomProblem(payload.data?.roomProblem);
               if (!roomProblem) return;
 
-              if (draft.data.roomDetails.currentlySelectedProblem?._id === roomProblem._id) {
-                draft.data.roomDetails.currentlySelectedProblem = roomProblem;
-              }
-
-              draft.data.problems = draft.data.problems.map((problem) => (problem._id === roomProblem._id ? roomProblem : problem));
+              replaceRoomProblem(draft, roomProblem);
             }
           });
         };
 
         const handleCodeExecution = (payload: unknown) => {
-          if (!isCodeExecutionPayload(payload) || payload.roomId !== roomId || payload.status !== 'completed' || !payload.roomProblem) return;
+          if (!isCodeExecutionPayload(payload) || payload.roomId !== roomId) return;
 
           updateCachedData((draft) => {
             if (!draft?.data) return;
-            const roomProblem = payload.roomProblem!;
 
-            if (draft.data.roomDetails.currentlySelectedProblem?._id === roomProblem._id) {
-              draft.data.roomDetails.currentlySelectedProblem = roomProblem;
+            if (payload.status === 'running') {
+              updateRoomProblem(draft, payload.roomProblemId, (roomProblem) => {
+                roomProblem.executionStatus = 'running';
+                roomProblem.executionStartedAt = new Date().toISOString();
+              });
+              return;
             }
 
-            draft.data.problems = draft.data.problems.map((problem) => (problem._id === roomProblem._id ? roomProblem : problem));
+            if (payload.status === 'completed' && payload.roomProblem) {
+              replaceRoomProblem(draft, payload.roomProblem);
+              return;
+            }
+
+            if (payload.status === 'failed') {
+              updateRoomProblem(draft, payload.roomProblemId, (roomProblem) => {
+                roomProblem.executionStatus = 'idle';
+                roomProblem.executionStartedAt = null;
+                roomProblem.executionRequestedBy = null;
+              });
+            }
           });
         };
 
