@@ -2033,3 +2033,39 @@ npm run build:web
 git diff --check
 ```
 
+## Step 39: AI Generated Room Problems
+
+Built AI-assisted DSA problem generation on `feat/ai-problem-generation`.
+
+API completed:
+
+- added Gemini structured-output configuration under the problems module with optional `GEMINI_*` environment values
+- added a protected, rate-limited `/api/problem/ai/generate` endpoint
+- validated prompt input, room access, generated problem fields, test-case shape, difficulty, tags, constraints, and boilerplate before persistence
+- saved generated challenges in the existing `problems` collection with `isAIGenerated: true`
+- split problem search by source so normal Add shows seeded/manual problems and AI shows generated problems
+
+Web completed:
+
+- added an AI problem modal to the collab room problems panel
+- added AI-only problem search, suggestions, prompt-based generation, immediate generated-result display, load more, and add-to-room flow
+- reused the existing DSA accordion UX while adding AI-generated badges in the modal and room problem list
+- updated the account policy text to disclose shared AI-generated catalog behavior and demo/free-tier limitations
+
+Documentation completed:
+
+- updated deployment, README, architecture, ADR, debugging, infrastructure, and future-plan docs for Gemini generation and demo limitations
+- kept the existing Piston/code-execution limitation documented as a separate external-provider concern
+
+Why:
+
+Rooms need a product differentiator beyond a static problem catalog. AI generation lets users request fresh practice problems while preserving the existing room add/select/run workflow and keeping generated content clearly flagged.
+
+Verification used:
+
+```bash
+npm --prefix api run build
+npm --prefix web run build
+git diff --check
+```
+

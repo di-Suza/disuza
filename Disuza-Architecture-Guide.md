@@ -67,6 +67,7 @@ Express 5 + TypeScript modular monolith
   +-- BullMQ workers for destructive cleanup
   +-- Socket.IO for chat, notifications, and rooms
   +-- Piston-compatible adapter for room code execution
+  +-- Gemini Interactions structured output for AI-generated room problems
   +-- PeerJS/WebRTC room audio signaling
   +-- Planned: production TURN hardening for room audio
 
@@ -273,7 +274,7 @@ Small modules may omit unnecessary files. The layer pattern is a responsibility 
 | Issues | Partial | User submission/history; admin workflow remains |
 | Contributions | Implemented | Heatmap and source-linked contribution records |
 | Chat and feedback | Partial | Feedback persistence/API, realtime messages, unread state, groups, and attachments; admin workflows remain |
-| Rooms and problems | Partial | Personal/collab rooms, problem state, access policy, Yjs sync, Piston-compatible execution adapter, presence, room chat, and audio signaling; reliable paid/self-hosted execution runner, production TURN, and admin problem catalog remain |
+| Rooms and problems | Partial | Personal/collab rooms, problem state, access policy, Yjs sync, Piston-compatible execution adapter, Gemini-backed AI problem generation, presence, room chat, and audio signaling; reliable paid/self-hosted execution runner, production TURN, admin review, and production-grade AI validation remain |
 | Background jobs | Partial | Post, account, and hidden-conversation cleanup workers; broader reconciliation remains |
 
 ### 6.6 Infrastructure boundaries
@@ -293,9 +294,10 @@ api/src/infrastructure/
   email/
   oauth/
   code-execution/
+  ai/
 ```
 
-This move is evolutionary. Existing working code should migrate only when an adapter has real reuse or operational complexity. Redis, BullMQ, Socket.IO, and the Piston-compatible code-execution adapter now have active infrastructure boundaries; a reliable paid/self-hosted execution runner and future providers such as TURN must remain planned until verified.
+This move is evolutionary. Existing working code should migrate only when an adapter has real reuse or operational complexity. Redis, BullMQ, Socket.IO, the Piston-compatible code-execution adapter, and Gemini-backed AI problem generation now have active infrastructure boundaries; a reliable paid/self-hosted execution runner, production-grade AI validation, and future providers such as TURN must remain planned until verified.
 
 ## 7. Frontend Architecture
 
@@ -532,6 +534,7 @@ The accepted room behavior now implemented in the current application includes:
 - room access is decided by one central policy service;
 - blocked-room behavior protects the blocker while preserving the other user's work in solo mode;
 - problems can be added, selected, unselected, updated, run, and marked solved;
+- AI-generated problems can be created through a rate-limited Gemini flow, structurally validated, saved with an `isAIGenerated` flag, and added to any room from the AI problem modal;
 - code collaboration uses Yjs document updates rather than repeated full-string replacement;
 - code execution is locked per room problem, isolated behind the Piston-compatible adapter, and returns per-test results to every active room user when a reliable runner is configured;
 - audio signaling and voice-room presence are available to room participants, with production TURN hardening still planned.

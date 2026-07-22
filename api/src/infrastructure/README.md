@@ -15,3 +15,4 @@ Accepted adapter areas:
 - `jobs`: future BullMQ queues and workers.
 - `realtime`: future Socket.IO gateway, auth, and event contracts.
 - `code-execution`: Piston/code runner adapter.
+- `ai`: Gemini and future model-provider adapters for structured generation.
