@@ -69,8 +69,13 @@
 
 .landing-v1-signin,
 .landing-v1-actions a:first-child,
+.landing-v1-actions a:last-child,
 .landing-v1-cta a {
   border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   background: var(--accent);
   color: white;
   font-size: 14px;
