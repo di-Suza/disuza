@@ -112,7 +112,7 @@ const CodeEditor = ({ code, language, onCodeChange, onLanguageChange, onRun, isR
       <header>
         <div>
           <span>Code Editor</span>
-          <select value={language} onChange={(event) => onLanguageChange(event.target.value as ProblemLanguage)}>
+          <select value={language} onChange={(event) => onLanguageChange(event.target.value as ProblemLanguage)} disabled={isRunning}>
             {languageOptions.map((item) => (
               <option key={item.value} value={item.value}>{item.label}</option>
             ))}
@@ -141,6 +141,7 @@ const CodeEditor = ({ code, language, onCodeChange, onLanguageChange, onRun, isR
             minimap: { enabled: false },
             scrollBeyondLastLine: false,
             automaticLayout: true,
+            readOnly: isRunning,
             padding: { top: 16, bottom: 16 },
             lineNumbers: 'on',
             renderLineHighlight: 'all',

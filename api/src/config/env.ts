@@ -130,9 +130,9 @@ const rawEnvSchema = z.object({
   MEDIA_MAX_VIDEO_FILE_SIZE_BYTES: z.coerce.number().int().min(1024).max(100 * 1024 * 1024).default(50 * 1024 * 1024),
   MEDIA_POST_IMAGE_MAX_COUNT: z.coerce.number().int().min(1).max(10).default(5),
   MEDIA_POST_MEDIA_MAX_COUNT: z.coerce.number().int().min(1).max(10).default(5),
-  JUDGE0_API_URL: z.string().trim().min(1).default('https://judge029.p.rapidapi.com'),
-  RAPIDAPI_JUDGE0_HOST: z.string().trim().min(1).default('judge029.p.rapidapi.com'),
-  RAPIDAPI_JUDGE0_KEY: optionalString,
+  PISTON_API_URL: z.string().trim().min(1).default('https://emkc.org/api/v2/piston'),
+  PISTON_RUN_TIMEOUT_MS: z.coerce.number().int().min(1000).max(30_000).default(5000),
+  PISTON_COMPILE_TIMEOUT_MS: z.coerce.number().int().min(1000).max(30_000).default(10_000),
   PROBLEM_RUN_LOCK_TTL_SECONDS: z.coerce.number().int().min(5).max(300).default(60),
 });
 

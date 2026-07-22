@@ -11,26 +11,34 @@ type CodeExecutionTestCase = {
   isHidden: boolean;
 };
 
-const languageIdMap: Record<CodeExecutionLanguage, number> = {
-  javascript: 63,
-  python: 71,
-  cpp: 54,
+const pistonLanguageMap: Record<CodeExecutionLanguage, { language: string; version: string; fileName: string }> = {
+  javascript: { language: 'javascript', version: '*', fileName: 'main.js' },
+  python: { language: 'python', version: '*', fileName: 'main.py' },
+  cpp: { language: 'cpp', version: '*', fileName: 'main.cpp' },
 };
 
-type Judge0Status = {
+type ExecutionStatus = {
   id?: number;
   description?: string;
+  code?: number | null;
+  signal?: string | null;
+  provider?: 'piston';
 };
 
-type Judge0Submission = {
-  token?: string;
+type PistonStage = {
   stdout?: string;
   stderr?: string;
-  compile_output?: string;
+  output?: string;
+  code?: number | null;
+  signal?: string | null;
+};
+
+type PistonExecutionResponse = {
+  language?: string;
+  version?: string;
+  run?: PistonStage;
+  compile?: PistonStage;
   message?: string;
-  status?: Judge0Status;
-  time?: string;
-  memory?: number;
 };
 
 type TestCaseResult = {
@@ -39,7 +47,7 @@ type TestCaseResult = {
   expectedOutput: string;
   output: string;
   error: string;
-  status?: Judge0Status;
+  status?: ExecutionStatus;
   time?: string;
   memory?: number;
   passed: boolean;
@@ -57,20 +65,27 @@ function normalizeOutput(value = '') {
   return value.toString().trim().replace(/\r\n/g, '\n');
 }
 
-function encodeBase64(value = '') {
-  return Buffer.from(value.toString(), 'utf8').toString('base64');
-}
-
-function decodeBase64(value = '') {
-  if (!value) return '';
-  return Buffer.from(value, 'base64').toString('utf8');
-}
-
 function parseTestValue(value: string) {
+  const trimmedValue = value.trim();
+
+  if (/^(['"])(?:\\.|(?!\1).)*\1$/s.test(trimmedValue)) {
+    return trimmedValue.slice(1, -1);
+  }
+
+  if (/^-?\d+(\.\d+)?$/.test(trimmedValue)) {
+    return Number(trimmedValue);
+  }
+
+  if (trimmedValue === 'true') return true;
+  if (trimmedValue === 'false') return false;
+  if (trimmedValue === 'null') return null;
+
+  const jsonishValue = trimmedValue.replace(/'([^'\\]*(?:\\.[^'\\]*)*)'/g, (_, content: string) => JSON.stringify(content));
+
   try {
-    return JSON.parse(value) as unknown;
+    return JSON.parse(jsonishValue) as unknown;
   } catch {
-    return value;
+    return trimmedValue;
   }
 }
 
@@ -79,17 +94,82 @@ function normalizeExpectedValue(value: string) {
   return typeof parsed === 'string' ? parsed : JSON.stringify(parsed);
 }
 
+function splitTopLevel(value: string) {
+  const parts: string[] = [];
+  let buffer = '';
+  let depth = 0;
+  let quote: string | null = null;
+
+  for (let index = 0; index < value.length; index += 1) {
+    const character = value[index];
+    const previousCharacter = value[index - 1];
+
+    if ((character === '"' || character === "'") && previousCharacter !== '\\') {
+      quote = quote === character ? null : quote || character;
+    }
+
+    if (!quote) {
+      if (['[', '{', '('].includes(character)) depth += 1;
+      if ([']', '}', ')'].includes(character)) depth = Math.max(0, depth - 1);
+
+      if (character === ',' && depth === 0) {
+        parts.push(buffer.trim());
+        buffer = '';
+        continue;
+      }
+    }
+
+    buffer += character;
+  }
+
+  if (buffer.trim()) parts.push(buffer.trim());
+  return parts;
+}
+
+function stripNamedValue(value: string) {
+  const parts = value.split('=');
+  if (parts.length < 2 || !/^[a-zA-Z_$][\w$.\[\]]*\s*$/.test(parts[0])) return value;
+  return parts.slice(1).join('=').trim();
+}
+
 function getArgsFromInput(input: string) {
-  const parsed = parseTestValue(input);
-  return Array.isArray(parsed) ? parsed : [parsed];
+  const trimmedInput = input.trim();
+  const topLevelParts = splitTopLevel(trimmedInput);
+  const hasNamedParts = topLevelParts.some((part) => /^[a-zA-Z_$][\w$.\[\]]*\s*=/.test(part));
+
+  if (hasNamedParts) {
+    return topLevelParts.map((part) => parseTestValue(stripNamedValue(part)));
+  }
+
+  if (topLevelParts.length > 1 && !trimmedInput.startsWith('[') && !trimmedInput.startsWith('{')) {
+    return topLevelParts.map((part) => parseTestValue(part));
+  }
+
+  return [parseTestValue(trimmedInput)];
+}
+
+function getJavaScriptCallableName(sourceCode: string) {
+  const functionMatch = sourceCode.match(/function\s+([A-Za-z_$][\w$]*)\s*\(/);
+  const arrowMatch = sourceCode.match(/(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=\s*(?:async\s*)?(?:\([^)]*\)|[A-Za-z_$][\w$]*)\s*=>/);
+  return functionMatch?.[1] || arrowMatch?.[1] || 'solution';
+}
+
+function getPythonCallableName(sourceCode: string) {
+  return sourceCode.match(/def\s+([A-Za-z_]\w*)\s*\(/)?.[1] || 'solution';
 }
 
 function buildJavaScriptHarness(sourceCode: string, args: unknown[]) {
+  const callableName = getJavaScriptCallableName(sourceCode);
+
   return `
 ${sourceCode}
 
 const __args = ${JSON.stringify(args)};
-const __result = solution(...__args);
+const __candidate = typeof ${callableName} === "function" ? ${callableName} : (typeof solution === "function" ? solution : null);
+if (!__candidate) {
+  throw new Error("No callable function found. Define ${callableName}() or solution().");
+}
+const __result = __candidate(...__args);
 if (typeof __result === "undefined") {
   console.log("");
 } else if (typeof __result === "string") {
@@ -101,12 +181,17 @@ if (typeof __result === "undefined") {
 }
 
 function buildPythonHarness(sourceCode: string, args: unknown[]) {
+  const callableName = getPythonCallableName(sourceCode);
+
   return `
 ${sourceCode}
 
 import json
 __args = json.loads(${JSON.stringify(JSON.stringify(args))})
-__result = solution(*__args)
+__candidate = globals().get("${callableName}") or globals().get("solution")
+if __candidate is None:
+    raise Exception("No callable function found. Define ${callableName}() or solution().")
+__result = __candidate(*__args)
 if __result is None:
     print("")
 elif isinstance(__result, str):
@@ -129,47 +214,81 @@ function buildExecutableSource(input: { sourceCode: string; language: CodeExecut
 }
 
 class CodeExecutionService {
-  private getJudge0Config() {
-    if (!env.RAPIDAPI_JUDGE0_KEY) {
-      throw new AppError('Code execution key is not configured', 500);
-    }
-
+  private getPistonConfig() {
     return {
-      apiUrl: env.JUDGE0_API_URL,
-      rapidApiHost: env.RAPIDAPI_JUDGE0_HOST,
-      rapidApiKey: env.RAPIDAPI_JUDGE0_KEY,
+      apiUrl: env.PISTON_API_URL.replace(/\/$/, ''),
+      runTimeoutMs: env.PISTON_RUN_TIMEOUT_MS,
+      compileTimeoutMs: env.PISTON_COMPILE_TIMEOUT_MS,
     };
   }
 
-  private getJudge0Headers() {
-    const { apiUrl, rapidApiHost, rapidApiKey } = this.getJudge0Config();
+  private getPistonHeaders() {
+    const { apiUrl, runTimeoutMs, compileTimeoutMs } = this.getPistonConfig();
+    const headers: Record<string, string> = {
+      'content-type': 'application/json',
+    };
 
     return {
       apiUrl,
-      headers: {
-        'content-type': 'application/json',
-        'x-rapidapi-host': rapidApiHost,
-        'x-rapidapi-key': rapidApiKey,
-      },
+      headers,
+      runTimeoutMs,
+      compileTimeoutMs,
     };
   }
 
-  private async createSubmission(input: { sourceCode: string; language: CodeExecutionLanguage; expectedOutput: string }) {
-    const { apiUrl, headers } = this.getJudge0Headers();
-    const languageId = languageIdMap[input.language];
+  private buildExecutionStatus(execution: PistonExecutionResponse): ExecutionStatus {
+    const compileFailed = execution.compile?.code !== undefined
+      && execution.compile.code !== null
+      && execution.compile.code !== 0;
+    const runFailed = execution.run?.code !== undefined
+      && execution.run.code !== null
+      && execution.run.code !== 0;
+    const signal = execution.compile?.signal || execution.run?.signal || null;
+    const failed = compileFailed || runFailed || Boolean(signal) || Boolean(execution.message);
 
-    if (!languageId) {
+    return {
+      id: failed ? 4 : 3,
+      description: failed ? 'Execution Error' : 'Accepted',
+      code: execution.compile?.code ?? execution.run?.code ?? null,
+      signal,
+      provider: 'piston',
+    };
+  }
+
+  private getExecutionError(execution: PistonExecutionResponse) {
+    const compileError = execution.compile?.stderr || execution.compile?.output;
+    const runError = execution.run?.stderr;
+    const runFailedOutput = execution.run?.code && execution.run.code !== 0 ? execution.run.output : '';
+
+    return normalizeOutput(compileError || runError || execution.message || runFailedOutput || '');
+  }
+
+  private async runSubmission(input: { sourceCode: string; language: CodeExecutionLanguage; expectedOutput: string }) {
+    const { apiUrl, headers, runTimeoutMs, compileTimeoutMs } = this.getPistonHeaders();
+    const runtime = pistonLanguageMap[input.language];
+
+    if (!runtime) {
       throw new BadRequestError('Unsupported language');
     }
 
-    const response = await fetch(`${apiUrl}/submissions?base64_encoded=true&wait=false&fields=*`, {
+    const response = await fetch(`${apiUrl}/execute`, {
       method: 'POST',
       headers,
       body: JSON.stringify({
-        source_code: encodeBase64(input.sourceCode),
-        language_id: languageId,
-        stdin: encodeBase64(''),
-        expected_output: encodeBase64(input.expectedOutput),
+        language: runtime.language,
+        version: runtime.version,
+        files: [
+          {
+            name: runtime.fileName,
+            content: input.sourceCode,
+          },
+        ],
+        stdin: '',
+        args: [],
+        compile_timeout: compileTimeoutMs,
+        run_timeout: runTimeoutMs,
+        compile_memory_limit: -1,
+        run_memory_limit: -1,
       }),
     });
 
@@ -177,51 +296,12 @@ class CodeExecutionService {
       throw new AppError('Code execution failed. Please try again.', 502);
     }
 
-    const submission = await response.json() as Judge0Submission;
-    if (!submission.token) {
-      throw new AppError('Code execution token not received', 502);
+    const execution = await response.json() as PistonExecutionResponse;
+    if (!execution.run && !execution.compile && !execution.message) {
+      throw new AppError('Code execution returned an invalid response', 502);
     }
 
-    return submission.token;
-  }
-
-  private async getSubmission(token: string) {
-    const { apiUrl, headers } = this.getJudge0Headers();
-    const response = await fetch(`${apiUrl}/submissions/${token}?base64_encoded=true&fields=*`, {
-      method: 'GET',
-      headers,
-    });
-
-    if (!response.ok) {
-      throw new AppError('Code execution result fetch failed', 502);
-    }
-
-    return response.json() as Promise<Judge0Submission>;
-  }
-
-  private async waitForSubmission(token: string) {
-    const maxAttempts = 15;
-    const delayMs = 700;
-
-    for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
-      const submission = await this.getSubmission(token);
-      const statusId = submission.status?.id;
-
-      if (statusId && statusId !== 1 && statusId !== 2) {
-        return submission;
-      }
-
-      await new Promise((resolve) => {
-        setTimeout(resolve, delayMs);
-      });
-    }
-
-    throw new AppError('Code execution timed out', 504);
-  }
-
-  private async runSubmission(input: { sourceCode: string; language: CodeExecutionLanguage; expectedOutput: string }) {
-    const token = await this.createSubmission(input);
-    return this.waitForSubmission(token);
+    return execution;
   }
 
   async runTestCases(input: {
@@ -242,21 +322,17 @@ class CodeExecutionService {
         testInput: testCase.input,
       });
 
-      const submission = await this.runSubmission({
+      const execution = await this.runSubmission({
         sourceCode: executableSource,
         language: input.language,
         expectedOutput: normalizeExpectedValue(testCase.expectedOutput),
       });
 
-      const output = normalizeOutput(decodeBase64(submission.stdout || ''));
+      const output = normalizeOutput(execution.run?.stdout || '');
       const expectedOutput = normalizeOutput(normalizeExpectedValue(testCase.expectedOutput));
-      const errorOutput = normalizeOutput(
-        decodeBase64(submission.stderr || '')
-        || decodeBase64(submission.compile_output || '')
-        || submission.message
-        || '',
-      );
-      const passed = submission.status?.id === 3 && output === expectedOutput && !errorOutput;
+      const errorOutput = this.getExecutionError(execution);
+      const status = this.buildExecutionStatus(execution);
+      const passed = status.id === 3 && output === expectedOutput && !errorOutput;
 
       results.push({
         index: index + 1,
@@ -264,9 +340,7 @@ class CodeExecutionService {
         expectedOutput: testCase.isHidden ? 'Hidden expected output' : testCase.expectedOutput,
         output,
         error: errorOutput,
-        status: submission.status,
-        time: submission.time,
-        memory: submission.memory,
+        status,
         passed,
         isHidden: testCase.isHidden,
       });

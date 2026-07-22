@@ -118,6 +118,16 @@ const CollabRoomPage = () => {
   const roomDetails = room?.data?.roomDetails || null;
   const problems = room?.data?.problems || [];
   const selectedRoomProblem = roomDetails?.currentlySelectedProblem || null;
+  const runningRoomProblemId = problems.find((problem) => problem.executionStatus === 'running')?._id
+    || (selectedRoomProblem?.executionStatus === 'running' ? selectedRoomProblem._id : null);
+  const isRoomExecutionLocked = Boolean(runningRoomProblemId || runState.isRunning);
+  const isSelectedProblemRunning = Boolean(
+    selectedRoomProblem
+    && (
+      runningRoomProblemId === selectedRoomProblem._id
+      || (runState.isRunning && runState.roomProblemId === selectedRoomProblem._id)
+    ),
+  );
   const isSoloRoom = !roomDetails || roomDetails.roomType === 'personal' || roomDetails.realtimeDisabled;
   const usersData = isSoloRoom ? [] : roomDetails.conversationId?.participants || [];
   const { usersWithPresence } = useCollabRoom({ roomId: isSoloRoom ? undefined : roomId, usersData, currentUserId });
@@ -262,6 +272,19 @@ const CollabRoomPage = () => {
   }, [selectedRoomProblem?.language]);
 
   useEffect(() => {
+    if (runningRoomProblemId) {
+      setRunState((currentState) => (
+        currentState.isRunning && currentState.roomProblemId === runningRoomProblemId
+          ? currentState
+          : { isRunning: true, roomProblemId: runningRoomProblemId }
+      ));
+      return;
+    }
+
+    setRunState((currentState) => (currentState.isRunning ? { isRunning: false, roomProblemId: null } : currentState));
+  }, [runningRoomProblemId]);
+
+  useEffect(() => {
     const socket = getSocket();
     const handleYjsCodeUpdate = (payload: unknown) => {
       if (
@@ -356,6 +379,10 @@ const CollabRoomPage = () => {
 
   const handleLanguageChange = async (language: ProblemLanguage) => {
     if (!roomId || !selectedRoomProblem?._id) return;
+    if (isRoomExecutionLocked) {
+      showError('Code is running. Please wait before changing language.');
+      return;
+    }
 
     const previousLanguage = activeLanguage;
     setActiveLanguage(language);
@@ -369,7 +396,7 @@ const CollabRoomPage = () => {
   };
 
   const handleRunCode = async () => {
-    if (!roomId || !selectedRoomProblem?._id || runState.isRunning) return;
+    if (!roomId || !selectedRoomProblem?._id || isRoomExecutionLocked) return;
 
     try {
       setRunState({ isRunning: true, roomProblemId: selectedRoomProblem._id });
@@ -389,6 +416,10 @@ const CollabRoomPage = () => {
 
   const handleUnselectProblem = async () => {
     if (!roomId || isUnselecting) return;
+    if (isRoomExecutionLocked) {
+      showError('Code is running. Please wait before changing room problems.');
+      return;
+    }
 
     try {
       await unselectProblem({ roomId }).unwrap();
@@ -424,7 +455,13 @@ const CollabRoomPage = () => {
           <>
             <div className="collab-left-panel" style={{ width: clamp(leftPanelWidth, 220, getAvailableSideWidth('left')) }}>
               <ErrorBoundary variant="section" title="Problems panel could not be rendered." resetKeys={[roomId, selectedRoomProblem?._id]} showReload={false}>
-                <ProblemsPanel problems={problems} selectedProblem={selectedRoomProblem} roomId={roomId} onCollapse={() => setIsLeftPanelCollapsed(true)} />
+                <ProblemsPanel
+                  problems={problems}
+                  selectedProblem={selectedRoomProblem}
+                  roomId={roomId}
+                  isSelectionLocked={isRoomExecutionLocked}
+                  onCollapse={() => setIsLeftPanelCollapsed(true)}
+                />
               </ErrorBoundary>
             </div>
             <div role="separator" aria-orientation="vertical" className="collab-resize-handle is-vertical" onPointerDown={(event) => startHorizontalResize('left', event)} />
@@ -439,8 +476,8 @@ const CollabRoomPage = () => {
                   <div>
                     <p>Active Problem</p>
                   </div>
-                  <button type="button" onClick={handleUnselectProblem} disabled={isUnselecting}>
-                    {isUnselecting ? 'Unselecting...' : 'Unselect Problem'}
+                  <button type="button" onClick={handleUnselectProblem} disabled={isUnselecting || isRoomExecutionLocked}>
+                    {isSelectedProblemRunning ? 'Code Running' : isUnselecting ? 'Unselecting...' : 'Unselect Problem'}
                   </button>
                 </header>
                 <ErrorBoundary variant="section" title="Problem details could not be rendered." resetKeys={[selectedRoomProblem._id]} showReload={false}>
@@ -456,14 +493,14 @@ const CollabRoomPage = () => {
                     onCodeChange={handleCodeChange}
                     onLanguageChange={handleLanguageChange}
                     onRun={handleRunCode}
-                    isRunning={runState.isRunning}
+                    isRunning={isSelectedProblemRunning}
                   />
                 </ErrorBoundary>
               </section>
               <div role="separator" aria-orientation="horizontal" className="collab-resize-handle is-horizontal" onPointerDown={(event) => startVerticalResize('results', event)} />
               <section className="collab-results-region" style={{ height: resultsPanelHeight }}>
                 <ErrorBoundary variant="section" title="Run results could not be rendered." resetKeys={[selectedRoomProblem._id, results?.status]} showReload={false}>
-                  <ResultsPanel results={results} isRunning={runState.isRunning} />
+                  <ResultsPanel results={results} isRunning={isSelectedProblemRunning} />
                 </ErrorBoundary>
               </section>
             </>

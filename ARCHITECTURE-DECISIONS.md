@@ -84,7 +84,7 @@ Decision:
 - The architecture guide records current boundaries and accepted targets.
 - Status labels must distinguish implemented, partial, planned, and deferred work.
 
-Consequence: documentation cannot claim Socket.IO, Redis, BullMQ, Yjs, Judge0, tests, or Docker are active before they exist and are verified in the current implementation, and must be updated when they become active.
+Consequence: documentation cannot claim Socket.IO, Redis, BullMQ, Yjs, Piston-compatible execution, tests, or Docker are active before they exist and are verified in the current implementation, and must be updated when they become active.
 
 ### DLF-003: TypeScript modular monolith
 
@@ -259,6 +259,7 @@ Decision:
 
 - Use Helmet, restricted CORS, validated cookies, request validation, and upload controls.
 - Apply rate limits to auth, OTP, reports, messages, uploads, and code execution according to abuse cost.
+- Treat public/demo code runners as non-production dependencies until a reliable paid or self-hosted sandbox is configured.
 - Add identity/account throttles where IP-only limits are insufficient.
 - Never log credentials, OTPs, raw tokens, cookies, or secrets.
 
@@ -412,10 +413,12 @@ Current delivery note: BullMQ cleanup queues and workers exist for migrated dest
 
 Decision:
 
-- ImageKit, Resend, Google, Judge0, Redis, BullMQ, and future TURN/provider details stay behind adapters.
+- ImageKit, Resend, Google, Piston-compatible execution, Redis, BullMQ, and future TURN/provider details stay behind adapters.
 - Domain services depend on product operations rather than provider SDK request shapes.
 
 Consequence: providers can be tested, replaced, timed out, and observed centrally.
+
+Current delivery note: room code execution is wired through a Piston-compatible adapter, but reliable live execution is not claimed for the hosted demo until `PISTON_API_URL` points to a maintained paid or self-hosted sandbox runner.
 
 ## Operations And Evolution Decisions
 

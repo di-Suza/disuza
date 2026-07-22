@@ -1470,16 +1470,37 @@ npm run build:web
 git diff --check
 ```
 
+## Step 40: Code Execution Runner Status Documentation
+
+Recorded the current collaborative room code-execution status.
+
+Updated:
+
+- documented that room code execution is wired through the Piston-compatible API adapter
+- clarified that the default public Piston endpoint is a demo fallback and may be unavailable, restricted, or rate-limited
+- documented that reliable production execution requires a paid or self-hosted Piston-compatible sandbox configured through `PISTON_API_URL`
+- updated deployment, architecture, debugging, future-plan, environment-example, and adapter notes so the project does not claim unreliable hosted execution as production-ready
+
+Why:
+
+The room/editor/socket flow is implemented, but external code execution reliability depends on the configured sandbox provider. The documentation now separates implemented architecture from hosted-demo provider limitations in a way that is honest for interviews, demos, and future deployment work.
+
+Verification used:
+
+```bash
+git diff --check
+```
+
 ## Step 39: Room Code Execution Parity
 
 Tightened the collaborative room code execution flow after comparing the original room module file-by-file with the current TypeScript implementation.
 
 Completed:
 
-- kept the existing `/api/problem/run` flow aligned with the original behavior: selected room problem, source code, language, stored test cases, Judge0 execution, persisted room-problem status, and `code_execution` realtime updates
-- moved the Judge0-compatible runner behind the `api/src/infrastructure/code-execution` adapter boundary while preserving the existing problem-module import path
-- documented Judge0 runtime configuration in `api/.env.example`, the deployment guide, and the code-execution adapter README
-- corrected architecture/ADR status labels so Socket.IO, Yjs, BullMQ, Redis, rooms, and Judge0 are no longer documented as only planned where active code exists
+- kept the existing `/api/problem/run` flow aligned with the original behavior: selected room problem, source code, language, stored test cases, Piston-compatible execution, persisted room-problem status, and `code_execution` realtime updates
+- moved the Piston-compatible runner behind the `api/src/infrastructure/code-execution` adapter boundary while preserving the existing problem-module import path
+- documented Piston runtime configuration in `api/.env.example`, the deployment guide, and the code-execution adapter README
+- corrected architecture/ADR status labels so Socket.IO, Yjs, BullMQ, Redis, rooms, and the code-execution adapter are no longer documented as only planned where active code exists
 - hardened the room editor language state so solo rooms update immediately and rollback on failed language changes
 - added a tested frontend result-summary helper so the results panel can render empty, running, completed, and partially malformed result payloads safely
 
@@ -1620,7 +1641,7 @@ Added:
 - verified current maps for the current implementation API and web applications
 - domain rules inherited from v1 for auth, social relationships, posts, media, comments, contributions, saves, reports, notifications, messaging, blocking, and collaborative rooms
 - current request, auth refresh, post, comment, feedback, and cleanup flows
-- explicit infrastructure boundaries for future Redis, Socket.IO, BullMQ, Yjs, Judge0, TURN, OpenAPI, testing, CI, and Docker work
+- explicit infrastructure boundaries for future Redis, Socket.IO, BullMQ, Yjs, code execution, TURN, OpenAPI, testing, CI, and Docker work
 
 Documentation sources:
 
@@ -1704,7 +1725,7 @@ Completed the first eight foundation modifications before the remaining v1 modul
 Deferred intentionally:
 
 - Docker/local infrastructure packaging and production deployment manifests remain for the final hardening phase after the app modules are complete.
-- Redis, BullMQ, Socket.IO, Yjs, Judge0, and TURN folders are structure targets only until real implementation branches add and verify those runtimes.
+- Redis, BullMQ, Socket.IO, Yjs, code-execution, and TURN folders are structure targets only until real implementation branches add and verify those runtimes.
 - Full endpoint OpenAPI coverage, lint-enforced boundaries, and automated unit/integration/component/E2E tests are planned follow-up work on top of this foundation.
 
 Why:

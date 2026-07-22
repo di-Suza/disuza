@@ -36,8 +36,9 @@ type TypingPayload = {
 };
 
 const CHAT_ATTACHMENT_MAX_SIZE_BYTES = 2 * 1024 * 1024;
-const TYPING_IDLE_MS = 1200;
-const TYPING_EXPIRE_MS = 2800;
+const TYPING_IDLE_MS = 1800;
+const TYPING_REFRESH_MS = 900;
+const TYPING_EXPIRE_MS = 3600;
 
 export const useChatWindow = ({ allMessages, handleChatSelect, isFetchingMessages, selectedChat }: UseChatWindowArgs) => {
   const navigate = useNavigate();
@@ -51,6 +52,7 @@ export const useChatWindow = ({ allMessages, handleChatSelect, isFetchingMessage
   const firstMessageIdRef = useRef<string | null>(null);
   const typingIdleTimeoutRef = useRef<number | null>(null);
   const typingExpiryTimeoutsRef = useRef<Map<string, number>>(new Map());
+  const lastTypingEmitAtRef = useRef(0);
   const isTypingRef = useRef(false);
   const [messageInput, setMessageInput] = useState('');
   const [selectedAttachment, setSelectedAttachment] = useState<File | null>(null);
@@ -72,6 +74,7 @@ export const useChatWindow = ({ allMessages, handleChatSelect, isFetchingMessage
     if (!selectedChat?._id || !isTypingRef.current) return;
     getSocket().emit('typing_stop', { conversationId: selectedChat._id });
     isTypingRef.current = false;
+    lastTypingEmitAtRef.current = 0;
   }, [clearTypingTimeout, selectedChat?._id]);
 
   const scheduleTypingStop = useCallback(() => {
@@ -83,10 +86,15 @@ export const useChatWindow = ({ allMessages, handleChatSelect, isFetchingMessage
 
   const emitTypingStart = useCallback(() => {
     if (!selectedChat?._id || selectedChat.isBlocked || selectedChat.hasBlockedMe || selectedChat.otherUser?.isDeletedUser) return;
-    if (!isTypingRef.current) {
+    const now = Date.now();
+    const shouldEmit = !isTypingRef.current || now - lastTypingEmitAtRef.current >= TYPING_REFRESH_MS;
+
+    if (shouldEmit) {
       getSocket().emit('typing_start', { conversationId: selectedChat._id });
+      lastTypingEmitAtRef.current = now;
       isTypingRef.current = true;
     }
+
     scheduleTypingStop();
   }, [scheduleTypingStop, selectedChat]);
 
@@ -255,6 +263,7 @@ export const useChatWindow = ({ allMessages, handleChatSelect, isFetchingMessage
 
   useEffect(() => {
     isTypingRef.current = false;
+    lastTypingEmitAtRef.current = 0;
     clearTypingTimeout();
     setTypingUsers([]);
 

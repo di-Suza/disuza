@@ -3,6 +3,7 @@ import type { ChatMessage, ChatUser } from '@/features/messages/model/chat.types
 export type ProblemDifficulty = 'Easy' | 'Medium' | 'Hard';
 export type ProblemLanguage = 'javascript' | 'python' | 'cpp';
 export type RoomProblemStatus = 'pending' | 'solving' | 'solved' | 'attempted';
+export type RoomProblemExecutionStatus = 'idle' | 'running';
 
 export type ProblemTestCase = {
   _id?: string;
@@ -28,6 +29,9 @@ export type RoomProblem = {
   roomId: string;
   problemId: Problem;
   status: RoomProblemStatus;
+  executionStatus?: RoomProblemExecutionStatus;
+  executionStartedAt?: string | null;
+  executionRequestedBy?: ChatUser | string | null;
   currentCode: string;
   language: ProblemLanguage;
   testCasesPassed: number;
@@ -127,6 +131,15 @@ export type ProblemMutationResponse = {
   data: RoomProblem | null;
 };
 
+export type RemoveProblemResponse = {
+  success: boolean;
+  message: string;
+  data: {
+    removedProblemId: string;
+    unselectedProblem?: RoomProblem | null;
+  };
+};
+
 export type CodeRunResultCase = {
   index: number;
   input: string;
@@ -158,7 +171,7 @@ export type RunProblemResponse = {
 };
 
 export type RoomSyncPayload = {
-  type: 'ADD_PROBLEM' | 'SELECT_PROBLEM' | 'UNSELECT_PROBLEM' | 'CODE_CHANGE' | 'YJS_CODE_UPDATE' | 'LANG_CHANGE' | 'RUN_COMPLETED';
+  type: 'ADD_PROBLEM' | 'SELECT_PROBLEM' | 'UNSELECT_PROBLEM' | 'REMOVE_PROBLEM' | 'CODE_CHANGE' | 'YJS_CODE_UPDATE' | 'LANG_CHANGE' | 'RUN_COMPLETED';
   roomId: string;
   data?: Record<string, unknown>;
 };

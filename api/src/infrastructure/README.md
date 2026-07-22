@@ -14,4 +14,4 @@ Accepted adapter areas:
 - `cache`: future Redis client and cache helpers.
 - `jobs`: future BullMQ queues and workers.
 - `realtime`: future Socket.IO gateway, auth, and event contracts.
-- `code-execution`: future Judge0/code runner adapter.
+- `code-execution`: Piston/code runner adapter.

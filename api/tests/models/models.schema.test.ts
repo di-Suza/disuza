@@ -149,5 +149,12 @@ describe('Mongoose model schemas', () => {
     await problem.validate();
     assert.equal(problem.difficulty, 'Easy');
     assert.equal(problem.boilerplate.javascript?.includes('function solution'), true);
+
+    const roomProblem = new RoomProblemModel({
+      roomId: oid(postId),
+      problemId: oid(postId),
+    });
+    await roomProblem.validate();
+    assert.equal(roomProblem.executionStatus, 'idle');
   });
 });
