@@ -27,6 +27,7 @@ type GeminiResponse = {
   }>;
   error?: {
     message?: string;
+    details?: unknown;
   };
 };
 
@@ -55,57 +56,57 @@ const generatedProblemSchema = z.object({
   { message: 'At least one hidden test case is required' },
 );
 
-const generatedProblemJsonSchema = {
-  type: 'object',
+const generatedProblemResponseSchema = {
+  type: 'OBJECT',
   properties: {
     title: {
-      type: 'string',
+      type: 'STRING',
       description: 'A concise original DSA problem title, 6 to 90 characters.',
     },
     description: {
-      type: 'string',
+      type: 'STRING',
       description: 'A self-contained problem statement with input meaning and expected task.',
     },
     difficulty: {
-      type: 'string',
+      type: 'STRING',
       enum: PROBLEM_DIFFICULTIES,
       description: 'Estimated difficulty.',
     },
     tags: {
-      type: 'array',
+      type: 'ARRAY',
       minItems: 2,
       maxItems: 8,
-      items: { type: 'string' },
+      items: { type: 'STRING' },
       description: 'Searchable algorithm and data-structure tags.',
     },
     constraints: {
-      type: 'array',
+      type: 'ARRAY',
       minItems: 1,
       maxItems: 8,
-      items: { type: 'string' },
+      items: { type: 'STRING' },
       description: 'Problem constraints.',
     },
     testCases: {
-      type: 'array',
+      type: 'ARRAY',
       minItems: 3,
       maxItems: 8,
       items: {
-        type: 'object',
+        type: 'OBJECT',
         properties: {
           input: {
-            type: 'string',
+            type: 'STRING',
             description: 'Function arguments as a comma-separated value list, for example: nums=[1,2,3], target=4',
           },
           expectedOutput: {
-            type: 'string',
+            type: 'STRING',
             description: 'The exact function return value expected by the code runner.',
           },
           isHidden: {
-            type: 'boolean',
+            type: 'BOOLEAN',
             description: 'Whether this case should be hidden from the user.',
           },
           explanation: {
-            type: 'string',
+            type: 'STRING',
             description: 'Optional brief visible-case explanation.',
           },
         },
@@ -113,18 +114,18 @@ const generatedProblemJsonSchema = {
       },
     },
     boilerplate: {
-      type: 'object',
+      type: 'OBJECT',
       properties: {
         javascript: {
-          type: 'string',
+          type: 'STRING',
           description: 'JavaScript starter code exposing a solution(...) function.',
         },
         python: {
-          type: 'string',
+          type: 'STRING',
           description: 'Python starter code exposing a solution(...) function.',
         },
         cpp: {
-          type: 'string',
+          type: 'STRING',
           description: 'C++ starter code for future native runner support.',
         },
       },
@@ -132,6 +133,7 @@ const generatedProblemJsonSchema = {
     },
   },
   required: ['title', 'description', 'difficulty', 'tags', 'constraints', 'testCases', 'boilerplate'],
+  propertyOrdering: ['title', 'description', 'difficulty', 'tags', 'constraints', 'testCases', 'boilerplate'],
 };
 
 function buildPrompt(userPrompt: string) {
@@ -172,7 +174,35 @@ function extractJsonText(payload: GeminiResponse) {
     throw new BadRequestError('AI problem generation returned an empty response.');
   }
 
-  return text.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
+  const cleanedText = text
+    .replace(/^```(?:json)?\s*/i, '')
+    .replace(/\s*```$/i, '')
+    .trim();
+
+  if (cleanedText.startsWith('{') && cleanedText.endsWith('}')) {
+    return cleanedText;
+  }
+
+  const objectStart = cleanedText.indexOf('{');
+  const objectEnd = cleanedText.lastIndexOf('}');
+
+  if (objectStart !== -1 && objectEnd > objectStart) {
+    return cleanedText.slice(objectStart, objectEnd + 1);
+  }
+
+  return cleanedText;
+}
+
+function parseGeminiPayload(responseText: string): GeminiResponse {
+  if (!responseText.trim()) {
+    return {};
+  }
+
+  try {
+    return JSON.parse(responseText) as GeminiResponse;
+  } catch {
+    return {};
+  }
 }
 
 function normalizeGeneratedProblem(problem: z.infer<typeof generatedProblemSchema>): GeneratedProblem {
@@ -210,7 +240,12 @@ function normalizeGeneratedProblem(problem: z.infer<typeof generatedProblemSchem
 
 class AIProblemGeneratorService {
   private getEndpoint() {
-    return `${env.GEMINI_API_BASE_URL.replace(/\/$/, '')}/interactions`;
+    const baseUrl = env.GEMINI_API_BASE_URL
+      .replace(/\/$/, '')
+      .replace(/\/v1beta2$/, '/v1beta');
+    const model = env.GEMINI_MODEL.startsWith('models/') ? env.GEMINI_MODEL : `models/${env.GEMINI_MODEL}`;
+
+    return `${baseUrl}/${model}:generateContent`;
   }
 
   async generateProblem(userPrompt: string): Promise<GeneratedProblem> {
@@ -229,23 +264,28 @@ class AIProblemGeneratorService {
           'x-goog-api-key': env.GEMINI_API_KEY,
         },
         body: JSON.stringify({
-          model: env.GEMINI_MODEL,
-          input: buildPrompt(userPrompt),
-          system_instruction: 'Generate only one schema-valid JSON object. Do not include markdown, commentary, or extra keys.',
-          response_format: [
+          contents: [
             {
-              type: 'text',
-              mime_type: 'application/json',
-              schema: generatedProblemJsonSchema,
+              role: 'user',
+              parts: [{ text: buildPrompt(userPrompt) }],
             },
           ],
+          systemInstruction: {
+            parts: [{ text: 'Generate only one schema-valid JSON object. Do not include markdown, commentary, or extra keys.' }],
+          },
+          generationConfig: {
+            maxOutputTokens: 4096,
+            responseMimeType: 'application/json',
+            responseSchema: generatedProblemResponseSchema,
+          },
         }),
       });
     } catch {
       throw new BadRequestError('AI problem generation is currently unavailable. Please try again later.');
     }
 
-    const payload = await response.json().catch(() => ({})) as GeminiResponse;
+    const responseText = await response.text();
+    const payload = parseGeminiPayload(responseText);
 
     if (!response.ok) {
       throw new BadRequestError(payload.error?.message || 'AI problem generation is currently unavailable. Please try again later.');
@@ -254,7 +294,8 @@ class AIProblemGeneratorService {
     let rawProblem: unknown;
 
     try {
-      rawProblem = JSON.parse(extractJsonText(payload));
+      const jsonText = extractJsonText(payload);
+      rawProblem = JSON.parse(jsonText);
     } catch {
       throw new BadRequestError('AI problem generation returned invalid JSON. Please try again.');
     }
