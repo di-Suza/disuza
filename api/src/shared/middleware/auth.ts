@@ -1,8 +1,22 @@
 import type { RequestHandler } from 'express';
 
+import authCacheService from '../../modules/auth/authCache.service.js';
 import userRepository from '../../modules/users/user.repository.js';
 import { ForbiddenError, UnauthorizedError } from '../errors/index.js';
 import tokenService from '../utils/token.js';
+
+const buildAuthUser = (user: Awaited<ReturnType<typeof userRepository.findPublicById>>) => {
+  if (!user) return null;
+
+  return {
+    id: String(user._id),
+    userName: user.userName,
+    email: user.email,
+    role: user.role,
+    active: user.active,
+    profilePicture: user.profilePicture,
+  };
+};
 
 const authenticate: RequestHandler = async (req, _res, next) => {
   try {
@@ -14,20 +28,32 @@ const authenticate: RequestHandler = async (req, _res, next) => {
     }
 
     const payload = tokenService.verifyAccessToken(token);
-    const user = await userRepository.findPublicById(payload.id);
+    const isBlacklisted = await authCacheService.isAccessTokenBlacklisted(token);
 
-    if (!user || user.active === false) {
+    if (isBlacklisted) {
+      throw new UnauthorizedError('Invalid or expired token');
+    }
+
+    const cachedUser = await authCacheService.getUser(payload.id);
+
+    if (cachedUser) {
+      if (cachedUser.active === false) {
+        throw new UnauthorizedError('Account no longer exists');
+      }
+
+      req.user = cachedUser;
+      return next();
+    }
+
+    const user = await userRepository.findPublicById(payload.id);
+    const authUser = buildAuthUser(user);
+
+    if (!authUser || authUser.active === false) {
       throw new UnauthorizedError('Account no longer exists');
     }
 
-    req.user = {
-      id: String(user._id),
-      userName: user.userName,
-      email: user.email,
-      role: user.role,
-      active: user.active,
-      profilePicture: user.profilePicture,
-    };
+    await authCacheService.setUser(authUser);
+    req.user = authUser;
 
     return next();
   } catch (error) {

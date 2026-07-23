@@ -35,6 +35,32 @@ describe('AuthService and AuthSessionService', () => {
     assert.deepEqual(await service.logout(null), { message: 'Logged out successfully!' });
   });
 
+  it('blacklists access tokens during logout flows', async () => {
+    const calls: string[] = [];
+    const sessions = {
+      revokeSession: async (token: string, reason: string) => calls.push(`refresh:${token}:${reason}`),
+      revokeAllUserSessions: async (id: string, reason: string) => calls.push(`all:${id}:${reason}`),
+    };
+    const authCache = {
+      blacklistAccessToken: async (token: string) => calls.push(`access:${token}`),
+      invalidateUser: async (id: string) => calls.push(`user:${id}`),
+    };
+    const service = new AuthService({} as never, sessions as never, {} as never, {} as never, authCache as never);
+
+    assert.deepEqual(await service.logout('refresh-token', 'Bearer access-token'), { message: 'Logged out successfully!' });
+    assert.deepEqual(await service.logoutAllDevices(userId, 'Bearer second-access-token'), {
+      message: 'Logged out from all devices successfully!',
+    });
+
+    assert.deepEqual(calls, [
+      'refresh:refresh-token:LOGOUT',
+      'access:access-token',
+      `all:${userId}:LOGOUT_ALL`,
+      `user:${userId}`,
+      'access:second-access-token',
+    ]);
+  });
+
   it('creates, rotates, validates, and revokes refresh sessions through the repository', async () => {
     let storedHash = '';
     let sessionId = '';

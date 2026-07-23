@@ -15,6 +15,7 @@ import {
 import passwordService from '../../shared/utils/password.js';
 import tokenService from '../../shared/utils/token.js';
 import type { UserDocument } from '../users/user.model.js';
+import authCacheService, { type AuthCacheService } from './authCache.service.js';
 import authRepository, { type AuthRepository } from './auth.repository.js';
 import otpService, { type OtpService } from './otp.service.js';
 import authSessionService, { type AuthSessionService } from './session/authSession.service.js';
@@ -44,6 +45,7 @@ class AuthService {
     private readonly sessions: AuthSessionService = authSessionService,
     private readonly otps: OtpService = otpService,
     private readonly heatmap: HeatmapService = heatmapService,
+    private readonly authCache: AuthCacheService = authCacheService,
   ) {
     this.googleClient = new OAuth2Client(
       env.GOOGLE_CLIENT_ID,
@@ -236,18 +238,32 @@ class AuthService {
     return this.sanitizeUser(user);
   }
 
-  async logout(refreshToken: string | null) {
+  private getBearerToken(authorizationHeader?: string) {
+    const [scheme, token] = (authorizationHeader || '').split(' ');
+    return scheme === 'Bearer' ? token : '';
+  }
+
+  async logout(refreshToken: string | null, authorizationHeader?: string) {
     if (refreshToken) {
       await this.sessions.revokeSession(refreshToken, 'LOGOUT');
     }
+
+    const accessToken = this.getBearerToken(authorizationHeader);
+    await this.authCache.blacklistAccessToken(accessToken);
 
     return {
       message: 'Logged out successfully!',
     };
   }
 
-  async logoutAllDevices(userId: string) {
-    await this.sessions.revokeAllUserSessions(userId, 'LOGOUT_ALL');
+  async logoutAllDevices(userId: string, authorizationHeader?: string) {
+    const accessToken = this.getBearerToken(authorizationHeader);
+
+    await Promise.all([
+      this.sessions.revokeAllUserSessions(userId, 'LOGOUT_ALL'),
+      this.authCache.invalidateUser(userId),
+      this.authCache.blacklistAccessToken(accessToken),
+    ]);
 
     return {
       message: 'Logged out from all devices successfully!',

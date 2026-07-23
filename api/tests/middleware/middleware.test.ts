@@ -3,6 +3,7 @@ import { describe, it } from 'node:test';
 
 import { body } from 'express-validator';
 
+import authCacheService from '../../src/modules/auth/authCache.service.js';
 import userRepository from '../../src/modules/users/user.repository.js';
 import { AppError, ForbiddenError, NotFoundError, UnauthorizedError, ValidationError } from '../../src/shared/errors/index.js';
 import { authenticate, authorize } from '../../src/shared/middleware/auth.js';
@@ -69,8 +70,16 @@ describe('shared middleware', () => {
     const mutableUserRepository = userRepository as unknown as {
       findPublicById: (id: string) => Promise<unknown>;
     };
+    const mutableAuthCache = authCacheService as unknown as {
+      getUser: typeof authCacheService.getUser;
+      setUser: typeof authCacheService.setUser;
+      isAccessTokenBlacklisted: typeof authCacheService.isAccessTokenBlacklisted;
+    };
     const originalVerify = mutableTokenService.verifyAccessToken;
     const originalFindPublicById = mutableUserRepository.findPublicById;
+    const originalGetUser = mutableAuthCache.getUser;
+    const originalSetUser = mutableAuthCache.setUser;
+    const originalIsAccessTokenBlacklisted = mutableAuthCache.isAccessTokenBlacklisted;
 
     mutableTokenService.verifyAccessToken = () => ({
       id: userId,
@@ -86,6 +95,9 @@ describe('shared middleware', () => {
       active: true,
       profilePicture: { url: 'pp.jpg', fileId: 'file-1' },
     }) as never;
+    mutableAuthCache.getUser = async () => null;
+    mutableAuthCache.setUser = async () => undefined;
+    mutableAuthCache.isAccessTokenBlacklisted = async () => false;
 
     try {
       const missing = await invokeMiddleware(authenticate as never, { headers: {} });
@@ -102,6 +114,69 @@ describe('shared middleware', () => {
     } finally {
       mutableTokenService.verifyAccessToken = originalVerify;
       mutableUserRepository.findPublicById = originalFindPublicById;
+      mutableAuthCache.getUser = originalGetUser;
+      mutableAuthCache.setUser = originalSetUser;
+      mutableAuthCache.isAccessTokenBlacklisted = originalIsAccessTokenBlacklisted;
+    }
+  });
+
+  it('uses cached auth users and rejects blacklisted access tokens before querying the database', async () => {
+    const mutableTokenService = tokenService as unknown as {
+      verifyAccessToken: typeof tokenService.verifyAccessToken;
+    };
+    const mutableUserRepository = userRepository as unknown as {
+      findPublicById: (id: string) => Promise<unknown>;
+    };
+    const mutableAuthCache = authCacheService as unknown as {
+      getUser: typeof authCacheService.getUser;
+      setUser: typeof authCacheService.setUser;
+      isAccessTokenBlacklisted: typeof authCacheService.isAccessTokenBlacklisted;
+    };
+    const originalVerify = mutableTokenService.verifyAccessToken;
+    const originalFindPublicById = mutableUserRepository.findPublicById;
+    const originalGetUser = mutableAuthCache.getUser;
+    const originalSetUser = mutableAuthCache.setUser;
+    const originalIsAccessTokenBlacklisted = mutableAuthCache.isAccessTokenBlacklisted;
+    let dbCalls = 0;
+
+    mutableTokenService.verifyAccessToken = () => ({
+      id: userId,
+      email: 'samar@example.com',
+      role: 'USER',
+      tokenType: TokenType.ACCESS,
+    });
+    mutableUserRepository.findPublicById = async () => {
+      dbCalls += 1;
+      return null;
+    };
+    mutableAuthCache.getUser = async () => ({
+      id: userId,
+      userName: 'Samar',
+      email: 'samar@example.com',
+      role: 'USER',
+      active: true,
+      profilePicture: { url: 'pp.jpg', fileId: 'file-1' },
+    });
+    mutableAuthCache.setUser = async () => undefined;
+    mutableAuthCache.isAccessTokenBlacklisted = async () => false;
+
+    try {
+      const validReq = { headers: { authorization: 'Bearer token' } };
+      const valid = await invokeMiddleware(authenticate as never, validReq);
+      assert.equal(valid.nextError, undefined);
+      assert.equal((validReq as { user?: { id: string } }).user?.id, userId);
+      assert.equal(dbCalls, 0);
+
+      mutableAuthCache.isAccessTokenBlacklisted = async () => true;
+      const blacklisted = await invokeMiddleware(authenticate as never, { headers: { authorization: 'Bearer token' } });
+      assert.ok(blacklisted.nextError instanceof UnauthorizedError);
+      assert.equal(dbCalls, 0);
+    } finally {
+      mutableTokenService.verifyAccessToken = originalVerify;
+      mutableUserRepository.findPublicById = originalFindPublicById;
+      mutableAuthCache.getUser = originalGetUser;
+      mutableAuthCache.setUser = originalSetUser;
+      mutableAuthCache.isAccessTokenBlacklisted = originalIsAccessTokenBlacklisted;
     }
   });
 });

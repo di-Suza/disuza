@@ -58,6 +58,18 @@ class RedisCache {
     return result === 'OK';
   }
 
+  async getValue(key: string): Promise<string | null> {
+    return this.getConnection().get(key);
+  }
+
+  async setValue(key: string, value: string, ttlSeconds: number): Promise<void> {
+    await this.getConnection().setex(key, ttlSeconds, value);
+  }
+
+  async keyExists(key: string): Promise<boolean> {
+    return (await this.getConnection().exists(key)) === 1;
+  }
+
   async releaseLock(key: string): Promise<void> {
     await this.getConnection().del(key);
   }
