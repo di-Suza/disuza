@@ -6,7 +6,7 @@ This file is the source of truth for resume/project metrics. Use only measuremen
 
 - Date: 2026-07-23
 - Machine: local Windows development machine
-- Project root: `E:\Final3\dlf\devloopfeed`
+- Project root: `<repo-root>`
 - Notes:
   - AI problem generation depends on Gemini free tier.
   - Code execution depends on the free/public Piston-compatible runner.

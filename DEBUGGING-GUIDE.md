@@ -7,7 +7,7 @@ The guide describes the current TypeScript API and web application. Realtime, wo
 ## 1. Debugging Rules
 
 1. Reproduce the smallest failing user flow before changing code.
-2. Record expected behavior from v1 or the accepted accepted decision before deciding that current behavior is wrong.
+2. Record expected behavior from product requirements or the accepted decision before deciding that current behavior is wrong.
 3. Follow the request through its owning layers instead of patching the first visible symptom.
 4. Change the layer that owns the defect.
 5. Verify adjacent views and caches affected by the same data.
@@ -56,7 +56,7 @@ First failing layer:
 Reproduction frequency:
 ```
 
-For v1 parity defects, also record the matching v1 page, modal, endpoint, or business rule. V1 behavior is the parity baseline; current code remains the implementation source of truth.
+For Product consistency defects, also record the matching the product specification page, modal, endpoint, or business rule. Product behavior is the expected-behavior baseline; current code remains the implementation source of truth.
 
 ## 4. Symptom Triage
 
@@ -75,7 +75,7 @@ For v1 parity defects, also record the matching v1 page, modal, endpoint, or bus
 | UI succeeds but stays stale | RTK Query tags, cache key, optimistic patch, invalidation |
 | Counter differs from records | Relation source, failed multi-write, reconciliation need |
 | Media missing after save | Upload result, media order, provider ID, cleanup/rollback |
-| Desktop works, mobile fails | V1 breakpoint, overflow, modal sizing, fixed navigation |
+| Desktop works, mobile fails | the product specification breakpoint, overflow, modal sizing, fixed navigation |
 
 ## 5. Request Path Checklist
 
@@ -137,9 +137,9 @@ UI action
 - [ ] Confirm body scroll is restored after every modal exit path.
 - [ ] Confirm server validation messages map to the correct field or shared error surface.
 
-### V1 UI parity
+### UI Consistency
 
-- [ ] Compare against the actual v1 JSX and CSS, not memory or a redesigned approximation.
+- [ ] Compare against the actual accepted JSX and CSS baseline, not memory or a redesigned approximation.
 - [ ] Check content order, dimensions, spacing, colors, borders, typography, icons, and modal flow.
 - [ ] Inspect desktop, tablet, and mobile breakpoints.
 - [ ] Check clipping, horizontal overflow, fixed navigation overlap, long text, empty states, and media aspect ratios.
@@ -211,7 +211,7 @@ UI action
 - [ ] Confirm provider IDs are persisted for replacement and cleanup.
 - [ ] Confirm removed or failed media is cleaned up without deleting media still referenced by a post.
 - [ ] Confirm post detail does not embed comments; comments load through their own paginated flow.
-- [ ] Confirm `all` and `following` feed filters preserve v1 visibility behavior.
+- [ ] Confirm `all` and `following` feed filters preserve the product specification visibility behavior.
 
 ### Likes, comments, replies, and contributions
 
@@ -255,7 +255,7 @@ UI action
 - [ ] Use a transaction for critical MongoDB-only multi-write flows where supported.
 - [ ] For external providers, define compensation or idempotent cleanup when one step fails.
 - [ ] Re-run the failed action safely to check idempotency.
-- [ ] Verify delete flows remove or deactivate dependent records according to v1 behavior.
+- [ ] Verify delete flows remove or deactivate dependent records according to product behavior.
 - [ ] Record any counter drift or orphaned media/session/contribution state that needs future reconciliation.
 
 ## 11. External Provider Checklist
@@ -306,7 +306,7 @@ Until implementation exists, debugging should stop at the documented HTTP/persis
 | Cross-stack | `npm run check`, both builds, complete user-flow smoke test |
 | Auth/session | Login, refresh, retry, current logout, logout-all, expired/revoked cases |
 | Data relation/counter | Create, duplicate, delete, failure rollback, authoritative-record check |
-| V1 UI parity | Desktop/tablet/mobile comparison plus overflow and modal checks |
+| UI Consistency | Desktop/tablet/mobile comparison plus overflow and modal checks |
 | Future socket/worker | Contract, reconnect/retry, idempotency, multi-instance, durable recovery |
 
 A bug is closed only when:

@@ -18,6 +18,7 @@ Disuza is a TypeScript-first real-time social and collaboration platform for dev
 - [API contracts](./contracts/README.md)
 - [Testing strategy](./tests/README.md)
 - [Deployment guide](./DEPLOYMENT.md)
+- [Production notes and demo limitations](./PRODUCTION_NOTES.md)
 - [Future plan](./FUTUREPLAN.md)
 - [Development journey](./docs.md)
 
