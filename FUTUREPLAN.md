@@ -6,3 +6,4 @@
 - Add observability with structured logs, metrics, alerts, and request tracing before running paid production traffic.
 - Harden media delivery with private object storage, signed URLs, lifecycle cleanup, and malware/type scanning for uploaded files.
 - Replace the demo/public code-execution runner with a paid or self-hosted Piston-compatible sandbox so collaborative room code runs are reliable, isolated, monitored, and rate-limited for production use.
+- Upgrade AI problem generation with paid Gemini quota, judge-backed test validation, moderation/review workflows, prompt abuse monitoring, duplicate detection, and admin controls before treating generated challenges as production-grade.

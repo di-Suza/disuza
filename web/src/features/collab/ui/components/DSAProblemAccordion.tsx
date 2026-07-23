@@ -1,4 +1,4 @@
-import { CheckCircle, ChevronDown, ChevronUp, Code2, Plus, Tag, Zap } from 'lucide-react';
+import { CheckCircle, ChevronDown, ChevronUp, Code2, Plus, Sparkles, Tag, Zap } from 'lucide-react';
 import { useState } from 'react';
 
 import { useAddProblemToRoomMutation } from '@/features/collab/api/problem.api';
@@ -59,6 +59,12 @@ const DSAProblemAccordion = ({ problem, roomId, onProblemAdded }: DSAProblemAcco
           <div className="collab-dsa-card__title">
             <h3>{problem.title}</h3>
             <span className={cn('collab-difficulty', getDifficultyClass(problem.difficulty))}>{problem.difficulty}</span>
+            {problem.isAIGenerated && (
+              <span className="collab-ai-badge">
+                <Sparkles size={12} aria-hidden="true" />
+                AI generated
+              </span>
+            )}
           </div>
 
           <div className="collab-dsa-tags">
@@ -123,6 +129,7 @@ const DSAProblemAccordion = ({ problem, roomId, onProblemAdded }: DSAProblemAcco
             <span><Zap size={14} aria-hidden="true" />Difficulty: {problem.difficulty}</span>
             <span><Tag size={14} aria-hidden="true" />{problem.tags.length} Tags</span>
             <span><CheckCircle size={14} aria-hidden="true" />{problem.testCases.length} Test Cases</span>
+            {problem.isAIGenerated && <span><Sparkles size={14} aria-hidden="true" />AI generated</span>}
           </footer>
         </div>
       )}

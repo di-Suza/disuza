@@ -2,6 +2,7 @@ import type { ChatMessage, ChatUser } from '@/features/messages/model/chat.types
 
 export type ProblemDifficulty = 'Easy' | 'Medium' | 'Hard';
 export type ProblemLanguage = 'javascript' | 'python' | 'cpp';
+export type ProblemSource = 'manual' | 'ai' | 'all';
 export type RoomProblemStatus = 'pending' | 'solving' | 'solved' | 'attempted';
 export type RoomProblemExecutionStatus = 'idle' | 'running';
 
@@ -21,6 +22,7 @@ export type Problem = {
   tags: string[];
   testCases: ProblemTestCase[];
   constraints?: string[];
+  isAIGenerated?: boolean;
   isAdded?: boolean;
 };
 
@@ -123,6 +125,12 @@ export type ProblemSearchResponse = {
   message: string;
   data: Problem[];
   hasMore: boolean;
+};
+
+export type GenerateAIProblemResponse = {
+  success: boolean;
+  message: string;
+  data: Problem;
 };
 
 export type ProblemMutationResponse = {

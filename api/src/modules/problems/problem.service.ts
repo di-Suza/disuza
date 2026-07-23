@@ -4,6 +4,7 @@ import env from '../../config/env.js';
 import redisCache, { type RedisCache } from '../../infrastructure/cache/redis.js';
 import { BadRequestError, ConflictError, NotFoundError } from '../../shared/errors/index.js';
 import collabRoomAccessService, { type CollabRoomAccessService } from '../collab/collabRoomAccess.service.js';
+import aiProblemGeneratorService, { type AIProblemGeneratorService } from './aiProblemGenerator.service.js';
 import { type Problem, type ProblemLanguage } from './problem.model.js';
 import problemRepository, { type ProblemRepository, type SearchProblemFilter } from './problem.repository.js';
 import codeExecutionService, { type CodeExecutionService } from './codeExecution.service.js';
@@ -17,6 +18,8 @@ type RunProblemInput = {
   code: string;
   language: ProblemLanguage;
 };
+
+type ProblemSource = 'manual' | 'ai' | 'all';
 
 type PopulatedProblem = Problem & {
   _id: Types.ObjectId;
@@ -42,6 +45,7 @@ class ProblemService {
     private readonly roomAccess: CollabRoomAccessService = collabRoomAccessService,
     private readonly codeRunner: CodeExecutionService = codeExecutionService,
     private readonly cache: RedisCache = redisCache,
+    private readonly aiGenerator: AIProblemGeneratorService = aiProblemGeneratorService,
   ) {}
 
   private normalizePage(pageInput: unknown): number {
@@ -52,6 +56,11 @@ class ProblemService {
   private normalizeLimit(limitInput: unknown, fallback = 8, max = 20): number {
     const limit = Number(limitInput) || fallback;
     return Math.min(Math.max(limit, 1), max);
+  }
+
+  private normalizeProblemSource(sourceInput: unknown): ProblemSource {
+    if (sourceInput === 'ai' || sourceInput === 'all') return sourceInput;
+    return 'manual';
   }
 
   async getRoomRealtimeAccess(userId: string, roomId: string) {
@@ -67,13 +76,18 @@ class ProblemService {
     }
   }
 
-  async searchProblem(queryInput: unknown, pageInput: unknown, limitInput: unknown, roomId: string, userId: string) {
+  async searchProblem(queryInput: unknown, pageInput: unknown, limitInput: unknown, roomId: string, userId: string, sourceInput?: unknown) {
     await this.roomAccess.getRoomAccess(userId, roomId);
 
     const query = typeof queryInput === 'string' ? queryInput.trim() : '';
     const page = this.normalizePage(pageInput);
     const limit = this.normalizeLimit(limitInput);
+    const source = this.normalizeProblemSource(sourceInput);
     const filter: SearchProblemFilter = {};
+
+    if (source !== 'all') {
+      filter.isAIGenerated = source === 'ai';
+    }
 
     if (query) {
       filter.$or = [
@@ -92,6 +106,27 @@ class ProblemService {
         isAdded: Boolean(isAdded),
       };
     }));
+  }
+
+  async generateAIProblem(userId: string, roomId: string, promptInput: unknown) {
+    await this.roomAccess.getRoomAccess(userId, roomId);
+
+    const prompt = typeof promptInput === 'string' ? promptInput.trim() : '';
+    if (!prompt) {
+      throw new BadRequestError('Prompt is required');
+    }
+
+    const generatedProblem = await this.aiGenerator.generateProblem(prompt);
+    const existingProblem = await this.problems.findAIGeneratedProblemByTitle(generatedProblem.title);
+
+    if (existingProblem) {
+      return existingProblem;
+    }
+
+    return this.problems.createProblem({
+      ...generatedProblem,
+      isAIGenerated: true,
+    });
   }
 
   async addProblemToRoom(userId: string, roomId: string, problemId: string) {

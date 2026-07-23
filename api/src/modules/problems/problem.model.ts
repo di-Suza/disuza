@@ -63,6 +63,7 @@ const problemSchema = new mongoose.Schema<Problem, ProblemModel>(
   { timestamps: true },
 );
 
+problemSchema.index({ isAIGenerated: 1, createdAt: -1 });
 problemSchema.index({ title: 'text', tags: 'text' });
 
 const ProblemModel = mongoose.models.Problem as ProblemModel

@@ -24,6 +24,7 @@ import {
 } from '../../src/modules/posts/validators/post.validator.js';
 import {
   addProblemToRoomRules,
+  generateAIProblemRules,
   removeProblemFromRoomRules,
   runProblemRules,
   updateProblemLanguageRules,
@@ -149,6 +150,7 @@ describe('Backend validators', () => {
     assert.equal((await runRules(createIssueRules, { body: { category: 'Bug', description: 'broken' } })).errors.length, 0);
 
     assert.equal((await runRules(addProblemToRoomRules, { body: { roomId: objectId, problemId: otherObjectId } })).errors.length, 0);
+    assert.equal((await runRules(generateAIProblemRules, { body: { roomId: objectId, prompt: 'Create a medium graph problem' } })).errors.length, 0);
     assert.equal((await runRules(removeProblemFromRoomRules, { body: { roomId: objectId, roomProblemId: otherObjectId } })).errors.length, 0);
     assert.equal((await runRules(updateProblemLanguageRules, { body: { roomId: objectId, roomProblemId: otherObjectId, language: 'java' } })).errors.length, 1);
     assert.equal((await runRules(runProblemRules, { body: { roomId: objectId, roomProblemId: otherObjectId, code: ' ', language: 'javascript' } })).errors.length, 1);

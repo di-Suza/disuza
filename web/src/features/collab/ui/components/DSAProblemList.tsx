@@ -3,17 +3,18 @@ import DSAProblemAccordion from './DSAProblemAccordion';
 
 type DSAProblemListProps = {
   problems: Problem[];
+  title?: string;
   roomId?: string;
   addedProblemIds?: string[];
   onProblemAdded?: (problemId: string) => void;
 };
 
-const DSAProblemList = ({ problems, roomId, addedProblemIds = [], onProblemAdded }: DSAProblemListProps) => {
+const DSAProblemList = ({ problems, title = 'DSA Problems', roomId, addedProblemIds = [], onProblemAdded }: DSAProblemListProps) => {
   const addedProblemIdSet = new Set(addedProblemIds);
 
   return (
     <div className="collab-dsa-list">
-      <h2>DSA Problems</h2>
+      <h2>{title}</h2>
       {problems.map((problem) => (
         <DSAProblemAccordion
           key={problem._id}

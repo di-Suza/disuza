@@ -56,7 +56,7 @@ Delivery is tracked separately:
 | DLF-033 | Add Docker without coupling application design to containers | Accepted | Planned |
 | DLF-034 | Extract services only after measured modular-monolith limits | Accepted | Planned |
 | DLF-035 | Keep admin moderation as a separate future product surface | Accepted | Deferred |
-| DLF-036 | Add GenAI problem generation only with admin and safety controls | Accepted | Deferred |
+| DLF-036 | Add GenAI problem generation with clear validation and safety limits | Accepted | Partial |
 | DLF-037 | Model reposts as profile-visible references, not feed fan-out | Accepted | Implemented |
 
 ## Foundation Decisions
@@ -477,10 +477,12 @@ Consequence: moderation is planned explicitly without pretending a report submis
 
 Decision:
 
-- GenAI-generated problems remain deferred until room/problem foundations and admin review exist.
-- Generated statements, constraints, solutions, and tests require validation, cost/rate limits, provenance, and abuse controls.
+- GenAI-generated problems are allowed inside rooms through a dedicated AI problem modal.
+- The API must validate room access, rate-limit generation, request schema-shaped Gemini output, validate returned problem structure, and save generated problems with `isAIGenerated`.
+- Generated problems become part of the shared problem catalog and are not attributed publicly to the prompt author.
+- Free-tier/demo generation remains partial: structural validation is active, but judge-backed correctness validation, admin review, duplicate detection, and abuse monitoring remain production hardening work.
 
-Consequence: AI does not introduce unreviewed executable or incorrect challenge content into the core collaboration flow.
+Consequence: AI gives the demo a differentiated practice flow while documentation stays honest that production-grade generated challenge quality needs paid quota, stronger validation, and moderation controls.
 
 ## Adding Or Changing A Decision
 

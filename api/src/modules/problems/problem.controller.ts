@@ -12,6 +12,7 @@ class ProblemController {
   readonly updateProblemLanguage: RequestHandler;
   readonly removeProblemFromRoom: RequestHandler;
   readonly runProblem: RequestHandler;
+  readonly generateAIProblem: RequestHandler;
 
   constructor(
     private readonly service: ProblemService = problemService,
@@ -24,6 +25,7 @@ class ProblemController {
     this.updateProblemLanguage = asyncHandler(this.handleUpdateProblemLanguage.bind(this));
     this.removeProblemFromRoom = asyncHandler(this.handleRemoveProblemFromRoom.bind(this));
     this.runProblem = asyncHandler(this.handleRunProblem.bind(this));
+    this.generateAIProblem = asyncHandler(this.handleGenerateAIProblem.bind(this));
   }
 
   private getRealtimeUser(req: Request) {
@@ -36,13 +38,24 @@ class ProblemController {
 
   private async handleSearchProblem(req: Request, res: Response) {
     const limit = 8;
-    const problems = await this.service.searchProblem(req.query.query, req.query.page, limit, String(req.params.roomId), req.user!.id);
+    const problems = await this.service.searchProblem(req.query.query, req.query.page, limit, String(req.params.roomId), req.user!.id, req.query.source);
 
     res.status(200).json({
       success: true,
       message: 'Problems Found Successfully',
       data: problems,
       hasMore: problems.length === limit,
+    });
+  }
+
+  private async handleGenerateAIProblem(req: Request, res: Response) {
+    const { roomId, prompt } = req.body as { roomId: string; prompt: string };
+    const problem = await this.service.generateAIProblem(req.user!.id, roomId, prompt);
+
+    res.status(201).json({
+      success: true,
+      message: 'AI problem generated successfully',
+      data: problem,
     });
   }
 

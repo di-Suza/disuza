@@ -267,7 +267,7 @@ UI action
 - [ ] Confirm cleanup can identify the remote resource through its stored provider ID.
 - [ ] Distinguish local configuration failure from provider rejection or network failure.
 
-Current providers include ImageKit, Resend, Google OAuth, Redis, BullMQ, Socket.IO, and the Piston-compatible code-execution adapter. The default public Piston endpoint is a demo fallback only; if execution fails with the generic client message, first confirm whether `PISTON_API_URL` points to a reliable paid or self-hosted runner before treating the room/editor flow as broken. TURN-related providers remain planned.
+Current providers include ImageKit, Resend, Google OAuth, Redis, BullMQ, Socket.IO, Gemini AI generation, and the Piston-compatible code-execution adapter. The default public Piston endpoint is a demo fallback only; if execution fails with the generic client message, first confirm whether `PISTON_API_URL` points to a reliable paid or self-hosted runner before treating the room/editor flow as broken. If AI problem generation fails, confirm `GEMINI_API_KEY`, model availability, provider quota/rate limits, and structured-output validation before treating the room problem flow as broken. TURN-related providers remain planned.
 
 ## 12. Realtime, Rooms, And Workers: Planned Baseline
 

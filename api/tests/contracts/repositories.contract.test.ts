@@ -122,6 +122,8 @@ const expectedRepositories: Record<string, string[]> = {
   'src/modules/problems/problem.repository.ts': [
     'findProblemById',
     'searchProblems',
+    'findAIGeneratedProblemByTitle',
+    'createProblem',
     'existsInRoom',
     'findRoomProblem',
     'createRoomProblem',

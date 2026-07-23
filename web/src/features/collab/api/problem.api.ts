@@ -1,7 +1,9 @@
 import { api } from '@/shared/api/api';
 import type {
   CollabRoomResponse,
+  GenerateAIProblemResponse,
   ProblemLanguage,
+  ProblemSource,
   ProblemMutationResponse,
   ProblemSearchResponse,
   RemoveProblemResponse,
@@ -14,6 +16,7 @@ type GetProblemsArgs = {
   query: string;
   page: number;
   roomId: string;
+  source?: ProblemSource;
 };
 
 type RoomProblemArgs = {
@@ -45,11 +48,11 @@ const replaceRoomProblemInDraft = (draft: CollabRoomResponse, roomProblem: RoomP
 export const problemApi = api.injectEndpoints({
   endpoints: (builder) => ({
     getProblems: builder.query<ProblemSearchResponse, GetProblemsArgs>({
-      query: ({ query, page, roomId }) => ({
+      query: ({ query, page, roomId, source = 'manual' }) => ({
         url: `/problem/${roomId}`,
-        params: { query, page },
+        params: { query, page, source },
       }),
-      serializeQueryArgs: ({ queryArgs }) => `${queryArgs.roomId}:${queryArgs.query || 'all'}`,
+      serializeQueryArgs: ({ queryArgs }) => `${queryArgs.roomId}:${queryArgs.source || 'manual'}:${queryArgs.query || 'all'}`,
       merge: (currentCache, newItems, { arg }) => {
         if (arg.page === 1) {
           currentCache.data = newItems.data;
@@ -65,9 +68,18 @@ export const problemApi = api.injectEndpoints({
       forceRefetch({ currentArg, previousArg }) {
         return currentArg?.query !== previousArg?.query
           || currentArg?.page !== previousArg?.page
-          || currentArg?.roomId !== previousArg?.roomId;
+          || currentArg?.roomId !== previousArg?.roomId
+          || currentArg?.source !== previousArg?.source;
       },
-      providesTags: (_result, _error, arg) => [{ type: 'Problems', id: `${arg.roomId}:${arg.query}` }],
+      providesTags: (_result, _error, arg) => [{ type: 'Problems', id: `${arg.roomId}:${arg.source || 'manual'}:${arg.query}` }],
+    }),
+    generateAIProblem: builder.mutation<GenerateAIProblemResponse, { roomId: string; prompt: string }>({
+      query: ({ roomId, prompt }) => ({
+        url: '/problem/ai/generate',
+        method: 'POST',
+        body: { roomId, prompt },
+      }),
+      invalidatesTags: ['Problems'],
     }),
     addProblemToRoom: builder.mutation<ProblemMutationResponse, { roomId: string; problemId: string }>({
       query: ({ roomId, problemId }) => ({
@@ -220,6 +232,7 @@ export const problemApi = api.injectEndpoints({
 
 export const {
   useAddProblemToRoomMutation,
+  useGenerateAIProblemMutation,
   useGetProblemsQuery,
   useRemoveProblemFromRoomMutation,
   useRunProblemMutation,

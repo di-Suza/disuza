@@ -9,6 +9,7 @@ import ConfirmDialog from '@/shared/ui/ConfirmDialog';
 import '@/shared/ui/Spinner.css';
 import { cn } from '@/shared/utils/cn';
 import { getErrorMessage } from '@/shared/utils/getErrorMessage';
+import AIProblemModal from './AIProblemModal';
 import SelectProblemModal from './SelectProblemModal';
 
 type ProblemsPanelProps = {
@@ -44,6 +45,7 @@ const getStatusIcon = (status?: string, executionStatus?: string) => {
 const ProblemsPanel = ({ selectedProblem, problems, roomId, isSelectionLocked = false, onCollapse }: ProblemsPanelProps) => {
   const navigate = useNavigate();
   const [isSelectProblemModalOpen, setIsSelectProblemModalOpen] = useState(false);
+  const [isAIProblemModalOpen, setIsAIProblemModalOpen] = useState(false);
   const [contextMenu, setContextMenu] = useState<ProblemContextMenu | null>(null);
   const [problemToRemove, setProblemToRemove] = useState<ProblemContextMenu | null>(null);
   const [selectProblem, { isLoading: isSelecting }] = useSelectProblemMutation();
@@ -125,7 +127,7 @@ const ProblemsPanel = ({ selectedProblem, problems, roomId, isSelectionLocked = 
             <Plus size={16} aria-hidden="true" />
             <span>Add</span>
           </button>
-          <button type="button">
+          <button type="button" onClick={() => setIsAIProblemModalOpen(true)} disabled={isSelectionLocked}>
             <Sparkles size={16} aria-hidden="true" />
             <span>AI</span>
           </button>
@@ -148,7 +150,15 @@ const ProblemsPanel = ({ selectedProblem, problems, roomId, isSelectionLocked = 
                 <FileCode size={20} aria-hidden="true" />
                 <span>
                   <strong>{problemDetails.title}</strong>
-                  <em className={getDifficultyClass(problemDetails.difficulty)}>{problemDetails.difficulty}</em>
+                  <span className="collab-problem-card__meta">
+                    <em className={getDifficultyClass(problemDetails.difficulty)}>{problemDetails.difficulty}</em>
+                    {problemDetails.isAIGenerated && (
+                      <small>
+                        <Sparkles size={11} aria-hidden="true" />
+                        AI
+                      </small>
+                    )}
+                  </span>
                 </span>
                 <i className={cn('collab-problem-card__status', problem.status, problem.executionStatus)}>
                   {getStatusIcon(problem.status, problem.executionStatus)}
@@ -168,6 +178,13 @@ const ProblemsPanel = ({ selectedProblem, problems, roomId, isSelectionLocked = 
       <SelectProblemModal
         isOpen={isSelectProblemModalOpen}
         onClose={() => setIsSelectProblemModalOpen(false)}
+        roomId={roomId}
+        addedProblemIds={addedProblemIds}
+      />
+
+      <AIProblemModal
+        isOpen={isAIProblemModalOpen}
+        onClose={() => setIsAIProblemModalOpen(false)}
         roomId={roomId}
         addedProblemIds={addedProblemIds}
       />
