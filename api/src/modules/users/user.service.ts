@@ -13,6 +13,7 @@ import {
 import passwordService from '../../shared/utils/password.js';
 import otpRepository, { type OtpRepository } from '../auth/otp.repository.js';
 import otpService, { type OtpService } from '../auth/otp.service.js';
+import authCacheService, { type AuthCacheService } from '../auth/authCache.service.js';
 import authSessionService, { type AuthSessionService } from '../auth/session/authSession.service.js';
 import chatRepository, { type ChatRepository } from '../chat/chat.repository.js';
 import commentRepository, { type CommentRepository } from '../comments/comment.repository.js';
@@ -86,6 +87,7 @@ class UserService {
     private readonly otps: OtpService = otpService,
     private readonly otpRecords: OtpRepository = otpRepository,
     private readonly sessions: AuthSessionService = authSessionService,
+    private readonly authCache: AuthCacheService = authCacheService,
     private readonly accountDeletionVerifications: AccountDeletionVerificationRepository = accountDeletionVerificationRepository,
     private readonly cleanupJobs: CleanupQueue = cleanupQueue,
     private readonly profileViews: ProfileViewRepository = profileViewRepository,
@@ -282,6 +284,8 @@ class UserService {
     if (previousProfilePictureFileIdToDelete && previousProfilePictureFileIdToDelete !== updatedUser.profilePicture.fileId) {
       await this.cleanupMediaFile(previousProfilePictureFileIdToDelete, 'profile-picture-replaced');
     }
+
+    await this.authCache.invalidateUser(userId);
 
     return {
       userName: updatedUser.userName,
@@ -873,6 +877,7 @@ class UserService {
       this.accountDeletionVerifications.deleteByUser(userId),
       this.posts.markUserPostsDeleting(user._id),
       this.sessions.revokeAllUserSessions(userId, 'LOGOUT_ALL'),
+      this.authCache.invalidateUser(userId),
     ]);
 
     await this.cleanupJobs.enqueueUserCleanup({

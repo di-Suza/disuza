@@ -29,6 +29,7 @@ const createUserService = (overrides: Record<string, unknown> = {}) => {
     otps: {},
     otpRecords: {},
     sessions: {},
+    authCache: { invalidateUser: async () => undefined },
     accountDeletionVerifications: {},
     cleanupJobs: {},
     profileViews: {
@@ -55,6 +56,7 @@ const createUserService = (overrides: Record<string, unknown> = {}) => {
     dependencies.otps as never,
     dependencies.otpRecords as never,
     dependencies.sessions as never,
+    dependencies.authCache as never,
     dependencies.accountDeletionVerifications as never,
     dependencies.cleanupJobs as never,
     dependencies.profileViews as never,
