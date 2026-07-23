@@ -1,23 +1,23 @@
 # Disuza Architecture Guide
 
-This document is the architecture source of truth for Disuza. It records the product behavior inherited from Disuza v1, the structure already implemented in the current implementation, and the boundaries that future work must preserve.
+This document is the architecture source of truth for Disuza. It records the product behavior defined by the Disuza product specification, the structure already implemented in the current codebase, and the boundaries that future work must preserve.
 
 Snapshot date: 2026-07-12
 
 ## 1. How To Read This Guide
 
-Disuza is being migrated feature by feature, so architecture and delivery status are separate concerns.
+Disuza is being implemented feature by feature, so architecture and delivery status are separate concerns.
 
 - `Implemented`: present and wired in Disuza.
-- `Partial`: a useful subset exists in the current implementation, but the complete v1 flow is not migrated yet.
-- `Planned`: accepted as part of the product architecture, but not implemented in the current implementation yet.
+- `Partial`: a useful subset exists in the current codebase, but the complete product flow is not implemented yet.
+- `Planned`: accepted as part of the product architecture, but not implemented in the current codebase yet.
 - `Deferred`: intentionally postponed until its dependencies or product rules are ready.
 
 The sources used for this baseline are:
 
 1. The live code, which is the implementation source of truth.
 2. The development log in `docs.md`, which explains when and why work was added.
-3. The v1 root, backend, and frontend documentation, which define existing product behavior that must be preserved during migration.
+3. The project root, backend, and frontend documentation, which define existing product behavior that must be preserved during implementation.
 4. `Collabify-Architecture-Guide.md`, used only as inspiration for documentation discipline, module boundaries, and public APIs.
 
 Collabify's exact stack is not a Disuza requirement. Disuza remains an Express REST API with MongoDB and a React client unless a future architecture decision explicitly changes that choice.
@@ -33,7 +33,7 @@ Disuza is a developer-focused social and collaboration product. It combines:
 - direct messaging;
 - collaborative coding rooms with shared problems, code, execution, presence, chat, and calls.
 
-The product journey inherited from v1 is:
+The product journey is:
 
 ```txt
 Discover developer or post
@@ -45,7 +45,7 @@ Discover developer or post
   -> solve and track problems together
 ```
 
-This journey is more important than copying v1 source code. The current implementation may improve implementation quality, but it must not silently change user-visible flow or business rules.
+This journey is more important than copying implementation source. The current codebase may improve implementation quality, but it must not silently change user-visible flow or business rules.
 
 ## 3. High-Level System Map
 
@@ -84,7 +84,7 @@ The deployment unit is currently a modular monolith, not a microservice system. 
 
 ### 4.1 Preserve product behavior, improve implementation
 
-V1 is the baseline for product flow and exact UI where parity has been requested. The current implementation replaces weak coupling, duplicated logic, and unsafe configuration with typed modules and explicit boundaries.
+The product specification is the baseline for product flow and exact UI where product consistency matters. The current codebase keeps those product rules while using typed modules and explicit boundaries.
 
 ### 4.2 Organize around business capabilities
 
@@ -281,7 +281,7 @@ Small modules may omit unnecessary files. The layer pattern is a responsibility 
 
 External providers must be behind adapters owned by `config`, `infrastructure`, or a focused service. Business services should ask for an operation such as `uploadMedia`, `sendOtp`, or `executeCode`; provider-specific request shapes must not spread across modules.
 
-As infrastructure grows, The current implementation may add:
+As infrastructure grows, the current codebase may add:
 
 ```txt
 api/src/infrastructure/
@@ -297,7 +297,7 @@ api/src/infrastructure/
   ai/
 ```
 
-This move is evolutionary. Existing working code should migrate only when an adapter has real reuse or operational complexity. Redis, BullMQ, Socket.IO, the Piston-compatible code-execution adapter, and Gemini-backed AI problem generation now have active infrastructure boundaries; a reliable paid/self-hosted execution runner, production-grade AI validation, and future providers such as TURN must remain planned until verified.
+This move is evolutionary. Existing working code should move only when an adapter has real reuse or operational complexity. Redis, BullMQ, Socket.IO, the Piston-compatible code-execution adapter, and Gemini-backed AI problem generation now have active infrastructure boundaries; a reliable paid/self-hosted execution runner, production-grade AI validation, and future providers such as TURN must remain planned until verified.
 
 ## 7. Frontend Architecture
 
@@ -437,8 +437,8 @@ Components own:
 - Public and protected layouts remain separate.
 - Protected app pages use the shared sidebar shell.
 - Heavy pages are lazy-loaded at route level.
-- Feed, post card, dashboard, modals, navigation, and responsive behavior preserve exact v1 UX where parity has been requested.
-- The current implementation can improve accessibility, loading behavior, error handling, and component structure without inventing a different product flow.
+- Feed, post card, dashboard, modals, navigation, and responsive behavior preserve exact product UX where product consistency matters.
+- the current codebase can improve accessibility, loading behavior, error handling, and component structure without inventing a different product flow.
 - Desktop, tablet, and mobile states are all part of feature completion.
 
 ## 8. Domain Rules And Invariants
@@ -477,7 +477,7 @@ Rules:
 - Media is an ordered heterogeneous list, so image/video sequence is durable and editable.
 - Upload validation includes type, size, and count limits before provider calls.
 - Provider IDs are retained so cleanup can delete remote media reliably.
-- Feed supports `all` and `following` behavior from v1.
+- Feed supports `all` and `following` behavior from product requirements.
 - Post detail is fetched independently; comments are loaded through the comments flow, not embedded into the post response.
 - A user cannot repost their own post; this is a backend domain rule, not only a hidden frontend action.
 - Reposts are durable user-post references for dashboard/profile activity and repost detail pages.
@@ -606,7 +606,7 @@ Authorized delete request
   -> reconciliation detects permanently failed cleanup
 ```
 
-The current implementation uses queued cleanup for migrated destructive flows. Broader reconciliation and operational dashboards remain planned before production-scale destructive operations.
+The current codebase uses queued cleanup for implemented destructive flows. Broader reconciliation and operational dashboards remain planned before production-scale destructive operations.
 
 ## 10. Data And Consistency Strategy
 
@@ -616,7 +616,7 @@ The current implementation uses queued cleanup for migrated destructive flows. B
 - Denormalized counters are allowed for read performance, but relation records remain authoritative.
 - Multi-write flows need transactions where the deployment supports them, or idempotent compensation/reconciliation where external providers are involved.
 - Query-driven compound indexes must be documented beside their models.
-- Timeline endpoints should migrate from skip pagination to cursor pagination before high data volume.
+- Timeline endpoints should move from skip pagination to cursor pagination before high data volume.
 - Search may begin with MongoDB queries but should move to indexed search when regex scans become a measured bottleneck.
 
 ## 11. Security Baseline
@@ -659,7 +659,7 @@ Current rules:
 - request validation is colocated with the owning module;
 - success and error response shapes should be consistent across modules;
 - frontend request/response types must match actual API behavior;
-- breaking changes require an explicit decision and migration plan.
+- breaking changes require an explicit decision and implementation plan.
 
 OpenAPI now has a draft baseline in `contracts/openapi/disuza.yaml`. It is not complete endpoint coverage yet. It should document auth, cookies, schemas, pagination, errors, and rate-limit responses as modules are verified. GraphQL is not required merely because the reference architecture uses it.
 
@@ -683,7 +683,7 @@ Target quality layers:
 4. Frontend component tests for complex forms and modals.
 5. End-to-end tests for critical user journeys.
 6. Socket and worker integration tests for reconnect, idempotency, and cleanup.
-7. Visual regression checks for exact v1 parity surfaces.
+7. Visual regression checks for exact product key product surfaces.
 
 CI now runs dependency install, type checking, and API/web builds on pull requests and pushes to `develop` and `main`. Tests, linting, visual checks, and contract validation should be added as their tools are introduced. Docker can be added after feature work, but local infrastructure and deployment process types must remain explicit.
 
@@ -695,7 +695,7 @@ CI now runs dependency install, type checking, and API/web builds on pull reques
 - Continue moving cross-module imports to public APIs and enforce import boundaries gradually.
 - Expand the draft OpenAPI contract into verified endpoint coverage.
 - Add real automated tests on top of the testing and CI foundation.
-- Add indexes and transaction/reconciliation rules for migrated modules.
+- Add indexes and transaction/reconciliation rules for implemented modules.
 
 ### Messaging and rooms hardening
 
@@ -710,7 +710,7 @@ CI now runs dependency install, type checking, and API/web builds on pull reques
 - Harden collab requests, room access policy, personal/shared rooms, and problem execution with integration tests.
 - Improve Yjs/Monaco collaboration with cursor awareness and reconnect replay.
 - Track code execution latency, failures, and provider limits after a reliable execution runner is configured.
-- Complete production TURN configuration for audio.
+- complete production TURN configuration for audio.
 
 ### Production hardening
 

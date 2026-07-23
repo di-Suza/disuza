@@ -1,6 +1,6 @@
 # Disuza Architecture Decision Register
 
-This register records durable product and engineering decisions for Disuza. It starts with the behavior proven in v1 and the foundation already established in the current implementation.
+This register records durable product and engineering decisions for Disuza. It starts with the behavior proven in the product requirements and the foundation already established in the current codebase.
 
 The full system map lives in `Disuza-Architecture-Guide.md`.
 
@@ -12,70 +12,70 @@ The full system map lives in `Disuza-Architecture-Guide.md`.
 
 Delivery is tracked separately:
 
-- `Implemented`: present and verified in the current implementation.
+- `Implemented`: present and verified in the current codebase.
 - `Partial`: part of the decision is present.
-- `Planned`: accepted but not delivered in the current implementation.
+- `Planned`: accepted but not delivered in the current codebase.
 - `Deferred`: intentionally waiting for dependencies or product work.
 
 ## Register
 
 | ID | Decision | Decision state | Delivery |
 | --- | --- | --- | --- |
-| DLF-001 | Use v1 behavior as the migration parity baseline | Accepted | Partial |
-| DLF-002 | Treat live code as implementation truth | Accepted | Implemented |
-| DLF-003 | Build the app as a TypeScript modular monolith | Accepted | Implemented |
-| DLF-004 | Use layered backend modules | Accepted | Implemented |
-| DLF-005 | Isolate persistence in repositories | Accepted | Implemented |
-| DLF-006 | Keep controllers thin and errors centralized | Accepted | Implemented |
-| DLF-007 | Split environment and request validation tools | Accepted | Implemented |
-| DLF-008 | Validate configuration once and fail fast | Accepted | Implemented |
-| DLF-009 | Remain REST-first and add OpenAPI contracts | Accepted | Partial |
-| DLF-010 | Evolve the frontend from feature-first toward explicit layers | Accepted | Partial |
-| DLF-011 | Use RTK Query for server state and Redux slices selectively | Accepted | Implemented |
-| DLF-012 | Keep orchestration in hooks and rendering in focused components | Accepted | Partial |
-| DLF-013 | Return access tokens and keep refresh tokens in HttpOnly cookies | Accepted | Implemented |
-| DLF-014 | Persist hashed, rotating, revocable refresh sessions | Accepted | Implemented |
-| DLF-015 | Use MongoDB/Mongoose and separate high-growth relations | Accepted | Implemented |
-| DLF-016 | Allow denormalized counters with authoritative relations | Accepted | Partial |
-| DLF-017 | Store post images and videos as ordered mixed media | Accepted | Implemented |
-| DLF-018 | Keep replies one level deep and link contribution sources | Accepted | Implemented |
-| DLF-019 | Model saved collections as a first-class domain | Accepted | Implemented |
-| DLF-020 | Use a reusable target model for moderation reports | Accepted | Partial |
-| DLF-021 | Enforce blocking as a backend cross-domain policy | Accepted | Partial |
-| DLF-022 | Persist notifications and add realtime delivery later | Accepted | Partial |
-| DLF-023 | Model post/profile feedback as contextual messages | Accepted | Partial |
-| DLF-024 | Use Socket.IO with shared state before multi-instance scale | Accepted | Partial |
-| DLF-025 | Use Yjs updates for collaborative code editing | Accepted | Partial |
-| DLF-026 | Move destructive cleanup to idempotent background jobs | Accepted | Partial |
-| DLF-027 | Hide external providers behind infrastructure adapters | Accepted | Partial |
-| DLF-028 | Preserve exact v1 UX on parity surfaces | Accepted | Partial |
-| DLF-029 | Lazy-load routes and define explicit cache update ownership | Accepted | Partial |
-| DLF-030 | Apply defense-in-depth security and abuse limits | Accepted | Partial |
-| DLF-031 | Use structured observability across HTTP, sockets, and jobs | Accepted | Partial |
-| DLF-032 | Add layered automated tests and CI before production claims | Accepted | Partial |
-| DLF-033 | Add Docker without coupling application design to containers | Accepted | Planned |
-| DLF-034 | Extract services only after measured modular-monolith limits | Accepted | Planned |
-| DLF-035 | Keep admin moderation as a separate future product surface | Accepted | Deferred |
-| DLF-036 | Add GenAI problem generation with clear validation and safety limits | Accepted | Partial |
-| DLF-037 | Model reposts as profile-visible references, not feed fan-out | Accepted | Implemented |
+| DISUZA-001 | Use product behavior as the implementation baseline | Accepted | Partial |
+| DISUZA-002 | Treat live code as implementation truth | Accepted | Implemented |
+| DISUZA-003 | Build the app as a TypeScript modular monolith | Accepted | Implemented |
+| DISUZA-004 | Use layered backend modules | Accepted | Implemented |
+| DISUZA-005 | Isolate persistence in repositories | Accepted | Implemented |
+| DISUZA-006 | Keep controllers thin and errors centralized | Accepted | Implemented |
+| DISUZA-007 | Split environment and request validation tools | Accepted | Implemented |
+| DISUZA-008 | Validate configuration once and fail fast | Accepted | Implemented |
+| DISUZA-009 | Remain REST-first and add OpenAPI contracts | Accepted | Partial |
+| DISUZA-010 | Evolve the frontend from feature-first toward explicit layers | Accepted | Partial |
+| DISUZA-011 | Use RTK Query for server state and Redux slices selectively | Accepted | Implemented |
+| DISUZA-012 | Keep orchestration in hooks and rendering in focused components | Accepted | Partial |
+| DISUZA-013 | Return access tokens and keep refresh tokens in HttpOnly cookies | Accepted | Implemented |
+| DISUZA-014 | Persist hashed, rotating, revocable refresh sessions | Accepted | Implemented |
+| DISUZA-015 | Use MongoDB/Mongoose and separate high-growth relations | Accepted | Implemented |
+| DISUZA-016 | Allow denormalized counters with authoritative relations | Accepted | Partial |
+| DISUZA-017 | Store post images and videos as ordered mixed media | Accepted | Implemented |
+| DISUZA-018 | Keep replies one level deep and link contribution sources | Accepted | Implemented |
+| DISUZA-019 | Model saved collections as a first-class domain | Accepted | Implemented |
+| DISUZA-020 | Use a reusable target model for moderation reports | Accepted | Partial |
+| DISUZA-021 | Enforce blocking as a backend cross-domain policy | Accepted | Partial |
+| DISUZA-022 | Persist notifications and add realtime delivery later | Accepted | Partial |
+| DISUZA-023 | Model post/profile feedback as contextual messages | Accepted | Partial |
+| DISUZA-024 | Use Socket.IO with shared state before multi-instance scale | Accepted | Partial |
+| DISUZA-025 | Use Yjs updates for collaborative code editing | Accepted | Partial |
+| DISUZA-026 | Move destructive cleanup to idempotent background jobs | Accepted | Partial |
+| DISUZA-027 | Hide external providers behind infrastructure adapters | Accepted | Partial |
+| DISUZA-028 | Preserve exact product UX on key surfaces | Accepted | Partial |
+| DISUZA-029 | Lazy-load routes and define explicit cache update ownership | Accepted | Partial |
+| DISUZA-030 | Apply defense-in-depth security and abuse limits | Accepted | Partial |
+| DISUZA-031 | Use structured observability across HTTP, sockets, and jobs | Accepted | Partial |
+| DISUZA-032 | Add layered automated tests and CI before production claims | Accepted | Partial |
+| DISUZA-033 | Add Docker without coupling application design to containers | Accepted | Planned |
+| DISUZA-034 | Extract services only after measured modular-monolith limits | Accepted | Planned |
+| DISUZA-035 | Keep admin moderation as a separate future product surface | Accepted | Deferred |
+| DISUZA-036 | Add GenAI problem generation with clear validation and safety limits | Accepted | Partial |
+| DISUZA-037 | Model reposts as profile-visible references, not feed fan-out | Accepted | Implemented |
 
 ## Foundation Decisions
 
-### DLF-001: V1 behavior is the migration baseline
+### DISUZA-001: Product behavior is the implementation baseline
 
-Context: v1 already contains the intended product journey and many connected edge cases.
+Context: the product specification already contains the intended product journey and many connected edge cases.
 
 Decision:
 
-- Preserve user-visible flow, domain rules, and exact UI where parity is requested.
+- Preserve user-visible flow, domain rules, and exact UI where product consistency matters.
 - Rewrite implementation using TypeScript types, boundaries, repositories, hooks, and shared utilities.
 - Any deliberate product behavior change needs its own documented decision.
 
-Consequence: source code is not copied blindly, but missing v1 behavior is a migration gap rather than a new design opportunity.
+Consequence: source code is not copied blindly, but missing Product behavior is an implementation gap rather than a new design opportunity.
 
-### DLF-002: live code is implementation truth
+### DISUZA-002: live code is implementation truth
 
-Context: migration documentation may describe planned or partial work.
+Context: implementation documentation may describe planned or partial work.
 
 Decision:
 
@@ -84,9 +84,9 @@ Decision:
 - The architecture guide records current boundaries and accepted targets.
 - Status labels must distinguish implemented, partial, planned, and deferred work.
 
-Consequence: documentation cannot claim Socket.IO, Redis, BullMQ, Yjs, Piston-compatible execution, tests, or Docker are active before they exist and are verified in the current implementation, and must be updated when they become active.
+Consequence: documentation cannot claim Socket.IO, Redis, BullMQ, Yjs, Piston-compatible execution, tests, or Docker are active before they exist and are verified in the current codebase, and must be updated when they become active.
 
-### DLF-003: TypeScript modular monolith
+### DISUZA-003: TypeScript modular monolith
 
 Context: the product is broad, but the current team and load do not justify distributed services.
 
@@ -100,7 +100,7 @@ Consequence: development and deployment stay understandable while preserving a p
 
 ## Backend Decisions
 
-### DLF-004: Layered backend modules
+### DISUZA-004: Layered backend modules
 
 Decision:
 
@@ -116,7 +116,7 @@ route -> middleware/validator -> controller -> service -> repository -> model
 
 Consequence: layers may be omitted for genuinely tiny modules, but responsibilities may not be mixed for convenience.
 
-### DLF-005: Repository-owned persistence
+### DISUZA-005: Repository-owned persistence
 
 Decision:
 
@@ -126,7 +126,7 @@ Decision:
 
 Consequence: business rules can be tested independently and query changes have one owner.
 
-### DLF-006: Thin controllers and centralized errors
+### DISUZA-006: Thin controllers and centralized errors
 
 Decision:
 
@@ -137,7 +137,7 @@ Decision:
 
 Consequence: API behavior stays consistent and unexpected errors do not leak internals.
 
-### DLF-007: Validation tool split
+### DISUZA-007: Validation tool split
 
 Decision:
 
@@ -147,7 +147,7 @@ Decision:
 
 Consequence: validation remains natural to each lifecycle without confusing input shape with authorization or policy.
 
-### DLF-008: Fail-fast configuration
+### DISUZA-008: Fail-fast configuration
 
 Decision:
 
@@ -158,7 +158,7 @@ Decision:
 
 Consequence: missing production configuration fails at startup instead of failing unpredictably during requests.
 
-### DLF-009: REST-first contracts
+### DISUZA-009: REST-first contracts
 
 Decision:
 
@@ -172,9 +172,9 @@ Current delivery note: a draft OpenAPI baseline exists under `contracts/openapi`
 
 ## Frontend Decisions
 
-### DLF-010: Evolutionary frontend layering
+### DISUZA-010: Evolutionary frontend layering
 
-Context: the current implementation currently uses `app`, `features`, and `shared` successfully.
+Context: the current codebase uses `app`, `features`, and `shared` successfully.
 
 Decision:
 
@@ -187,7 +187,7 @@ Consequence: the frontend gains Feature-Sliced discipline without a disruptive f
 
 Current delivery note: route-level `pages` wrappers, reserved `widgets` and `entities` folders, shared contracts, and feature public APIs now exist. Domain model movement and lint-enforced boundaries remain gradual.
 
-### DLF-011: State ownership
+### DISUZA-011: State ownership
 
 Decision:
 
@@ -198,7 +198,7 @@ Decision:
 
 Consequence: there is one primary owner for each piece of state and fewer synchronization bugs.
 
-### DLF-012: Hooks and focused components
+### DISUZA-012: Hooks and focused components
 
 Decision:
 
@@ -208,17 +208,17 @@ Decision:
 
 Consequence: JSX remains readable without hiding all behavior inside generic abstractions.
 
-### DLF-028: V1 UX parity
+### DISUZA-028: the product specification UX consistency
 
 Decision:
 
-- Feed, post card, dashboard, modal, navigation, and responsive behavior use v1 as visual truth when parity is requested.
-- The current implementation may improve accessibility, error boundaries, loading states, and component internals without changing product flow.
+- Feed, post card, dashboard, modal, navigation, and responsive behavior use the product specification as visual truth where product consistency matters.
+- the current codebase may improve accessibility, error boundaries, loading states, and component internals without changing product flow.
 - New UI concepts require explicit product approval.
 
 Consequence: the rewrite feels like the same product rather than an unrelated redesign.
 
-### DLF-029: Route loading and cache ownership
+### DISUZA-029: Route loading and cache ownership
 
 Decision:
 
@@ -231,7 +231,7 @@ Consequence: performance and cache correctness are designed per workflow instead
 
 ## Identity And Security Decisions
 
-### DLF-013: Access and refresh token placement
+### DISUZA-013: Access and refresh token placement
 
 Decision:
 
@@ -242,7 +242,7 @@ Decision:
 
 Consequence: JavaScript cannot read the refresh token, and persistent browser storage does not hold the access token.
 
-### DLF-014: Database-backed refresh sessions
+### DISUZA-014: Database-backed refresh sessions
 
 Decision:
 
@@ -253,7 +253,7 @@ Decision:
 
 Consequence: the product can support multiple devices and targeted revocation while reducing replay risk.
 
-### DLF-030: Defense in depth
+### DISUZA-030: Defense in depth
 
 Decision:
 
@@ -267,17 +267,17 @@ Consequence: security is a cross-cutting baseline rather than one middleware che
 
 ## Data And Domain Decisions
 
-### DLF-015: MongoDB and relation collections
+### DISUZA-015: MongoDB and relation collections
 
 Decision:
 
-- Keep MongoDB and Mongoose for the current implementation.
+- Keep MongoDB and Mongoose for the current codebase.
 - Use separate collections for high-growth relations such as follows, blocks, likes, saves, sessions, and contribution sources.
 - Avoid unbounded relationship arrays in primary documents.
 
 Consequence: relation queries, uniqueness, indexes, and cleanup can scale independently.
 
-### DLF-016: Denormalized counters
+### DISUZA-016: Denormalized counters
 
 Decision:
 
@@ -288,7 +288,7 @@ Decision:
 
 Consequence: fast reads do not hide the need for consistency controls.
 
-### DLF-017: Ordered mixed media
+### DISUZA-017: Ordered mixed media
 
 Decision:
 
@@ -298,7 +298,7 @@ Decision:
 
 Consequence: the carousel order is durable and does not depend on separate image/video arrays.
 
-### DLF-018: One-level replies and source-linked contributions
+### DISUZA-018: One-level replies and source-linked contributions
 
 Decision:
 
@@ -308,7 +308,7 @@ Decision:
 
 Consequence: the discussion model remains understandable while heatmap/activity cleanup remains traceable.
 
-### DLF-019: Saved collections
+### DISUZA-019: Saved collections
 
 Decision:
 
@@ -318,7 +318,7 @@ Decision:
 
 Consequence: saved content is a real organizational product feature, not a post flag.
 
-### DLF-020: Generic moderation reports
+### DISUZA-020: Generic moderation reports
 
 Decision:
 
@@ -328,7 +328,7 @@ Decision:
 
 Consequence: one moderation foundation can support multiple resources and a future admin panel.
 
-### DLF-021: Central block policy
+### DISUZA-021: Central block policy
 
 Decision:
 
@@ -338,7 +338,7 @@ Decision:
 
 Consequence: users cannot bypass restrictions through direct API or socket calls.
 
-### DLF-037: Repost visibility and ownership policy
+### DISUZA-037: Repost visibility and ownership policy
 
 Decision:
 
@@ -352,7 +352,7 @@ Consequence: reposts behave like a profile activity and discovery signal without
 
 ## Realtime And Async Decisions
 
-### DLF-022: Durable notifications first
+### DISUZA-022: Durable notifications first
 
 Decision:
 
@@ -362,7 +362,7 @@ Decision:
 
 Consequence: reconnecting clients can recover notification state from the API.
 
-### DLF-023: Contextual feedback messages
+### DISUZA-023: Contextual feedback messages
 
 Decision:
 
@@ -372,7 +372,7 @@ Decision:
 
 Consequence: feedback naturally leads into conversation and later collaboration.
 
-### DLF-024: Socket.IO and shared realtime state
+### DISUZA-024: Socket.IO and shared realtime state
 
 Decision:
 
@@ -385,7 +385,7 @@ Consequence: the first implementation can stay in the modular monolith without b
 
 Current delivery note: authenticated Socket.IO is active for chat, notifications, rooms, presence, code events, and call/voice signaling. Multi-instance socket scaling and externalized presence/call state remain planned.
 
-### DLF-025: Yjs collaborative documents
+### DISUZA-025: Yjs collaborative documents
 
 Decision:
 
@@ -397,7 +397,7 @@ Consequence: concurrent edits, cursor stability, and reconnect behavior have a s
 
 Current delivery note: room code now relays Yjs updates and persists debounced room-problem snapshots. Cursor awareness and deeper reconnect replay remain planned.
 
-### DLF-026: Background cleanup jobs
+### DISUZA-026: Background cleanup jobs
 
 Decision:
 
@@ -407,9 +407,9 @@ Decision:
 
 Consequence: expensive external and relational cleanup does not block HTTP requests or run once per API replica accidentally.
 
-Current delivery note: BullMQ cleanup queues and workers exist for migrated destructive flows. Full reconciliation dashboards and production dead-letter handling remain planned.
+Current delivery note: BullMQ cleanup queues and workers exist for implemented destructive flows. Full reconciliation dashboards and production dead-letter handling remain planned.
 
-### DLF-027: External provider adapters
+### DISUZA-027: External provider adapters
 
 Decision:
 
@@ -422,7 +422,7 @@ Current delivery note: room code execution is wired through a Piston-compatible 
 
 ## Operations And Evolution Decisions
 
-### DLF-031: Structured observability
+### DISUZA-031: Structured observability
 
 Decision:
 
@@ -432,7 +432,7 @@ Decision:
 
 Consequence: production behavior can be diagnosed across asynchronous boundaries without leaking sensitive data.
 
-### DLF-032: Tests and CI
+### DISUZA-032: Tests and CI
 
 Decision:
 
@@ -444,7 +444,7 @@ Consequence: architecture boundaries become enforceable rather than documentatio
 
 Current delivery note: CI now installs API/web dependencies, typechecks, and builds on pull requests and protected branch pushes. Real unit, integration, component, E2E, socket, worker, visual, lint, and contract gates remain planned.
 
-### DLF-033: Docker as packaging
+### DISUZA-033: Docker as packaging
 
 Decision:
 
@@ -454,7 +454,7 @@ Decision:
 
 Consequence: containers improve repeatability but do not become hidden application architecture.
 
-### DLF-034: Evidence-based service extraction
+### DISUZA-034: Evidence-based service extraction
 
 Decision:
 
@@ -464,7 +464,7 @@ Decision:
 
 Consequence: Disuza can look and behave like a product without premature microservice complexity.
 
-### DLF-035: Admin moderation later
+### DISUZA-035: Admin moderation later
 
 Decision:
 
@@ -473,7 +473,7 @@ Decision:
 
 Consequence: moderation is planned explicitly without pretending a report submission endpoint is a complete safety system.
 
-### DLF-036: Controlled GenAI problem generation
+### DISUZA-036: Controlled GenAI problem generation
 
 Decision:
 
@@ -497,7 +497,7 @@ When a durable choice changes:
 Use this template for a larger future ADR:
 
 ```md
-# DLF-XXX: Short decision title
+# DISUZA-XXX: Short decision title
 
 Status: Proposed | Accepted | Superseded
 Delivery: Implemented | Partial | Planned | Deferred
