@@ -10,7 +10,9 @@ class ProblemController {
   readonly selectProblem: RequestHandler;
   readonly unselectProblem: RequestHandler;
   readonly updateProblemLanguage: RequestHandler;
+  readonly removeProblemFromRoom: RequestHandler;
   readonly runProblem: RequestHandler;
+  readonly generateAIProblem: RequestHandler;
 
   constructor(
     private readonly service: ProblemService = problemService,
@@ -21,7 +23,9 @@ class ProblemController {
     this.selectProblem = asyncHandler(this.handleSelectProblem.bind(this));
     this.unselectProblem = asyncHandler(this.handleUnselectProblem.bind(this));
     this.updateProblemLanguage = asyncHandler(this.handleUpdateProblemLanguage.bind(this));
+    this.removeProblemFromRoom = asyncHandler(this.handleRemoveProblemFromRoom.bind(this));
     this.runProblem = asyncHandler(this.handleRunProblem.bind(this));
+    this.generateAIProblem = asyncHandler(this.handleGenerateAIProblem.bind(this));
   }
 
   private getRealtimeUser(req: Request) {
@@ -34,13 +38,24 @@ class ProblemController {
 
   private async handleSearchProblem(req: Request, res: Response) {
     const limit = 8;
-    const problems = await this.service.searchProblem(req.query.query, req.query.page, limit, String(req.params.roomId), req.user!.id);
+    const problems = await this.service.searchProblem(req.query.query, req.query.page, limit, String(req.params.roomId), req.user!.id, req.query.source);
 
     res.status(200).json({
       success: true,
       message: 'Problems Found Successfully',
       data: problems,
       hasMore: problems.length === limit,
+    });
+  }
+
+  private async handleGenerateAIProblem(req: Request, res: Response) {
+    const { roomId, prompt } = req.body as { roomId: string; prompt: string };
+    const problem = await this.service.generateAIProblem(req.user!.id, roomId, prompt);
+
+    res.status(201).json({
+      success: true,
+      message: 'AI problem generated successfully',
+      data: problem,
     });
   }
 
@@ -129,6 +144,38 @@ class ProblemController {
       success: true,
       message: 'Language Updated Successfully',
       data: roomProblem,
+    });
+  }
+
+  private async handleRemoveProblemFromRoom(req: Request, res: Response) {
+    const { roomId, roomProblemId } = req.body as { roomId: string; roomProblemId: string };
+    const {
+      removedProblem,
+      removedProblemId,
+      unselectedProblem,
+      canUseRealtime,
+    } = await this.service.removeProblemFromRoom(req.user!.id, roomId, roomProblemId);
+
+    if (canUseRealtime) {
+      this.realtime.emitToRoom(roomId, 'room_sync', {
+        type: 'REMOVE_PROBLEM',
+        roomId,
+        data: {
+          removedProblem,
+          removedProblemId,
+          unselectedProblem,
+          removedBy: this.getRealtimeUser(req),
+        },
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Problem Removed From Room Successfully',
+      data: {
+        removedProblemId,
+        unselectedProblem,
+      },
     });
   }
 

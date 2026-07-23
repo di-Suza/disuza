@@ -4,6 +4,7 @@ import env from '../../config/env.js';
 import redisCache, { type RedisCache } from '../../infrastructure/cache/redis.js';
 import { BadRequestError, ConflictError, NotFoundError } from '../../shared/errors/index.js';
 import collabRoomAccessService, { type CollabRoomAccessService } from '../collab/collabRoomAccess.service.js';
+import aiProblemGeneratorService, { type AIProblemGeneratorService } from './aiProblemGenerator.service.js';
 import { type Problem, type ProblemLanguage } from './problem.model.js';
 import problemRepository, { type ProblemRepository, type SearchProblemFilter } from './problem.repository.js';
 import codeExecutionService, { type CodeExecutionService } from './codeExecution.service.js';
@@ -18,6 +19,8 @@ type RunProblemInput = {
   language: ProblemLanguage;
 };
 
+type ProblemSource = 'manual' | 'ai' | 'all';
+
 type PopulatedProblem = Problem & {
   _id: Types.ObjectId;
 };
@@ -25,6 +28,9 @@ type PopulatedProblem = Problem & {
 type RoomProblemWithProblem = {
   _id: Types.ObjectId;
   status: 'pending' | 'solving' | 'solved' | 'attempted';
+  executionStatus: 'idle' | 'running';
+  executionStartedAt?: Date | null;
+  executionRequestedBy?: Types.ObjectId | null;
   currentCode: string;
   language: ProblemLanguage;
   testCasesPassed: number;
@@ -39,6 +45,7 @@ class ProblemService {
     private readonly roomAccess: CollabRoomAccessService = collabRoomAccessService,
     private readonly codeRunner: CodeExecutionService = codeExecutionService,
     private readonly cache: RedisCache = redisCache,
+    private readonly aiGenerator: AIProblemGeneratorService = aiProblemGeneratorService,
   ) {}
 
   private normalizePage(pageInput: unknown): number {
@@ -51,18 +58,36 @@ class ProblemService {
     return Math.min(Math.max(limit, 1), max);
   }
 
+  private normalizeProblemSource(sourceInput: unknown): ProblemSource {
+    if (sourceInput === 'ai' || sourceInput === 'all') return sourceInput;
+    return 'manual';
+  }
+
   async getRoomRealtimeAccess(userId: string, roomId: string) {
     const access = await this.roomAccess.getRoomAccess(userId, roomId);
     return access.canUseRealtime;
   }
 
-  async searchProblem(queryInput: unknown, pageInput: unknown, limitInput: unknown, roomId: string, userId: string) {
+  private async ensureRoomIsNotRunning(roomId: string) {
+    const runningProblem = await this.problems.findRunningRoomProblem(roomId);
+
+    if (runningProblem) {
+      throw new ConflictError('Code is running. Please wait before changing room problems.');
+    }
+  }
+
+  async searchProblem(queryInput: unknown, pageInput: unknown, limitInput: unknown, roomId: string, userId: string, sourceInput?: unknown) {
     await this.roomAccess.getRoomAccess(userId, roomId);
 
     const query = typeof queryInput === 'string' ? queryInput.trim() : '';
     const page = this.normalizePage(pageInput);
     const limit = this.normalizeLimit(limitInput);
+    const source = this.normalizeProblemSource(sourceInput);
     const filter: SearchProblemFilter = {};
+
+    if (source !== 'all') {
+      filter.isAIGenerated = source === 'ai';
+    }
 
     if (query) {
       filter.$or = [
@@ -81,6 +106,27 @@ class ProblemService {
         isAdded: Boolean(isAdded),
       };
     }));
+  }
+
+  async generateAIProblem(userId: string, roomId: string, promptInput: unknown) {
+    await this.roomAccess.getRoomAccess(userId, roomId);
+
+    const prompt = typeof promptInput === 'string' ? promptInput.trim() : '';
+    if (!prompt) {
+      throw new BadRequestError('Prompt is required');
+    }
+
+    const generatedProblem = await this.aiGenerator.generateProblem(prompt);
+    const existingProblem = await this.problems.findAIGeneratedProblemByTitle(generatedProblem.title);
+
+    if (existingProblem) {
+      return existingProblem;
+    }
+
+    return this.problems.createProblem({
+      ...generatedProblem,
+      isAIGenerated: true,
+    });
   }
 
   async addProblemToRoom(userId: string, roomId: string, problemId: string) {
@@ -119,6 +165,7 @@ class ProblemService {
 
   async selectProblem(userId: string, roomId: string, roomProblemId: string) {
     const access = await this.roomAccess.getRoomAccess(userId, roomId);
+    await this.ensureRoomIsNotRunning(roomId);
     const collabRoom = await this.problems.findCollabRoomById(roomId);
 
     if (!collabRoom) {
@@ -158,6 +205,7 @@ class ProblemService {
 
   async unselectProblem(userId: string, roomId: string) {
     const access = await this.roomAccess.getRoomAccess(userId, roomId);
+    await this.ensureRoomIsNotRunning(roomId);
     const collabRoom = await this.problems.findCollabRoomById(roomId);
 
     if (!collabRoom) {
@@ -202,6 +250,37 @@ class ProblemService {
     };
   }
 
+  async removeProblemFromRoom(userId: string, roomId: string, roomProblemId: string) {
+    const access = await this.roomAccess.getRoomAccess(userId, roomId);
+    await this.ensureRoomIsNotRunning(roomId);
+    const collabRoom = await this.problems.findCollabRoomById(roomId);
+
+    if (!collabRoom) {
+      throw new NotFoundError('Collaboration room not found');
+    }
+
+    const existingProblem = await this.problems.findRoomProblemById(roomId, roomProblemId);
+
+    if (!existingProblem) {
+      throw new NotFoundError('Problem not found in this room');
+    }
+
+    const wasSelected = collabRoom.currentlySelectedProblem?.toString() === roomProblemId;
+    const removedProblem = await this.problems.deleteRoomProblem(roomId, roomProblemId);
+
+    if (wasSelected) {
+      collabRoom.currentlySelectedProblem = null;
+      await collabRoom.save();
+    }
+
+    return {
+      removedProblem,
+      removedProblemId: roomProblemId,
+      unselectedProblem: wasSelected ? removedProblem : null,
+      canUseRealtime: access.canUseRealtime,
+    };
+  }
+
   async runProblem(input: RunProblemInput) {
     const access = await this.roomAccess.getRoomAccess(input.userId, input.roomId);
     const lockKey = `run:${input.roomProblemId}`;
@@ -221,12 +300,18 @@ class ProblemService {
       runLocks.set(lockKey, input.userId);
     }
 
+    let roomProblem: RoomProblemWithProblem | null = null;
+
     try {
-      const roomProblem = await this.problems.findRoomProblemById(input.roomId, input.roomProblemId)
+      roomProblem = await this.problems.findRoomProblemById(input.roomId, input.roomProblemId)
         .populate('problemId') as unknown as RoomProblemWithProblem | null;
 
       if (!roomProblem) {
         throw new NotFoundError('Problem not found in this room');
+      }
+
+      if (roomProblem.executionStatus === 'running') {
+        throw new ConflictError('Code is already running. Please wait.');
       }
 
       if (!input.code?.trim()) {
@@ -235,6 +320,9 @@ class ProblemService {
 
       roomProblem.currentCode = input.code;
       roomProblem.language = input.language;
+      roomProblem.executionStatus = 'running';
+      roomProblem.executionStartedAt = new Date();
+      roomProblem.executionRequestedBy = input.userId as unknown as Types.ObjectId;
       await roomProblem.save();
 
       const executionResult = await this.codeRunner.runTestCases({
@@ -251,6 +339,9 @@ class ProblemService {
         roomProblem.status = 'attempted';
       }
 
+      roomProblem.executionStatus = 'idle';
+      roomProblem.executionStartedAt = null;
+      roomProblem.executionRequestedBy = null;
       await roomProblem.save();
       await roomProblem.populate('problemId');
 
@@ -263,6 +354,15 @@ class ProblemService {
         },
         canUseRealtime: access.canUseRealtime,
       };
+    } catch (error) {
+      if (roomProblem?.executionStatus === 'running') {
+        roomProblem.executionStatus = 'idle';
+        roomProblem.executionStartedAt = null;
+        roomProblem.executionRequestedBy = null;
+        await roomProblem.save();
+      }
+
+      throw error;
     } finally {
       if (this.cache.isEnabled()) {
         await this.cache.releaseLock(lockKey);

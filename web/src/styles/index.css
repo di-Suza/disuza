@@ -108,6 +108,10 @@ body {
   background: var(--bg-main);
 }
 
+:root[data-theme='light'] .brand-logo-image {
+  filter: brightness(0) saturate(100%) invert(36%) sepia(96%) saturate(1800%) hue-rotate(219deg) brightness(101%) contrast(101%);
+}
+
 :root[data-theme='light'] .app-mobile-navbar,
 :root[data-theme='light'] .app-sidebar.is-expanded {
   background: color-mix(in srgb, var(--surface) 92%, transparent);

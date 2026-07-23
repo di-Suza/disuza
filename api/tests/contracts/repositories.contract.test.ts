@@ -122,13 +122,17 @@ const expectedRepositories: Record<string, string[]> = {
   'src/modules/problems/problem.repository.ts': [
     'findProblemById',
     'searchProblems',
+    'findAIGeneratedProblemByTitle',
+    'createProblem',
     'existsInRoom',
     'findRoomProblem',
     'createRoomProblem',
     'findCollabRoomById',
     'findRoomProblemById',
+    'findRunningRoomProblem',
     'updateRoomProblemLanguage',
     'updateAttemptedProblem',
+    'deleteRoomProblem',
   ],
   'src/modules/reports/report.repository.ts': ['findExisting', 'create', 'findByReporter', 'countByReporter'],
   'src/modules/reposts/repost.repository.ts': [

@@ -217,6 +217,10 @@
   background: var(--bg-main);
 }
 
+.collab-problem-card.is-locked {
+  cursor: not-allowed;
+}
+
 .collab-problem-card.is-selected {
   border-color: var(--accent);
   background: rgba(59, 99, 255, 0.1);
@@ -234,7 +238,7 @@
   color: var(--accent);
 }
 
-.collab-problem-card span {
+.collab-problem-card > span {
   min-width: 0;
   flex: 1;
 }
@@ -266,6 +270,36 @@
 .collab-problem-card em.is-hard,
 .collab-difficulty.is-hard { color: var(--danger); }
 
+.collab-problem-card__meta {
+  display: inline-flex;
+  min-width: 0;
+  align-items: center;
+  gap: 8px;
+}
+
+.collab-problem-card__meta small,
+.collab-ai-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: 1px solid rgba(94, 89, 255, 0.32);
+  border-radius: 999px;
+  background: rgba(94, 89, 255, 0.12);
+  color: var(--accent);
+  font-size: 11px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.collab-problem-card__meta small {
+  margin-top: 5px;
+  padding: 3px 7px;
+}
+
+.collab-ai-badge {
+  padding: 5px 9px;
+}
+
 .collab-problem-card__status {
   display: flex;
   margin-top: 2px;
@@ -273,8 +307,39 @@
 }
 
 .collab-problem-card__status.solved,
-.collab-problem-card__status.solving { color: var(--accent); }
+.collab-problem-card__status.solving,
+.collab-problem-card__status.running { color: var(--accent); }
 .collab-problem-card__status.attempted { color: var(--warning); }
+
+.collab-problem-context-menu {
+  position: fixed;
+  z-index: 10020;
+  min-width: 224px;
+  border: 1px solid var(--border-secondary);
+  border-radius: 10px;
+  background: var(--surface);
+  box-shadow: var(--shadow-elevated);
+  padding: 6px;
+}
+
+.collab-problem-context-menu button {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 8px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #fca5a5;
+  padding: 10px;
+  font-size: 12px;
+  font-weight: 800;
+  text-align: left;
+}
+
+.collab-problem-context-menu button:hover {
+  background: rgba(239, 68, 68, 0.12);
+}
 
 .collab-problems-panel__footer {
   border-top: 1px solid var(--border-secondary);
@@ -734,6 +799,90 @@
   padding: 24px;
 }
 
+.collab-ai-modal-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: stretch;
+}
+
+.collab-ai-generate-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid rgba(94, 89, 255, 0.45);
+  border-radius: 10px;
+  background: var(--accent);
+  color: white;
+  padding: 0 16px;
+  font-size: 13px;
+  font-weight: 900;
+  box-shadow: 0 12px 26px rgba(94, 89, 255, 0.18);
+}
+
+.collab-ai-generate-button:disabled {
+  cursor: wait;
+  opacity: 0.72;
+}
+
+.collab-ai-generate-card {
+  display: grid;
+  gap: 16px;
+  border: 1px solid var(--border-secondary);
+  border-radius: 12px;
+  background: var(--surface);
+  padding: 18px;
+}
+
+.collab-ai-generate-card__header {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.collab-ai-generate-card__header h2,
+.collab-ai-generate-card__header p {
+  margin: 0;
+}
+
+.collab-ai-generate-card__header p {
+  margin-top: 4px;
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+.collab-ai-prompt {
+  width: 100%;
+  min-height: 180px;
+  resize: vertical;
+  border: 1px solid var(--border-secondary);
+  border-radius: 10px;
+  background: var(--surface-deep);
+  color: var(--text-primary);
+  padding: 14px;
+  outline: none;
+  line-height: 1.6;
+}
+
+.collab-ai-prompt:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(94, 89, 255, 0.12);
+}
+
+.collab-ai-generate-card__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.collab-ai-generate-card__footer > span {
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 800;
+}
+
 .collab-search-box {
   display: flex;
   align-items: center;
@@ -1000,4 +1149,21 @@
 
   .collab-code-editor header button { width: 100%; }
   .collab-problem-modal__body { padding: 16px; }
+
+  .collab-ai-modal-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .collab-ai-generate-button {
+    min-height: 42px;
+    padding: 10px 14px;
+  }
+
+  .collab-dsa-card__header {
+    flex-direction: column;
+  }
+
+  .collab-dsa-card__actions {
+    width: 100%;
+  }
 }

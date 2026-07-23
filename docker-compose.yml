@@ -21,7 +21,7 @@ services:
     restart: unless-stopped
     environment:
       NODE_ENV: development
-      PORT: 8080
+      PORT: 8081
       MONGODB_URI: mongodb://mongo:27017/disuza
       CORS_ORIGIN: http://localhost:5173
       SOCKET_CORS_ORIGIN: http://localhost:5173
@@ -32,7 +32,7 @@ services:
       PRIVATE_JWT_KEY_BS64: ""
       PUBLIC_JWT_KEY_BS64: ""
     ports:
-      - "8080:8080"
+      - "8081:8081"
     volumes:
       - .:/app
       - api-node-modules:/app/api/node_modules
@@ -47,8 +47,8 @@ services:
       target: development
     restart: unless-stopped
     environment:
-      VITE_API_BASE_URL: http://localhost:8080/api
-      VITE_SOCKET_URL: http://localhost:8080
+      VITE_API_BASE_URL: http://localhost:8081/api
+      VITE_SOCKET_URL: http://localhost:8081
     ports:
       - "5173:5173"
     volumes:

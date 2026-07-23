@@ -56,8 +56,7 @@ const LandingPage = () => (
     <nav className="landing-v1-nav">
       <div className="landing-v1-nav__inner">
         <Link to="/" className="landing-v1-brand">
-          <img src={logo} alt="Disuza" />
-          <span>Disuza</span>
+          <img className="brand-logo-image" src={logo} alt="Disuza" />
         </Link>
 
         <div className="landing-v1-nav__links">
@@ -99,7 +98,7 @@ const LandingPage = () => (
             <pre>{`room.sync("two-sum", {
   code: "shared editor",
   status: "solving",
-  run: "Judge0 execution",
+  run: "Piston execution",
 });
 
 feed.post({
@@ -185,8 +184,7 @@ feed.post({
     <footer className="landing-v1-footer">
       <div className="landing-v1-container">
         <span>
-          <img src={logo} alt="Disuza" />
-          <strong>Disuza</strong>
+          <img className="brand-logo-image" src={logo} alt="Disuza" />
         </span>
         <p>Built for focused developer growth.</p>
       </div>

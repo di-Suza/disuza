@@ -22,4 +22,15 @@ const apiRateLimiter = rateLimit({
   },
 });
 
-export { apiRateLimiter, authRateLimiter };
+const aiProblemRateLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    success: false,
+    message: 'AI problem generation limit reached. Please try again later.',
+  },
+});
+
+export { aiProblemRateLimiter, apiRateLimiter, authRateLimiter };

@@ -142,6 +142,8 @@ const DashboardAccountModal = ({ isOpen, mode, onClose }: DashboardAccountModalP
             <div className="dashboard-modal__policy">
               <p>Disuza keeps authentication refresh tokens in secure cookies and keeps short-lived access tokens in app memory.</p>
               <p>Your profile, posts, saved collections, reports, and account actions are tied to your account so the app can keep ownership and moderation rules consistent.</p>
+              <p>AI-generated room problems may be saved into the shared problem catalog after basic validation so other users can discover and add them later.</p>
+              <p>Demo code execution and AI generation depend on external free-tier providers, so generated challenges and execution results may need review before production use.</p>
               <p>You can manage sessions, blocked users, reports, and saved collections from this dashboard.</p>
             </div>
             <footer className="report-modal__footer">

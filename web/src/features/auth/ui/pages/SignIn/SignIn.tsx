@@ -9,6 +9,7 @@ import Button from '@/shared/ui/Button';
 import Input from '@/shared/ui/Input';
 import { useSignIn } from './useSignIn';
 import '../auth.css';
+import logo from "@/shared/assets/images/logo.png";
 
 const signInFeatures = [
   {
@@ -53,10 +54,9 @@ const SignInPage = () => {
         <div className="auth-layout auth-layout--signin">
           <ErrorBoundary variant="section" title="Sign in overview could not be rendered." showReload={false}>
             <section className="auth-story" aria-label="Disuza sign in overview">
-            <Link to="/" className="auth-brand">
-              <span className="auth-brand__mark">DLF</span>
-              <span>Disuza</span>
-            </Link>
+             <Link to="/" className="auth-brand">
+                <img className="brand-logo-image" src={logo} alt="Disuza" />
+              </Link>
             <h1>Pick up your dev loop exactly where you left it.</h1>
             <p>
               Feed, feedback, saved collections, real-time collaboration, and coding rooms stay ready inside one focused workspace.
@@ -78,7 +78,6 @@ const SignInPage = () => {
           <ErrorBoundary variant="section" title="Sign in form could not be rendered." showReload={false}>
             <section className="auth-card" aria-label="Sign in form">
             <div className="auth-card__header">
-              <Link to="/" className="auth-logo">DLF</Link>
               <h2>Welcome back</h2>
               <p>
                 New here? <Link to="/auth/signup">Create an account</Link>

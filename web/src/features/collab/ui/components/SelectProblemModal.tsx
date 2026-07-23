@@ -39,7 +39,7 @@ const SelectProblemModal = ({ isOpen, onClose, roomId, addedProblemIds = [] }: S
     isFetching,
     refetch,
   } = useGetProblemsQuery(
-    { query: debouncedSearchQuery, page, roomId: roomId || '' },
+    { query: debouncedSearchQuery, page, roomId: roomId || '', source: 'manual' },
     { skip: debouncedSearchQuery.trim() === '' || !roomId },
   );
   const problems = problemsData?.data || [];

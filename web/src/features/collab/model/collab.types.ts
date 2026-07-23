@@ -2,7 +2,9 @@ import type { ChatMessage, ChatUser } from '@/features/messages/model/chat.types
 
 export type ProblemDifficulty = 'Easy' | 'Medium' | 'Hard';
 export type ProblemLanguage = 'javascript' | 'python' | 'cpp';
+export type ProblemSource = 'manual' | 'ai' | 'all';
 export type RoomProblemStatus = 'pending' | 'solving' | 'solved' | 'attempted';
+export type RoomProblemExecutionStatus = 'idle' | 'running';
 
 export type ProblemTestCase = {
   _id?: string;
@@ -20,6 +22,7 @@ export type Problem = {
   tags: string[];
   testCases: ProblemTestCase[];
   constraints?: string[];
+  isAIGenerated?: boolean;
   isAdded?: boolean;
 };
 
@@ -28,6 +31,9 @@ export type RoomProblem = {
   roomId: string;
   problemId: Problem;
   status: RoomProblemStatus;
+  executionStatus?: RoomProblemExecutionStatus;
+  executionStartedAt?: string | null;
+  executionRequestedBy?: ChatUser | string | null;
   currentCode: string;
   language: ProblemLanguage;
   testCasesPassed: number;
@@ -121,10 +127,25 @@ export type ProblemSearchResponse = {
   hasMore: boolean;
 };
 
+export type GenerateAIProblemResponse = {
+  success: boolean;
+  message: string;
+  data: Problem;
+};
+
 export type ProblemMutationResponse = {
   success: boolean;
   message: string;
   data: RoomProblem | null;
+};
+
+export type RemoveProblemResponse = {
+  success: boolean;
+  message: string;
+  data: {
+    removedProblemId: string;
+    unselectedProblem?: RoomProblem | null;
+  };
 };
 
 export type CodeRunResultCase = {
@@ -158,7 +179,7 @@ export type RunProblemResponse = {
 };
 
 export type RoomSyncPayload = {
-  type: 'ADD_PROBLEM' | 'SELECT_PROBLEM' | 'UNSELECT_PROBLEM' | 'CODE_CHANGE' | 'YJS_CODE_UPDATE' | 'LANG_CHANGE' | 'RUN_COMPLETED';
+  type: 'ADD_PROBLEM' | 'SELECT_PROBLEM' | 'UNSELECT_PROBLEM' | 'REMOVE_PROBLEM' | 'CODE_CHANGE' | 'YJS_CODE_UPDATE' | 'LANG_CHANGE' | 'RUN_COMPLETED';
   roomId: string;
   data?: Record<string, unknown>;
 };
@@ -182,6 +203,7 @@ export type CodeExecutionPayload = {
 export type RoomChatPanelProps = {
   conversationId: string | null;
   otherUser: string | null;
+  participants?: CollabParticipant[];
   roomId?: string;
 };
 

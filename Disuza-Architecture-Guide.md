@@ -63,13 +63,15 @@ Express 5 + TypeScript modular monolith
   +-- Resend for transactional email
   +-- Google OAuth verification
   |
-  +-- Planned: Redis for shared ephemeral state and caching
-  +-- Planned: BullMQ workers for destructive cleanup
-  +-- Planned: Socket.IO for chat, notifications, and rooms
-  +-- Planned: Judge0 adapter for code execution
-  +-- Planned: WebRTC/PeerJS and TURN for room audio
+  +-- Redis for shared locks, cache-backed jobs, and production coordination
+  +-- BullMQ workers for destructive cleanup
+  +-- Socket.IO for chat, notifications, and rooms
+  +-- Piston-compatible adapter for room code execution
+  +-- Gemini Interactions structured output for AI-generated room problems
+  +-- PeerJS/WebRTC room audio signaling
+  +-- Planned: production TURN hardening for room audio
 
-Browser realtime collaboration, planned migration
+Browser realtime collaboration
   |
   +-- Socket.IO event transport
   +-- Yjs document updates for shared code
@@ -117,7 +119,7 @@ The frontend may hide unavailable actions for good UX, but authorization, owners
 
 ### 4.6 Prefer explicit status over misleading completeness
 
-Planned Socket.IO, BullMQ, Redis, Yjs, Judge0, tests, Docker, and OpenAPI work must be documented as planned until it is present and verified in the current implementation.
+Socket.IO, BullMQ, Redis, Yjs, Piston-compatible execution, tests, Docker, and OpenAPI work must keep status labels honest as each surface is implemented, partial, planned, or deferred.
 
 ## 5. Repository Map
 
@@ -267,13 +269,13 @@ Small modules may omit unnecessary files. The layer pattern is a responsibility 
 | Likes | Implemented | User-post relation and count updates |
 | Saves and collections | Implemented | Collection lifecycle and saved-post movement |
 | Reports | Partial | Post and profile reporting; message/admin workflows remain |
-| Notifications | Partial | Persistent HTTP flow; realtime delivery remains |
+| Notifications | Partial | Persistent HTTP flow with realtime delivery; richer moderation/admin flows remain |
 | Search and discovery | Implemented | Users, posts, contributors, trending results |
 | Issues | Partial | User submission/history; admin workflow remains |
 | Contributions | Implemented | Heatmap and source-linked contribution records |
-| Chat and feedback | Partial | Feedback persistence/API exists; full realtime messaging remains |
-| Rooms and problems | Planned | Personal/collab rooms, problem state, access policy, execution |
-| Background jobs | Planned | Post, account, and conversation cleanup workers |
+| Chat and feedback | Partial | Feedback persistence/API, realtime messages, unread state, groups, and attachments; admin workflows remain |
+| Rooms and problems | Partial | Personal/collab rooms, problem state, access policy, Yjs sync, Piston-compatible execution adapter, Gemini-backed AI problem generation, presence, room chat, and audio signaling; reliable paid/self-hosted execution runner, production TURN, admin review, and production-grade AI validation remain |
+| Background jobs | Partial | Post, account, and hidden-conversation cleanup workers; broader reconciliation remains |
 
 ### 6.6 Infrastructure boundaries
 
@@ -292,9 +294,10 @@ api/src/infrastructure/
   email/
   oauth/
   code-execution/
+  ai/
 ```
 
-This move is evolutionary. Existing working code should migrate only when an adapter has real reuse or operational complexity. The infrastructure folders now exist as documented adapter targets; planned providers such as Redis, BullMQ, Socket.IO, and Judge0 must still be implemented before they are marked active.
+This move is evolutionary. Existing working code should migrate only when an adapter has real reuse or operational complexity. Redis, BullMQ, Socket.IO, the Piston-compatible code-execution adapter, and Gemini-backed AI problem generation now have active infrastructure boundaries; a reliable paid/self-hosted execution runner, production-grade AI validation, and future providers such as TURN must remain planned until verified.
 
 ## 7. Frontend Architecture
 
@@ -523,7 +526,7 @@ Rules:
 
 ### 8.9 Collaborative rooms
 
-The accepted v1 behavior is planned for the current implementation:
+The accepted room behavior now implemented in the current application includes:
 
 - a collaboration request begins from conversation context;
 - accepting creates or reuses the shared room;
@@ -531,9 +534,10 @@ The accepted v1 behavior is planned for the current implementation:
 - room access is decided by one central policy service;
 - blocked-room behavior protects the blocker while preserving the other user's work in solo mode;
 - problems can be added, selected, unselected, updated, run, and marked solved;
+- AI-generated problems can be created through a rate-limited Gemini flow, structurally validated, saved with an `isAIGenerated` flag, and added to any room from the AI problem modal;
 - code collaboration uses Yjs document updates rather than repeated full-string replacement;
-- expensive code execution is rate limited and isolated behind an adapter;
-- audio calls are available only when room presence permits them.
+- code execution is locked per room problem, isolated behind the Piston-compatible adapter, and returns per-test results to every active room user when a reliable runner is configured;
+- audio signaling and voice-room presence are available to room participants, with production TURN hardening still planned.
 
 ## 9. Important End-To-End Flows
 
@@ -602,7 +606,7 @@ Authorized delete request
   -> reconciliation detects permanently failed cleanup
 ```
 
-the current implementation currently has direct cleanup behavior for migrated flows. BullMQ process separation and reconciliation remain planned before production-scale destructive operations.
+The current implementation uses queued cleanup for migrated destructive flows. Broader reconciliation and operational dashboards remain planned before production-scale destructive operations.
 
 ## 10. Data And Consistency Strategy
 
@@ -631,7 +635,7 @@ the current implementation currently has direct cleanup behavior for migrated fl
 
 ## 12. Realtime And Background Work
 
-Before realtime modules are migrated, current implementation must define:
+Realtime modules now define:
 
 - authenticated Socket.IO handshake and reconnect behavior;
 - stable event names and payload schemas;
@@ -640,7 +644,7 @@ Before realtime modules are migrated, current implementation must define:
 - Redis adapter requirements before multiple API instances;
 - shared presence/call state outside process memory;
 - durable-write-before-emit ordering for important events;
-- Yjs persistence and Monaco binding strategy;
+- Yjs update relay with durable room-problem code snapshots;
 - worker queues, retries, dead-letter handling, and monitoring.
 
 The HTTP API, socket gateway, and workers may share domain services, but each is a separate transport/runtime boundary.
@@ -693,20 +697,20 @@ CI now runs dependency install, type checking, and API/web builds on pull reques
 - Add real automated tests on top of the testing and CI foundation.
 - Add indexes and transaction/reconciliation rules for migrated modules.
 
-### Before full messaging and rooms
+### Messaging and rooms hardening
 
-- Introduce Redis through an infrastructure adapter.
-- Define Socket.IO event contracts and authentication.
-- Complete full conversation/message APIs and UI.
-- Implement notification realtime delivery.
-- Add BullMQ workers as separate process types.
+- Add Redis-backed Socket.IO scaling before running multiple API instances.
+- Continue tightening socket event contracts and reconnect verification.
+- Expand E2E coverage for chat, groups, room code sync, and code execution.
+- Replace the public/demo code runner with a paid or self-hosted Piston-compatible sandbox before claiming reliable live execution.
+- Add production TURN configuration for room audio.
 
 ### Collaborative product milestone
 
-- Migrate collab requests, room access policy, personal/shared rooms, and problems.
-- Add Yjs/Monaco collaboration and awareness.
-- Add code execution adapter, limits, timeouts, and result persistence.
-- Add WebRTC audio with production TURN configuration.
+- Harden collab requests, room access policy, personal/shared rooms, and problem execution with integration tests.
+- Improve Yjs/Monaco collaboration with cursor awareness and reconnect replay.
+- Track code execution latency, failures, and provider limits after a reliable execution runner is configured.
+- Complete production TURN configuration for audio.
 
 ### Production hardening
 

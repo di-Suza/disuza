@@ -3,6 +3,7 @@ WORKDIR /app
 COPY package.json ./
 COPY web/package*.json ./web/
 RUN npm --prefix web install
+RUN npm --prefix web install @rollup/rollup-linux-x64-musl@4.62.2 --no-save
 
 FROM deps AS development
 WORKDIR /app
@@ -12,8 +13,8 @@ CMD ["npm", "--prefix", "web", "run", "dev", "--", "--host", "0.0.0.0"]
 
 FROM deps AS build
 WORKDIR /app
-ARG VITE_API_BASE_URL=http://localhost:8080/api
-ARG VITE_SOCKET_URL=http://localhost:8080
+ARG VITE_API_BASE_URL=http://localhost:8081/api
+ARG VITE_SOCKET_URL=http://localhost:8081
 ARG VITE_GOOGLE_CLIENT_ID=
 ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
 ENV VITE_SOCKET_URL=$VITE_SOCKET_URL

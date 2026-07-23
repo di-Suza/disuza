@@ -80,6 +80,7 @@ const syncYTextWithCode = (yText: Y.Text, nextCode: string, origin: 'local' | 'r
 
 const CollabRoomPage = () => {
   const [code, setCode] = useState('// Write your code here...');
+  const [activeLanguage, setActiveLanguage] = useState<ProblemLanguage>('javascript');
   const [results, setResults] = useState<CodeRunResult | null>(null);
   const [leftPanelWidth, setLeftPanelWidth] = useState(320);
   const [rightPanelWidth, setRightPanelWidth] = useState(320);
@@ -117,6 +118,16 @@ const CollabRoomPage = () => {
   const roomDetails = room?.data?.roomDetails || null;
   const problems = room?.data?.problems || [];
   const selectedRoomProblem = roomDetails?.currentlySelectedProblem || null;
+  const runningRoomProblemId = problems.find((problem) => problem.executionStatus === 'running')?._id
+    || (selectedRoomProblem?.executionStatus === 'running' ? selectedRoomProblem._id : null);
+  const isRoomExecutionLocked = Boolean(runningRoomProblemId || runState.isRunning);
+  const isSelectedProblemRunning = Boolean(
+    selectedRoomProblem
+    && (
+      runningRoomProblemId === selectedRoomProblem._id
+      || (runState.isRunning && runState.roomProblemId === selectedRoomProblem._id)
+    ),
+  );
   const isSoloRoom = !roomDetails || roomDetails.roomType === 'personal' || roomDetails.realtimeDisabled;
   const usersData = isSoloRoom ? [] : roomDetails.conversationId?.participants || [];
   const { usersWithPresence } = useCollabRoom({ roomId: isSoloRoom ? undefined : roomId, usersData, currentUserId });
@@ -221,6 +232,7 @@ const CollabRoomPage = () => {
     pendingYUpdatesRef.current = [];
     codeRef.current = initialCode;
     setCode(initialCode);
+    setActiveLanguage(selectedRoomProblem.language || 'javascript');
     setResults(null);
     lastEmittedCodeRef.current = initialCode;
     yDoc.transact(() => {
@@ -253,6 +265,24 @@ const CollabRoomPage = () => {
       pendingYUpdatesRef.current = [];
     };
   }, [selectedRoomProblem?._id]);
+
+  useEffect(() => {
+    if (!selectedRoomProblem?.language) return;
+    setActiveLanguage(selectedRoomProblem.language);
+  }, [selectedRoomProblem?.language]);
+
+  useEffect(() => {
+    if (runningRoomProblemId) {
+      setRunState((currentState) => (
+        currentState.isRunning && currentState.roomProblemId === runningRoomProblemId
+          ? currentState
+          : { isRunning: true, roomProblemId: runningRoomProblemId }
+      ));
+      return;
+    }
+
+    setRunState((currentState) => (currentState.isRunning ? { isRunning: false, roomProblemId: null } : currentState));
+  }, [runningRoomProblemId]);
 
   useEffect(() => {
     const socket = getSocket();
@@ -332,7 +362,7 @@ const CollabRoomPage = () => {
       roomProblemId: selectedRoomProblem._id,
       update: Array.from(mergedUpdate),
       code: codeToEmit,
-      language: selectedRoomProblem.language,
+      language: activeLanguage,
     });
   };
 
@@ -349,16 +379,24 @@ const CollabRoomPage = () => {
 
   const handleLanguageChange = async (language: ProblemLanguage) => {
     if (!roomId || !selectedRoomProblem?._id) return;
+    if (isRoomExecutionLocked) {
+      showError('Code is running. Please wait before changing language.');
+      return;
+    }
+
+    const previousLanguage = activeLanguage;
+    setActiveLanguage(language);
 
     try {
       await updateProblemLanguage({ roomId, roomProblemId: selectedRoomProblem._id, language }).unwrap();
     } catch (error) {
+      setActiveLanguage(previousLanguage);
       showError(getErrorMessage(error, 'Language could not be updated. Please try again.'));
     }
   };
 
   const handleRunCode = async () => {
-    if (!roomId || !selectedRoomProblem?._id || runState.isRunning) return;
+    if (!roomId || !selectedRoomProblem?._id || isRoomExecutionLocked) return;
 
     try {
       setRunState({ isRunning: true, roomProblemId: selectedRoomProblem._id });
@@ -366,7 +404,7 @@ const CollabRoomPage = () => {
         roomId,
         roomProblemId: selectedRoomProblem._id,
         code,
-        language: selectedRoomProblem.language || 'javascript',
+        language: activeLanguage,
       }).unwrap();
       setResults(response.data.result || null);
       setRunState({ isRunning: false, roomProblemId: null });
@@ -378,6 +416,10 @@ const CollabRoomPage = () => {
 
   const handleUnselectProblem = async () => {
     if (!roomId || isUnselecting) return;
+    if (isRoomExecutionLocked) {
+      showError('Code is running. Please wait before changing room problems.');
+      return;
+    }
 
     try {
       await unselectProblem({ roomId }).unwrap();
@@ -413,7 +455,13 @@ const CollabRoomPage = () => {
           <>
             <div className="collab-left-panel" style={{ width: clamp(leftPanelWidth, 220, getAvailableSideWidth('left')) }}>
               <ErrorBoundary variant="section" title="Problems panel could not be rendered." resetKeys={[roomId, selectedRoomProblem?._id]} showReload={false}>
-                <ProblemsPanel problems={problems} selectedProblem={selectedRoomProblem} roomId={roomId} onCollapse={() => setIsLeftPanelCollapsed(true)} />
+                <ProblemsPanel
+                  problems={problems}
+                  selectedProblem={selectedRoomProblem}
+                  roomId={roomId}
+                  isSelectionLocked={isRoomExecutionLocked}
+                  onCollapse={() => setIsLeftPanelCollapsed(true)}
+                />
               </ErrorBoundary>
             </div>
             <div role="separator" aria-orientation="vertical" className="collab-resize-handle is-vertical" onPointerDown={(event) => startHorizontalResize('left', event)} />
@@ -428,8 +476,8 @@ const CollabRoomPage = () => {
                   <div>
                     <p>Active Problem</p>
                   </div>
-                  <button type="button" onClick={handleUnselectProblem} disabled={isUnselecting}>
-                    {isUnselecting ? 'Unselecting...' : 'Unselect Problem'}
+                  <button type="button" onClick={handleUnselectProblem} disabled={isUnselecting || isRoomExecutionLocked}>
+                    {isSelectedProblemRunning ? 'Code Running' : isUnselecting ? 'Unselecting...' : 'Unselect Problem'}
                   </button>
                 </header>
                 <ErrorBoundary variant="section" title="Problem details could not be rendered." resetKeys={[selectedRoomProblem._id]} showReload={false}>
@@ -441,18 +489,18 @@ const CollabRoomPage = () => {
                 <ErrorBoundary variant="section" title="Code editor could not be rendered." resetKeys={[selectedRoomProblem._id]} showReload={false}>
                   <CodeEditor
                     code={code}
-                    language={selectedRoomProblem.language || 'javascript'}
+                    language={activeLanguage}
                     onCodeChange={handleCodeChange}
                     onLanguageChange={handleLanguageChange}
                     onRun={handleRunCode}
-                    isRunning={runState.isRunning}
+                    isRunning={isSelectedProblemRunning}
                   />
                 </ErrorBoundary>
               </section>
               <div role="separator" aria-orientation="horizontal" className="collab-resize-handle is-horizontal" onPointerDown={(event) => startVerticalResize('results', event)} />
               <section className="collab-results-region" style={{ height: resultsPanelHeight }}>
                 <ErrorBoundary variant="section" title="Run results could not be rendered." resetKeys={[selectedRoomProblem._id, results?.status]} showReload={false}>
-                  <ResultsPanel results={results} isRunning={runState.isRunning} />
+                  <ResultsPanel results={results} isRunning={isSelectedProblemRunning} />
                 </ErrorBoundary>
               </section>
             </>
@@ -481,7 +529,7 @@ const CollabRoomPage = () => {
               </ErrorBoundary>
               <div className="collab-chat-region">
                 <ErrorBoundary variant="section" title="Room chat could not be rendered." resetKeys={[roomDetails?.conversationId?._id, roomId]} showReload={false}>
-                  <ChatPanel conversationId={roomDetails?.conversationId?._id || null} otherUser={otherUser} roomId={roomId} />
+                  <ChatPanel conversationId={roomDetails?.conversationId?._id || null} otherUser={otherUser} participants={usersData} roomId={roomId} />
                 </ErrorBoundary>
               </div>
             </aside>

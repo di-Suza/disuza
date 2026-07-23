@@ -78,6 +78,16 @@ const ChatWindow = ({
   const headerAvatarUser = selectedChat?.isGroup
     ? { userName: getConversationTitle(selectedChat), profilePicture: selectedChat.groupAvatar }
     : selectedChat?.otherUser;
+  const headerSubtitle = typingLabel
+    || (selectedChat?.isGroup ? `${selectedChat.participants?.length || 1} members` : 'Right click anywhere to close chat');
+  const groupParticipantNameById = useMemo(() => {
+    if (!selectedChat?.isGroup) return new Map<string, string>();
+
+    return new Map(
+      (selectedChat.participants || [])
+        .map((participant) => [participant._id, participant.userName?.trim() || 'Group member'] as const),
+    );
+  }, [selectedChat?.isGroup, selectedChat?.participants]);
   const threadedMessages = useMemo(() => allMessages.map((message, index) => {
     const previousMessage = allMessages[index - 1];
     const showDateDivider = index === 0
@@ -85,6 +95,13 @@ const ChatWindow = ({
 
     return { message, showDateDivider };
   }), [allMessages]);
+  const getGroupMessageSenderName = (message: ChatMessage) => {
+    if (!selectedChat?.isGroup || message.messageType === 'system') return undefined;
+
+    return message.senderInfo?.userName?.trim()
+      || groupParticipantNameById.get(message.sender)
+      || 'Unknown member';
+  };
 
   useEffect(() => {
     if (!contextMenu) return;
@@ -139,7 +156,7 @@ const ChatWindow = ({
 
               <button type="button" className="messages-v1-window__identity" onClick={handleUserProfileClick}>
                 <h3>{getConversationTitle(selectedChat)}</h3>
-                <p>{selectedChat.isGroup ? `${selectedChat.participants?.length || 1} members` : 'Right click anywhere to close chat'}</p>
+                <p className={cn(typingLabel && 'is-typing')}>{headerSubtitle}</p>
               </button>
             </div>
 
@@ -213,15 +230,10 @@ const ChatWindow = ({
                         <span>{formatChatDateDivider(message.createdAt)}</span>
                       </div>
                     )}
-                    <MessageItem message={message} />
+                    <MessageItem message={message} senderName={getGroupMessageSenderName(message)} />
                   </div>
                 ))}
 
-                {typingLabel && (
-                  <div className="messages-v1-typing">
-                    <span>{typingLabel}</span>
-                  </div>
-                )}
               </div>
 
               <footer className="messages-v1-composer">

@@ -104,7 +104,7 @@ class AuthController {
 
   private async handleLogout(req: Request, res: Response) {
     const refreshToken = this.cookies.getRefreshToken(req);
-    const data = await this.service.logout(refreshToken);
+    const data = await this.service.logout(refreshToken, req.headers.authorization);
     this.cookies.clearRefreshToken(res);
 
     res.status(200).json({
@@ -114,7 +114,7 @@ class AuthController {
   }
 
   private async handleLogoutAllDevices(req: Request, res: Response) {
-    const data = await this.service.logoutAllDevices(req.user!.id);
+    const data = await this.service.logoutAllDevices(req.user!.id, req.headers.authorization);
     this.cookies.clearRefreshToken(res);
 
     res.status(200).json({

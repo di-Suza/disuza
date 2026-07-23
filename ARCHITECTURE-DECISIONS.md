@@ -44,9 +44,9 @@ Delivery is tracked separately:
 | DLF-021 | Enforce blocking as a backend cross-domain policy | Accepted | Partial |
 | DLF-022 | Persist notifications and add realtime delivery later | Accepted | Partial |
 | DLF-023 | Model post/profile feedback as contextual messages | Accepted | Partial |
-| DLF-024 | Use Socket.IO with shared state before multi-instance scale | Accepted | Planned |
-| DLF-025 | Use Yjs updates for collaborative code editing | Accepted | Planned |
-| DLF-026 | Move destructive cleanup to idempotent background jobs | Accepted | Planned |
+| DLF-024 | Use Socket.IO with shared state before multi-instance scale | Accepted | Partial |
+| DLF-025 | Use Yjs updates for collaborative code editing | Accepted | Partial |
+| DLF-026 | Move destructive cleanup to idempotent background jobs | Accepted | Partial |
 | DLF-027 | Hide external providers behind infrastructure adapters | Accepted | Partial |
 | DLF-028 | Preserve exact v1 UX on parity surfaces | Accepted | Partial |
 | DLF-029 | Lazy-load routes and define explicit cache update ownership | Accepted | Partial |
@@ -56,7 +56,7 @@ Delivery is tracked separately:
 | DLF-033 | Add Docker without coupling application design to containers | Accepted | Planned |
 | DLF-034 | Extract services only after measured modular-monolith limits | Accepted | Planned |
 | DLF-035 | Keep admin moderation as a separate future product surface | Accepted | Deferred |
-| DLF-036 | Add GenAI problem generation only with admin and safety controls | Accepted | Deferred |
+| DLF-036 | Add GenAI problem generation with clear validation and safety limits | Accepted | Partial |
 | DLF-037 | Model reposts as profile-visible references, not feed fan-out | Accepted | Implemented |
 
 ## Foundation Decisions
@@ -84,7 +84,7 @@ Decision:
 - The architecture guide records current boundaries and accepted targets.
 - Status labels must distinguish implemented, partial, planned, and deferred work.
 
-Consequence: documentation cannot claim Socket.IO, Redis, BullMQ, Yjs, Judge0, tests, or Docker are active before they exist and are verified in the current implementation.
+Consequence: documentation cannot claim Socket.IO, Redis, BullMQ, Yjs, Piston-compatible execution, tests, or Docker are active before they exist and are verified in the current implementation, and must be updated when they become active.
 
 ### DLF-003: TypeScript modular monolith
 
@@ -259,6 +259,7 @@ Decision:
 
 - Use Helmet, restricted CORS, validated cookies, request validation, and upload controls.
 - Apply rate limits to auth, OTP, reports, messages, uploads, and code execution according to abuse cost.
+- Treat public/demo code runners as non-production dependencies until a reliable paid or self-hosted sandbox is configured.
 - Add identity/account throttles where IP-only limits are insufficient.
 - Never log credentials, OTPs, raw tokens, cookies, or secrets.
 
@@ -382,6 +383,8 @@ Decision:
 
 Consequence: the first implementation can stay in the modular monolith without blocking horizontal scale later.
 
+Current delivery note: authenticated Socket.IO is active for chat, notifications, rooms, presence, code events, and call/voice signaling. Multi-instance socket scaling and externalized presence/call state remain planned.
+
 ### DLF-025: Yjs collaborative documents
 
 Decision:
@@ -391,6 +394,8 @@ Decision:
 - Separate ephemeral awareness/presence from durable room code snapshots.
 
 Consequence: concurrent edits, cursor stability, and reconnect behavior have a stronger foundation.
+
+Current delivery note: room code now relays Yjs updates and persists debounced room-problem snapshots. Cursor awareness and deeper reconnect replay remain planned.
 
 ### DLF-026: Background cleanup jobs
 
@@ -402,14 +407,18 @@ Decision:
 
 Consequence: expensive external and relational cleanup does not block HTTP requests or run once per API replica accidentally.
 
+Current delivery note: BullMQ cleanup queues and workers exist for migrated destructive flows. Full reconciliation dashboards and production dead-letter handling remain planned.
+
 ### DLF-027: External provider adapters
 
 Decision:
 
-- ImageKit, Resend, Google, Judge0, Redis, BullMQ, and future TURN/provider details stay behind adapters.
+- ImageKit, Resend, Google, Piston-compatible execution, Redis, BullMQ, and future TURN/provider details stay behind adapters.
 - Domain services depend on product operations rather than provider SDK request shapes.
 
 Consequence: providers can be tested, replaced, timed out, and observed centrally.
+
+Current delivery note: room code execution is wired through a Piston-compatible adapter, but reliable live execution is not claimed for the hosted demo until `PISTON_API_URL` points to a maintained paid or self-hosted sandbox runner.
 
 ## Operations And Evolution Decisions
 
@@ -468,10 +477,12 @@ Consequence: moderation is planned explicitly without pretending a report submis
 
 Decision:
 
-- GenAI-generated problems remain deferred until room/problem foundations and admin review exist.
-- Generated statements, constraints, solutions, and tests require validation, cost/rate limits, provenance, and abuse controls.
+- GenAI-generated problems are allowed inside rooms through a dedicated AI problem modal.
+- The API must validate room access, rate-limit generation, request schema-shaped Gemini output, validate returned problem structure, and save generated problems with `isAIGenerated`.
+- Generated problems become part of the shared problem catalog and are not attributed publicly to the prompt author.
+- Free-tier/demo generation remains partial: structural validation is active, but judge-backed correctness validation, admin review, duplicate detection, and abuse monitoring remain production hardening work.
 
-Consequence: AI does not introduce unreviewed executable or incorrect challenge content into the core collaboration flow.
+Consequence: AI gives the demo a differentiated practice flow while documentation stays honest that production-grade generated challenge quality needs paid quota, stronger validation, and moderation controls.
 
 ## Adding Or Changing A Decision
 

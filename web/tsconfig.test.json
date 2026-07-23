@@ -10,6 +10,8 @@
   },
   "include": [
     "src/features/comments/model/comment.helpers.ts",
+    "src/features/collab/model/codeExecution.helpers.ts",
+    "src/features/collab/ui/components/ResultsPanel.tsx",
     "src/features/dashboard/ui/components/ContributionHeatmap.helpers.ts",
     "src/features/messages/model/chat.helpers.ts",
     "src/features/messages/model/offlineMessageQueue.ts",
