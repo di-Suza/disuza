@@ -49,3 +49,5 @@ docker compose up --build
 ```
 
 The compose stack starts MongoDB, Redis, the API, and the Vite web app with source mounts for local development.
+
+Local Docker defaults expose the API on `http://localhost:8081`, the API base URL on `http://localhost:8081/api`, and the web app on `http://localhost:5173`.

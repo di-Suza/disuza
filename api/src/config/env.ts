@@ -88,7 +88,7 @@ const isPublicPemKey = (value: string) => value.includes('-----BEGIN PUBLIC KEY-
 
 const rawEnvSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
-  PORT: z.coerce.number().int().min(1).max(65535).default(8080),
+  PORT: z.coerce.number().int().min(1).max(65535).default(8081),
   MONGODB_URI: z.string().trim().min(1).default('mongodb://localhost:27017/disuza'),
   CORS_ORIGIN: z.string().trim().min(1).default('http://localhost:5173'),
   SOCKET_CORS_ORIGIN: optionalString,

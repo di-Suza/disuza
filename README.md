@@ -46,3 +46,5 @@ npm test
 npm run check
 npm run verify
 ```
+
+Local defaults: the API listens on `http://localhost:8081`, the API base URL is `http://localhost:8081/api`, and the web app runs on `http://localhost:5173`.
