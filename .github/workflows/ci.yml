@@ -12,7 +12,7 @@ on:
 
 jobs:
   verify:
-    name: Typecheck and build
+    name: Test, typecheck, and build
     runs-on: ubuntu-latest
 
     steps:
@@ -33,9 +33,15 @@ jobs:
 
       - name: Install web dependencies
         run: npm ci --include=optional --prefix web
-        
+
       - name: Install Rollup Linux optional binary
         run: npm install --prefix web --no-save @rollup/rollup-linux-x64-gnu
+
+      - name: Run backend and frontend tests
+        run: npm run test
+        env:
+          NODE_ENV: test
+
       - name: Typecheck
         run: npm run check
 
