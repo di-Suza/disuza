@@ -1810,6 +1810,16 @@
   }
 }
 
+@keyframes save-tooltip-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
 .feed-navbar-exact {
   position: fixed;
   top: 0;
@@ -2674,17 +2684,18 @@
 
 .v1-post-card__save-tooltip {
   position: absolute;
-  left: -50px;
-  bottom: calc(100% + 16px);
-  transform: translateX(-50%);
-  z-index: 35;
-  animation: toast-in 180ms ease-out;
+  right: 0;
+  bottom: calc(100% + 12px);
+  left: auto;
+  transform: none;
+  z-index: 45;
+  animation: save-tooltip-in 140ms ease-out both;
 }
 
 .v1-post-card__save-tooltip-card {
   position: relative;
   overflow: hidden;
-  width: 220px;
+  width: min(220px, calc(100vw - 32px));
   border: 1px solid var(--border-secondary);
   border-radius: 10px;
   background: var(--bg-main);
@@ -2727,10 +2738,11 @@
 .v1-post-card__save-tooltip i {
   position: absolute;
   top: 100%;
-  left: 50%;
+  right: 14px;
+  left: auto;
   width: 0;
   height: 0;
-  transform: translateX(-50%);
+  transform: none;
   border: 8px solid transparent;
   border-top-color: var(--bg-main);
 }
