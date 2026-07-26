@@ -299,6 +299,7 @@ const Conversations = ({ conversations, getConversationsLoading, handleChatSelec
 
       {startMode && (
         <ConversationStartModal
+          existingConversations={conversations}
           isOpen={Boolean(startMode)}
           mode={startMode}
           onClose={() => setStartMode(null)}
