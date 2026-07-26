@@ -45,8 +45,7 @@ const SearchPage = () => {
       <section className="dashboard-panel dashboard-panel--wide search-panel">
         <header className="search-header">
           <div>
-            <p className="state-panel__eyebrow">Explore</p>
-            <h1>Search</h1>
+            <h1>Explore</h1>
             <p>{hasActiveSearchQuery ? `${totalUsers + totalPosts} result${totalUsers + totalPosts === 1 ? '' : 's'}` : 'Discover people and posts'}</p>
           </div>
           <div className="search-header__actions">
@@ -63,8 +62,8 @@ const SearchPage = () => {
             onChange={handleSearchChange}
             onFocus={handleSearchFocus}
             onBlur={handleSearchBlur}
-            placeholder="Search people or posts"
-            aria-label="Search people or posts"
+            placeholder="Anything you want to explore..."
+            aria-label="Anything you want to explore..."
           />
           {searchQuery && (
             <Button variant="ghost" className="button--icon" onClick={handleClearSearch} aria-label="Clear search">
@@ -150,7 +149,7 @@ const SearchPage = () => {
                 <Crown size={19} aria-hidden="true" />
                 <h2>Top Contributors</h2>
               </div>
-              <div className="search-user-grid">
+              <div className="search-user-grid search-user-grid--contributors">
                 {topContributors.map((user, index) => (
                   <ErrorBoundary key={user._id} variant="section" title="Contributor card could not be rendered." resetKeys={[user._id]} showReload={false}>
                     <SearchUserCard user={user} index={index} currentUserId={currentUserId} />
