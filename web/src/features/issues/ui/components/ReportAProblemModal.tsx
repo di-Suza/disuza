@@ -29,7 +29,7 @@ const ReportAProblemModal = ({ isOpen, onClose }: ReportAProblemModalProps) => {
 
   return createPortal(
     <div className="modal-backdrop report-modal-backdrop" role="dialog" aria-modal="true" onMouseDown={handleClose}>
-      <section className="modal-card report-modal" onMouseDown={(event) => event.stopPropagation()}>
+      <section className="modal-card report-modal dashboard-support-modal" onMouseDown={(event) => event.stopPropagation()}>
         <header className="modal-card__header report-modal__header">
           <span className="report-modal__icon">
             <AlertCircle size={22} aria-hidden="true" />
