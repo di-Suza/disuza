@@ -13,15 +13,20 @@ import {
   MessageCircle,
   MessageSquareWarning,
   MoreHorizontal,
+  Pause,
+  Play,
   Repeat2,
   SendHorizontal,
   Share2,
   Sparkles,
   Trash2,
   UserRound,
+  Volume2,
+  VolumeX,
   X,
 } from 'lucide-react';
-import { lazy, memo, Suspense, useCallback, useEffect, useMemo, useState, type CSSProperties, type ReactNode } from 'react';
+import { lazy, memo, Suspense, useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type MouseEvent, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 
 import { useDeletePostMutation, useGetPostQuery, useTrackPostLinkClickMutation } from '@/features/posts/api/post.api';
@@ -106,6 +111,95 @@ const normalizeLink = (url?: string) => {
 };
 
 const truncateUrl = (url: string) => url.replace(/^https?:\/\//i, '').replace(/\/$/, '');
+
+const PostVideoPlayer = ({
+  ariaLabel,
+  className,
+  onOpenPreview,
+  src,
+  variant,
+}: {
+  ariaLabel: string;
+  className: string;
+  onOpenPreview?: () => void;
+  src: string;
+  variant: 'card' | 'preview';
+}) => {
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const [isPaused, setPaused] = useState(false);
+  const [isMuted, setMuted] = useState(true);
+
+  useEffect(() => {
+    setPaused(false);
+    setMuted(true);
+  }, [src]);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    video.muted = isMuted;
+    if (isPaused) {
+      video.pause();
+      return;
+    }
+
+    const playRequest = video.play();
+    if (playRequest) {
+      playRequest.catch(() => setPaused(true));
+    }
+  }, [isMuted, isPaused, src]);
+
+  const togglePlayback = useCallback((event?: MouseEvent<HTMLButtonElement>) => {
+    event?.stopPropagation();
+    setPaused((current) => !current);
+  }, []);
+
+  const toggleMute = useCallback((event: MouseEvent<HTMLButtonElement>) => {
+    event.stopPropagation();
+    setMuted((current) => !current);
+  }, []);
+
+  return (
+    <div
+      className={cn('v1-post-card__video-player', `v1-post-card__video-player--${variant}`)}
+      onClick={variant === 'card' ? onOpenPreview : () => setPaused((current) => !current)}
+      onKeyDown={(event) => {
+        if (variant !== 'card' || !onOpenPreview) return;
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          onOpenPreview();
+        }
+      }}
+      role={variant === 'card' ? 'button' : undefined}
+      tabIndex={variant === 'card' ? 0 : undefined}
+      aria-label={variant === 'card' ? 'Open video preview' : undefined}
+    >
+      <video
+        ref={videoRef}
+        className={className}
+        src={src}
+        autoPlay
+        muted={isMuted}
+        playsInline
+        loop
+        preload="metadata"
+        disablePictureInPicture
+        aria-label={ariaLabel}
+        onPlay={() => setPaused(false)}
+        onPause={() => setPaused(true)}
+      />
+      <div className="v1-post-card__video-controls" aria-label="Video controls">
+        <button type="button" onClick={togglePlayback} aria-label={isPaused ? 'Play video' : 'Pause video'}>
+          {isPaused ? <Play size={16} aria-hidden="true" /> : <Pause size={16} aria-hidden="true" />}
+        </button>
+        <button type="button" onClick={toggleMute} aria-label={isMuted ? 'Turn sound on' : 'Turn sound off'}>
+          {isMuted ? <VolumeX size={16} aria-hidden="true" /> : <Volume2 size={16} aria-hidden="true" />}
+        </button>
+      </div>
+    </div>
+  );
+};
 
 const PostCard = ({ className, fallbackAuthor, hideFeedbackAction = false, post, viewerId }: PostCardProps) => {
   const navigate = useNavigate();
@@ -375,11 +469,17 @@ const PostCard = ({ className, fallbackAuthor, hideFeedbackAction = false, post,
               {!isVideoMedia(activeMedia) && <img className="v1-post-card__media-bg" src={activeMedia.url} alt="" aria-hidden="true" />}
               <div className="v1-post-card__media-overlay" />
               {isVideoMedia(activeMedia) ? (
-                <video className="v1-post-card__media-main" src={activeMedia.url} controls preload="metadata" />
+                <PostVideoPlayer
+                  ariaLabel={`Post video ${currentIndex + 1}`}
+                  className="v1-post-card__media-main"
+                  src={activeMedia.url}
+                  variant="card"
+                  onOpenPreview={() => setMediaPreviewOpen(true)}
+                />
               ) : (
                 <img className="v1-post-card__media-main" src={activeMedia.url} alt={`Post content ${currentIndex + 1}`} loading="lazy" />
               )}
-              <button type="button" className="v1-post-card__media-open" onClick={() => setMediaPreviewOpen(true)} aria-label="Open media preview" />
+              {!isVideoMedia(activeMedia) && <button type="button" className="v1-post-card__media-open" onClick={() => setMediaPreviewOpen(true)} aria-label="Open media preview" />}
 
               {media.length > 1 && currentIndex > 0 && <button type="button" className="v1-post-card__media-nav v1-post-card__media-nav--left" onClick={goToPrevious} aria-label="Previous media"><ChevronLeft size={20} /></button>}
               {media.length > 1 && currentIndex < media.length - 1 && <button type="button" className="v1-post-card__media-nav v1-post-card__media-nav--right" onClick={goToNext} aria-label="Next media"><ChevronRight size={20} /></button>}
@@ -445,12 +545,17 @@ const PostCard = ({ className, fallbackAuthor, hideFeedbackAction = false, post,
           />
         )}
       </Suspense>
-      {isMediaPreviewOpen && activeMedia && (
+      {isMediaPreviewOpen && activeMedia && createPortal(
         <div className="v1-post-card__media-preview" role="dialog" aria-modal="true" aria-label="Media preview">
           <button type="button" className="v1-post-card__media-preview-backdrop" onClick={() => setMediaPreviewOpen(false)} aria-label="Close media preview" />
           <div className="v1-post-card__media-preview-stage">
             {isVideoMedia(activeMedia) ? (
-              <video className="v1-post-card__media-preview-media" src={activeMedia.url} controls autoPlay playsInline />
+              <PostVideoPlayer
+                ariaLabel={`Post video ${currentIndex + 1} preview`}
+                className="v1-post-card__media-preview-media"
+                src={activeMedia.url}
+                variant="preview"
+              />
             ) : (
               <img className="v1-post-card__media-preview-media" src={activeMedia.url} alt={`Post content ${currentIndex + 1}`} />
             )}
@@ -458,7 +563,8 @@ const PostCard = ({ className, fallbackAuthor, hideFeedbackAction = false, post,
           <button type="button" className="v1-post-card__media-preview-close" onClick={() => setMediaPreviewOpen(false)} aria-label="Close media preview">
             <X size={22} aria-hidden="true" />
           </button>
-        </div>
+        </div>,
+        document.body,
       )}
       <Suspense fallback={null}>
         {isFeedbackOpen && ownerId && (

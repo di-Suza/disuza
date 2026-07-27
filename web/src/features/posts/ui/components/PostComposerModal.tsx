@@ -17,6 +17,7 @@ import {
   X,
 } from 'lucide-react';
 import { memo, useId, useState } from 'react';
+import { createPortal } from 'react-dom';
 
 import type { Post } from '@/features/posts/model/post.types';
 import Button from '@/shared/ui/Button';
@@ -77,7 +78,7 @@ const PostComposerModal = ({ isOpen, isPostLoading = false, mode, onClose, post 
   const isPostEnabled = !isSubmitting && (isEditMode || hasComposerContent) && (!projectLinksRequired || projectLinksComplete);
   const toggleProjectPost = () => setIsProjectPost((current) => !current);
 
-  return (
+  return createPortal(
     <div className="modal-backdrop post-composer-v1-backdrop" role="dialog" aria-modal="true" aria-label={isEditMode ? 'Edit post' : 'Create post'}>
       <section className="post-composer-v1">
         {isPostLoading ? (
@@ -316,7 +317,8 @@ const PostComposerModal = ({ isOpen, isPostLoading = false, mode, onClose, post 
           </form>
         )}
       </section>
-    </div>
+    </div>,
+    document.body,
   );
 };
 
