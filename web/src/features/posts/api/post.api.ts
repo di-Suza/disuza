@@ -391,7 +391,7 @@ const collectPostSavePatches = (dispatch: AppDispatch, state: unknown, postId: s
     ),
   ];
 
-  getFulfilledQueryEntries(state, ['getFeed', 'getAllPosts', 'getSavedCollectionPosts']).forEach((entry) => {
+  getFulfilledQueryEntries(state, ['getFeed', 'getAllPosts', 'getSavedCollectionPosts', 'getUserReposts', 'getRepost']).forEach((entry) => {
     if (entry.endpointName === 'getFeed') {
       patches.push(
         dispatch(
@@ -417,6 +417,26 @@ const collectPostSavePatches = (dispatch: AppDispatch, state: unknown, postId: s
         dispatch(
           postApi.util.updateQueryData('getSavedCollectionPosts', entry.originalArgs as SavedCollectionPostsQueryArgs, (draft) => {
             updateSavedCollectionPostsSaveState(draft, postId, saved);
+          }),
+        ),
+      );
+    }
+
+    if (entry.endpointName === 'getUserReposts') {
+      patches.push(
+        dispatch(
+          postApi.util.updateQueryData('getUserReposts', entry.originalArgs as UserRepostsQueryArgs, (draft) => {
+            updateRepostListPostSaveState(draft, postId, saved);
+          }),
+        ),
+      );
+    }
+
+    if (entry.endpointName === 'getRepost') {
+      patches.push(
+        dispatch(
+          postApi.util.updateQueryData('getRepost', entry.originalArgs as string, (draft) => {
+            updateSingleRepostPostSaveState(draft, postId, saved);
           }),
         ),
       );
@@ -562,9 +582,20 @@ const updateRepostListPostState = (draft: RepostListResponse | undefined, postId
   });
 };
 
+const updateRepostListPostSaveState = (draft: RepostListResponse | undefined, postId: string, saved: boolean) => {
+  draft?.reposts?.forEach((repost) => {
+    if (repost.post?._id === postId) updatePostSaveState(repost.post, saved);
+  });
+};
+
 const updateSingleRepostPostState = (draft: SingleRepostResponse | undefined, postId: string, reposted: boolean) => {
   if (draft?.repost?.post?._id !== postId) return;
   updatePostRepostState(draft.repost.post, reposted);
+};
+
+const updateSingleRepostPostSaveState = (draft: SingleRepostResponse | undefined, postId: string, saved: boolean) => {
+  if (draft?.repost?.post?._id !== postId) return;
+  updatePostSaveState(draft.repost.post, saved);
 };
 
 const updatePostLikeState = (post: Post | undefined, liked: boolean) => {
