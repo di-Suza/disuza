@@ -2152,10 +2152,17 @@
 }
 
 .recommendation-slider {
+  display: grid;
+  gap: 12px;
   width: min(100%, 640px);
   max-width: 640px;
   margin: 16px auto;
-  padding: 0 8px;
+  overflow: hidden;
+  border: 1px solid var(--border-primary);
+  border-radius: 12px;
+  background: var(--surface);
+  padding: 14px;
+  box-shadow: var(--shadow-media);
 }
 
 .recommendation-slider > .recommendation-header,
@@ -2165,24 +2172,16 @@
 
 .recommendation-slider .recommendation-header {
   margin: 0;
-  padding: 16px 16px 0;
-  border: 1px solid var(--border-primary);
-  border-bottom: 0;
-  border-radius: 12px 12px 0 0;
-  background: var(--surface);
-  box-shadow: var(--shadow-media);
+  padding: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
 .recommendation-slider__track {
   display: flex;
   gap: 12px;
   overflow-x: auto;
-  border: 1px solid var(--border-primary);
-  border-top: 0;
-  border-radius: 0 0 12px 12px;
-  background: var(--surface);
-  padding: 12px 16px 16px;
-  box-shadow: var(--shadow-media);
+  padding: 0 2px 2px 0;
   scrollbar-width: none;
 }
 
