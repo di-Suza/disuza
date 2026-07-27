@@ -54,6 +54,7 @@ export type ChatUser = {
 
 export type ChatMessage = {
   _id: string;
+  clientMessageId?: string;
   conversationId: string;
   sender: string;
   senderInfo?: ChatUser;
@@ -72,6 +73,7 @@ export type ChatMessage = {
   deliveredTo?: string[];
   receiverId?: string;
   conversationIsUnread?: boolean;
+  sendState?: 'pending' | 'failed';
   createdAt?: string;
   updatedAt?: string;
 };

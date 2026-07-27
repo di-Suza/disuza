@@ -223,16 +223,20 @@ const ChatWindow = ({
                   </div>
                 ) : null}
 
-                {threadedMessages.map(({ message, showDateDivider }, index) => (
-                  <div key={`${message._id}_${index}`}>
-                    {showDateDivider && (
-                      <div className="messages-v1-date-divider">
-                        <span>{formatChatDateDivider(message.createdAt)}</span>
-                      </div>
-                    )}
-                    <MessageItem message={message} senderName={getGroupMessageSenderName(message)} />
-                  </div>
-                ))}
+                {threadedMessages.map(({ message, showDateDivider }) => {
+                  const messageKey = message.clientMessageId || message._id;
+
+                  return (
+                    <div key={messageKey}>
+                      {showDateDivider && (
+                        <div className="messages-v1-date-divider">
+                          <span>{formatChatDateDivider(message.createdAt)}</span>
+                        </div>
+                      )}
+                      <MessageItem message={message} senderName={getGroupMessageSenderName(message)} />
+                    </div>
+                  );
+                })}
 
               </div>
 

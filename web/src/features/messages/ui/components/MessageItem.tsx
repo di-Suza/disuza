@@ -1,4 +1,4 @@
-import { Check, CheckCheck, Flag, MoreVertical, Undo2 } from 'lucide-react';
+import { Check, CheckCheck, CircleX, Clock3, Flag, MoreVertical, Undo2 } from 'lucide-react';
 import { lazy, memo, Suspense, useEffect, useRef, useState } from 'react';
 
 import { formatChatMessageTime, getFeedbackMediaUrl, getSharedPostMediaUrl } from '@/features/messages/model/chat.helpers';
@@ -35,6 +35,9 @@ const MessageItem = ({ message, senderName }: MessageItemProps) => {
   const sharedPostCaption = message.sharedPostDetails?.caption || 'View shared post';
   const feedbackPostCaption = message.feedbackDetails?.caption?.trim() || '';
   const shouldShowText = Boolean(message.text?.trim()) && !(message.messageType === 'attachment' && message.text === 'Sent an attachment');
+  const isPendingMessage = deliveryStatus === 'pending';
+  const isFailedMessage = deliveryStatus === 'failed';
+  const shouldShowMenuButton = !isPendingMessage && !isFailedMessage;
 
   useEffect(() => {
     if (!isMenuOpen) return;
@@ -71,17 +74,25 @@ const MessageItem = ({ message, senderName }: MessageItemProps) => {
         className={`messages-v1-message ${senderIsMe ? 'is-mine' : 'is-theirs'}`}
       >
         <div className="messages-v1-message__inner">
-          <div className="messages-v1-message__actions" ref={menuRootRef}>
-            <button
-              type="button"
-              className="messages-v1-icon-button"
-              onClick={() => setIsMenuOpen((current) => !current)}
-              aria-label="Message options"
-            >
-              <MoreVertical size={16} aria-hidden="true" />
-            </button>
+          <div className={`messages-v1-message__actions ${isFailedMessage ? 'is-visible' : ''}`} ref={menuRootRef}>
+            {isFailedMessage ? (
+              <span className="messages-v1-send-error-indicator" aria-label="Message failed to send" title="Message failed to send">
+                <CircleX size={17} aria-hidden="true" />
+              </span>
+            ) : isPendingMessage ? (
+              <span className="messages-v1-message__action-placeholder" aria-hidden="true" />
+            ) : (
+              <button
+                type="button"
+                className="messages-v1-icon-button"
+                onClick={() => setIsMenuOpen((current) => !current)}
+                aria-label="Message options"
+              >
+                <MoreVertical size={16} aria-hidden="true" />
+              </button>
+            )}
 
-            {isMenuOpen && (
+            {shouldShowMenuButton && isMenuOpen && (
               <div className={`messages-v1-menu messages-v1-message__menu ${senderIsMe ? 'is-right' : 'is-left'}`}>
                 {senderIsMe ? (
                   <button
@@ -169,13 +180,17 @@ const MessageItem = ({ message, senderName }: MessageItemProps) => {
               {shouldShowText && <p>{message.text}</p>}
               <span className="messages-v1-bubble__meta">
                 <time dateTime={message.createdAt}>{formatChatMessageTime(message.createdAt)}</time>
-                {deliveryStatus && (
+                {deliveryStatus && deliveryStatus !== 'failed' && (
                   <span
                     className={`messages-v1-delivery-status is-${deliveryStatus}`}
-                    aria-label={deliveryStatus === 'seen' ? 'Seen' : deliveryStatus === 'delivered' ? 'Delivered' : 'Sent'}
-                    title={deliveryStatus === 'seen' ? 'Seen' : deliveryStatus === 'delivered' ? 'Delivered' : 'Sent'}
+                    aria-label={deliveryStatus === 'pending' ? 'Sending' : deliveryStatus === 'seen' ? 'Seen' : deliveryStatus === 'delivered' ? 'Delivered' : 'Sent'}
+                    title={deliveryStatus === 'pending' ? 'Sending' : deliveryStatus === 'seen' ? 'Seen' : deliveryStatus === 'delivered' ? 'Delivered' : 'Sent'}
                   >
-                    {deliveryStatus === 'sent' ? <Check size={14} aria-hidden="true" /> : <CheckCheck size={14} aria-hidden="true" />}
+                    {deliveryStatus === 'pending'
+                      ? <Clock3 size={13} aria-hidden="true" />
+                      : deliveryStatus === 'sent'
+                        ? <Check size={14} aria-hidden="true" />
+                        : <CheckCheck size={14} aria-hidden="true" />}
                   </span>
                 )}
               </span>

@@ -2,9 +2,8 @@ import { useCallback, useEffect, useRef, useState, type ChangeEvent, type Keyboa
 import { useNavigate } from 'react-router-dom';
 
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks';
-import { useMarkAsReadMutation, useSendMessageMutation } from '@/features/messages/api/chat.api';
+import { chatApi, useMarkAsReadMutation, useSendMessageMutation } from '@/features/messages/api/chat.api';
 import type { ChatConversation, ChatMessage, SendMessageRequest } from '@/features/messages/model/chat.types';
-import { isRetryableMessageSendError, queueOfflineMessage } from '@/features/messages/model/offlineMessageQueue';
 import {
   clearSelectedChatFromState,
   setChatWindowActive,
@@ -43,7 +42,7 @@ const TYPING_EXPIRE_MS = 3600;
 export const useChatWindow = ({ allMessages, handleChatSelect, isFetchingMessages, selectedChat }: UseChatWindowArgs) => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const { showError, showInfo } = useToast();
+  const { showError } = useToast();
   const currentUserId = useAppSelector((state) => state.auth.user?._id);
   const messagesContainerRef = useRef<HTMLDivElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -61,6 +60,16 @@ export const useChatWindow = ({ allMessages, handleChatSelect, isFetchingMessage
   const [markAsRead] = useMarkAsReadMutation();
   const [sendMessage] = useSendMessageMutation();
   const { selectedChatId } = useAppSelector((state) => state.chat);
+
+  const clearFailedLocalMessages = useCallback((conversationId?: string) => {
+    if (!conversationId) return;
+
+    dispatch(
+      chatApi.util.updateQueryData('getMessages', { conversationId, page: 1 }, (draft) => {
+        draft.messages = draft.messages.filter((message) => message.sendState !== 'failed');
+      }),
+    );
+  }, [dispatch]);
 
   const clearTypingTimeout = useCallback(() => {
     if (typingIdleTimeoutRef.current) {
@@ -100,10 +109,11 @@ export const useChatWindow = ({ allMessages, handleChatSelect, isFetchingMessage
 
   const handleBackToChats = useCallback(() => {
     emitTypingStop();
+    clearFailedLocalMessages(selectedChat?._id);
     dispatch(clearSelectedChatFromState());
     dispatch(setChatWindowClosed());
     handleChatSelect(null);
-  }, [dispatch, emitTypingStop, handleChatSelect]);
+  }, [clearFailedLocalMessages, dispatch, emitTypingStop, handleChatSelect, selectedChat?._id]);
 
   const handleUserProfileClick = useCallback(() => {
     if (selectedChat?.isGroup) return;
@@ -151,39 +161,26 @@ export const useChatWindow = ({ allMessages, handleChatSelect, isFetchingMessage
       return;
     }
 
+    const attachmentToSend = selectedAttachment;
     const payload: SendMessageRequest = {
       conversationId: selectedChat?._id,
       message: trimmedMessage,
-      messageType: selectedAttachment ? 'attachment' : undefined,
-      attachment: selectedAttachment || undefined,
+      messageType: attachmentToSend ? 'attachment' : undefined,
+      attachment: attachmentToSend || undefined,
       receiverId: selectedChat?.isGroup ? undefined : selectedChat?.otherUser?._id,
     };
 
+    setMessageInput('');
+    setSelectedAttachment(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+    emitTypingStop();
+
     try {
       await sendMessage(payload).unwrap();
-      setMessageInput('');
-      setSelectedAttachment(null);
-      if (fileInputRef.current) fileInputRef.current.value = '';
-      emitTypingStop();
     } catch (error) {
-      if (isRetryableMessageSendError(error)) {
-        try {
-          await queueOfflineMessage(payload);
-          setMessageInput('');
-          setSelectedAttachment(null);
-          if (fileInputRef.current) fileInputRef.current.value = '';
-          emitTypingStop();
-          showInfo('Message queued. It will send when you reconnect.');
-          return;
-        } catch {
-          showError('Message could not be queued offline.');
-          return;
-        }
-      }
-
       showError(getErrorMessage(error, 'Message not sent! Try Again'));
     }
-  }, [emitTypingStop, messageInput, selectedAttachment, selectedChat, sendMessage, showError, showInfo]);
+  }, [emitTypingStop, messageInput, selectedAttachment, selectedChat, sendMessage, showError]);
 
   const handleMessageInputKeyDown = useCallback((event: KeyboardEvent<HTMLTextAreaElement>) => {
     if (event.key === 'Enter' && !event.shiftKey) {
@@ -268,11 +265,12 @@ export const useChatWindow = ({ allMessages, handleChatSelect, isFetchingMessage
     setTypingUsers([]);
 
     return () => {
+      clearFailedLocalMessages(selectedChat?._id);
       emitTypingStop();
       typingExpiryTimeoutsRef.current.forEach((timeoutId) => window.clearTimeout(timeoutId));
       typingExpiryTimeoutsRef.current.clear();
     };
-  }, [clearTypingTimeout, emitTypingStop, selectedChat?._id]);
+  }, [clearFailedLocalMessages, clearTypingTimeout, emitTypingStop, selectedChat?._id]);
 
   useEffect(() => {
     if (!selectedChat?._id) return undefined;
