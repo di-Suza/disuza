@@ -62,16 +62,12 @@ const NotificationsPage = () => {
               {unreadCount > 0 && <small>{unreadCount > 99 ? '99+' : unreadCount}</small>}
             </span>
             <div>
-              <p className="state-panel__eyebrow">Activity Center</p>
               <h1>Notifications</h1>
               <p>{unreadCount > 0 ? `${unreadCount} unread notification${unreadCount > 1 ? 's' : ''}` : "You're all caught up"}</p>
             </div>
           </div>
 
           <div className="notifications-header__actions">
-            <Button variant="ghost" className="button--icon" onClick={() => refetch()} disabled={isFetching} aria-label="Refresh notifications">
-              {isFetching ? <Loader2 className="spin" size={18} aria-hidden="true" /> : <RefreshCw size={18} aria-hidden="true" />}
-            </Button>
             {notifications.length > 0 && (
               <Button variant="danger" onClick={handleDeleteAllNotifications} disabled={isDeletingAll}>
                 {isDeletingAll ? <Loader2 className="spin" size={18} aria-hidden="true" /> : <Trash2 size={18} aria-hidden="true" />}
