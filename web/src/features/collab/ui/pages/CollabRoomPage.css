@@ -70,6 +70,10 @@
 .collab-collapse-rail.is-left { border-right: 1px solid var(--border-secondary); }
 .collab-collapse-rail.is-right { border-left: 1px solid var(--border-secondary); }
 
+.collab-mobile-panel-controls {
+  display: none;
+}
+
 .collab-icon-button {
   display: inline-flex;
   width: 32px;
@@ -1119,35 +1123,292 @@
 
 @media (max-width: 900px) {
   .collab-room-page {
-    height: auto;
-    min-height: 100vh;
-    overflow: auto;
+    height: 100dvh;
+    min-height: 100dvh;
+    overflow: hidden;
     padding: 8px;
   }
 
   .collab-room-shell {
-    min-height: calc(100vh - 16px);
-    border-radius: 12px;
+    --collab-mobile-toolbar-height: 46px;
+    position: relative;
+    height: calc(100dvh - 16px);
+    min-height: 0;
+    overflow: visible;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    padding-top: var(--collab-mobile-toolbar-height);
   }
 
-  .collab-right-panel { min-width: min(82vw, 320px); }
+  .collab-center-panel {
+    width: 100%;
+    height: 100%;
+    min-width: 0;
+    overflow: hidden;
+    border: 1px solid var(--border-primary);
+    border-radius: 12px;
+    background: var(--surface-deep);
+    box-shadow: var(--shadow-elevated);
+  }
+
+  .collab-left-panel,
+  .collab-right-panel {
+    position: absolute;
+    top: var(--collab-mobile-toolbar-height);
+    bottom: 0;
+    z-index: 70;
+    width: min(88vw, 340px) !important;
+    max-width: calc(100% - 48px);
+    min-width: 0;
+    box-shadow: 0 22px 54px rgba(0, 0, 0, 0.42);
+  }
+
+  .collab-left-panel {
+    left: 0;
+    border-right: 1px solid var(--border-primary);
+  }
+
+  .collab-right-panel {
+    right: 0;
+    border-left: 1px solid var(--border-primary);
+  }
+
+  .collab-resize-handle.is-vertical {
+    display: none;
+  }
+
+  .collab-collapse-rail {
+    display: none;
+  }
+
+  .collab-mobile-panel-controls {
+    position: absolute;
+    top: 0;
+    right: 0;
+    left: 0;
+    z-index: 60;
+    display: flex;
+    height: 38px;
+    align-items: center;
+    justify-content: space-between;
+    pointer-events: none;
+  }
+
+  .collab-mobile-panel-controls .collab-icon-button {
+    width: 38px;
+    height: 38px;
+    border: 1px solid var(--border-secondary);
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--surface) 92%, transparent);
+    padding: 2px;
+    box-shadow: var(--shadow-media);
+    pointer-events: auto;
+  }
+
+  .collab-panel-header,
+  .collab-users-panel {
+    padding: 12px;
+  }
+
+  .collab-panel-header__actions .collab-icon-button,
+  .collab-users-panel header > .collab-icon-button {
+    display: none;
+  }
+
+  .collab-panel-header h2,
+  .collab-users-panel h3 {
+    font-size: 15px;
+  }
+
+  .collab-panel-header p,
+  .collab-active-problem-header p,
+  .collab-problem-statement header p {
+    font-size: 10px;
+    letter-spacing: 0.12em;
+  }
+
+  .collab-problems-panel__actions {
+    padding: 0 12px 12px;
+  }
+
+  .collab-problems-panel__actions button,
+  .collab-audio-button,
+  .collab-code-editor header button,
+  .collab-call-box button {
+    min-height: 36px;
+    padding: 8px 10px;
+  }
+
+  .collab-problems-list {
+    gap: 7px;
+    padding: 10px;
+  }
+
+  .collab-problem-card {
+    gap: 10px;
+    border-radius: 8px;
+    padding: 10px;
+  }
+
+  .collab-users-panel {
+    max-height: 42%;
+    overflow-y: auto;
+  }
+
+  .collab-users-panel header {
+    padding-bottom: 12px;
+  }
+
+  .collab-users-list {
+    gap: 7px;
+    margin-bottom: 12px;
+  }
+
+  .collab-users-list article {
+    gap: 10px;
+    border-radius: 8px;
+    padding: 8px;
+  }
+
+  .collab-avatar-wrap img {
+    width: 36px;
+    height: 36px;
+  }
+
+  .collab-call-box {
+    border-radius: 8px;
+    padding: 10px;
+  }
+
+  .collab-chat-region {
+    min-height: 260px;
+  }
+
   .collab-problem-statement h1 { font-size: 22px; }
 }
 
 @media (max-width: 640px) {
   .collab-left-panel,
-  .collab-right-panel { min-width: 260px; }
+  .collab-right-panel {
+    width: min(90vw, 320px) !important;
+    max-width: calc(100% - 42px);
+  }
 
-  .collab-center-panel { min-width: 280px; }
+  .collab-center-panel { min-width: 0; }
 
   .collab-code-editor header,
   .collab-active-problem-header,
   .collab-results-panel header {
-    align-items: flex-start;
-    flex-direction: column;
+    align-items: center;
+    flex-direction: row;
+    padding: 10px 12px;
   }
 
-  .collab-code-editor header button { width: 100%; }
+  .collab-statement-region {
+    height: min(32dvh, 210px) !important;
+  }
+
+  .collab-results-region {
+    height: min(26dvh, 160px) !important;
+  }
+
+  .collab-resize-handle.is-horizontal {
+    height: 4px;
+  }
+
+  .collab-problem-statement {
+    height: calc(100% - 46px);
+    padding: 12px;
+  }
+
+  .collab-problem-statement header {
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+
+  .collab-problem-statement h1 {
+    font-size: 20px;
+  }
+
+  .collab-problem-statement section,
+  .collab-example-card,
+  .collab-results-state,
+  .collab-empty-editor section,
+  .collab-empty-box,
+  .collab-testcase-card {
+    border-radius: 8px;
+    padding: 12px;
+  }
+
+  .collab-problem-statement section {
+    margin-bottom: 12px;
+  }
+
+  .collab-problem-statement p,
+  .collab-problem-statement li,
+  .collab-example-card p,
+  .collab-dsa-card p,
+  .collab-testcase-card p {
+    font-size: 12px;
+    line-height: 1.55;
+  }
+
+  .collab-code-editor header {
+    gap: 8px;
+  }
+
+  .collab-code-editor header > div {
+    flex: 1 1 auto;
+    gap: 8px;
+  }
+
+  .collab-code-editor select {
+    min-width: 104px;
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+
+  .collab-code-editor header button {
+    width: auto;
+    min-height: 34px;
+    flex: 0 0 auto;
+    padding: 7px 10px;
+    font-size: 12px;
+  }
+
+  .collab-results-panel header {
+    gap: 8px;
+  }
+
+  .collab-results-panel header > div {
+    gap: 6px;
+  }
+
+  .collab-results-panel header span {
+    padding: 4px 7px;
+    font-size: 11px;
+  }
+
+  .collab-results-list {
+    gap: 8px;
+    padding: 10px;
+  }
+
+  .collab-results-list article {
+    border-radius: 8px;
+    padding: 10px;
+  }
+
+  .collab-results-state {
+    margin: 10px;
+  }
+
+  .collab-empty-editor {
+    padding: 16px;
+  }
+
   .collab-problem-modal__body { padding: 16px; }
 
   .collab-ai-modal-actions {
@@ -1165,5 +1426,38 @@
 
   .collab-dsa-card__actions {
     width: 100%;
+  }
+}
+
+@media (max-width: 420px) {
+  .collab-room-page {
+    padding: 6px;
+  }
+
+  .collab-room-shell {
+    height: calc(100dvh - 12px);
+  }
+
+  .collab-mobile-panel-controls {
+    height: 34px;
+  }
+
+  .collab-mobile-panel-controls .collab-icon-button {
+    width: 34px;
+    height: 34px;
+  }
+
+  .collab-code-editor header > div > span {
+    display: none;
+  }
+
+  .collab-code-editor select {
+    min-width: 96px;
+  }
+
+  .collab-code-editor header button {
+    gap: 5px;
+    padding-right: 8px;
+    padding-left: 8px;
   }
 }
