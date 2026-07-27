@@ -86,7 +86,7 @@ const DashboardBlockedUsersModal = ({ isOpen, onClose }: DashboardBlockedUsersMo
                   <small>{item.blockedUser.headline || 'Blocked profile'}</small>
                 </span>
               </Link>
-              <Button variant="secondary" onClick={() => handleUnblock(item.blockedUser!._id)} disabled={isUnblocking}>
+              <Button variant="secondary" onClick={() => handleUnblock(item.blockedUser!._id)} isLoading={isUnblocking} loadingLabel="Unblocking user">
                 <LockOpen size={16} aria-hidden="true" />Unblock
               </Button>
             </article>
@@ -96,8 +96,8 @@ const DashboardBlockedUsersModal = ({ isOpen, onClose }: DashboardBlockedUsersMo
         <footer className="report-modal__footer">
           <Button variant="secondary" onClick={onClose}>Close</Button>
           {data?.hasMore && (
-            <Button onClick={() => setPage((current) => current + 1)} disabled={isFetching}>
-              {isFetching ? <Loader2 className="spin" size={17} aria-hidden="true" /> : <Ban size={17} aria-hidden="true" />}
+            <Button onClick={() => setPage((current) => current + 1)} isLoading={isFetching} loadingLabel="Loading blocked users">
+              <Ban size={17} aria-hidden="true" />
               Load more
             </Button>
           )}

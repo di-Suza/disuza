@@ -1,4 +1,4 @@
-import { Check, Loader2, Search, UserRound, Users, X } from 'lucide-react';
+import { Check, Search, UserRound, Users, X } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 
@@ -237,9 +237,10 @@ const ConversationStartModal = ({
           <small>{isGroupMode ? `${selectedIds.length}/2 minimum selected` : selectedIds.length ? 'Ready to start' : 'Select one person'}</small>
           <Button
             onClick={handleSubmit}
-            disabled={isSubmitting || (isGroupMode ? selectedIds.length < 2 : selectedIds.length !== 1)}
+            disabled={isGroupMode ? selectedIds.length < 2 : selectedIds.length !== 1}
+            isLoading={isSubmitting}
+            loadingLabel={isGroupMode ? 'Creating group' : 'Starting conversation'}
           >
-            {isSubmitting && <Loader2 className="spin" size={16} aria-hidden="true" />}
             {isGroupMode ? 'Create Group' : 'Start Messaging'}
           </Button>
         </footer>

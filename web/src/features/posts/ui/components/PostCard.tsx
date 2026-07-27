@@ -388,7 +388,7 @@ const PostCard = ({ className, fallbackAuthor, hideFeedbackAction = false, post,
                     <button type="button" onClick={() => { setShowDropdown(false); setShareOpen(true); }}><Share2 size={16} />Share</button>
                     {isOwner && <button type="button" onClick={() => { setShowDropdown(false); setEditOpen(true); }}><Edit3 size={16} />Edit</button>}
                     {isOwner && <button type="button" onClick={() => { setShowDropdown(false); setAnalyticsOpen(true); }}><BarChart3 size={16} />Analytics</button>}
-                    {isOwner && <button type="button" className="is-danger" onClick={() => { setShowDropdown(false); setDeleteConfirmOpen(true); }} disabled={isDeleting}>{isDeleting ? <Loader2 className="spin" size={16} /> : <Trash2 size={16} />}Delete</button>}
+                    {isOwner && <button type="button" className="is-danger" onClick={() => { setShowDropdown(false); setDeleteConfirmOpen(true); }} disabled={isDeleting}>{isDeleting ? <Loader2 className="spin" size={16} aria-hidden="true" /> : <><Trash2 size={16} aria-hidden="true" />Delete</>}</button>}
                     {!isOwner && <button type="button" className="is-danger" onClick={() => { setShowDropdown(false); setReportOpen(true); }}><MessageSquareWarning size={16} />Report</button>}
                     <button type="button" className="is-muted" onClick={() => setShowDropdown(false)}><X size={16} />Cancel</button>
                   </div>

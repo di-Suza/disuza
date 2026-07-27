@@ -1,4 +1,4 @@
-import { AlertTriangle, Loader2, X } from 'lucide-react';
+import { AlertTriangle, X } from 'lucide-react';
 import { createPortal } from 'react-dom';
 
 import type { ReportReason, ReportTargetModel } from '@/features/reports/model/report.types';
@@ -90,9 +90,9 @@ const ReportModal = ({ isOpen, onClose, onModel, targetId }: ReportModalProps) =
 
         <footer className="report-modal__footer">
           <Button variant="secondary" onClick={handleClose}>Cancel</Button>
-          <Button variant="danger" onClick={handleSubmit} disabled={!reason || !description.trim() || isSubmitting}>
-            {isSubmitting ? <Loader2 className="spin" size={17} aria-hidden="true" /> : <AlertTriangle size={17} aria-hidden="true" />}
-            {isSubmitting ? 'Submitting...' : 'Submit report'}
+          <Button variant="danger" onClick={handleSubmit} disabled={!reason || !description.trim()} isLoading={isSubmitting} loadingLabel="Submitting report">
+            <AlertTriangle size={17} aria-hidden="true" />
+            Submit report
           </Button>
         </footer>
       </section>

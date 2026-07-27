@@ -37,6 +37,7 @@ const CommentModal = ({ isOpen, onClose, post }: CommentModalProps) => {
     isError,
     isFetching,
     isLoading,
+    isPosting,
     refetch,
     replyTarget,
     setCommentText,
@@ -109,9 +110,9 @@ const CommentModal = ({ isOpen, onClose, post }: CommentModalProps) => {
 
           {hasMore && (
             <div className="comments-load-more">
-              <Button variant="secondary" onClick={handleLoadMore} disabled={isFetching}>
-                {isFetching ? <LoadingSpinner inline label="Loading comments" size={16} /> : <ChevronDown size={16} aria-hidden="true" />}
-                {!isFetching && 'Load more comments'}
+              <Button variant="secondary" onClick={handleLoadMore} isLoading={isFetching} loadingLabel="Loading comments">
+                <ChevronDown size={16} aria-hidden="true" />
+                Load more comments
               </Button>
             </div>
           )}
@@ -136,7 +137,7 @@ const CommentModal = ({ isOpen, onClose, post }: CommentModalProps) => {
               className={cn('comments-composer__input', emptyError && 'comments-composer__input--error')}
               maxLength={1000}
             />
-            <Button type="submit" className="button--icon" aria-label={replyTarget ? 'Post reply' : 'Post comment'}>
+            <Button type="submit" className="button--icon" isLoading={isPosting} loadingLabel={replyTarget ? 'Posting reply' : 'Posting comment'} aria-label={replyTarget ? 'Post reply' : 'Post comment'}>
               <Send size={18} aria-hidden="true" />
             </Button>
           </div>

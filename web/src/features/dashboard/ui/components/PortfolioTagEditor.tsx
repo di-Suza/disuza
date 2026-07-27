@@ -1,6 +1,8 @@
 import { Plus, X, type LucideIcon } from 'lucide-react';
 import { useMemo, useRef, useState, type KeyboardEvent } from 'react';
 
+import LoadingSpinner from '@/shared/ui/LoadingSpinner';
+
 type PortfolioTagEditorProps = {
   actionNoun?: string;
   countLabel: string;
@@ -80,7 +82,7 @@ const PortfolioTagEditor = ({
         <label htmlFor={`portfolio-${label.toLowerCase()}`}>
           {label}<span>*</span>
         </label>
-        <small>{isSaving ? 'saving...' : 'Up to date!'}</small>
+        <small>{isSaving ? <LoadingSpinner inline label="Saving portfolio" size={13} /> : 'Up to date!'}</small>
       </div>
 
       <div

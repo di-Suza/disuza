@@ -1,4 +1,4 @@
-import { Check, CheckCheck, CircleX, Clock3, Flag, MoreVertical, Undo2 } from 'lucide-react';
+import { Check, CheckCheck, CircleX, Clock3, Flag, Loader2, MoreVertical, Undo2 } from 'lucide-react';
 import { lazy, memo, Suspense, useEffect, useRef, useState } from 'react';
 
 import { formatChatMessageTime, getFeedbackMediaUrl, getSharedPostMediaUrl } from '@/features/messages/model/chat.helpers';
@@ -103,8 +103,8 @@ const MessageItem = ({ message, senderName }: MessageItemProps) => {
                     }}
                     disabled={isUnsendLoading}
                   >
-                    <Undo2 size={16} aria-hidden="true" />
-                    {isUnsendLoading ? 'Unsending...' : 'Unsend'}
+                    {isUnsendLoading ? <Loader2 className="spin" size={16} aria-hidden="true" /> : <Undo2 size={16} aria-hidden="true" />}
+                    {!isUnsendLoading && 'Unsend'}
                   </button>
                 ) : (
                   <button

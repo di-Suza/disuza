@@ -1,4 +1,4 @@
-import { Code2, DoorOpen, Loader2, Lock, RefreshCw, UserRound, Users } from 'lucide-react';
+import { Code2, DoorOpen, Lock, RefreshCw, UserRound, Users } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 import {
@@ -80,9 +80,9 @@ const DashboardRoomsPanel = () => {
         <div>
           <h2>Your Rooms</h2>
         </div>
-        <Button className="dashboard-rooms-v1__personal-button" onClick={handleOpenPersonalRoom} disabled={isPersonalLoading}>
-          {isPersonalLoading ? <Loader2 className="spin" size={16} aria-hidden="true" /> : <Code2 size={16} aria-hidden="true" />}
-          {isPersonalLoading ? 'Opening...' : 'Open Personal Room'}
+        <Button className="dashboard-rooms-v1__personal-button" onClick={handleOpenPersonalRoom} isLoading={isPersonalLoading} loadingLabel="Opening personal room">
+          <Code2 size={16} aria-hidden="true" />
+          Open Personal Room
         </Button>
       </header>
 
@@ -95,7 +95,7 @@ const DashboardRoomsPanel = () => {
         </div>
       ) : rooms.length > 0 ? (
         <div className="dashboard-room-list">
-          {isFetching && <p className="dashboard-room-refresh">Refreshing...</p>}
+          {isFetching && <LoadingSpinner inline className="dashboard-room-refresh" label="Refreshing rooms" size={16} />}
           {rooms.map((room) => <RoomCard key={room._id} room={room} onOpen={openRoom} />)}
         </div>
       ) : (

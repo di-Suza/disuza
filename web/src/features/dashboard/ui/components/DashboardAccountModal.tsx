@@ -1,4 +1,4 @@
-import { Loader2, Shield, Trash2, X } from 'lucide-react';
+import { Shield, Trash2, X } from 'lucide-react';
 import { useEffect, useState, type FormEvent } from 'react';
 import { createPortal } from 'react-dom';
 
@@ -115,8 +115,8 @@ const DashboardAccountModal = ({ isOpen, mode, onClose }: DashboardAccountModalP
               )}
               <footer className="report-modal__footer">
                 <Button variant="secondary" onClick={onClose}>Cancel</Button>
-                <Button variant="danger" type="submit" disabled={(!isGoogleUser && password.length < 8) || isBusy}>
-                  {isBusy ? <Loader2 className="spin" size={17} aria-hidden="true" /> : <Trash2 size={17} aria-hidden="true" />}
+                <Button variant="danger" type="submit" disabled={!isGoogleUser && password.length < 8} isLoading={isBusy} loadingLabel={isGoogleUser ? 'Sending OTP' : 'Deleting account'}>
+                  <Trash2 size={17} aria-hidden="true" />
                   {isGoogleUser ? 'Send OTP' : 'Delete account'}
                 </Button>
               </footer>
@@ -130,8 +130,8 @@ const DashboardAccountModal = ({ isOpen, mode, onClose }: DashboardAccountModalP
               </label>
               <footer className="report-modal__footer">
                 <Button variant="secondary" onClick={onClose}>Cancel</Button>
-                <Button variant="danger" type="submit" disabled={otp.trim().length < 4 || isBusy}>
-                  {isBusy ? <Loader2 className="spin" size={17} aria-hidden="true" /> : <Trash2 size={17} aria-hidden="true" />}
+                <Button variant="danger" type="submit" disabled={otp.trim().length < 4} isLoading={isBusy} loadingLabel="Deleting account">
+                  <Trash2 size={17} aria-hidden="true" />
                   Delete account
                 </Button>
               </footer>

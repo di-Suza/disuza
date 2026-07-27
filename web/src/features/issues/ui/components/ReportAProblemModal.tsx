@@ -1,4 +1,4 @@
-import { AlertCircle, Loader2, X } from 'lucide-react';
+import { AlertCircle, X } from 'lucide-react';
 import { createPortal } from 'react-dom';
 
 import { useReportAProblemModal } from '@/features/issues/ui/hooks/useReportAProblemModal';
@@ -70,9 +70,9 @@ const ReportAProblemModal = ({ isOpen, onClose }: ReportAProblemModalProps) => {
 
         <footer className="report-modal__footer">
           <Button variant="secondary" onClick={handleClose}>Cancel</Button>
-          <Button variant="danger" onClick={handleSubmit} disabled={!description.trim() || isSubmitting}>
-            {isSubmitting ? <Loader2 className="spin" size={17} aria-hidden="true" /> : <AlertCircle size={17} aria-hidden="true" />}
-            {isSubmitting ? 'Submitting...' : 'Submit Report'}
+          <Button variant="danger" onClick={handleSubmit} disabled={!description.trim()} isLoading={isSubmitting} loadingLabel="Submitting report">
+            <AlertCircle size={17} aria-hidden="true" />
+            Submit Report
           </Button>
         </footer>
       </section>

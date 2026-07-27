@@ -232,8 +232,7 @@ const PostAnalyticsModal = ({ isOpen, onClose, postId }: PostAnalyticsModalProps
           </div>
 
           {hasMore && (
-            <Button variant="secondary" className="post-analytics-modal__load-more" onClick={() => fetchAnalytics(activeTab, page + 1, true)} disabled={isFetching}>
-              {isFetching ? <Loader2 className="spin" size={16} aria-hidden="true" /> : null}
+            <Button variant="secondary" className="post-analytics-modal__load-more" onClick={() => fetchAnalytics(activeTab, page + 1, true)} isLoading={isFetching} loadingLabel="Loading analytics">
               Load more
             </Button>
           )}

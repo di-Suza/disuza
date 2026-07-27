@@ -157,8 +157,7 @@ const BlockConfirmModal = ({
         <p>They will not be able to follow you, message you, send collab requests, or interact with your profile until you unblock them.</p>
         <footer className="report-modal__footer">
           <Button variant="secondary" onClick={onClose} disabled={isLoading}>Cancel</Button>
-          <Button variant="danger" onClick={onConfirm} disabled={isLoading}>
-            {isLoading && <Loader2 className="spin" size={17} aria-hidden="true" />}
+          <Button variant="danger" onClick={onConfirm} isLoading={isLoading} loadingLabel="Blocking user">
             Block
           </Button>
         </footer>
@@ -272,8 +271,8 @@ const ProfilePage = () => {
               <h1>{profileUser.userName}</h1>
               <p className="profile-warning">You blocked this user.</p>
             </div>
-            <Button onClick={handleUnblock} disabled={isMutating} className="profile-hero__unblock">
-              {isMutating ? <Loader2 className="spin" size={17} aria-hidden="true" /> : <LockOpen size={18} aria-hidden="true" />}
+            <Button onClick={handleUnblock} className="profile-hero__unblock" isLoading={isMutating} loadingLabel="Unblocking user">
+              <LockOpen size={18} aria-hidden="true" />
               Unblock User
             </Button>
           </div>
@@ -341,7 +340,7 @@ const ProfilePage = () => {
                 </Button>
               ) : (
                 <>
-                  <Button onClick={handleFollowToggle} disabled={isMutating} variant={profileUser.isFollowed ? 'secondary' : 'primary'} className="profile-hero__follow">
+                  <Button onClick={handleFollowToggle} variant={profileUser.isFollowed ? 'secondary' : 'primary'} className="profile-hero__follow" isLoading={isMutating} loadingLabel={profileUser.isFollowed ? 'Unfollowing user' : 'Following user'}>
                     {profileUser.isFollowed ? <Users size={18} aria-hidden="true" /> : <UserPlus size={18} aria-hidden="true" />}
                     {profileUser.isFollowed ? 'Following' : 'Follow'}
                   </Button>
@@ -371,7 +370,7 @@ const ProfilePage = () => {
             {profileUser.about && (
               <ProfileSection icon={User} title="About">
                 <p className="profile-copy">{profileUser.about}</p>
-                {isFetching && <small className="profile-refresh-note">Refreshing profile...</small>}
+                {isFetching && <ProfileSectionLoader />}
               </ProfileSection>
             )}
 

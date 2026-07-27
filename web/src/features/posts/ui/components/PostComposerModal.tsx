@@ -8,7 +8,6 @@ import {
   GitFork,
   ImagePlus,
   Link2,
-  Loader2,
   Plus,
   Send,
   Settings,
@@ -71,7 +70,7 @@ const PostComposerModal = ({ isOpen, isPostLoading = false, mode, onClose, post 
 
   if (!isOpen) return null;
 
-  const submitLabel = isSubmitting ? 'Saving...' : isEditMode ? 'Save changes' : 'Post';
+  const submitLabel = isEditMode ? 'Save changes' : 'Post';
   const showProjectSection = !isEditMode || isEditingProjectPost;
   const projectLinksRequired = canEditProjectLinks && (isProjectPost || isEditingProjectPost);
   const projectLinksComplete = Boolean(projectLinks.liveDemoUrl.trim() && projectLinks.repositoryUrl.trim());
@@ -309,8 +308,8 @@ const PostComposerModal = ({ isOpen, isPostLoading = false, mode, onClose, post 
                 )}
               </div>
 
-              <Button type="submit" disabled={!isPostEnabled}>
-                {isSubmitting ? <Loader2 className="spin" size={17} aria-hidden="true" /> : <Send size={17} aria-hidden="true" />}
+              <Button type="submit" disabled={!isPostEnabled} isLoading={isSubmitting} loadingLabel={isEditMode ? 'Saving post' : 'Publishing post'}>
+                <Send size={17} aria-hidden="true" />
                 {submitLabel}
               </Button>
             </footer>

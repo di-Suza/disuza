@@ -103,7 +103,8 @@ const DashboardReportsModal = ({ isOpen, onClose }: DashboardReportsModalProps) 
               {data?.hasMore && (
                 <div className="dashboard-reports-v1__load-more">
                   <button type="button" onClick={() => setPage((current) => current + 1)} disabled={isFetching}>
-                    {isFetching ? <Loader2 className="spin" size={16} /> : <RotateCw size={16} />}Load more
+                    {isFetching ? <Loader2 className="spin" size={16} /> : <RotateCw size={16} />}
+                    {!isFetching && 'Load more'}
                   </button>
                 </div>
               )}

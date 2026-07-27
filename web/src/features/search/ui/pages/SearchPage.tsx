@@ -83,7 +83,6 @@ const SearchPage = () => {
             {isSearchPending ? (
               <section className="post-empty-state search-state">
                 <Loader2 className="spin" size={24} aria-hidden="true" />
-                <p>Searching...</p>
               </section>
             ) : totalUsers + totalPosts === 0 ? (
               <section className="post-empty-state search-state">
@@ -107,8 +106,8 @@ const SearchPage = () => {
                     </div>
                     {hasMoreSearchUsers && (
                       <div className="search-load-more">
-                        <Button variant="secondary" onClick={handleLoadMoreSearchUsers} disabled={isFetching}>
-                          {isFetching ? <Loader2 className="spin" size={18} aria-hidden="true" /> : <RefreshCw size={18} aria-hidden="true" />}
+                        <Button variant="secondary" onClick={handleLoadMoreSearchUsers} isLoading={isFetching} loadingLabel="Loading users">
+                          <RefreshCw size={18} aria-hidden="true" />
                           Load more users
                         </Button>
                       </div>
@@ -131,8 +130,8 @@ const SearchPage = () => {
                     </div>
                     {hasMoreSearchPosts && (
                       <div className="search-load-more">
-                        <Button variant="secondary" onClick={handleLoadMoreSearchPosts} disabled={isFetching}>
-                          {isFetching ? <Loader2 className="spin" size={18} aria-hidden="true" /> : <RefreshCw size={18} aria-hidden="true" />}
+                        <Button variant="secondary" onClick={handleLoadMoreSearchPosts} isLoading={isFetching} loadingLabel="Loading posts">
+                          <RefreshCw size={18} aria-hidden="true" />
                           Load more posts
                         </Button>
                       </div>
@@ -179,8 +178,8 @@ const SearchPage = () => {
               )}
               {hasMoreTrendingPosts && (
                 <div className="search-load-more">
-                  <Button variant="secondary" onClick={handleLoadMoreTrendingPosts} disabled={isDiscoverFetching}>
-                    {isDiscoverFetching ? <Loader2 className="spin" size={18} aria-hidden="true" /> : <RefreshCw size={18} aria-hidden="true" />}
+                  <Button variant="secondary" onClick={handleLoadMoreTrendingPosts} isLoading={isDiscoverFetching} loadingLabel="Loading posts">
+                    <RefreshCw size={18} aria-hidden="true" />
                     Load more posts
                   </Button>
                 </div>
