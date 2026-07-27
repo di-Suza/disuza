@@ -62,19 +62,15 @@ const NotificationsPage = () => {
               {unreadCount > 0 && <small>{unreadCount > 99 ? '99+' : unreadCount}</small>}
             </span>
             <div>
-              <p className="state-panel__eyebrow">Activity Center</p>
               <h1>Notifications</h1>
               <p>{unreadCount > 0 ? `${unreadCount} unread notification${unreadCount > 1 ? 's' : ''}` : "You're all caught up"}</p>
             </div>
           </div>
 
           <div className="notifications-header__actions">
-            <Button variant="ghost" className="button--icon" onClick={() => refetch()} disabled={isFetching} aria-label="Refresh notifications">
-              {isFetching ? <Loader2 className="spin" size={18} aria-hidden="true" /> : <RefreshCw size={18} aria-hidden="true" />}
-            </Button>
             {notifications.length > 0 && (
-              <Button variant="danger" onClick={handleDeleteAllNotifications} disabled={isDeletingAll}>
-                {isDeletingAll ? <Loader2 className="spin" size={18} aria-hidden="true" /> : <Trash2 size={18} aria-hidden="true" />}
+              <Button variant="danger" onClick={handleDeleteAllNotifications} isLoading={isDeletingAll} loadingLabel="Clearing notifications">
+                <Trash2 size={18} aria-hidden="true" />
                 Clear all
               </Button>
             )}
@@ -129,7 +125,7 @@ const NotificationsPage = () => {
                           onClick={(event) => handleAcceptCollabFromNotification(event, notification)}
                         >
                           {activeActionId === notification._id ? <Loader2 className="spin" size={14} aria-hidden="true" /> : <Check size={14} aria-hidden="true" />}
-                          {activeActionId === notification._id ? 'Accepting...' : 'Accept Request'}
+                          {activeActionId !== notification._id && 'Accept Request'}
                         </button>
                       )}
                       {notification.type === 'COLLAB_ACCEPTED' && (
@@ -140,7 +136,7 @@ const NotificationsPage = () => {
                           onClick={(event) => handleEnterRoomFromNotification(event, notification)}
                         >
                           {activeActionId === notification._id ? <Loader2 className="spin" size={14} aria-hidden="true" /> : <LogIn size={14} aria-hidden="true" />}
-                          {activeActionId === notification._id ? 'Opening...' : 'Enter Room'}
+                          {activeActionId !== notification._id && 'Enter Room'}
                         </button>
                       )}
                       {notification.type === 'GROUP_INVITE' && (
@@ -151,7 +147,7 @@ const NotificationsPage = () => {
                           onClick={(event) => handleAcceptGroupInviteFromNotification(event, notification)}
                         >
                           {activeActionId === notification._id ? <Loader2 className="spin" size={14} aria-hidden="true" /> : <Check size={14} aria-hidden="true" />}
-                          {activeActionId === notification._id ? 'Joining...' : 'Accept Invite'}
+                          {activeActionId !== notification._id && 'Accept Invite'}
                         </button>
                       )}
                     </div>
@@ -178,8 +174,8 @@ const NotificationsPage = () => {
 
             {notificationsData?.hasMore && (
               <div className="notifications-load-more">
-                <Button variant="secondary" onClick={handleLoadMore} disabled={isFetching}>
-                  {isFetching ? <Loader2 className="spin" size={18} aria-hidden="true" /> : <RefreshCw size={18} aria-hidden="true" />}
+                <Button variant="secondary" onClick={handleLoadMore} isLoading={isFetching} loadingLabel="Loading notifications">
+                  <RefreshCw size={18} aria-hidden="true" />
                   Load more
                 </Button>
               </div>

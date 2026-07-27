@@ -376,16 +376,105 @@
   }
 
   .search-header {
-    align-items: stretch;
-    flex-direction: column;
+    align-items: center;
+    flex-direction: row;
+  }
+
+  .search-header > div:first-child {
+    min-width: 0;
+  }
+
+  .search-header h1 {
+    font-size: 28px;
+    line-height: 1.05;
+  }
+
+  .search-header p:last-child {
+    font-size: 12px;
+    line-height: 1.35;
   }
 
   .search-header__actions {
-    justify-content: flex-start;
+    flex: 0 0 auto;
+    justify-content: flex-end;
   }
 
   .search-user-grid {
     grid-template-columns: 1fr;
+  }
+
+  .search-user-grid--contributors {
+    display: flex;
+    grid-template-columns: none;
+    gap: 12px;
+    margin-inline: -2px;
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+    padding: 2px 2px 8px;
+    scroll-padding-inline: 2px;
+    scroll-snap-type: x proximity;
+  }
+
+  .search-user-grid--contributors::-webkit-scrollbar {
+    height: 4px;
+  }
+
+  .search-user-grid--contributors .search-user-card {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "avatar"
+      "body"
+      "score";
+    justify-items: center;
+    flex: 0 0 132px;
+    width: 132px;
+    min-height: 178px;
+    gap: 8px;
+    padding: 14px 10px 12px;
+    scroll-snap-align: start;
+    text-align: center;
+  }
+
+  .search-user-grid--contributors .search-user-card__rank {
+    top: 8px;
+    right: 8px;
+    min-height: 22px;
+    border: 0;
+    padding: 0;
+    color: var(--text-primary);
+    font-size: 10px;
+    background: transparent;
+  }
+
+  .search-user-grid--contributors .search-user-card__rank svg {
+    display: none;
+  }
+
+  .search-user-grid--contributors .search-user-card__avatar {
+    width: 72px;
+    height: 72px;
+    border-radius: 999px;
+  }
+
+  .search-user-grid--contributors .search-user-card__body {
+    justify-items: center;
+    padding-right: 0;
+  }
+
+  .search-user-grid--contributors .search-user-card__body strong {
+    max-width: 108px;
+    font-size: 13px;
+  }
+
+  .search-user-grid--contributors .search-user-card__body small {
+    display: none;
+  }
+
+  .search-user-grid--contributors .search-user-card__score {
+    min-height: 28px;
+    width: 100%;
+    padding-inline: 8px;
+    font-size: 11px;
   }
 
   .search-post-grid {
@@ -395,16 +484,38 @@
 
 @media (max-width: 460px) {
   .search-box {
-    grid-template-columns: 22px minmax(0, 1fr) 40px;
+    grid-template-columns: 18px minmax(0, 1fr) auto;
+    gap: 7px;
     padding-inline: 10px;
+  }
+
+  .search-box .button--icon {
+    min-width: 30px;
+    width: 30px;
+    height: 30px;
+  }
+
+  .search-box .input {
+    font-size: 12px;
   }
 
   .search-user-card {
     grid-template-columns: 46px minmax(0, 1fr);
   }
 
+  .search-user-grid--contributors .search-user-card {
+    flex-basis: 124px;
+    width: 124px;
+    min-height: 170px;
+  }
+
   .search-user-card__avatar {
     width: 46px;
     height: 46px;
+  }
+
+  .search-user-grid--contributors .search-user-card__avatar {
+    width: 66px;
+    height: 66px;
   }
 }

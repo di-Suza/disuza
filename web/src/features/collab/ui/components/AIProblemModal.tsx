@@ -133,7 +133,7 @@ const AIProblemModal = ({ isOpen, onClose, roomId, addedProblemIds = [] }: AIPro
                 <span>{prompt.trim().length}/1200</span>
                 <button type="button" className="collab-ai-generate-button" onClick={handleGenerateProblem} disabled={isGenerating}>
                   {isGenerating ? <Loader2 className="spin" size={16} aria-hidden="true" /> : <Wand2 size={16} aria-hidden="true" />}
-                  <span>{isGenerating ? 'Generating' : 'Generate'}</span>
+                  {!isGenerating && <span>Generate</span>}
                 </button>
               </div>
             </section>
@@ -193,8 +193,8 @@ const AIProblemModal = ({ isOpen, onClose, roomId, addedProblemIds = [] }: AIPro
                   )}
 
                   {hasMore && (
-                    <button type="button" className="collab-load-more" onClick={() => setPage((currentPage) => currentPage + 1)}>
-                      Load more
+                    <button type="button" className="collab-load-more" onClick={() => setPage((currentPage) => currentPage + 1)} disabled={isFetching}>
+                      {isFetching ? <LoadingSpinner inline label="Loading AI problems" size={16} /> : 'Load more'}
                     </button>
                   )}
                 </>

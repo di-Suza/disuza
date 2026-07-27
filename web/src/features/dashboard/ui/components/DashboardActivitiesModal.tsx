@@ -168,8 +168,8 @@ const DashboardActivitiesModal = ({ isOpen, onClose, type }: DashboardActivities
         <footer className="report-modal__footer">
           <Button variant="secondary" onClick={onClose}>Close</Button>
           {activitiesType === type && currentData?.hasMore && (
-            <Button onClick={() => setPage((current) => current + 1)} disabled={isFetching}>
-              {isFetching ? <Loader2 className="spin" size={17} aria-hidden="true" /> : <Activity size={17} aria-hidden="true" />}
+            <Button onClick={() => setPage((current) => current + 1)} isLoading={isFetching} loadingLabel="Loading activity">
+              <Activity size={17} aria-hidden="true" />
               Load more
             </Button>
           )}

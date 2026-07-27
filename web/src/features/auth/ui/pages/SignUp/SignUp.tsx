@@ -165,8 +165,8 @@ const SignUpPage = () => {
                   )}
                 </label>
 
-                <Button type="submit" disabled={isBusy}>
-                  {isSendOtpLoading ? "Sending OTP..." : "Create account"}
+                <Button type="submit" disabled={isBusy} isLoading={isSendOtpLoading} loadingLabel="Sending OTP">
+                  Create account
                   <ArrowRight size={18} aria-hidden="true" />
                 </Button>
               </form>
@@ -179,9 +179,11 @@ const SignUpPage = () => {
                 variant="secondary"
                 onClick={handleOAuthSignUp}
                 disabled={isBusy}
+                isLoading={isGoogleLoading}
+                loadingLabel="Connecting with Google"
               >
                 <GoogleIcon />
-                {isGoogleLoading ? "Connecting..." : "Continue with Google"}
+                Continue with Google
               </Button>
             </section>
           </ErrorBoundary>

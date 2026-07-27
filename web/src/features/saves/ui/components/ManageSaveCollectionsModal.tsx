@@ -1,4 +1,4 @@
-import { Check, FolderOpen, ImageIcon, Loader2, Plus, X } from 'lucide-react';
+import { Check, FolderOpen, ImageIcon, Plus, X } from 'lucide-react';
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { createPortal } from 'react-dom';
 
@@ -115,8 +115,8 @@ const ManageSaveCollectionsModal = ({ isOpen, onClose, onSaved, postId }: Manage
                 autoFocus
                 maxLength={50}
               />
-              <Button type="submit" disabled={isCreating}>
-                {isCreating ? <Loader2 className="spin" size={17} aria-hidden="true" /> : <Check size={17} aria-hidden="true" />}
+              <Button type="submit" isLoading={isCreating} loadingLabel="Creating collection">
+                <Check size={17} aria-hidden="true" />
                 Create
               </Button>
               <Button variant="ghost" className="button--icon" onClick={() => setIsAdding(false)} aria-label="Cancel collection create">
@@ -168,8 +168,8 @@ const ManageSaveCollectionsModal = ({ isOpen, onClose, onSaved, postId }: Manage
 
         <footer className="saves-modal__footer">
           <Button variant="secondary" onClick={onClose}>Cancel</Button>
-          <Button onClick={handleSaveToCollection} disabled={isChanging || !selectedCollectionId}>
-            {isChanging ? <Loader2 className="spin" size={17} aria-hidden="true" /> : <Check size={17} aria-hidden="true" />}
+          <Button onClick={handleSaveToCollection} disabled={!selectedCollectionId} isLoading={isChanging} loadingLabel="Saving collection">
+            <Check size={17} aria-hidden="true" />
             Save
           </Button>
         </footer>

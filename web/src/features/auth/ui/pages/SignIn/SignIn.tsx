@@ -130,17 +130,17 @@ const SignInPage = () => {
                 Forgot password?
               </button>
 
-              <Button type="submit" disabled={isBusy}>
-                {isLoginLoading ? 'Signing in...' : 'Sign in'}
+              <Button type="submit" disabled={isBusy} isLoading={isLoginLoading} loadingLabel="Signing in">
+                Sign in
                 <ArrowRight size={18} aria-hidden="true" />
               </Button>
             </form>
 
             <div className="auth-divider"><span>or</span></div>
 
-            <Button variant="secondary" onClick={handleOAuthSignIn} disabled={isBusy}>
+            <Button variant="secondary" onClick={handleOAuthSignIn} disabled={isBusy} isLoading={isGoogleLoading} loadingLabel="Connecting with Google">
               <GoogleIcon />
-              {isGoogleLoading ? 'Connecting...' : 'Continue with Google'}
+              Continue with Google
             </Button>
           </section>
           </ErrorBoundary>

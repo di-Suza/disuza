@@ -1,4 +1,4 @@
-import { PanelLeftOpen, PanelRightOpen } from 'lucide-react';
+import { PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import * as Y from 'yjs';
@@ -445,6 +445,27 @@ const CollabRoomPage = () => {
   return (
     <main className="collab-room-page">
       <div ref={roomShellRef} className="collab-room-shell">
+        <div className="collab-mobile-panel-controls" aria-label="Room panel controls">
+          <button
+            type="button"
+            className="collab-icon-button"
+            onClick={() => setIsLeftPanelCollapsed((isCollapsed) => !isCollapsed)}
+            aria-label={isLeftPanelCollapsed ? 'Open problems panel' : 'Close problems panel'}
+          >
+            {isLeftPanelCollapsed ? <PanelLeftOpen size={18} aria-hidden="true" /> : <PanelLeftClose size={18} aria-hidden="true" />}
+          </button>
+          {!isSoloRoom && (
+            <button
+              type="button"
+              className="collab-icon-button"
+              onClick={() => setIsRightPanelCollapsed((isCollapsed) => !isCollapsed)}
+              aria-label={isRightPanelCollapsed ? 'Open chat panel' : 'Close chat panel'}
+            >
+              {isRightPanelCollapsed ? <PanelRightOpen size={18} aria-hidden="true" /> : <PanelRightClose size={18} aria-hidden="true" />}
+            </button>
+          )}
+        </div>
+
         {isLeftPanelCollapsed ? (
           <div className="collab-collapse-rail is-left">
             <button type="button" className="collab-icon-button" onClick={() => setIsLeftPanelCollapsed(false)} aria-label="Open problems panel">

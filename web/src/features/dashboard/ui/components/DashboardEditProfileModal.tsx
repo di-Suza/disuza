@@ -219,8 +219,8 @@ const DashboardEditProfileModal = ({
                     Forgot Password?
                   </button>
 
-                  <Button type="submit" disabled={!passwordsMatch || isPasswordUpdating}>
-                    {isPasswordUpdating ? 'Updating Password...' : 'Update Password'}
+                  <Button type="submit" disabled={!passwordsMatch} isLoading={isPasswordUpdating} loadingLabel="Updating password">
+                    Update Password
                   </Button>
                 </form>
               )}
@@ -229,7 +229,7 @@ const DashboardEditProfileModal = ({
         </div>
 
         <footer className="dashboard-edit-v1__footer">
-          <Button type="submit" form="dashboard-edit-identity-form" disabled={isBusy}>Update</Button>
+          <Button type="submit" form="dashboard-edit-identity-form" isLoading={isBusy} loadingLabel="Updating profile">Update</Button>
         </footer>
       </section>
     </div>,

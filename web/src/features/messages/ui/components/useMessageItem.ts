@@ -29,7 +29,11 @@ export const useMessageItem = ({ message }: UseMessageItemArgs) => {
       .filter((recipientId) => recipientId && recipientId !== userId)).size
     : 0;
   const deliveryStatus = senderIsMe
-    ? seenCount > 0
+    ? message.sendState === 'failed'
+      ? 'failed'
+      : message.sendState === 'pending'
+        ? 'pending'
+        : seenCount > 0
       ? 'seen'
       : deliveredCount > 0
         ? 'delivered'

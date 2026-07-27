@@ -1,4 +1,4 @@
-import { Code2, ImagePlus, Link2, Loader2, MoreHorizontal, Plus, Send, Trash2, UserRound, Video, X } from 'lucide-react';
+import { Code2, ImagePlus, Link2, MoreHorizontal, Plus, Send, Trash2, UserRound, Video, X } from 'lucide-react';
 import { memo, useId, useState } from 'react';
 
 import { useAppSelector } from '@/app/store/hooks';
@@ -230,8 +230,8 @@ const InlinePostComposer = () => {
           {mediaItems.some((item) => item.mediaType === 'video') && <span><Video size={16} aria-hidden="true" />Video ready</span>}
         </div>
 
-        <Button type="submit" disabled={isSubmitting || !hasComposerContent}>
-          {isSubmitting ? <Loader2 className="spin" size={17} aria-hidden="true" /> : <Send size={17} aria-hidden="true" />}
+        <Button type="submit" disabled={!hasComposerContent} isLoading={isSubmitting} loadingLabel="Publishing post">
+          <Send size={17} aria-hidden="true" />
           Post
         </Button>
       </footer>

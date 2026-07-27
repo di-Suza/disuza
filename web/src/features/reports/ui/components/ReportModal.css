@@ -52,3 +52,167 @@
   justify-content: flex-end;
   gap: 10px;
 }
+
+@media (max-width: 640px) {
+  .report-modal-backdrop {
+    padding: 10px;
+  }
+
+  .report-modal {
+    display: flex;
+    width: min(100%, calc(100vw - 20px));
+    max-height: min(620px, calc(100dvh - 20px));
+    flex-direction: column;
+    gap: 0;
+    overflow: hidden;
+    border-radius: 10px;
+    padding: 0;
+  }
+
+  .report-modal__header {
+    display: grid;
+    grid-template-columns: 34px minmax(0, 1fr) 32px;
+    flex: 0 0 auto;
+    align-items: center;
+    gap: 8px;
+    border-bottom: 1px solid var(--border-secondary);
+    padding: 10px 12px;
+  }
+
+  .report-modal__header > div {
+    min-width: 0;
+  }
+
+  .report-modal__header h1 {
+    overflow: hidden;
+    margin-top: 2px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 16px;
+  }
+
+  .report-modal__header .state-panel__eyebrow {
+    font-size: 10px;
+    letter-spacing: 0.12em;
+  }
+
+  .report-modal__header .button--icon {
+    width: 32px;
+    min-width: 32px;
+    min-height: 32px;
+    border-radius: 8px;
+    padding: 0;
+  }
+
+  .report-modal__icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+  }
+
+  .report-modal__body {
+    flex: 1 1 auto;
+    gap: 10px;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 12px;
+  }
+
+  .report-modal__body p {
+    font-size: 12px;
+    line-height: 1.45;
+  }
+
+  .report-modal .field {
+    gap: 6px;
+  }
+
+  .report-modal .field > span {
+    font-size: 11px;
+  }
+
+  .report-modal .input {
+    min-height: 38px;
+    border-radius: 8px;
+    padding: 0 10px;
+    font-size: 12px;
+  }
+
+  .report-modal__textarea {
+    min-height: 104px;
+    padding-top: 10px;
+    line-height: 1.45;
+  }
+
+  .report-modal__count {
+    font-size: 10px;
+  }
+
+  .report-modal__footer {
+    flex: 0 0 auto;
+    flex-wrap: nowrap;
+    gap: 8px;
+    justify-content: stretch;
+    border-top: 1px solid var(--border-secondary);
+    padding: 10px 12px 12px;
+  }
+
+  .report-modal__footer .button {
+    min-height: 36px;
+    flex: 1 1 0;
+    border-radius: 8px;
+    padding: 0 10px;
+    font-size: 12px;
+    white-space: nowrap;
+  }
+}
+
+@media (max-width: 420px) {
+  .report-modal-backdrop {
+    padding: 8px;
+  }
+
+  .report-modal {
+    width: min(100%, calc(100vw - 16px));
+    max-height: min(590px, calc(100dvh - 16px));
+  }
+
+  .report-modal__header {
+    grid-template-columns: 30px minmax(0, 1fr) 30px;
+    padding: 8px 10px;
+  }
+
+  .report-modal__header h1 {
+    font-size: 15px;
+  }
+
+  .report-modal__icon,
+  .report-modal__header .button--icon {
+    width: 30px;
+    height: 30px;
+    min-width: 30px;
+    min-height: 30px;
+  }
+
+  .report-modal__body {
+    padding: 10px;
+  }
+
+  .report-modal__body p {
+    font-size: 11px;
+  }
+
+  .report-modal__textarea {
+    min-height: 92px;
+  }
+
+  .report-modal__footer {
+    padding: 8px 10px 10px;
+  }
+
+  .report-modal__footer .button {
+    min-height: 34px;
+    padding: 0 8px;
+    font-size: 11px;
+  }
+}

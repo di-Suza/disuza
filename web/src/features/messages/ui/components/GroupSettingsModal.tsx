@@ -1,4 +1,4 @@
-import { Check, Loader2, Search, Trash2, UserMinus, UserRound, Users, X } from 'lucide-react';
+import { Check, Search, Trash2, UserMinus, UserRound, Users, X } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 
 import { useAppSelector } from '@/app/store/hooks';
@@ -152,8 +152,7 @@ const GroupSettingsModal = ({
           </label>
           {isAdmin && (
             <div className="messages-v1-group-settings__actions">
-              <Button onClick={handleUpdateGroup} disabled={isUpdating || !groupName.trim()}>
-                {isUpdating && <Loader2 className="spin" size={16} aria-hidden="true" />}
+              <Button onClick={handleUpdateGroup} disabled={!groupName.trim()} isLoading={isUpdating} loadingLabel="Saving group">
                 Save
               </Button>
             </div>
@@ -226,8 +225,7 @@ const GroupSettingsModal = ({
                   );
                 }) : <p className="messages-v1-group-settings__empty">No people available</p>}
               </div>
-              <Button onClick={handleInviteMembers} disabled={isInviting || selectedInviteIds.length === 0}>
-                {isInviting && <Loader2 className="spin" size={16} aria-hidden="true" />}
+              <Button onClick={handleInviteMembers} disabled={selectedInviteIds.length === 0} isLoading={isInviting} loadingLabel="Inviting members">
                 Invite selected
               </Button>
             </section>

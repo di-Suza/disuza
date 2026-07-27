@@ -1,4 +1,4 @@
-import { Loader2, TriangleAlert, X } from 'lucide-react';
+import { TriangleAlert, X } from 'lucide-react';
 import { memo, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 
@@ -64,8 +64,7 @@ const ConfirmDialog = ({
           <Button variant="secondary" onClick={onCancel} disabled={isBusy}>
             {cancelLabel}
           </Button>
-          <Button variant="danger" onClick={onConfirm} disabled={isBusy}>
-            {isBusy && <Loader2 className="spin" size={16} aria-hidden="true" />}
+          <Button variant="danger" onClick={onConfirm} isLoading={isBusy} loadingLabel={confirmLabel}>
             {confirmLabel}
           </Button>
         </footer>

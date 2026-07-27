@@ -42,6 +42,15 @@
   opacity: 0.58;
 }
 
+.button--loading {
+  cursor: wait;
+}
+
+.button__spinner {
+  margin: 0;
+  color: currentColor;
+}
+
 .button--icon {
   width: 44px;
   min-width: 44px;

@@ -186,7 +186,7 @@ const Sidebar = () => {
             aria-haspopup="menu"
             aria-label={isProfileMenuOpen ? 'Close profile actions' : 'Open profile actions'}
           >
-            <ChevronUp size={16} aria-hidden="true" />
+            <ChevronDown className={isProfileMenuOpen ? 'is-open' : undefined} size={16} aria-hidden="true" />
           </button>
           {isProfileMenuOpen && (
             <div className="app-mobile-navbar__profile-menu" role="menu">

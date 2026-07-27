@@ -19,6 +19,7 @@ import { useRef, useState, type ChangeEvent } from 'react';
 
 import Button from '@/shared/ui/Button';
 import Input from '@/shared/ui/Input';
+import LoadingSpinner from '@/shared/ui/LoadingSpinner';
 import type { UserProfile } from '@/features/users/model/user.types';
 import DashboardPortfolioPreviewModal from './DashboardPortfolioPreviewModal';
 import PortfolioTagEditor from './PortfolioTagEditor';
@@ -75,6 +76,10 @@ const interestSuggestions = [
   'Data Science',
 ];
 const languageSuggestions = ['Hindi', 'English', 'Spanish', 'French', 'German', 'Mandarin', 'Japanese', 'Korean', 'Arabic', 'Portuguese'];
+
+const SaveStatus = ({ isSaving, label }: { isSaving: boolean; label: string }) => (
+  <small>{isSaving ? <LoadingSpinner inline label="Saving portfolio" size={13} /> : label}</small>
+);
 
 const inputChange = (value: string): ChangeEvent<HTMLInputElement> => ({
   target: { value },
@@ -268,7 +273,7 @@ const DashboardPortfolioEditor = ({
               <div className="portfolio-section-v1">
                 <div className="portfolio-section-v1__label-row">
                   <label htmlFor="portfolio-headline">Headline<span>*</span></label>
-                  {focusedGeneralField === 'headline' && <small>{isBusy ? 'saving...' : 'Autosaves'}</small>}
+                  {focusedGeneralField === 'headline' && <SaveStatus isSaving={isBusy} label="Autosaves" />}
                 </div>
                 <div className="portfolio-field-v1">
                   <Sparkles size={20} aria-hidden="true" />
@@ -289,7 +294,7 @@ const DashboardPortfolioEditor = ({
               <div className="portfolio-section-v1">
                 <div className="portfolio-section-v1__label-row">
                   <label htmlFor="portfolio-about">About<span>*</span></label>
-                  {focusedGeneralField === 'about' && <small>{isBusy ? 'saving...' : 'Autosaves'}</small>}
+                  {focusedGeneralField === 'about' && <SaveStatus isSaving={isBusy} label="Autosaves" />}
                 </div>
                 <div className="portfolio-field-v1 portfolio-field-v1--textarea">
                   <FileText size={20} aria-hidden="true" />
@@ -311,7 +316,7 @@ const DashboardPortfolioEditor = ({
               <div className="portfolio-section-v1">
                 <div className="portfolio-section-v1__label-row">
                   <label>Address</label>
-                  {addressIsFocused && <small>{isBusy ? 'saving...' : 'Autosaves'}</small>}
+                  {addressIsFocused && <SaveStatus isSaving={isBusy} label="Autosaves" />}
                 </div>
                 <div className="portfolio-address-grid-v1">
                   <label htmlFor="portfolio-city">
@@ -374,7 +379,7 @@ const DashboardPortfolioEditor = ({
                 <div className="portfolio-section-v1">
                   <div className="portfolio-section-v1__label-row">
                     <label>Handles<span>*</span></label>
-                    <small>{isBusy ? 'saving...' : 'Up to date!'}</small>
+                    <SaveStatus isSaving={isBusy} label="Up to date!" />
                   </div>
 
                   <div className="portfolio-timeline-editor-v1">
@@ -457,7 +462,7 @@ const DashboardPortfolioEditor = ({
                 <div className="portfolio-section-v1">
                   <div className="portfolio-section-v1__label-row">
                     <label>Experience<span>*</span></label>
-                    <small>{isBusy ? 'saving...' : 'Up to date!'}</small>
+                    <SaveStatus isSaving={isBusy} label="Up to date!" />
                   </div>
 
                   <div className="portfolio-timeline-editor-v1">
@@ -510,7 +515,7 @@ const DashboardPortfolioEditor = ({
                 <div className="portfolio-section-v1">
                   <div className="portfolio-section-v1__label-row">
                     <label>Education<span>*</span></label>
-                    <small>{isBusy ? 'saving...' : 'Up to date!'}</small>
+                    <SaveStatus isSaving={isBusy} label="Up to date!" />
                   </div>
 
                   <div className="portfolio-timeline-editor-v1">

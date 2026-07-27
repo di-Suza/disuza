@@ -1,4 +1,4 @@
-import { Check, Loader2, Search, UserRound, Users, X } from 'lucide-react';
+import { Check, Search, UserRound, Users, X } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 
@@ -16,6 +16,7 @@ import { useToast } from '@/shared/hooks/useToast';
 type ConversationStartMode = 'chat' | 'group';
 
 type ConversationStartModalProps = {
+  existingConversations?: ChatConversation[];
   isOpen: boolean;
   mode: ConversationStartMode;
   onClose: () => void;
@@ -29,7 +30,33 @@ const getAvatarUrl = (user: UserProfile) => {
 
 const getInitial = (user: UserProfile) => user.userName?.trim().charAt(0).toUpperCase() || 'U';
 
-const ConversationStartModal = ({ isOpen, mode, onClose, onConversationReady }: ConversationStartModalProps) => {
+const getDirectConversationUserIds = (conversations: ChatConversation[], currentUserId?: string) => {
+  const userIds = new Set<string>();
+
+  conversations.forEach((conversation) => {
+    if (conversation.isGroup) return;
+
+    const otherUserId = conversation.otherUser?._id;
+    if (otherUserId) {
+      userIds.add(otherUserId);
+      return;
+    }
+
+    conversation.participants?.forEach((participant) => {
+      if (participant._id && participant._id !== currentUserId) userIds.add(participant._id);
+    });
+  });
+
+  return userIds;
+};
+
+const ConversationStartModal = ({
+  existingConversations = [],
+  isOpen,
+  mode,
+  onClose,
+  onConversationReady,
+}: ConversationStartModalProps) => {
   const currentUserId = useAppSelector((state) => state.auth.user?._id);
   const { showError, showSuccess } = useToast();
   const [query, setQuery] = useState('');
@@ -47,6 +74,10 @@ const ConversationStartModal = ({ isOpen, mode, onClose, onConversationReady }: 
   const [createGroup, { isLoading: isCreatingGroup }] = useCreateGroupMutation();
   const isGroupMode = mode === 'group';
   const isSubmitting = isStartingConversation || isCreatingGroup;
+  const existingDirectChatUserIds = useMemo(
+    () => getDirectConversationUserIds(existingConversations, currentUserId),
+    [currentUserId, existingConversations],
+  );
 
   const users = useMemo(() => {
     const userMap = new Map<string, UserProfile>();
@@ -55,10 +86,12 @@ const ConversationStartModal = ({ isOpen, mode, onClose, onConversationReady }: 
       if (user._id && user._id !== currentUserId) userMap.set(user._id, user);
     });
 
-    return Array.from(userMap.values()).sort((first, second) => (
+    return Array.from(userMap.values()).filter((user) => (
+      isGroupMode || !existingDirectChatUserIds.has(user._id)
+    )).sort((first, second) => (
       (first.userName || '').localeCompare(second.userName || '')
     ));
-  }, [currentUserId, followersData?.followers, followingData?.following]);
+  }, [currentUserId, existingDirectChatUserIds, followersData?.followers, followingData?.following, isGroupMode]);
 
   const filteredUsers = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
@@ -204,9 +237,10 @@ const ConversationStartModal = ({ isOpen, mode, onClose, onConversationReady }: 
           <small>{isGroupMode ? `${selectedIds.length}/2 minimum selected` : selectedIds.length ? 'Ready to start' : 'Select one person'}</small>
           <Button
             onClick={handleSubmit}
-            disabled={isSubmitting || (isGroupMode ? selectedIds.length < 2 : selectedIds.length !== 1)}
+            disabled={isGroupMode ? selectedIds.length < 2 : selectedIds.length !== 1}
+            isLoading={isSubmitting}
+            loadingLabel={isGroupMode ? 'Creating group' : 'Starting conversation'}
           >
-            {isSubmitting && <Loader2 className="spin" size={16} aria-hidden="true" />}
             {isGroupMode ? 'Create Group' : 'Start Messaging'}
           </Button>
         </footer>

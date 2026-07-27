@@ -1810,6 +1810,16 @@
   }
 }
 
+@keyframes save-tooltip-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
 .feed-navbar-exact {
   position: fixed;
   top: 0;
@@ -2142,10 +2152,17 @@
 }
 
 .recommendation-slider {
+  display: grid;
+  gap: 12px;
   width: min(100%, 640px);
   max-width: 640px;
   margin: 16px auto;
-  padding: 0 8px;
+  overflow: hidden;
+  border: 1px solid var(--border-primary);
+  border-radius: 12px;
+  background: var(--surface);
+  padding: 14px;
+  box-shadow: var(--shadow-media);
 }
 
 .recommendation-slider > .recommendation-header,
@@ -2155,24 +2172,16 @@
 
 .recommendation-slider .recommendation-header {
   margin: 0;
-  padding: 16px 16px 0;
-  border: 1px solid var(--border-primary);
-  border-bottom: 0;
-  border-radius: 12px 12px 0 0;
-  background: var(--surface);
-  box-shadow: var(--shadow-media);
+  padding: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
 .recommendation-slider__track {
   display: flex;
   gap: 12px;
   overflow-x: auto;
-  border: 1px solid var(--border-primary);
-  border-top: 0;
-  border-radius: 0 0 12px 12px;
-  background: var(--surface);
-  padding: 12px 16px 16px;
-  box-shadow: var(--shadow-media);
+  padding: 0 2px 2px 0;
   scrollbar-width: none;
 }
 
@@ -2479,6 +2488,68 @@
   cursor: zoom-in;
 }
 
+.v1-post-card__video-player {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  width: 100%;
+  height: 100%;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: #020617;
+}
+
+.v1-post-card__video-player--card {
+  cursor: zoom-in;
+}
+
+.v1-post-card__video-player--preview {
+  width: min(1180px, 94vw);
+  max-height: 88vh;
+  border-radius: 12px;
+  box-shadow: 0 32px 120px rgba(0, 0, 0, 0.62);
+  cursor: pointer;
+}
+
+.v1-post-card__video-controls {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  z-index: 4;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 999px;
+  background: rgba(5, 8, 13, 0.72);
+  padding: 6px;
+  color: white;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 14px 38px rgba(0, 0, 0, 0.35);
+}
+
+.v1-post-card__video-controls button {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.1);
+  color: inherit;
+  transition: background 160ms ease, transform 160ms ease;
+}
+
+.v1-post-card__video-controls button:hover {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.v1-post-card__video-controls button:active {
+  transform: scale(0.96);
+}
+
 .v1-post-card__media-nav {
   position: absolute;
   top: 50%;
@@ -2532,7 +2603,7 @@
 .v1-post-card__media-preview {
   position: fixed;
   inset: 0;
-  z-index: 1700;
+  z-index: 9400;
   display: grid;
   place-items: center;
   padding: 28px;
@@ -2570,6 +2641,12 @@
 .v1-post-card__media-preview-media:is(video) {
   width: min(1180px, 94vw);
   background: #000;
+}
+
+.v1-post-card__video-player--preview .v1-post-card__media-preview-media {
+  width: 100%;
+  max-width: 100%;
+  box-shadow: none;
 }
 
 .v1-post-card__media-preview-close {
@@ -2674,17 +2751,18 @@
 
 .v1-post-card__save-tooltip {
   position: absolute;
-  left: -50px;
-  bottom: calc(100% + 16px);
-  transform: translateX(-50%);
-  z-index: 35;
-  animation: toast-in 180ms ease-out;
+  right: 0;
+  bottom: calc(100% + 12px);
+  left: auto;
+  transform: none;
+  z-index: 45;
+  animation: save-tooltip-in 140ms ease-out both;
 }
 
 .v1-post-card__save-tooltip-card {
   position: relative;
   overflow: hidden;
-  width: 220px;
+  width: min(220px, calc(100vw - 32px));
   border: 1px solid var(--border-secondary);
   border-radius: 10px;
   background: var(--bg-main);
@@ -2727,10 +2805,11 @@
 .v1-post-card__save-tooltip i {
   position: absolute;
   top: 100%;
-  left: 50%;
+  right: 14px;
+  left: auto;
   width: 0;
   height: 0;
-  transform: translateX(-50%);
+  transform: none;
   border: 8px solid transparent;
   border-top-color: var(--bg-main);
 }
@@ -4035,8 +4114,119 @@
 }
 
 @media (max-width: 640px) {
+  .post-composer-v1-backdrop {
+    padding: 10px;
+  }
+
+  .post-composer-v1 {
+    width: min(100%, calc(100vw - 20px));
+    max-height: calc(100dvh - 20px);
+  }
+
+  .post-composer-v1__body {
+    gap: 14px;
+  }
+
+  .v1-post-card__media-preview {
+    padding: 12px;
+  }
+
+  .v1-post-card__media-preview-stage,
+  .v1-post-card__video-player--preview {
+    max-width: calc(100vw - 24px);
+    max-height: calc(100dvh - 82px);
+  }
+
+  .v1-post-card__media-preview-media {
+    max-width: calc(100vw - 24px);
+    max-height: calc(100dvh - 82px);
+  }
+
+  .v1-post-card__media-preview-media:is(video) {
+    width: calc(100vw - 24px);
+  }
+
+  .v1-post-card__media-preview-close {
+    top: 12px;
+    right: 12px;
+    width: 38px;
+    height: 38px;
+  }
+
+  .v1-post-card__video-controls {
+    right: 10px;
+    bottom: 10px;
+    gap: 6px;
+    padding: 5px;
+  }
+
+  .v1-post-card__video-controls button {
+    width: 32px;
+    height: 32px;
+  }
+
   .post-analytics-modal__metrics {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .share-post-modal-backdrop,
+  .post-analytics-modal-backdrop {
+    padding: 10px;
+  }
+
+  .share-post-modal,
+  .post-analytics-modal {
+    width: min(100%, calc(100vw - 20px));
+    max-height: calc(100dvh - 20px);
+    gap: 12px;
+    border-radius: 10px;
+    padding: 14px;
+  }
+
+  .share-post-modal__header,
+  .post-analytics-modal__header {
+    gap: 10px;
+    padding-right: 40px;
+  }
+
+  .share-post-modal__header > span,
+  .post-analytics-modal__header > span {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+  }
+
+  .share-post-modal__header h2,
+  .post-analytics-modal__header h2 {
+    font-size: 17px;
+  }
+
+  .share-post-modal__note textarea {
+    min-height: 72px;
+    border-radius: 8px;
+    padding: 10px;
+    font-size: 13px;
+  }
+
+  .share-post-modal__list {
+    max-height: 210px;
+  }
+
+  .share-post-modal__list button,
+  .post-analytics-modal__activity-row,
+  .post-analytics-modal__link-list article {
+    border-radius: 8px;
+    padding: 8px;
+  }
+
+  .share-post-modal__footer {
+    align-items: stretch;
+    flex-direction: column-reverse;
+  }
+
+  .share-post-modal__footer .button {
+    width: 100%;
+    min-height: 36px;
   }
 
   .post-analytics-modal__tabs {

@@ -29,3 +29,41 @@
   margin: 4px 0 0;
   font-size: 28px;
 }
+
+@media (max-width: 768px) {
+  .modal-backdrop {
+    padding: 12px;
+  }
+
+  .modal-card {
+    width: min(100%, calc(100vw - 24px));
+    max-height: calc(100dvh - 24px);
+    overflow: auto;
+    border-radius: 10px;
+    padding: 18px;
+  }
+
+  .modal-card__header {
+    gap: 12px;
+  }
+
+  .modal-card__header h1 {
+    font-size: 22px;
+  }
+}
+
+@media (max-width: 480px) {
+  .modal-backdrop {
+    padding: 8px;
+  }
+
+  .modal-card {
+    width: min(100%, calc(100vw - 16px));
+    max-height: calc(100dvh - 16px);
+    padding: 14px;
+  }
+
+  .modal-card__header h1 {
+    font-size: 19px;
+  }
+}

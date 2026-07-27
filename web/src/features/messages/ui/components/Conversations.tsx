@@ -1,4 +1,4 @@
-import { MessageSquarePlus, MoreVertical, Pin, PinOff, Search, Trash2, Users, X } from 'lucide-react';
+import { Loader2, MessageSquarePlus, MoreVertical, Pin, PinOff, Search, Trash2, Users, X } from 'lucide-react';
 import { memo, useEffect, useMemo, useState, type KeyboardEvent, type MouseEvent } from 'react';
 
 import { useAppDispatch } from '@/app/store/hooks';
@@ -259,8 +259,8 @@ const Conversations = ({ conversations, getConversationsLoading, handleChatSelec
                               disabled={deletingConversation || groupAdminCannotLeave}
                               title={groupAdminCannotLeave ? 'Remove all members before leaving this group.' : undefined}
                             >
-                              <Trash2 size={16} aria-hidden="true" />
-                              {deletingConversation ? 'Removing...' : removeLabel}
+                              {deletingConversation ? <Loader2 className="spin" size={16} aria-hidden="true" /> : <Trash2 size={16} aria-hidden="true" />}
+                              {!deletingConversation && removeLabel}
                             </button>
                           </div>
                         )}
@@ -299,6 +299,7 @@ const Conversations = ({ conversations, getConversationsLoading, handleChatSelec
 
       {startMode && (
         <ConversationStartModal
+          existingConversations={conversations}
           isOpen={Boolean(startMode)}
           mode={startMode}
           onClose={() => setStartMode(null)}

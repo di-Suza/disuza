@@ -1,4 +1,4 @@
-import { CheckCircle, ChevronDown, ChevronUp, Code2, Plus, Sparkles, Tag, Zap } from 'lucide-react';
+import { CheckCircle, ChevronDown, ChevronUp, Code2, Loader2, Plus, Sparkles, Tag, Zap } from 'lucide-react';
 import { useState } from 'react';
 
 import { useAddProblemToRoomMutation } from '@/features/collab/api/problem.api';
@@ -86,7 +86,7 @@ const DSAProblemAccordion = ({ problem, roomId, onProblemAdded }: DSAProblemAcco
             onClick={handleAddProblem}
             disabled={isAdded || isAdding}
           >
-            {isAdded ? 'Added' : isAdding ? 'Adding' : (
+            {isAdded ? 'Added' : isAdding ? <Loader2 className="spin" size={15} aria-hidden="true" /> : (
               <>
                 <Plus size={15} aria-hidden="true" />
                 <span>Add</span>

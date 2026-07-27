@@ -35,7 +35,7 @@
   --shadow-elevated: 0 18px 50px rgba(0, 0, 0, 0.32);
   --shadow-media: 0 18px 34px rgba(0, 0, 0, 0.35);
   --app-mobile-navbar-height: 64px;
-  --app-mobile-content-top: 80px;
+  --app-mobile-content-top: calc(var(--app-mobile-navbar-height) + 4px);
 }
 
 :root[data-theme='light'] {

@@ -1,4 +1,4 @@
-import { Loader2, Send, X } from 'lucide-react';
+import { Send, X } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState, type FormEvent, type KeyboardEvent } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
@@ -144,9 +144,9 @@ const SendFeedbackModal = ({ feedbackOn, isOpen, onClose, postId, receiverId, re
           </label>
           <div className="feedback-modal-v1__footer">
             <small>{message.length}/2000</small>
-            <Button type="submit" variant="secondary" disabled={isLoading}>
-            {isLoading ? <Loader2 className="spin" size={17} aria-hidden="true" /> : <Send size={17} aria-hidden="true" />}
-            Send
+            <Button type="submit" variant="secondary" isLoading={isLoading} loadingLabel="Sending feedback">
+              <Send size={17} aria-hidden="true" />
+              Send
             </Button>
           </div>
         </div>

@@ -104,8 +104,8 @@ const SelectProblemModal = ({ isOpen, onClose, roomId, addedProblemIds = [] }: S
               )}
 
               {hasMore && (
-                <button type="button" className="collab-load-more" onClick={() => setPage((currentPage) => currentPage + 1)}>
-                  Load more
+                <button type="button" className="collab-load-more" onClick={() => setPage((currentPage) => currentPage + 1)} disabled={isFetching}>
+                  {isFetching ? <LoadingSpinner inline label="Loading problems" size={16} /> : 'Load more'}
                 </button>
               )}
             </>
