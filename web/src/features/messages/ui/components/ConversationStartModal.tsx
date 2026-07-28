@@ -1,5 +1,5 @@
 import { Check, Search, UserRound, Users, X } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 import { useAppSelector } from '@/app/store/hooks';
@@ -29,6 +29,35 @@ const getAvatarUrl = (user: UserProfile) => {
 };
 
 const getInitial = (user: UserProfile) => user.userName?.trim().charAt(0).toUpperCase() || 'U';
+
+type ConversationPersonCardProps = {
+  onToggle: (userId: string) => void;
+  selected: boolean;
+  user: UserProfile;
+};
+
+const ConversationPersonCard = memo(({ onToggle, selected, user }: ConversationPersonCardProps) => {
+  const avatarUrl = getAvatarUrl(user);
+
+  return (
+    <button
+      type="button"
+      className={`messages-v1-person-card ${selected ? 'is-selected' : ''}`}
+      onClick={() => onToggle(user._id)}
+    >
+      <span className="messages-v1-person-card__avatar">
+        {avatarUrl ? <img src={avatarUrl} alt="" /> : <UserRound size={16} aria-hidden="true" />}
+      </span>
+      <span>
+        <strong>{user.userName || getInitial(user)}</strong>
+        <small>{user.headline || 'Disuza member'}</small>
+      </span>
+      {selected && <Check size={16} aria-hidden="true" />}
+    </button>
+  );
+});
+
+ConversationPersonCard.displayName = 'ConversationPersonCard';
 
 const getDirectConversationUserIds = (conversations: ChatConversation[], currentUserId?: string) => {
   const userIds = new Set<string>();
@@ -110,9 +139,7 @@ const ConversationStartModal = ({
     setSelectedIds([]);
   }, [isOpen, mode]);
 
-  if (!isOpen) return null;
-
-  const toggleUser = (userId: string) => {
+  const toggleUser = useCallback((userId: string) => {
     setSelectedIds((current) => {
       if (isGroupMode) {
         return current.includes(userId) ? current.filter((id) => id !== userId) : [...current, userId];
@@ -120,9 +147,9 @@ const ConversationStartModal = ({
 
       return current.includes(userId) ? [] : [userId];
     });
-  };
+  }, [isGroupMode]);
 
-  const handleSubmit = async () => {
+  const handleSubmit = useCallback(async () => {
     if (isSubmitting) return;
 
     try {
@@ -154,7 +181,20 @@ const ConversationStartModal = ({
     } catch (error) {
       showError(getErrorMessage(error, isGroupMode ? 'Group could not be created.' : 'Conversation could not be started.'));
     }
-  };
+  }, [
+    createGroup,
+    groupName,
+    isGroupMode,
+    isSubmitting,
+    onClose,
+    onConversationReady,
+    selectedIds,
+    showError,
+    showSuccess,
+    startConversation,
+  ]);
+
+  if (!isOpen) return null;
 
   return createPortal(
     <div className="messages-v1-modal-backdrop" role="presentation" onMouseDown={onClose}>
@@ -206,24 +246,14 @@ const ConversationStartModal = ({
           ) : filteredUsers.length > 0 ? (
             filteredUsers.map((user) => {
               const selected = selectedIds.includes(user._id);
-              const avatarUrl = getAvatarUrl(user);
 
               return (
-                <button
+                <ConversationPersonCard
                   key={user._id}
-                  type="button"
-                  className={`messages-v1-person-card ${selected ? 'is-selected' : ''}`}
-                  onClick={() => toggleUser(user._id)}
-                >
-                  <span className="messages-v1-person-card__avatar">
-                    {avatarUrl ? <img src={avatarUrl} alt="" /> : <UserRound size={16} aria-hidden="true" />}
-                  </span>
-                  <span>
-                    <strong>{user.userName || getInitial(user)}</strong>
-                    <small>{user.headline || 'Disuza member'}</small>
-                  </span>
-                  {selected && <Check size={16} aria-hidden="true" />}
-                </button>
+                  onToggle={toggleUser}
+                  selected={selected}
+                  user={user}
+                />
               );
             })
           ) : (
@@ -250,4 +280,4 @@ const ConversationStartModal = ({
   );
 };
 
-export default ConversationStartModal;
+export default memo(ConversationStartModal);
