@@ -3,6 +3,7 @@ import { useWindowVirtualizer } from '@tanstack/react-virtual';
 import { memo, useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
+import { useAppSelector } from '@/app/store/hooks';
 import { useGetUserRecommendationsQuery } from '@/features/users/api/user.api';
 import type { UserProfile } from '@/features/users/model/user.types';
 import type { Post, PostAuthor } from '@/features/posts/model/post.types';
@@ -11,6 +12,7 @@ import ErrorBoundary from '@/shared/components/ErrorBoundary/ErrorBoundary';
 import LoadingSpinner from '@/shared/ui/LoadingSpinner';
 import InlinePostComposer from '../components/InlinePostComposer';
 import PostCard from '../components/PostCard';
+import PostUploadStatusCard from '../components/PostUploadStatusCard';
 import { useFeedPage } from './useFeedPage';
 import '../posts.css';
 import '@/app/layouts/ProductShell.css';
@@ -91,11 +93,17 @@ const FeedPage = () => {
   const [recommendationInsertIndex] = useState(() => Math.floor(Math.random() * 3) + 2);
   const [visiblePostCount, setVisiblePostCount] = useState(FEED_RENDER_BATCH_SIZE);
   const { feedType, hasMore, isError, isFetching, isLoading, loadMore, posts, refetch, user } = useFeedPage();
+  const pendingUploads = useAppSelector((state) => state.postUploads.tasks);
   const { data: recommendationsData } = useGetUserRecommendationsQuery({ limit: 12 });
   const recommendations = recommendationsData?.recommendations || EMPTY_RECOMMENDATIONS;
   const hasRecommendations = recommendations.length > 0;
-  const inlineRecommendationIndex = posts.length >= 2 ? Math.min(recommendationInsertIndex, posts.length) : null;
-  const visiblePosts = useMemo(() => posts.slice(0, visiblePostCount), [posts, visiblePostCount]);
+  const pendingPostIds = useMemo(() => new Set(pendingUploads.map((task) => task.postId).filter(Boolean)), [pendingUploads]);
+  const readyPosts = useMemo(() => posts.filter((post) => (
+    (post.uploadState?.status === undefined || post.uploadState.status === 'ready')
+    && !pendingPostIds.has(post._id)
+  )), [pendingPostIds, posts]);
+  const inlineRecommendationIndex = readyPosts.length >= 2 ? Math.min(recommendationInsertIndex, readyPosts.length) : null;
+  const visiblePosts = useMemo(() => readyPosts.slice(0, visiblePostCount), [readyPosts, visiblePostCount]);
   const feedItems = useMemo<FeedVirtualItem[]>(() => {
     const items: FeedVirtualItem[] = [];
 
@@ -108,7 +116,7 @@ const FeedPage = () => {
 
     return items;
   }, [hasRecommendations, inlineRecommendationIndex, visiblePosts]);
-  const hasHiddenLoadedPosts = visiblePostCount < posts.length;
+  const hasHiddenLoadedPosts = visiblePostCount < readyPosts.length;
   const rowVirtualizer = useWindowVirtualizer({
     count: feedItems.length,
     estimateSize: (index) => (feedItems[index]?.type === 'recommendations' ? 230 : 760),
@@ -131,12 +139,12 @@ const FeedPage = () => {
     if (lastVirtualIndex < Math.max(0, feedItems.length - 3)) return;
 
     if (hasHiddenLoadedPosts) {
-      setVisiblePostCount((current) => Math.min(posts.length, current + FEED_RENDER_BATCH_SIZE));
+      setVisiblePostCount((current) => Math.min(readyPosts.length, current + FEED_RENDER_BATCH_SIZE));
       return;
     }
 
     if (hasMore && !isFetching) loadMore();
-  }, [feedItems.length, hasHiddenLoadedPosts, hasMore, isFetching, lastVirtualIndex, loadMore, posts.length]);
+  }, [feedItems.length, hasHiddenLoadedPosts, hasMore, isFetching, lastVirtualIndex, loadMore, readyPosts.length]);
 
   return (
     <div className={hasRecommendations ? 'home-feed-exact has-recommendations' : 'home-feed-exact'}>
@@ -144,11 +152,16 @@ const FeedPage = () => {
         <ErrorBoundary variant="section" title="Post composer could not be rendered." showReload={false}>
           <InlinePostComposer />
         </ErrorBoundary>
+        {pendingUploads.length > 0 && (
+          <div className="home-feed-exact__uploads">
+            {pendingUploads.map((task) => <PostUploadStatusCard key={task.clientUploadId} task={task} />)}
+          </div>
+        )}
         {isLoading ? (
           <><PostCardSkeleton /><PostCardSkeleton /></>
         ) : isError ? (
           <div className="post-empty-state"><RefreshCw size={24} aria-hidden="true" /><p>Feed could not be loaded.</p><button type="button" onClick={() => refetch()}>Retry</button></div>
-        ) : posts.length === 0 ? (
+        ) : readyPosts.length === 0 && pendingUploads.length === 0 ? (
           <p className="home-feed-exact__empty">{feedType === 'following' ? 'No posts from people you follow yet' : 'No posts yet'}</p>
         ) : (
           <>
@@ -187,7 +200,7 @@ const FeedPage = () => {
               <div className="home-feed-exact__sentinel">
                 <button
                   type="button"
-                  onClick={() => setVisiblePostCount((current) => Math.min(posts.length, current + FEED_RENDER_BATCH_SIZE))}
+                  onClick={() => setVisiblePostCount((current) => Math.min(readyPosts.length, current + FEED_RENDER_BATCH_SIZE))}
                 >
                   Show more posts
                 </button>
@@ -197,7 +210,7 @@ const FeedPage = () => {
                 <button type="button" onClick={loadMore} disabled={isFetching}>Load more</button>
               </div>
             )}
-            {!hasHiddenLoadedPosts && !hasMore && !isFetching && <p className="home-feed-exact__caught-up">You're all caught up</p>}
+            {!hasHiddenLoadedPosts && !hasMore && !isFetching && pendingUploads.length === 0 && <p className="home-feed-exact__caught-up">You're all caught up</p>}
           </>
         )}
         {isFetching && !isLoading && <LoadingSpinner className="home-feed-exact__loader" label="Loading more posts" />}

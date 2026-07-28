@@ -56,6 +56,19 @@ type PostAnalytics = {
   linkClicks: PostLinkClick[];
 };
 
+type PostUploadStatus = 'ready' | 'processing' | 'failed';
+
+type PostUploadState = {
+  status: PostUploadStatus;
+  progress: number;
+  clientUploadId?: string;
+  mediaCount?: number;
+  queuedAt?: Date;
+  completedAt?: Date;
+  failedAt?: Date;
+  error?: string;
+};
+
 type Post = {
   user: Types.ObjectId;
   caption: string;
@@ -68,6 +81,7 @@ type Post = {
   links: PostLink[];
   codeSnippet?: CodeSnippet;
   hashtags: string[];
+  uploadState: PostUploadState;
   isDeleting: boolean;
   deletedAt: Date | null;
   cleanupState: {
@@ -120,6 +134,20 @@ const codeSnippetSchema = new mongoose.Schema<CodeSnippet>(
   {
     language: { type: String, required: true, trim: true, maxlength: 40 },
     code: { type: String, required: true, maxlength: 8000 },
+  },
+  { _id: false },
+);
+
+const postUploadStateSchema = new mongoose.Schema<PostUploadState>(
+  {
+    status: { type: String, enum: ['ready', 'processing', 'failed'], default: 'ready', index: true },
+    progress: { type: Number, default: 100, min: 0, max: 100 },
+    clientUploadId: { type: String, trim: true },
+    mediaCount: { type: Number, min: 0 },
+    queuedAt: { type: Date },
+    completedAt: { type: Date },
+    failedAt: { type: Date },
+    error: { type: String, trim: true, maxlength: 240 },
   },
   { _id: false },
 );
@@ -197,6 +225,10 @@ const postSchema = new mongoose.Schema<Post, PostModel>(
         },
         message: 'A post can contain up to 12 hashtags.',
       },
+    },
+    uploadState: {
+      type: postUploadStateSchema,
+      default: () => ({ status: 'ready', progress: 100 }),
     },
     isDeleting: {
       type: Boolean,
@@ -276,8 +308,9 @@ postSchema.pre('validate', function normalizePost(next) {
   const hasLinks = Array.isArray(this.links) && this.links.length > 0;
   const hasTags = Array.isArray(this.hashtags) && this.hashtags.length > 0;
   const hasProjectLinks = Boolean(this.projectLinks?.liveDemoUrl || this.projectLinks?.repositoryUrl);
+  const hasQueuedMediaUpload = this.uploadState?.status === 'processing' && Number(this.uploadState?.mediaCount || 0) > 0;
 
-  if (!hasText && !hasMedia && !hasCode && !hasLinks && !hasTags && !hasProjectLinks) {
+  if (!hasText && !hasMedia && !hasCode && !hasLinks && !hasTags && !hasProjectLinks && !hasQueuedMediaUpload) {
     this.invalidate('caption', 'Post must include text, media, code, links, hashtags, or project links.');
   }
 
@@ -296,6 +329,8 @@ export {
   type PostLinkClick,
   type PostMedia,
   type PostSettings,
+  type PostUploadState,
+  type PostUploadStatus,
   type ProjectLinks,
 };
 export default PostModel;

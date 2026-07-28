@@ -2,6 +2,8 @@ import mongoose, { type FilterQuery } from 'mongoose';
 
 import logger from '../../config/logger.js';
 import cleanupQueue, { type CleanupQueue } from '../../infrastructure/jobs/cleanup.queue.js';
+import postUploadWorker, { type PostUploadWorker } from '../../infrastructure/jobs/postUpload.worker.js';
+import realtimeService, { type RealtimeService } from '../../infrastructure/realtime/realtime.service.js';
 import { BadRequestError, NotFoundError } from '../../shared/errors/index.js';
 import chatRepository, { type ChatRepository } from '../chat/chat.repository.js';
 import commentRepository, { type CommentRepository } from '../comments/comment.repository.js';
@@ -14,7 +16,7 @@ import saveRepository, { type SaveRepository } from '../saves/save.repository.js
 import followRepository, { type FollowRepository } from '../users/follow/follow.repository.js';
 import userRepository, { type UserRepository } from '../users/user.repository.js';
 import repostRepository, { type RepostRepository } from '../reposts/repost.repository.js';
-import type { CodeSnippet, Post, PostLink, PostLinkClick, PostMedia, PostSettings, ProjectLinks } from './post.model.js';
+import type { CodeSnippet, Post, PostLink, PostLinkClick, PostMedia, PostSettings, PostUploadState, ProjectLinks } from './post.model.js';
 import postRepository, { type PostRepository } from './post.repository.js';
 
 type MediaOrderItem = {
@@ -37,6 +39,7 @@ type CreatePostInput = {
   codeSnippet?: Partial<CodeSnippet>;
   hashtags?: string[];
   mediaOrder?: MediaOrderItem[];
+  clientUploadId?: string;
 };
 
 type UpdatePostInput = {
@@ -67,6 +70,24 @@ type AnalyticsLinkSummary = Omit<PostLinkClick, 'clicks'> & {
   clicks: number;
 };
 
+type NormalizedCreatePostInput = {
+  caption: string;
+  codeSnippet?: CodeSnippet;
+  hashtags: string[];
+  isProjectPost: boolean;
+  links: PostLink[];
+  projectLinks?: ProjectLinks;
+  settings: PostSettings;
+};
+
+type QueuedPostUploadInput = NormalizedCreatePostInput & {
+  clientUploadId?: string;
+  files: Express.Multer.File[];
+  mediaOrder?: MediaOrderItem[];
+  postId: mongoose.Types.ObjectId;
+  userId: string;
+};
+
 class PostService {
   private readonly linkClickCooldownMs = 20_000;
 
@@ -85,6 +106,8 @@ class PostService {
     private readonly media: MediaService = mediaService,
     private readonly heatmap: HeatmapService = heatmapService,
     private readonly cleanupJobs: CleanupQueue = cleanupQueue,
+    private readonly realtime: RealtimeService = realtimeService,
+    private readonly uploadWorker: PostUploadWorker = postUploadWorker,
   ) {}
 
   private normalizePage(pageInput: unknown): number {
@@ -499,41 +522,222 @@ class PostService {
     await this.cleanupMediaFiles(removedMedia.map((media) => media.fileId), 'post-media-replaced');
   }
 
-  async createPost(userId: string, input: CreatePostInput, files: Express.Multer.File[]) {
-    const postId = new mongoose.Types.ObjectId();
+  private normalizeCreatePostInput(input: CreatePostInput): NormalizedCreatePostInput {
     const isProjectPost = Boolean(input.isProjectPost);
-    const projectLinks = this.normalizeProjectLinks(isProjectPost, input.projectLinks);
     const caption = this.normalizeCaption(input.caption);
-    const links = this.normalizeLinks(input.links);
-    const codeSnippet = this.normalizeCodeSnippet(input.codeSnippet);
-    const hashtags = this.normalizeHashtags(input.hashtags, caption);
-    const uploadedMedia = await this.media.uploadPostMedia(files, userId, postId.toString());
+
+    return {
+      caption,
+      codeSnippet: this.normalizeCodeSnippet(input.codeSnippet),
+      hashtags: this.normalizeHashtags(input.hashtags, caption),
+      isProjectPost,
+      links: this.normalizeLinks(input.links),
+      projectLinks: this.normalizeProjectLinks(isProjectPost, input.projectLinks),
+      settings: this.normalizeSettings(input.settings),
+    };
+  }
+
+  private async completePostCreation(userId: string, postId: mongoose.Types.ObjectId, isProjectPost: boolean) {
+    await Promise.all([
+      this.users.incrementCounter(userId, 'postsCount', 1),
+      this.heatmap.updateContribution(userId, 'POST', postId),
+      ...(isProjectPost ? [this.users.incrementCounter(userId, 'projectsCount', 1)] : []),
+    ]);
+  }
+
+  private emitPostUploadProgress(userId: string, payload: {
+    clientUploadId?: string;
+    error?: string;
+    mediaCount?: number;
+    post?: unknown;
+    postId: string;
+    progress: number;
+    status: PostUploadState['status'];
+  }): void {
+    this.realtime.emitToUser(userId, 'post_upload_progress', payload);
+
+    if (payload.status === 'ready') {
+      this.realtime.emitToUser(userId, 'post_upload_completed', payload);
+      return;
+    }
+
+    if (payload.status === 'failed') {
+      this.realtime.emitToUser(userId, 'post_upload_failed', payload);
+    }
+  }
+
+  private getUploadErrorMessage(error: unknown): string {
+    if (error instanceof Error && error.message.trim()) return error.message;
+    return 'Post media upload failed. Please try again.';
+  }
+
+  private enqueuePostMediaUpload(input: QueuedPostUploadInput): void {
+    const postId = input.postId.toString();
+
+    this.uploadWorker.enqueue({
+      id: `post-upload-${postId}`,
+      run: () => this.processQueuedPostMediaUpload(input),
+    });
+  }
+
+  private async processQueuedPostMediaUpload(input: QueuedPostUploadInput): Promise<void> {
+    const postId = input.postId.toString();
+    const uploadedMedia: StoredMedia[] = [];
+
+    this.emitPostUploadProgress(input.userId, {
+      clientUploadId: input.clientUploadId,
+      mediaCount: input.files.length,
+      postId,
+      progress: 12,
+      status: 'processing',
+    });
 
     try {
+      for (let index = 0; index < input.files.length; index += 1) {
+        const [storedMedia] = await this.media.uploadPostMedia([input.files[index]], input.userId, postId);
+        uploadedMedia.push(storedMedia);
+
+        this.emitPostUploadProgress(input.userId, {
+          clientUploadId: input.clientUploadId,
+          mediaCount: input.files.length,
+          postId,
+          progress: Math.min(92, Math.round(20 + ((index + 1) / input.files.length) * 68)),
+          status: 'processing',
+        });
+      }
+
       const media = this.buildCreateMedia(uploadedMedia, input.mediaOrder);
 
-      if (!this.hasPostContent({ caption, media, links, codeSnippet, hashtags, projectLinks })) {
+      if (!this.hasPostContent({
+        caption: input.caption,
+        media,
+        links: input.links,
+        codeSnippet: input.codeSnippet,
+        hashtags: input.hashtags,
+        projectLinks: input.projectLinks,
+      })) {
+        throw new BadRequestError('Post must include text, media, code, links, hashtags, or project links.');
+      }
+
+      const readyUploadState: PostUploadState = {
+        status: 'ready',
+        progress: 100,
+        clientUploadId: input.clientUploadId,
+        mediaCount: input.files.length,
+        completedAt: new Date(),
+      };
+      const post = await this.posts.completeMediaUpload(input.postId, input.userId, media, readyUploadState);
+
+      if (!post) {
+        await this.cleanupUploadedMedia(uploadedMedia);
+        throw new NotFoundError("Post doesn't exist!");
+      }
+
+      await this.completePostCreation(input.userId, input.postId, input.isProjectPost);
+
+      this.emitPostUploadProgress(input.userId, {
+        clientUploadId: input.clientUploadId,
+        mediaCount: input.files.length,
+        post: post.toObject(),
+        postId,
+        progress: 100,
+        status: 'ready',
+      });
+    } catch (error) {
+      await this.cleanupUploadedMedia(uploadedMedia);
+
+      const errorMessage = this.getUploadErrorMessage(error);
+      await this.posts.failMediaUpload(input.postId, input.userId, {
+        status: 'failed',
+        progress: 100,
+        clientUploadId: input.clientUploadId,
+        mediaCount: input.files.length,
+        failedAt: new Date(),
+        error: errorMessage,
+      });
+
+      this.emitPostUploadProgress(input.userId, {
+        clientUploadId: input.clientUploadId,
+        error: errorMessage,
+        mediaCount: input.files.length,
+        postId,
+        progress: 100,
+        status: 'failed',
+      });
+
+      logger.error({ error, postId, userId: input.userId }, 'Queued post media upload failed');
+    }
+  }
+
+  async createPost(userId: string, input: CreatePostInput, files: Express.Multer.File[]) {
+    const postId = new mongoose.Types.ObjectId();
+    const normalizedInput = this.normalizeCreatePostInput(input);
+
+    if (files.length > 0) {
+      if (!this.hasPostContent({ ...normalizedInput, media: files.map((_, order) => ({ order }) as PostMedia) })) {
         throw new BadRequestError('Post must include text, media, code, links, hashtags, or project links.');
       }
 
       const post = await this.posts.create({
         _id: postId,
         user: userId,
-        caption,
-        media,
-        settings: this.normalizeSettings(input.settings),
-        isProjectPost,
-        projectLinks,
-        links,
-        codeSnippet,
-        hashtags,
+        caption: normalizedInput.caption,
+        media: [],
+        settings: normalizedInput.settings,
+        isProjectPost: normalizedInput.isProjectPost,
+        projectLinks: normalizedInput.projectLinks,
+        links: normalizedInput.links,
+        codeSnippet: normalizedInput.codeSnippet,
+        hashtags: normalizedInput.hashtags,
+        uploadState: {
+          status: 'processing',
+          progress: 5,
+          clientUploadId: input.clientUploadId,
+          mediaCount: files.length,
+          queuedAt: new Date(),
+        },
       });
 
-      await Promise.all([
-        this.users.incrementCounter(userId, 'postsCount', 1),
-        this.heatmap.updateContribution(userId, 'POST', post._id),
-        ...(isProjectPost ? [this.users.incrementCounter(userId, 'projectsCount', 1)] : []),
-      ]);
+      this.enqueuePostMediaUpload({
+        ...normalizedInput,
+        clientUploadId: input.clientUploadId,
+        files,
+        mediaOrder: input.mediaOrder,
+        postId,
+        userId,
+      });
+
+      return post;
+    }
+
+    const uploadedMedia = await this.media.uploadPostMedia(files, userId, postId.toString());
+
+    try {
+      const media = this.buildCreateMedia(uploadedMedia, input.mediaOrder);
+
+      if (!this.hasPostContent({ ...normalizedInput, media })) {
+        throw new BadRequestError('Post must include text, media, code, links, hashtags, or project links.');
+      }
+
+      const post = await this.posts.create({
+        _id: postId,
+        user: userId,
+        caption: normalizedInput.caption,
+        media,
+        settings: normalizedInput.settings,
+        isProjectPost: normalizedInput.isProjectPost,
+        projectLinks: normalizedInput.projectLinks,
+        links: normalizedInput.links,
+        codeSnippet: normalizedInput.codeSnippet,
+        hashtags: normalizedInput.hashtags,
+        uploadState: {
+          status: 'ready',
+          progress: 100,
+          completedAt: new Date(),
+        },
+      });
+
+      await this.completePostCreation(userId, post._id, normalizedInput.isProjectPost);
 
       return post;
     } catch (error) {

@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent } from 'react';
 
+import { useAppDispatch } from '@/app/store/hooks';
 import { useCreatePostMutation, useUpdatePostMutation } from '@/features/posts/api/post.api';
 import { getPostMedia } from '@/features/posts/model/post.helpers';
 import type { CodeSnippet, MediaKind, MediaOrderItem, Post, PostLink } from '@/features/posts/model/post.types';
+import { addPendingPostUpload, attachQueuedPostUpload, failPostUpload } from '@/features/posts/state/postUploadSlice';
 import { useToast } from '@/shared/hooks/useToast';
 import { getErrorMessage } from '@/shared/utils/getErrorMessage';
 
@@ -34,6 +36,12 @@ const MAX_LINKS = 8;
 
 const createItemId = () => `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
+const createUploadClientId = () => (
+  typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+    ? crypto.randomUUID()
+    : createItemId()
+);
+
 const getFileMediaType = (file: File): MediaKind | null => {
   if (file.type.startsWith('image/')) return 'image';
   if (file.type.startsWith('video/')) return 'video';
@@ -49,20 +57,24 @@ const getExistingMediaItems = (post?: Post | null): ComposerMediaItem[] => getPo
 }));
 
 export const usePostComposer = ({ isOpen, mode, onClose, post }: UsePostComposerOptions) => {
+  const dispatch = useAppDispatch();
   const { showError, showSuccess } = useToast();
   const [createPost, { isLoading: isCreating }] = useCreatePostMutation();
   const [updatePost, { isLoading: isUpdating }] = useUpdatePostMutation();
   const uploadPreviewUrls = useRef(new Set<string>());
+  const mountedRef = useRef(true);
 
   const [caption, setCaption] = useState('');
   const [mediaItems, setMediaItems] = useState<ComposerMediaItem[]>([]);
+  const [isDetachedCreateActive, setDetachedCreateActive] = useState(false);
   const [isProjectPost, setIsProjectPost] = useState(false);
   const [settings, setSettings] = useState({ hideLikesCount: false, commentsDisabled: false });
   const [projectLinks, setProjectLinks] = useState({ liveDemoUrl: '', repositoryUrl: '' });
   const [links, setLinks] = useState<ComposerLinkItem[]>([]);
   const [codeSnippet, setCodeSnippet] = useState<CodeSnippet>({ language: 'tsx', code: '' });
 
-  const isSubmitting = isCreating || isUpdating;
+  const isSubmitting = isUpdating || (isCreating && !isDetachedCreateActive);
+  const isSubmissionLocked = isCreating || isUpdating;
   const isEditMode = mode === 'edit';
   const isEditingProjectPost = Boolean(isEditMode && post?.isProjectPost);
   const canEditProjectLinks = !isEditMode || isEditingProjectPost;
@@ -99,6 +111,10 @@ export const usePostComposer = ({ isOpen, mode, onClose, post }: UsePostComposer
   }, [isOpen, mediaFingerprint, resetFromPost]);
 
   useEffect(() => () => revokeUploadUrls(), [revokeUploadUrls]);
+
+  useEffect(() => () => {
+    mountedRef.current = false;
+  }, []);
 
   const closeComposer = useCallback(() => {
     revokeUploadUrls();
@@ -214,7 +230,7 @@ export const usePostComposer = ({ isOpen, mode, onClose, post }: UsePostComposer
     });
   }, [mediaItems]);
 
-  const buildFormData = useCallback(() => {
+  const buildFormData = useCallback((clientUploadId?: string) => {
     const formData = new FormData();
     const uploadItems = mediaItems.filter((item) => item.source === 'upload' && item.file);
 
@@ -235,6 +251,10 @@ export const usePostComposer = ({ isOpen, mode, onClose, post }: UsePostComposer
     uploadItems.forEach((item) => {
       if (item.file) formData.append('media', item.file);
     });
+
+    if (clientUploadId) {
+      formData.append('clientUploadId', clientUploadId);
+    }
 
     if (mode === 'create') {
       formData.append('isProjectPost', String(isProjectPost));
@@ -295,9 +315,46 @@ export const usePostComposer = ({ isOpen, mode, onClose, post }: UsePostComposer
   const handleSubmit = useCallback(async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    if (isSubmitting || !validateForm()) return;
+    if (isSubmissionLocked || !validateForm()) return;
 
     try {
+      const uploadItems = mediaItems.filter((item) => item.source === 'upload' && item.file);
+      const shouldDetachMediaUpload = !isEditMode && uploadItems.length > 0;
+
+      if (shouldDetachMediaUpload) {
+        const clientUploadId = createUploadClientId();
+        const formData = buildFormData(clientUploadId);
+        const uploadCaption = caption.trim();
+
+        dispatch(addPendingPostUpload({
+          caption: uploadCaption,
+          clientUploadId,
+          mediaCount: uploadItems.length,
+        }));
+        setDetachedCreateActive(true);
+        closeComposer();
+
+        void createPost(formData).unwrap()
+          .then((result) => {
+            dispatch(attachQueuedPostUpload({
+              clientUploadId,
+              postId: result.post._id,
+              progress: result.post.uploadState?.progress,
+            }));
+            showSuccess(result.message);
+          })
+          .catch((error) => {
+            const message = getErrorMessage(error);
+            dispatch(failPostUpload({ clientUploadId, error: message }));
+            showError(message);
+          })
+          .finally(() => {
+            if (mountedRef.current) setDetachedCreateActive(false);
+          });
+
+        return;
+      }
+
       const formData = buildFormData();
       const result = isEditMode && post?._id
         ? await updatePost({ postId: post._id, body: formData }).unwrap()
@@ -308,7 +365,7 @@ export const usePostComposer = ({ isOpen, mode, onClose, post }: UsePostComposer
     } catch (error) {
       showError(getErrorMessage(error));
     }
-  }, [buildFormData, closeComposer, createPost, isEditMode, isSubmitting, post?._id, showError, showSuccess, updatePost, validateForm]);
+  }, [buildFormData, caption, closeComposer, createPost, dispatch, isEditMode, isSubmissionLocked, mediaItems, post?._id, showError, showSuccess, updatePost, validateForm]);
 
   const mediaSummary = useMemo(() => `${mediaItems.length}/${MAX_MEDIA_ITEMS}`, [mediaItems.length]);
   const hasComposerContent = Boolean(

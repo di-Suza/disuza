@@ -2,6 +2,7 @@ import { configureStore } from '@reduxjs/toolkit';
 
 import authReducer from '@/features/auth/state/authSlice';
 import chatReducer from '@/features/messages/state/chatSlice';
+import postUploadReducer from '@/features/posts/state/postUploadSlice';
 import { api } from '@/shared/api/api';
 
 export const store = configureStore({
@@ -9,6 +10,7 @@ export const store = configureStore({
     [api.reducerPath]: api.reducer,
     auth: authReducer,
     chat: chatReducer,
+    postUploads: postUploadReducer,
   },
   middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(api.middleware),
 });

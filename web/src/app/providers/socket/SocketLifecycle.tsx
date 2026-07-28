@@ -8,6 +8,8 @@ import { deleteQueuedChatMessage, getQueuedChatMessages, isRetryableMessageSendE
 import { setLastReceivedMessage } from '@/features/messages/state/chatSlice';
 import { notificationApi } from '@/features/notifications/api/notification.api';
 import type { NotificationItem } from '@/features/notifications/model/notification.types';
+import { postApi } from '@/features/posts/api/post.api';
+import { attachQueuedPostUpload, completePostUpload, failPostUpload, updatePostUploadProgress } from '@/features/posts/state/postUploadSlice';
 import { api } from '@/shared/api/api';
 import { connectSocket, disconnectSocket, getSocket } from '@/shared/services/socket';
 
@@ -124,6 +126,35 @@ const normalizeSeenPayload = (payload: unknown): { conversationId: string; seenB
   const seenBy = toIdString(data.seenBy);
 
   return conversationId && seenBy ? { conversationId, seenBy, seenAt: data.seenAt } : null;
+};
+
+const normalizePostUploadPayload = (payload: unknown): {
+  clientUploadId?: string;
+  error?: string;
+  postId: string;
+  progress: number;
+  status: 'processing' | 'ready' | 'failed';
+} | null => {
+  if (typeof payload !== 'object' || payload === null) return null;
+
+  const data = payload as {
+    clientUploadId?: unknown;
+    error?: unknown;
+    postId?: unknown;
+    progress?: unknown;
+    status?: unknown;
+  };
+  const postId = toIdString(data.postId);
+
+  if (!postId || (data.status !== 'processing' && data.status !== 'ready' && data.status !== 'failed')) return null;
+
+  return {
+    clientUploadId: typeof data.clientUploadId === 'string' ? data.clientUploadId : undefined,
+    error: typeof data.error === 'string' ? data.error : undefined,
+    postId,
+    progress: typeof data.progress === 'number' ? data.progress : 0,
+    status: data.status,
+  };
 };
 
 const addMessageToDraft = (draft: GetMessagesResponse, message: ChatMessage) => {
@@ -327,6 +358,42 @@ const SocketLifecycle = () => {
         dispatch(notificationApi.util.invalidateTags(['Notifications']));
       }
     };
+    const handlePostUploadProgress = (payload: unknown) => {
+      const upload = normalizePostUploadPayload(payload);
+      if (!upload) return;
+
+      dispatch(attachQueuedPostUpload({
+        clientUploadId: upload.clientUploadId,
+        postId: upload.postId,
+        progress: upload.progress,
+      }));
+      dispatch(updatePostUploadProgress({
+        clientUploadId: upload.clientUploadId,
+        postId: upload.postId,
+        progress: upload.progress,
+        status: 'processing',
+      }));
+    };
+    const handlePostUploadCompleted = (payload: unknown) => {
+      const upload = normalizePostUploadPayload(payload);
+      if (!upload) {
+        dispatch(postApi.util.invalidateTags(['Feed', 'Posts', 'ProfileUser', 'Auth']));
+        return;
+      }
+
+      dispatch(completePostUpload({ clientUploadId: upload.clientUploadId, postId: upload.postId }));
+      dispatch(postApi.util.invalidateTags(['Feed', 'Posts', 'ProfileUser', 'Auth']));
+    };
+    const handlePostUploadFailed = (payload: unknown) => {
+      const upload = normalizePostUploadPayload(payload);
+      if (!upload) return;
+
+      dispatch(failPostUpload({
+        clientUploadId: upload.clientUploadId,
+        error: upload.error,
+        postId: upload.postId,
+      }));
+    };
     const handleReceiveMessage = (payload: unknown) => {
       const message = normalizeIncomingMessage(payload);
       if (!message) return;
@@ -436,6 +503,9 @@ const SocketLifecycle = () => {
     socket.on('session_disconnected', handleSessionDisconnected);
     socket.on('new_notification', handleNewNotification);
     socket.on('delete_notification', handleDeleteNotification);
+    socket.on('post_upload_progress', handlePostUploadProgress);
+    socket.on('post_upload_completed', handlePostUploadCompleted);
+    socket.on('post_upload_failed', handlePostUploadFailed);
     socket.off('receive-message', handleReceiveMessage);
     socket.on('receive-message', handleReceiveMessage);
     socket.on('message-unsent', handleMessageUnsent);
@@ -445,6 +515,9 @@ const SocketLifecycle = () => {
       socket.off('session_disconnected', handleSessionDisconnected);
       socket.off('new_notification', handleNewNotification);
       socket.off('delete_notification', handleDeleteNotification);
+      socket.off('post_upload_progress', handlePostUploadProgress);
+      socket.off('post_upload_completed', handlePostUploadCompleted);
+      socket.off('post_upload_failed', handlePostUploadFailed);
       socket.off('receive-message', handleReceiveMessage);
       socket.off('message-unsent', handleMessageUnsent);
       socket.off('messages_seen', handleMessagesSeen);

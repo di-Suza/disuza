@@ -2007,6 +2007,170 @@
   min-height: 50px;
 }
 
+.home-feed-exact__uploads {
+  display: grid;
+  width: 100%;
+  margin: 0 auto 16px;
+  gap: 8px;
+}
+
+.post-upload-status-card {
+  position: relative;
+  display: grid;
+  min-height: 54px;
+  grid-template-columns: 34px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  overflow: hidden;
+  border: 1px solid var(--border-primary);
+  border-radius: 10px;
+  background:
+    linear-gradient(135deg, rgba(59, 99, 255, 0.12), transparent 48%),
+    var(--surface);
+  box-shadow: var(--shadow-soft);
+  padding: 10px 14px;
+  pointer-events: none;
+}
+
+.post-upload-status-card__icon {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  border: 1px solid rgba(59, 99, 255, 0.24);
+  border-radius: 9px;
+  background: rgba(59, 99, 255, 0.12);
+  color: var(--accent);
+}
+
+.post-upload-status-card__body {
+  display: grid;
+  min-width: 0;
+  gap: 5px;
+}
+
+.post-upload-status-card__meta {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.post-upload-status-card__meta strong {
+  color: var(--text-primary);
+  font-size: 13px;
+}
+
+.post-upload-status-card__meta span,
+.post-upload-status-card__body small {
+  color: var(--text-secondary);
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.post-upload-status-card__body p {
+  overflow: hidden;
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.post-upload-status-card__track {
+  position: relative;
+  overflow: hidden;
+  height: 3px;
+  border-radius: 999px;
+  background: var(--surface-deep);
+}
+
+.post-upload-status-card__track i {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 36%;
+  min-width: 36%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--accent), rgba(125, 103, 255, 0.48), var(--accent));
+  animation: upload-progress-sweep 1.15s ease-in-out infinite;
+}
+
+.post-upload-status-card.is-failed {
+  border-color: rgba(255, 91, 91, 0.34);
+  background: linear-gradient(135deg, rgba(255, 91, 91, 0.12), transparent 48%), var(--surface);
+}
+
+.post-upload-status-card.is-failed .post-upload-status-card__icon {
+  border-color: rgba(255, 91, 91, 0.28);
+  background: rgba(255, 91, 91, 0.12);
+  color: var(--danger);
+}
+
+.post-upload-status-card.is-failed .post-upload-status-card__track i {
+  background: var(--danger);
+  animation: none;
+}
+
+@keyframes upload-progress-sweep {
+  0% {
+    transform: translateX(-90%);
+  }
+
+  55% {
+    transform: translateX(95%);
+  }
+
+  100% {
+    transform: translateX(180%);
+  }
+}
+
+@media (max-width: 700px) {
+  .home-feed-exact__uploads {
+    margin-bottom: 12px;
+  }
+
+  .post-upload-status-card {
+    min-height: 50px;
+    grid-template-columns: 30px minmax(0, 1fr);
+    gap: 8px;
+    padding: 9px 10px;
+    border-radius: 9px;
+  }
+
+  .post-upload-status-card__icon {
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+  }
+
+  .post-upload-status-card__meta {
+    gap: 8px;
+  }
+
+  .post-upload-status-card__meta strong,
+  .post-upload-status-card__meta span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .post-upload-status-card__meta strong {
+    min-width: 0;
+    font-size: 12px;
+  }
+
+  .post-upload-status-card__meta span {
+    max-width: 42%;
+    font-size: 9px;
+  }
+
+  .post-upload-status-card__body p {
+    font-size: 10px;
+  }
+}
+
 .home-feed-exact__post-shell {
   content-visibility: auto;
   contain-intrinsic-size: 760px;

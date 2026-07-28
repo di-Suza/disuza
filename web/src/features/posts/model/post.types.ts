@@ -54,6 +54,17 @@ export type PostAnalyticsState = {
   linkClicks: PostLinkClick[];
 };
 
+export type PostUploadState = {
+  status: 'ready' | 'processing' | 'failed';
+  progress?: number;
+  clientUploadId?: string;
+  mediaCount?: number;
+  queuedAt?: string;
+  completedAt?: string;
+  failedAt?: string;
+  error?: string;
+};
+
 export type PostAuthor = {
   _id: string;
   userName: string;
@@ -79,6 +90,7 @@ export type Post = {
   links?: PostLink[];
   codeSnippet?: CodeSnippet;
   hashtags?: string[];
+  uploadState?: PostUploadState;
   isLiked?: boolean;
   isSaved?: boolean;
   isReposted?: boolean;
