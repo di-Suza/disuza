@@ -26,7 +26,7 @@ import {
   Users,
   type LucideIcon,
 } from 'lucide-react';
-import { lazy, Suspense, useState, type ReactNode } from 'react';
+import { lazy, Suspense, useMemo, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 
 import ErrorBoundary from '@/shared/components/ErrorBoundary/ErrorBoundary';
@@ -197,6 +197,20 @@ const ProfilePage = () => {
     projectPosts,
     refetch,
   } = useProfilePage();
+  const image = useMemo(() => avatarUrl(profileUser?.profilePicture?.url), [profileUser?.profilePicture?.url]);
+  const skills = useMemo(() => listToChips(profileUser?.skills), [profileUser?.skills]);
+  const handles = useMemo(() => listToHandles(profileUser?.handles), [profileUser?.handles]);
+  const interests = useMemo(() => listToChips(profileUser?.interests), [profileUser?.interests]);
+  const languages = useMemo(() => listToChips(profileUser?.languages), [profileUser?.languages]);
+  const experiences = useMemo(
+    () => listToRecords<{ companyName?: string; role?: string; timePeriod?: string }>(profileUser?.experiences),
+    [profileUser?.experiences],
+  );
+  const educations = useMemo(
+    () => listToRecords<{ collegeName?: string; course?: string; timePeriod?: string }>(profileUser?.educations),
+    [profileUser?.educations],
+  );
+  const profileAddress = useMemo(() => formatAddress(profileUser?.address), [profileUser?.address]);
 
   if (isOwnProfile) {
     return null;
@@ -223,20 +237,12 @@ const ProfilePage = () => {
     );
   }
 
-  const image = avatarUrl(profileUser.profilePicture?.url);
-  const skills = listToChips(profileUser.skills);
-  const handles = listToHandles(profileUser.handles);
-  const interests = listToChips(profileUser.interests);
-  const languages = listToChips(profileUser.languages);
-  const experiences = listToRecords<{ companyName?: string; role?: string; timePeriod?: string }>(profileUser.experiences);
-  const educations = listToRecords<{ collegeName?: string; course?: string; timePeriod?: string }>(profileUser.educations);
   const relationshipList = listMode === 'followers' ? followers : following;
   const isLimitedProfile = Boolean(profileUser.blockedProfile || profileUser.isBlocked || profileUser.hasBlockedMe);
   const canReportProfile = !isLimitedProfile;
   const canSendFeedback = canReportProfile && Boolean(profileUser._id && profileUser._id !== currentUserId);
   const profileBlockedByViewer = Boolean(profileUser.isBlocked);
   const profileBlockedViewer = Boolean(profileUser.hasBlockedMe);
-  const profileAddress = formatAddress(profileUser.address);
 
   const handleOpenReport = () => {
     setProfileMenuOpen(false);
