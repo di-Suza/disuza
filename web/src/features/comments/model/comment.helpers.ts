@@ -1,4 +1,5 @@
 import type { CommentItem } from './comment.types';
+import { getOptimizedImage } from '@/shared/utils/getOptimizedImage';
 
 const formatter = new Intl.RelativeTimeFormat('en', { numeric: 'auto' });
 
@@ -27,7 +28,7 @@ export const formatCommentTime = (value?: string): string => {
 
 export const getCommentAvatarUrl = (comment?: Pick<CommentItem, 'user'> | null): string | null => {
   const url = comment?.user?.profilePicture?.url;
-  return typeof url === 'string' && url.trim() ? url : null;
+  return typeof url === 'string' && url.trim() ? getOptimizedImage(url, 'avatarSmall') || url : null;
 };
 
 export const canDeleteComment = (comment: CommentItem, userId?: string | null): boolean => {

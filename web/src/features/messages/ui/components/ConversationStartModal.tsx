@@ -11,6 +11,7 @@ import Button from '@/shared/ui/Button';
 import Input from '@/shared/ui/Input';
 import LoadingSpinner from '@/shared/ui/LoadingSpinner';
 import { getErrorMessage } from '@/shared/utils/getErrorMessage';
+import { getOptimizedImage } from '@/shared/utils/getOptimizedImage';
 import { useToast } from '@/shared/hooks/useToast';
 
 type ConversationStartMode = 'chat' | 'group';
@@ -25,7 +26,7 @@ type ConversationStartModalProps = {
 
 const getAvatarUrl = (user: UserProfile) => {
   const url = user.profilePicture?.url;
-  return typeof url === 'string' && url.trim() ? url : null;
+  return typeof url === 'string' && url.trim() ? getOptimizedImage(url, 'avatarSmall') || url : null;
 };
 
 const getInitial = (user: UserProfile) => user.userName?.trim().charAt(0).toUpperCase() || 'U';

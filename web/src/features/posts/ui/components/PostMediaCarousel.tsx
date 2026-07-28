@@ -4,6 +4,7 @@ import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { getPostMedia, isVideoMedia } from '@/features/posts/model/post.helpers';
 import type { PostMedia } from '@/features/posts/model/post.types';
 import { cn } from '@/shared/utils/cn';
+import { getOptimizedImage } from '@/shared/utils/getOptimizedImage';
 
 type PostMediaCarouselProps = {
   media?: PostMedia[];
@@ -30,6 +31,7 @@ const PostMediaCarousel = ({ className, media }: PostMediaCarouselProps) => {
   if (!activeMedia) return null;
 
   const hasMultipleMedia = orderedMedia.length > 1;
+  const imageUrl = !isVideoMedia(activeMedia) ? getOptimizedImage(activeMedia.url, 'post') || activeMedia.url : '';
 
   return (
     <div className={cn('post-media-carousel', className)}>
@@ -37,7 +39,7 @@ const PostMediaCarousel = ({ className, media }: PostMediaCarouselProps) => {
         {isVideoMedia(activeMedia) ? (
           <video src={activeMedia.url} controls preload="metadata" />
         ) : (
-          <img src={activeMedia.url} alt={activeMedia.name || 'Post media'} loading="lazy" />
+          <img src={imageUrl} alt={activeMedia.name || 'Post media'} loading="lazy" />
         )}
 
         {isVideoMedia(activeMedia) && (

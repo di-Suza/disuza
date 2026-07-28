@@ -34,6 +34,7 @@ import type { PortfolioHandle, UserProfile } from '@/features/users/model/user.t
 import { useLockBodyScroll } from '@/shared/hooks/useLockBodyScroll';
 import Button from '@/shared/ui/Button';
 import LoadingSpinner from '@/shared/ui/LoadingSpinner';
+import { getOptimizedImage } from '@/shared/utils/getOptimizedImage';
 import ContributionHeatmap from './ContributionHeatmap';
 
 type DashboardPortfolioPreviewModalProps = {
@@ -77,6 +78,10 @@ const formatAddress = (address: UserProfile['address']): string => (
     .join(', ')
 );
 
+const optimizedMediaUrl = (url?: string, type: 'avatar' | 'thumbnail' = 'thumbnail'): string | undefined => (
+  url ? getOptimizedImage(url, type) || url : undefined
+);
+
 const PreviewSection = ({ children, icon: Icon, spacious = false, title }: PreviewSectionProps) => (
   <section className={spacious ? 'portfolio-preview-profile-section is-spacious' : 'portfolio-preview-profile-section'}>
     <header>
@@ -104,7 +109,7 @@ const PreviewPostCard = ({ post }: { post: Post }) => {
         {firstMedia && isVideoMedia(firstMedia) ? (
           <><video src={firstMedia.url} preload="metadata" muted /><i><Play size={14} aria-hidden="true" /></i></>
         ) : firstMedia ? (
-          <img src={firstMedia.url} alt="Post" loading="lazy" />
+          <img src={optimizedMediaUrl(firstMedia.thumbnailUrl || firstMedia.url, 'thumbnail')} alt="Post" loading="lazy" />
         ) : null}
         <em><Eye size={14} aria-hidden="true" /></em>
       </span>
@@ -147,7 +152,7 @@ const DashboardPortfolioPreviewModal = ({ isOpen, onClose, user }: DashboardPort
   const experiences = Array.isArray(user.experiences) ? [...user.experiences].reverse() : [];
   const educations = Array.isArray(user.educations) ? [...user.educations].reverse() : [];
   const avatar = typeof user.profilePicture?.url === 'string' && user.profilePicture.url.trim()
-    ? user.profilePicture.url
+    ? optimizedMediaUrl(user.profilePicture.url, 'avatar') || user.profilePicture.url
     : null;
   const address = formatAddress(user.address);
 

@@ -8,6 +8,7 @@ import type { UserProfile } from '@/features/users/model/user.types';
 import { useLockBodyScroll } from '@/shared/hooks/useLockBodyScroll';
 import Button from '@/shared/ui/Button';
 import LoadingSpinner from '@/shared/ui/LoadingSpinner';
+import { getOptimizedImage } from '@/shared/utils/getOptimizedImage';
 
 type DashboardUserListType = 'followers' | 'following';
 
@@ -23,7 +24,9 @@ type DashboardUserRowProps = {
   profile: UserProfile;
 };
 
-const getAvatarUrl = (url: unknown): string | null => (typeof url === 'string' && url.trim() ? url : null);
+const getAvatarUrl = (url: unknown): string | null => (
+  typeof url === 'string' && url.trim() ? getOptimizedImage(url, 'avatarSmall') || url : null
+);
 
 const getModalCopy = (type: DashboardUserListType) => (
   type === 'followers'
@@ -42,14 +45,18 @@ const mergeUsers = (current: UserProfile[], next: UserProfile[]) => {
   return [...current, ...next.filter((user) => !existingIds.has(user._id))];
 };
 
-const DashboardUserRow = memo(({ onClose, profile }: DashboardUserRowProps) => (
-  <Link to={`/profile/${profile._id}`} className="dashboard-modal__row" onClick={onClose}>
-    <span className="user-row__avatar">
-      {getAvatarUrl(profile.profilePicture?.url) ? <img src={profile.profilePicture?.url} alt="" /> : <UserRound size={18} aria-hidden="true" />}
-    </span>
-    <span><strong>{profile.userName}</strong><small>{profile.headline || 'Disuza member'}</small></span>
-  </Link>
-));
+const DashboardUserRow = memo(({ onClose, profile }: DashboardUserRowProps) => {
+  const avatarUrl = getAvatarUrl(profile.profilePicture?.url);
+
+  return (
+    <Link to={`/profile/${profile._id}`} className="dashboard-modal__row" onClick={onClose}>
+      <span className="user-row__avatar">
+        {avatarUrl ? <img src={avatarUrl} alt="" /> : <UserRound size={18} aria-hidden="true" />}
+      </span>
+      <span><strong>{profile.userName}</strong><small>{profile.headline || 'Disuza member'}</small></span>
+    </Link>
+  );
+});
 
 DashboardUserRow.displayName = 'DashboardUserRow';
 

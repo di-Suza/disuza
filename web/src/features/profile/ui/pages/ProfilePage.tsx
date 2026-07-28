@@ -33,11 +33,14 @@ import ErrorBoundary from '@/shared/components/ErrorBoundary/ErrorBoundary';
 import Button from '@/shared/ui/Button';
 import LoadingSpinner from '@/shared/ui/LoadingSpinner';
 import { getErrorMessage } from '@/shared/utils/getErrorMessage';
+import { getOptimizedImage, type ImageOptimizationType } from '@/shared/utils/getOptimizedImage';
 import { useProfilePage } from './useProfilePage';
 import './ProfilePage.css';
 import '@/app/layouts/ProductShell.css';
 
-const avatarUrl = (url: unknown): string | null => (typeof url === 'string' && url.trim() ? url : null);
+const avatarUrl = (url: unknown, type: ImageOptimizationType = 'avatarSmall'): string | null => (
+  typeof url === 'string' && url.trim() ? getOptimizedImage(url, type) || url : null
+);
 const listToChips = (items: unknown): string[] => Array.isArray(items) ? items.filter((item): item is string => typeof item === 'string') : [];
 const listToRecords = <T,>(items: unknown): T[] => Array.isArray(items) ? items.filter((item): item is T => typeof item === 'object' && item !== null) : [];
 const toExternalHref = (link: string): string => {
@@ -201,7 +204,7 @@ const ProfilePage = () => {
     projectPosts,
     refetch,
   } = useProfilePage();
-  const image = useMemo(() => avatarUrl(profileUser?.profilePicture?.url), [profileUser?.profilePicture?.url]);
+  const image = useMemo(() => avatarUrl(profileUser?.profilePicture?.url, 'avatar'), [profileUser?.profilePicture?.url]);
   const skills = useMemo(() => listToChips(profileUser?.skills), [profileUser?.skills]);
   const handles = useMemo(() => listToHandles(profileUser?.handles), [profileUser?.handles]);
   const interests = useMemo(() => listToChips(profileUser?.interests), [profileUser?.interests]);
@@ -514,12 +517,16 @@ const ProfilePage = () => {
               </div>
               <div className="user-list relation-modal__list">
                 {relationshipList.length === 0 && <p className="empty-copy">No users found.</p>}
-                {relationshipList.map((user) => (
-                  <Link to={`/profile/${user._id}`} className="user-row user-row__main" key={user._id} onClick={closeList}>
-                    <span className="user-row__avatar">{avatarUrl(user.profilePicture?.url) ? <img src={user.profilePicture?.url} alt="" /> : <UserRound size={18} />}</span>
-                    <span><strong>{user.userName}</strong><small>{user.headline || 'Disuza member'}</small></span>
-                  </Link>
-                ))}
+                {relationshipList.map((user) => {
+                  const userAvatarUrl = avatarUrl(user.profilePicture?.url);
+
+                  return (
+                    <Link to={`/profile/${user._id}`} className="user-row user-row__main" key={user._id} onClick={closeList}>
+                      <span className="user-row__avatar">{userAvatarUrl ? <img src={userAvatarUrl} alt="" /> : <UserRound size={18} />}</span>
+                      <span><strong>{user.userName}</strong><small>{user.headline || 'Disuza member'}</small></span>
+                    </Link>
+                  );
+                })}
               </div>
               <Button variant="secondary" onClick={closeList}>Close</Button>
             </section>

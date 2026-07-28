@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 
 import type { SearchUser } from '@/features/search/model/search.types';
 import { cn } from '@/shared/utils/cn';
+import { getOptimizedImage } from '@/shared/utils/getOptimizedImage';
 
 type SearchUserCardProps = {
   user: SearchUser;
@@ -13,7 +14,7 @@ type SearchUserCardProps = {
 
 const getAvatarUrl = (user: SearchUser): string | null => {
   const url = user.profilePicture?.url;
-  return typeof url === 'string' && url.trim() ? url : null;
+  return typeof url === 'string' && url.trim() ? getOptimizedImage(url, 'avatarSmall') || url : null;
 };
 
 const SearchUserCard = ({ currentUserId, index, user }: SearchUserCardProps) => {

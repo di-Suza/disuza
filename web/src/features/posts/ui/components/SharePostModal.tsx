@@ -12,6 +12,7 @@ import { useToast } from '@/shared/hooks/useToast';
 import Button from '@/shared/ui/Button';
 import LoadingSpinner from '@/shared/ui/LoadingSpinner';
 import { getErrorMessage } from '@/shared/utils/getErrorMessage';
+import { getOptimizedImage } from '@/shared/utils/getOptimizedImage';
 import '../posts.css';
 
 type SharePostModalProps = {
@@ -22,7 +23,7 @@ type SharePostModalProps = {
 
 const getConversationAvatar = (conversation: ChatConversation) => {
   const url = conversation.otherUser?.profilePicture?.url;
-  return typeof url === 'string' && url.trim() ? url : '';
+  return typeof url === 'string' && url.trim() ? getOptimizedImage(url, 'avatarSmall') || url : '';
 };
 
 const SharePostModal = ({ isOpen, onClose, post }: SharePostModalProps) => {

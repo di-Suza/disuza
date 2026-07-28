@@ -11,14 +11,19 @@ import ErrorBoundary from '@/shared/components/ErrorBoundary/ErrorBoundary';
 import Button from '@/shared/ui/Button';
 import LoadingSpinner from '@/shared/ui/LoadingSpinner';
 import { getErrorMessage } from '@/shared/utils/getErrorMessage';
+import { getOptimizedImage } from '@/shared/utils/getOptimizedImage';
 import { useNotificationsPage } from './useNotificationsPage';
 import './NotificationsPage.css';
 import '@/app/layouts/ProductShell.css';
 
 const getAvatarUrl = (notification: NotificationItem) => {
   const url = notification.sender?.profilePicture?.url;
-  return typeof url === 'string' && url.trim() ? url : null;
+  return typeof url === 'string' && url.trim() ? getOptimizedImage(url, 'avatarSmall') || url : null;
 };
+
+const getOptimizedThumbnailUrl = (url: string | null) => (
+  url ? getOptimizedImage(url, 'thumbnail') || url : null
+);
 
 const formatNotificationDate = (value?: string) => {
   if (!value) return '';
@@ -54,7 +59,7 @@ const NotificationCard = memo(({
   onSenderClick,
 }: NotificationCardProps) => {
   const avatarUrl = getAvatarUrl(notification);
-  const thumbnailUrl = getNotificationThumbnailUrl(notification);
+  const thumbnailUrl = getOptimizedThumbnailUrl(getNotificationThumbnailUrl(notification));
   const isUnread = !notification.isRead;
 
   return (

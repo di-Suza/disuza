@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 
 import { getPostMedia, isVideoMedia } from '@/features/posts/model/post.helpers';
 import type { Post } from '@/features/posts/model/post.types';
+import { getOptimizedImage } from '@/shared/utils/getOptimizedImage';
 
 type DashboardActivityKind = 'likes' | 'comments' | 'follows' | 'feedbacks';
 type ActivityRecord = Record<string, unknown>;
@@ -21,6 +22,14 @@ const asRecord = (value: unknown): ActivityRecord | null => (
 );
 
 const text = (value: unknown): string => (typeof value === 'string' ? value : '');
+const optimizedAvatar = (url: unknown): string => {
+  const value = text(url).trim();
+  return value ? getOptimizedImage(value, 'avatarSmall') || value : '';
+};
+const optimizedThumbnail = (url: unknown): string => {
+  const value = text(url).trim();
+  return value ? getOptimizedImage(value, 'thumbnail') || value : '';
+};
 
 const PostPreview = ({ meta, post, onNavigate }: { meta: string; post: ActivityRecord | null; onNavigate: () => void }) => {
   const postId = text(post?._id);
@@ -33,7 +42,7 @@ const PostPreview = ({ meta, post, onNavigate }: { meta: string; post: ActivityR
       <span className="activity-post-preview-v1__media">
         {firstMedia && isVideoMedia(firstMedia)
           ? <video src={firstMedia.url} poster={firstMedia.thumbnailUrl} muted preload="metadata" />
-          : firstMedia ? <img src={firstMedia.url} alt="" /> : <MessageSquare size={20} aria-hidden="true" />}
+          : firstMedia ? <img src={optimizedThumbnail(firstMedia.thumbnailUrl || firstMedia.url)} alt="" /> : <MessageSquare size={20} aria-hidden="true" />}
       </span>
       <span className="activity-post-preview-v1__body">
         <strong>{caption}</strong>
@@ -96,7 +105,7 @@ const DashboardActivityItem = ({ activity, isLoading, onAction, onNavigate, type
   if (type === 'follows') {
     const following = asRecord(record?.following);
     const userId = text(following?._id);
-    const avatar = text(asRecord(following?.profilePicture)?.url);
+    const avatar = optimizedAvatar(asRecord(following?.profilePicture)?.url);
     const content = (
       <>
         <i>{avatar ? <img src={avatar} alt="" /> : <UserRound size={20} aria-hidden="true" />}</i>
@@ -131,8 +140,8 @@ const DashboardActivityItem = ({ activity, isLoading, onAction, onNavigate, type
           <Link to={targetLink} onClick={onNavigate} className="activity-feedback-v1__target">
             <i>
               {targetType === 'User'
-                ? text(asRecord(details.profilePicture)?.url) ? <img src={text(asRecord(details.profilePicture)?.url)} alt="" /> : <UserRound size={20} />
-                : image ? <img src={image.url} alt="" /> : <MessageSquare size={20} />}
+                ? optimizedAvatar(asRecord(details.profilePicture)?.url) ? <img src={optimizedAvatar(asRecord(details.profilePicture)?.url)} alt="" /> : <UserRound size={20} />
+                : image ? <img src={optimizedThumbnail(image.thumbnailUrl || image.url)} alt="" /> : <MessageSquare size={20} />}
             </i>
             <span><strong>{targetType === 'User' ? text(details.userName) || 'Profile' : text(details.caption) || 'Untitled post'}</strong><small>{targetType === 'User' ? 'Profile feedback' : 'Post feedback'}</small></span>
           </Link>

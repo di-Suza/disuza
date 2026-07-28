@@ -8,6 +8,7 @@ import type { UserProfile } from '@/features/users/model/user.types';
 import type { Post, PostAuthor } from '@/features/posts/model/post.types';
 import ErrorBoundary from '@/shared/components/ErrorBoundary/ErrorBoundary';
 import LoadingSpinner from '@/shared/ui/LoadingSpinner';
+import { getOptimizedImage } from '@/shared/utils/getOptimizedImage';
 import InlinePostComposer from '../components/InlinePostComposer';
 import PostCard from '../components/PostCard';
 import { useFeedPage } from './useFeedPage';
@@ -27,7 +28,9 @@ const PostCardSkeleton = () => (
 
 const RecommendationCard = memo(({ user }: { user: UserProfile }) => {
   const navigate = useNavigate();
-  const avatarUrl = typeof user.profilePicture?.url === 'string' ? user.profilePicture.url : '';
+  const avatarUrl = typeof user.profilePicture?.url === 'string'
+    ? getOptimizedImage(user.profilePicture.url, 'avatarSmall') || user.profilePicture.url
+    : '';
 
   return (
     <button type="button" onClick={() => navigate(`/profile/${user._id}`)} className="recommendation-slider-card">
@@ -57,7 +60,9 @@ const UserRecommendations = memo(({ recommendations, variant = 'rail' }: { recom
       <div className="recommendation-header"><span><Sparkles size={16} aria-hidden="true" /></span><div><h2>You may know</h2><p>From your network</p></div></div>
       <div className="recommendation-rail__list">
         {recommendations.slice(0, 6).map((item) => {
-          const avatarUrl = typeof item.profilePicture?.url === 'string' ? item.profilePicture.url : '';
+          const avatarUrl = typeof item.profilePicture?.url === 'string'
+            ? getOptimizedImage(item.profilePicture.url, 'avatarSmall') || item.profilePicture.url
+            : '';
           return (
             <Link key={item._id} to={`/profile/${item._id}`} className="recommendation-row">
               <span>{avatarUrl ? <img src={avatarUrl} alt="" /> : <UserRound size={18} aria-hidden="true" />}</span>

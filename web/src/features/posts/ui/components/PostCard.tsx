@@ -39,6 +39,7 @@ import { useLockBodyScroll } from '@/shared/hooks/useLockBodyScroll';
 import { useToast } from '@/shared/hooks/useToast';
 import { cn } from '@/shared/utils/cn';
 import { getErrorMessage } from '@/shared/utils/getErrorMessage';
+import { getOptimizedImage } from '@/shared/utils/getOptimizedImage';
 import '../posts.css';
 
 type PostCardProps = {
@@ -236,6 +237,9 @@ const PostCard = ({ className, fallbackAuthor, hideFeedbackAction = false, post,
   const avatarUrl = getPostImageUrl(author);
   const media = useMemo(() => getPostMedia(post), [post]);
   const activeMedia = media[currentIndex];
+  const activeMediaBgUrl = activeMedia && !isVideoMedia(activeMedia) ? getOptimizedImage(activeMedia.url, 'card') || activeMedia.url : '';
+  const activeMediaPostUrl = activeMedia && !isVideoMedia(activeMedia) ? getOptimizedImage(activeMedia.url, 'post') || activeMedia.url : '';
+  const activeMediaPreviewUrl = activeMedia && !isVideoMedia(activeMedia) ? getOptimizedImage(activeMedia.url, 'preview') || activeMedia.url : '';
   const mediaStageStyle = useMemo(() => {
     if (!activeMedia?.width || !activeMedia.height) return undefined;
 
@@ -526,7 +530,7 @@ const PostCard = ({ className, fallbackAuthor, hideFeedbackAction = false, post,
         {shouldShowMedia && activeMedia && (
           <section className="v1-post-card__media-shell">
             <div className="v1-post-card__media-stage" style={mediaStageStyle}>
-              {!isVideoMedia(activeMedia) && <img className="v1-post-card__media-bg" src={activeMedia.url} alt="" aria-hidden="true" />}
+              {!isVideoMedia(activeMedia) && <img className="v1-post-card__media-bg" src={activeMediaBgUrl} alt="" aria-hidden="true" />}
               <div className="v1-post-card__media-overlay" />
               {isVideoMedia(activeMedia) ? (
                 <PostVideoPlayer
@@ -537,7 +541,7 @@ const PostCard = ({ className, fallbackAuthor, hideFeedbackAction = false, post,
                   onOpenPreview={openMediaPreview}
                 />
               ) : (
-                <img className="v1-post-card__media-main" src={activeMedia.url} alt={`Post content ${currentIndex + 1}`} loading="lazy" />
+                <img className="v1-post-card__media-main" src={activeMediaPostUrl} alt={`Post content ${currentIndex + 1}`} loading="lazy" />
               )}
               {!isVideoMedia(activeMedia) && <button type="button" className="v1-post-card__media-open" onClick={openMediaPreview} aria-label="Open media preview" />}
 
@@ -617,7 +621,7 @@ const PostCard = ({ className, fallbackAuthor, hideFeedbackAction = false, post,
                 variant="preview"
               />
             ) : (
-              <img className="v1-post-card__media-preview-media" src={activeMedia.url} alt={`Post content ${currentIndex + 1}`} />
+              <img className="v1-post-card__media-preview-media" src={activeMediaPreviewUrl} alt={`Post content ${currentIndex + 1}`} />
             )}
           </div>
           <button type="button" className="v1-post-card__media-preview-close" onClick={closeMediaPreview} aria-label="Close media preview">

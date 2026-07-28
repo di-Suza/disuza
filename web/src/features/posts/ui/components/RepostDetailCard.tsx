@@ -3,6 +3,7 @@ import { memo } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import type { Repost } from '@/features/posts/model/post.types';
+import { getOptimizedImage } from '@/shared/utils/getOptimizedImage';
 import PostCard from './PostCard';
 import '../posts.css';
 
@@ -31,7 +32,9 @@ const formatTime = (value?: string) => {
 const RepostDetailCard = ({ repost, viewerId }: RepostDetailCardProps) => {
   const navigate = useNavigate();
   const reposter = repost.user;
-  const avatarUrl = reposter?.profilePicture?.url;
+  const avatarUrl = reposter?.profilePicture?.url
+    ? getOptimizedImage(reposter.profilePicture.url, 'avatarSmall') || reposter.profilePicture.url
+    : '';
 
   return (
     <article className="repost-detail-card">

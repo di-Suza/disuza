@@ -15,6 +15,7 @@ import { createPortal } from 'react-dom';
 import { useLockBodyScroll } from '@/shared/hooks/useLockBodyScroll';
 import Button from '@/shared/ui/Button';
 import Input from '@/shared/ui/Input';
+import { getOptimizedImage } from '@/shared/utils/getOptimizedImage';
 import type { useDashboardPage } from '../pages/useDashboardPage';
 
 type DashboardPageState = ReturnType<typeof useDashboardPage>;
@@ -79,7 +80,9 @@ const DashboardEditProfileModal = ({
     setShowPasswords({ current: false, next: false, confirm: false });
   }, [isOpen]);
 
-  const avatarUrl = filePreview || identityForm.profilePictureUrl;
+  const avatarUrl = filePreview || (identityForm.profilePictureUrl
+    ? getOptimizedImage(identityForm.profilePictureUrl, 'avatar') || identityForm.profilePictureUrl
+    : '');
   const passwordsMatch = Boolean(passwordForm.newPassword) && passwordForm.newPassword === confirmPassword;
   const isGoogleUser = Boolean(user?.isGoogleUser);
 

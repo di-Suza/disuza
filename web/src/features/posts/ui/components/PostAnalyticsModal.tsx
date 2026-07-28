@@ -21,6 +21,7 @@ import { useToast } from '@/shared/hooks/useToast';
 import Button from '@/shared/ui/Button';
 import LoadingSpinner from '@/shared/ui/LoadingSpinner';
 import { getErrorMessage } from '@/shared/utils/getErrorMessage';
+import { getOptimizedImage } from '@/shared/utils/getOptimizedImage';
 import '../posts.css';
 
 type PostAnalyticsModalProps = {
@@ -50,7 +51,10 @@ const formatDate = (value?: string) => {
   return new Intl.DateTimeFormat('en', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }).format(date);
 };
 
-const getUserAvatar = (item: PostAnalyticsItem) => item.user?.profilePicture?.url || '';
+const getUserAvatar = (item: PostAnalyticsItem) => {
+  const url = item.user?.profilePicture?.url || '';
+  return getOptimizedImage(url, 'avatarSmall') || url;
+};
 
 const getUserName = (item: PostAnalyticsItem) => item.user?.userName || 'User';
 

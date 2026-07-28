@@ -9,6 +9,7 @@ import Button from '@/shared/ui/Button';
 import Input from '@/shared/ui/Input';
 import LoadingSpinner from '@/shared/ui/LoadingSpinner';
 import { cn } from '@/shared/utils/cn';
+import { getOptimizedImage } from '@/shared/utils/getOptimizedImage';
 import CommentReplies from './CommentReplies';
 import { useCommentModal } from '../hooks/useCommentModal';
 import './Comments.css';
@@ -93,6 +94,9 @@ const CommentModal = ({ isOpen, onClose, post }: CommentModalProps) => {
     replyTarget,
     setCommentText,
   } = useCommentModal({ isOpen, onClose, post });
+  const currentUserAvatar = currentUser?.profilePicture?.url
+    ? getOptimizedImage(currentUser.profilePicture.url, 'avatarSmall') || currentUser.profilePicture.url
+    : '';
 
   if (!isOpen) return null;
 
@@ -158,7 +162,7 @@ const CommentModal = ({ isOpen, onClose, post }: CommentModalProps) => {
           )}
           <div className="comments-composer__row">
             <span className="comment-avatar comment-avatar--small">
-              {currentUser?.profilePicture?.url ? <img src={currentUser.profilePicture.url} alt="" /> : <UserRound size={15} aria-hidden="true" />}
+              {currentUserAvatar ? <img src={currentUserAvatar} alt="" /> : <UserRound size={15} aria-hidden="true" />}
             </span>
             <Input
               ref={inputRef}

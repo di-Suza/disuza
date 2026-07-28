@@ -9,6 +9,7 @@ import useUnreadMessagesCount from '@/shared/hooks/useUnreadMessagesCount';
 import { useUnreadNotificationsCount } from '@/shared/hooks/useUnreadNotificationsCount';
 import { useToast } from '@/shared/hooks/useToast';
 import { getErrorMessage } from '@/shared/utils/getErrorMessage';
+import { getOptimizedImage } from '@/shared/utils/getOptimizedImage';
 import './Sidebar.css';
 
 const sidebarItems = [
@@ -78,7 +79,9 @@ const Sidebar = () => {
   const notificationCount = useUnreadNotificationsCount();
   const messageCount = useUnreadMessagesCount();
   const activeFeedType = new URLSearchParams(search).get('type') === 'following' ? 'following' : 'all';
-  const profilePictureUrl = typeof user?.profilePicture?.url === 'string' ? user.profilePicture.url : '';
+  const profilePictureUrl = typeof user?.profilePicture?.url === 'string'
+    ? getOptimizedImage(user.profilePicture.url, 'avatarSmall') || user.profilePicture.url
+    : '';
 
   const isItemActive = (itemPath: string) => pathname === itemPath || pathname.startsWith(`${itemPath}/`);
 

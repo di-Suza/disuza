@@ -11,10 +11,13 @@ import { useToast } from '@/shared/hooks/useToast';
 import Button from '@/shared/ui/Button';
 import LoadingSpinner from '@/shared/ui/LoadingSpinner';
 import { getErrorMessage } from '@/shared/utils/getErrorMessage';
+import { getOptimizedImage } from '@/shared/utils/getOptimizedImage';
 
 const EMPTY_ROOMS: CollabRoomListItem[] = [];
 
-const getAvatarUrl = (url: unknown): string | null => (typeof url === 'string' && url.trim() ? url : null);
+const getAvatarUrl = (url: unknown): string | null => (
+  typeof url === 'string' && url.trim() ? getOptimizedImage(url, 'avatarSmall') || url : null
+);
 
 const formatDate = (date?: string) => {
   if (!date) return 'Not opened yet';

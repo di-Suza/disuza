@@ -5,6 +5,7 @@ import { useAppSelector } from '@/app/store/hooks';
 import Button from '@/shared/ui/Button';
 import Input from '@/shared/ui/Input';
 import { cn } from '@/shared/utils/cn';
+import { getOptimizedImage } from '@/shared/utils/getOptimizedImage';
 import { usePostComposer } from '../hooks/usePostComposer';
 import '../posts.css';
 
@@ -15,7 +16,9 @@ const noopComposerClose = () => undefined;
 const InlinePostComposer = () => {
   const fileInputId = useId();
   const user = useAppSelector((state) => state.auth.user);
-  const avatarUrl = user?.profilePicture?.url;
+  const avatarUrl = user?.profilePicture?.url
+    ? getOptimizedImage(user.profilePicture.url, 'avatarSmall') || user.profilePicture.url
+    : '';
   const [activePanel, setActivePanel] = useState<ComposerPanel>(null);
   const {
     addLink,

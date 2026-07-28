@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { getPostAuthor, getPostImageUrl, getPostMedia, isVideoMedia } from '@/features/posts/model/post.helpers';
 import type { Repost } from '@/features/posts/model/post.types';
 import { cn } from '@/shared/utils/cn';
+import { getOptimizedImage } from '@/shared/utils/getOptimizedImage';
 
 type RepostPreviewCardProps = {
   className?: string;
@@ -26,6 +27,7 @@ const RepostPreviewCard = ({ className, repost }: RepostPreviewCardProps) => {
   const firstMedia = media[0];
   const originalAuthor = getPostAuthor(post);
   const avatarUrl = getPostImageUrl(originalAuthor);
+  const thumbnailUrl = firstMedia ? getOptimizedImage(firstMedia.thumbnailUrl || firstMedia.url, 'thumbnail') || firstMedia.thumbnailUrl || firstMedia.url : '';
 
   return (
     <button
@@ -40,7 +42,7 @@ const RepostPreviewCard = ({ className, repost }: RepostPreviewCardProps) => {
             <i><Play size={14} aria-hidden="true" /></i>
           </>
         ) : firstMedia ? (
-          <img src={firstMedia.url} alt="Reposted post" loading="lazy" />
+          <img src={thumbnailUrl} alt="Reposted post" loading="lazy" />
         ) : (
           <span className="repost-preview-card__empty"><Repeat2 size={22} aria-hidden="true" /></span>
         )}

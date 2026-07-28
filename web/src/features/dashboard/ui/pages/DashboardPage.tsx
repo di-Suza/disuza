@@ -31,6 +31,7 @@ import {
 
 import ErrorBoundary from '@/shared/components/ErrorBoundary/ErrorBoundary';
 import LoadingSpinner from '@/shared/ui/LoadingSpinner';
+import { getOptimizedImage } from '@/shared/utils/getOptimizedImage';
 import HeatmapRules from '../components/HeatmapRules';
 import type { DashboardAccountModalMode } from '../components/DashboardAccountModal';
 import type { DashboardActivityType } from '../components/DashboardActivitiesModal';
@@ -83,7 +84,9 @@ const getInitialTheme = (): Theme => {
   return window.localStorage.getItem(THEME_STORAGE_KEY) === 'light' ? 'light' : 'dark';
 };
 
-const getAvatarUrl = (url: unknown): string | null => (typeof url === 'string' && url.trim() ? url : null);
+const getAvatarUrl = (url: unknown): string | null => (
+  typeof url === 'string' && url.trim() ? getOptimizedImage(url, 'avatar') || url : null
+);
 
 const SettingsRow = ({
   description,

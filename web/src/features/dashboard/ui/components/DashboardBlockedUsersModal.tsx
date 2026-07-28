@@ -10,6 +10,7 @@ import { useToast } from '@/shared/hooks/useToast';
 import Button from '@/shared/ui/Button';
 import LoadingSpinner from '@/shared/ui/LoadingSpinner';
 import { getErrorMessage } from '@/shared/utils/getErrorMessage';
+import { getOptimizedImage } from '@/shared/utils/getOptimizedImage';
 
 type DashboardBlockedUsersModalProps = {
   isOpen: boolean;
@@ -23,7 +24,9 @@ type BlockedUserRowProps = {
   onUnblock: (userId: string) => void;
 };
 
-const getAvatarUrl = (url: unknown): string | null => (typeof url === 'string' && url.trim() ? url : null);
+const getAvatarUrl = (url: unknown): string | null => (
+  typeof url === 'string' && url.trim() ? getOptimizedImage(url, 'avatarSmall') || url : null
+);
 
 const mergeBlockedUsers = (current: BlockedUserItem[], next: BlockedUserItem[]) => {
   const existingIds = new Set(current.map((item) => item._id));
