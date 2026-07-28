@@ -294,7 +294,6 @@ const ProfilePage = () => {
               <AvatarImage src={image} imageType="avatar" alt={profileUser.userName} fallback={<UserRound size={42} aria-hidden="true" />} />
             </span>
             <div className="profile-hero__content">
-              <p className="state-panel__eyebrow">Developer Profile</p>
               <h1>{profileUser.userName}</h1>
               <p className="profile-warning">You blocked this user.</p>
             </div>
@@ -315,7 +314,6 @@ const ProfilePage = () => {
                 <div className="profile-preview-header__main">
                   <div className="profile-preview-header__title-row">
                     <div>
-                      <p>Developer Profile</p>
                       <h1>{profileUser.userName}</h1>
                     </div>
                     <div className="profile-hero__menu">
