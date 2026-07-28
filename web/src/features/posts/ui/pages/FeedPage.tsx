@@ -13,6 +13,8 @@ import { useFeedPage } from './useFeedPage';
 import '../posts.css';
 import '@/app/layouts/ProductShell.css';
 
+const EMPTY_RECOMMENDATIONS: UserProfile[] = [];
+
 const PostCardSkeleton = () => (
   <div className="feed-post-skeleton">
     <div className="feed-post-skeleton__header"><span /><div><i /><i /></div><em /></div>
@@ -22,7 +24,7 @@ const PostCardSkeleton = () => (
   </div>
 );
 
-const RecommendationCard = ({ user }: { user: UserProfile }) => {
+const RecommendationCard = memo(({ user }: { user: UserProfile }) => {
   const navigate = useNavigate();
   const avatarUrl = typeof user.profilePicture?.url === 'string' ? user.profilePicture.url : '';
 
@@ -33,9 +35,11 @@ const RecommendationCard = ({ user }: { user: UserProfile }) => {
       <em><Eye size={14} aria-hidden="true" />View</em>
     </button>
   );
-};
+});
 
-const UserRecommendations = ({ recommendations, variant = 'rail' }: { recommendations: UserProfile[]; variant?: 'rail' | 'slider' }) => {
+RecommendationCard.displayName = 'RecommendationCard';
+
+const UserRecommendations = memo(({ recommendations, variant = 'rail' }: { recommendations: UserProfile[]; variant?: 'rail' | 'slider' }) => {
   if (recommendations.length === 0) return null;
 
   if (variant === 'slider') {
@@ -63,7 +67,9 @@ const UserRecommendations = ({ recommendations, variant = 'rail' }: { recommenda
       </div>
     </aside>
   );
-};
+});
+
+UserRecommendations.displayName = 'UserRecommendations';
 
 const FeedPostItem = memo(({ fallbackAuthor, post, viewerId }: { fallbackAuthor?: PostAuthor; post: Post; viewerId?: string }) => (
   <div className="home-feed-exact__post-shell">
@@ -82,7 +88,7 @@ const FeedPage = () => {
   const [visiblePostCount, setVisiblePostCount] = useState(FEED_RENDER_BATCH_SIZE);
   const { feedType, hasMore, isError, isFetching, isLoading, loadMore, posts, refetch, user } = useFeedPage();
   const { data: recommendationsData } = useGetUserRecommendationsQuery({ limit: 12 });
-  const recommendations = recommendationsData?.recommendations || [];
+  const recommendations = recommendationsData?.recommendations || EMPTY_RECOMMENDATIONS;
   const hasRecommendations = recommendations.length > 0;
   const inlineRecommendationIndex = posts.length >= 2 ? Math.min(recommendationInsertIndex, posts.length) : null;
   const visiblePosts = useMemo(() => posts.slice(0, visiblePostCount), [posts, visiblePostCount]);
