@@ -15,13 +15,12 @@ import {
   Sparkles,
   X,
 } from 'lucide-react';
-import { useMemo, useRef, useState, type ChangeEvent } from 'react';
+import { lazy, Suspense, useMemo, useRef, useState, type ChangeEvent } from 'react';
 
 import Button from '@/shared/ui/Button';
 import Input from '@/shared/ui/Input';
 import LoadingSpinner from '@/shared/ui/LoadingSpinner';
 import type { UserProfile } from '@/features/users/model/user.types';
-import DashboardPortfolioPreviewModal from './DashboardPortfolioPreviewModal';
 import PortfolioTagEditor from './PortfolioTagEditor';
 import type { useDashboardPage } from '../pages/useDashboardPage';
 
@@ -76,6 +75,7 @@ const interestSuggestions = [
   'Data Science',
 ];
 const languageSuggestions = ['Hindi', 'English', 'Spanish', 'French', 'German', 'Mandarin', 'Japanese', 'Korean', 'Arabic', 'Portuguese'];
+const DashboardPortfolioPreviewModal = lazy(() => import('./DashboardPortfolioPreviewModal'));
 
 const SaveStatus = ({ isSaving, label }: { isSaving: boolean; label: string }) => (
   <small>{isSaving ? <LoadingSpinner inline label="Saving portfolio" size={13} /> : label}</small>
@@ -583,11 +583,15 @@ const DashboardPortfolioEditor = ({
         </section>
       </div>
 
-      <DashboardPortfolioPreviewModal
-        isOpen={isPreviewOpen}
-        onClose={() => setPreviewOpen(false)}
-        user={(user as UserProfile | null) || null}
-      />
+      <Suspense fallback={null}>
+        {isPreviewOpen && (
+          <DashboardPortfolioPreviewModal
+            isOpen={isPreviewOpen}
+            onClose={() => setPreviewOpen(false)}
+            user={(user as UserProfile | null) || null}
+          />
+        )}
+      </Suspense>
     </div>
   );
 };
