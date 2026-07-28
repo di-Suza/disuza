@@ -15,7 +15,7 @@ import {
   Sparkles,
   X,
 } from 'lucide-react';
-import { lazy, Suspense, useMemo, useRef, useState, type ChangeEvent } from 'react';
+import { lazy, memo, Suspense, useCallback, useMemo, useRef, useState, type ChangeEvent } from 'react';
 
 import Button from '@/shared/ui/Button';
 import Input from '@/shared/ui/Input';
@@ -77,9 +77,11 @@ const interestSuggestions = [
 const languageSuggestions = ['Hindi', 'English', 'Spanish', 'French', 'German', 'Mandarin', 'Japanese', 'Korean', 'Arabic', 'Portuguese'];
 const DashboardPortfolioPreviewModal = lazy(() => import('./DashboardPortfolioPreviewModal'));
 
-const SaveStatus = ({ isSaving, label }: { isSaving: boolean; label: string }) => (
+const SaveStatus = memo(({ isSaving, label }: { isSaving: boolean; label: string }) => (
   <small>{isSaving ? <LoadingSpinner inline label="Saving portfolio" size={13} /> : label}</small>
-);
+));
+
+SaveStatus.displayName = 'SaveStatus';
 
 const inputChange = (value: string): ChangeEvent<HTMLInputElement> => ({
   target: { value },
@@ -127,13 +129,28 @@ const DashboardPortfolioEditor = ({
   const professionalFormRef = useRef<HTMLFormElement>(null);
   const addressIsFocused = focusedGeneralField === 'city' || focusedGeneralField === 'state' || focusedGeneralField === 'country';
 
-  const scheduleProfessionalSave = () => {
+  const scheduleProfessionalSave = useCallback(() => {
     window.setTimeout(() => professionalFormRef.current?.requestSubmit(), 0);
-  };
+  }, []);
 
-  const setProfessionalValue = (field: ProfessionalTextField, value: string) => {
+  const setProfessionalValue = useCallback((field: ProfessionalTextField, value: string) => {
     updateProfessionalField(field)(inputChange(value));
-  };
+  }, [updateProfessionalField]);
+
+  const handleSkillsChange = useCallback((value: string) => {
+    setProfessionalValue('skills', value);
+  }, [setProfessionalValue]);
+
+  const handleInterestsChange = useCallback((value: string) => {
+    setProfessionalValue('interests', value);
+  }, [setProfessionalValue]);
+
+  const handleLanguagesChange = useCallback((value: string) => {
+    setProfessionalValue('languages', value);
+  }, [setProfessionalValue]);
+
+  const openPreview = useCallback(() => setPreviewOpen(true), []);
+  const closePreview = useCallback(() => setPreviewOpen(false), []);
 
   const beginAddingExperience = () => {
     const emptyIndex = professionalForm.experiences.findIndex((experience) => !hasExperience(experience));
@@ -277,7 +294,7 @@ const DashboardPortfolioEditor = ({
               </div>
             )}
           </div>
-          <Button variant="secondary" className="button--icon portfolio-preview-button-v1" onClick={() => setPreviewOpen(true)} aria-label="Preview portfolio">
+          <Button variant="secondary" className="button--icon portfolio-preview-button-v1" onClick={openPreview} aria-label="Preview portfolio">
             <Presentation size={17} aria-hidden="true" />
           </Button>
         </section>
@@ -381,7 +398,7 @@ const DashboardPortfolioEditor = ({
                   actionNoun=" skill"
                   countSuffix=" added"
                   onCommit={scheduleProfessionalSave}
-                  onValueChange={(value) => setProfessionalValue('skills', value)}
+                  onValueChange={handleSkillsChange}
                   placeholder="Type a skill and press comma, space, or enter..."
                   showSuggestionsBelow={1}
                   suggestionLabel="Popular skills:"
@@ -448,7 +465,7 @@ const DashboardPortfolioEditor = ({
                   isSaving={isBusy}
                   label="Interests"
                   onCommit={scheduleProfessionalSave}
-                  onValueChange={(value) => setProfessionalValue('interests', value)}
+                  onValueChange={handleInterestsChange}
                   placeholder="Type an interest and press comma, space, or enter..."
                   showSuggestionsBelow={3}
                   suggestionLabel="Popular interests:"
@@ -464,7 +481,7 @@ const DashboardPortfolioEditor = ({
                   isSaving={isBusy}
                   label="Languages"
                   onCommit={scheduleProfessionalSave}
-                  onValueChange={(value) => setProfessionalValue('languages', value)}
+                  onValueChange={handleLanguagesChange}
                   placeholder="Type a language and press comma, space, or enter..."
                   showSuggestionsBelow={3}
                   suggestionLabel="Common languages:"
@@ -587,7 +604,7 @@ const DashboardPortfolioEditor = ({
         {isPreviewOpen && (
           <DashboardPortfolioPreviewModal
             isOpen={isPreviewOpen}
-            onClose={() => setPreviewOpen(false)}
+            onClose={closePreview}
             user={(user as UserProfile | null) || null}
           />
         )}
