@@ -1,4 +1,5 @@
 import { ArrowLeft, ArrowRight, Loader2, RotateCcw, ShieldCheck } from 'lucide-react';
+import { memo } from 'react';
 import { createPortal } from 'react-dom';
 
 import type { OtpResponse } from '@/features/auth/model/auth.types';
@@ -96,4 +97,4 @@ const OtpVerificationModal = (props: OtpVerificationModalProps) => {
   );
 };
 
-export default OtpVerificationModal;
+export default memo(OtpVerificationModal);
