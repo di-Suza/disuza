@@ -428,6 +428,17 @@ button.profile-preview-stat:hover:not(:disabled) {
   color: var(--accent);
 }
 
+.profile-posts-section__see-all:disabled {
+  cursor: not-allowed;
+  opacity: 0.58;
+}
+
+.profile-posts-section__see-all:disabled:hover {
+  border-color: var(--border-secondary);
+  background: var(--bg-main);
+  color: var(--text-primary);
+}
+
 .profile-posts-section__footer {
   display: flex;
   justify-content: center;

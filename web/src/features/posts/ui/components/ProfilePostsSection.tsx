@@ -13,6 +13,7 @@ import LoadingSpinner from '@/shared/ui/LoadingSpinner';
 import '../posts.css';
 
 type ProfilePostsSectionProps = {
+  disableSeeAll?: boolean;
   normalPosts: Post[];
   profileUser: UserProfile;
   projectPosts: Post[];
@@ -152,12 +153,14 @@ ProfilePostPreviewCard.displayName = 'ProfilePostPreviewCard';
 
 const ProfilePostSection = ({
   children,
+  disableSeeAll = false,
   icon: Icon,
   onSeeAll,
   showSeeAll,
   title,
 }: {
   children: ReactNode;
+  disableSeeAll?: boolean;
   icon: LucideIcon;
   onSeeAll?: () => void;
   showSeeAll?: boolean;
@@ -173,7 +176,7 @@ const ProfilePostSection = ({
     <div className="profile-posts-section__gallery">{children}</div>
     {showSeeAll && onSeeAll && (
       <div className="profile-posts-section__footer">
-        <button type="button" className="profile-posts-section__see-all" onClick={onSeeAll}>
+        <button type="button" className="profile-posts-section__see-all" onClick={onSeeAll} disabled={disableSeeAll}>
           See all posts
         </button>
       </div>
@@ -181,7 +184,7 @@ const ProfilePostSection = ({
   </section>
 );
 
-const ProfilePostsSection = ({ normalPosts, profileUser, projectPosts }: ProfilePostsSectionProps) => {
+const ProfilePostsSection = ({ disableSeeAll = false, normalPosts, profileUser, projectPosts }: ProfilePostsSectionProps) => {
   const { previewLimit, viewportWidth } = useProfilePreviewLimit();
   const [activeGallery, setActiveGallery] = useState<ProfileGalleryModalState | null>(null);
   const [localModalLimit, setLocalModalLimit] = useState(PROFILE_MODAL_PAGE_SIZE);
@@ -313,6 +316,7 @@ const ProfilePostsSection = ({ normalPosts, profileUser, projectPosts }: Profile
   return (
     <>
       <ProfilePostSection
+        disableSeeAll={disableSeeAll}
         icon={Grid2X2}
         title="All Posts"
         showSeeAll={hasMorePosts}

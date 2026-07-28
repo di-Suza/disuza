@@ -3,16 +3,13 @@ import {
   Briefcase,
   Calendar,
   Code2,
-  Eye,
   ExternalLink,
   GraduationCap,
-  Grid2X2,
   Heart,
   Languages,
   Link2,
   MapPin,
-  MessageCircle,
-  Play,
+  MoreVertical,
   RefreshCw,
   SendHorizontal,
   Star,
@@ -28,15 +25,14 @@ import { type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 
 import { useGetAllPostsQuery } from '@/features/posts/api/post.api';
-import { getPostMedia, isVideoMedia } from '@/features/posts/model/post.helpers';
-import type { Post } from '@/features/posts/model/post.types';
+import ProfilePostsSection from '@/features/posts/ui/components/ProfilePostsSection';
 import type { PortfolioHandle, UserProfile } from '@/features/users/model/user.types';
 import AvatarImage from '@/shared/components/Avatar/AvatarImage';
-import Image from '@/shared/components/Image/Image';
 import { useLockBodyScroll } from '@/shared/hooks/useLockBodyScroll';
 import Button from '@/shared/ui/Button';
 import LoadingSpinner from '@/shared/ui/LoadingSpinner';
 import ContributionHeatmap from './ContributionHeatmap';
+import '@/features/profile/ui/pages/ProfilePage.css';
 
 type DashboardPortfolioPreviewModalProps = {
   isOpen: boolean;
@@ -80,7 +76,7 @@ const formatAddress = (address: UserProfile['address']): string => (
 );
 
 const PreviewSection = ({ children, icon: Icon, spacious = false, title }: PreviewSectionProps) => (
-  <section className={spacious ? 'portfolio-preview-profile-section is-spacious' : 'portfolio-preview-profile-section'}>
+  <section className={spacious ? 'profile-preview-section is-spacious' : 'profile-preview-section'}>
     <header>
       <span><Icon size={20} aria-hidden="true" /></span>
       <h2>{title}</h2>
@@ -90,43 +86,10 @@ const PreviewSection = ({ children, icon: Icon, spacious = false, title }: Previ
 );
 
 const PreviewStat = ({ icon: Icon, label, value }: { icon?: LucideIcon; label: string; value: number }) => (
-  <span className="portfolio-preview-profile-stat">
+  <span className="profile-preview-stat">
     <span>{Icon && <Icon size={16} aria-hidden="true" />}<small>{label}</small></span>
     <strong>{value}</strong>
   </span>
-);
-
-const PreviewPostCard = ({ post }: { post: Post }) => {
-  const media = getPostMedia(post);
-  const firstMedia = media[0];
-
-  return (
-    <article className="dashboard-post-preview-card portfolio-preview-post-v1">
-      <span className="dashboard-post-preview-card__media">
-        {firstMedia && isVideoMedia(firstMedia) ? (
-          <><video src={firstMedia.url} preload="metadata" muted /><i><Play size={14} aria-hidden="true" /></i></>
-        ) : firstMedia ? (
-          <Image src={firstMedia.thumbnailUrl || firstMedia.url} type="thumbnail" alt="Post" />
-        ) : null}
-        <em><Eye size={14} aria-hidden="true" /></em>
-      </span>
-      <span className="dashboard-post-preview-card__body">
-        <strong>{post.caption || 'Untitled post'}</strong>
-        <small>
-          <span><Heart size={12} aria-hidden="true" />{Number(post.counts?.likes || 0)}</span>
-          <span><MessageCircle size={12} aria-hidden="true" />{Number(post.counts?.comments || 0)}</span>
-        </small>
-      </span>
-    </article>
-  );
-};
-
-const PreviewPostSection = ({ icon, posts, title }: { icon: LucideIcon; posts: Post[]; title: string }) => (
-  <PreviewSection icon={icon} spacious title={title}>
-    <div className="portfolio-preview-profile-gallery">
-      {posts.map((post) => <PreviewPostCard key={post._id} post={post} />)}
-    </div>
-  </PreviewSection>
 );
 
 const DashboardPortfolioPreviewModal = ({ isOpen, onClose, user }: DashboardPortfolioPreviewModalProps) => {
@@ -168,11 +131,11 @@ const DashboardPortfolioPreviewModal = ({ isOpen, onClose, user }: DashboardPort
               <button type="button" onClick={() => refetch()}><RefreshCw size={16} />Retry</button>
             </div>
           ) : (
-            <div className="portfolio-preview-v1__content">
-              <section className="portfolio-preview-profile-header">
-                <div className="portfolio-preview-profile-header__top">
-                  <span className="portfolio-preview-profile-header__avatar-wrap">
-                    <span className="portfolio-preview-profile-header__avatar">
+            <div className="portfolio-preview-v1__content dashboard-panel dashboard-panel--wide profile-page-panel">
+              <section className="profile-preview-header">
+                <div className="profile-preview-header__top">
+                  <span className="profile-preview-header__avatar-wrap">
+                    <span className="profile-preview-header__avatar">
                       <AvatarImage
                         src={avatar}
                         imageType="avatar"
@@ -181,12 +144,20 @@ const DashboardPortfolioPreviewModal = ({ isOpen, onClose, user }: DashboardPort
                       />
                     </span>
                   </span>
-                  <div className="portfolio-preview-profile-header__main">
-                    <p>Developer Profile</p>
-                    <h1>{user.userName}</h1>
-                    {user.headline && <div className="portfolio-preview-profile-header__headline">{user.headline}</div>}
-                    {address && <div className="portfolio-preview-profile-header__address"><MapPin size={14} aria-hidden="true" />{address}</div>}
-                    <div className="portfolio-preview-profile-header__stats">
+                  <div className="profile-preview-header__main">
+                    <div className="profile-preview-header__title-row">
+                      <div>
+                        <h1>{user.userName}</h1>
+                      </div>
+                      <div className="profile-hero__menu" aria-hidden="true">
+                        <span className="profile-hero__menu-button">
+                          <MoreVertical size={18} aria-hidden="true" />
+                        </span>
+                      </div>
+                    </div>
+                    <div className="profile-preview-header__headline">{user.headline || 'Disuza developer'}</div>
+                    {address && <div className="profile-preview-header__address"><MapPin size={14} aria-hidden="true" />{address}</div>}
+                    <div className="profile-preview-header__stats">
                       <PreviewStat label="Posts" value={Number(user.postsCount || posts.length)} />
                       <PreviewStat icon={Users} label="Followers" value={Number(user.followersCount || 0)} />
                       <PreviewStat icon={UserCheck} label="Following" value={Number(user.followingCount || 0)} />
@@ -194,79 +165,80 @@ const DashboardPortfolioPreviewModal = ({ isOpen, onClose, user }: DashboardPort
                     </div>
                   </div>
                 </div>
-                <div className="portfolio-preview-profile-header__actions">
+                <div className="profile-preview-header__actions">
                   <Button disabled><UserPlus size={16} aria-hidden="true" />Follow</Button>
                   <Button variant="secondary" disabled><SendHorizontal size={16} aria-hidden="true" />Send Feedback</Button>
                 </div>
               </section>
 
-              <section className="portfolio-preview-heatmap-v1"><ContributionHeatmap heatmap={user.heatmap} /></section>
+              <div className="profile-preview-content">
+                <section className="profile-preview-heatmap"><ContributionHeatmap heatmap={user.heatmap} /></section>
 
-              {user.about && (
-                <PreviewSection icon={User} title="About"><p className="portfolio-preview-profile-copy">{user.about}</p></PreviewSection>
-              )}
+                {user.about && (
+                  <PreviewSection icon={User} title="About"><p className="profile-copy">{user.about}</p></PreviewSection>
+                )}
 
-              {skills.length > 0 && (
-                <PreviewSection icon={Code2} title="Skills"><div className="portfolio-preview-profile-chips">{skills.map((skill) => <span key={skill}>{skill}</span>)}</div></PreviewSection>
-              )}
+                {skills.length > 0 && (
+                  <PreviewSection icon={Code2} title="Skills"><div className="chip-list">{skills.map((skill) => <span key={skill}>{skill}</span>)}</div></PreviewSection>
+                )}
 
-              {handles.length > 0 && (
-                <PreviewSection icon={Link2} title="Handles">
-                  <div className="portfolio-preview-profile-chips">
-                    {handles.map((handle, index) => (
-                      <a key={`${handle.label}-${index}`} href={handle.link} target="_blank" rel="noreferrer">
-                        {handle.label}
-                        <ExternalLink size={13} aria-hidden="true" />
-                      </a>
-                    ))}
-                  </div>
-                </PreviewSection>
-              )}
+                {handles.length > 0 && (
+                  <PreviewSection icon={Link2} title="Handles">
+                    <div className="chip-list chip-list--links">
+                      {handles.map((handle, index) => (
+                        <a key={`${handle.label}-${index}`} href={handle.link} target="_blank" rel="noreferrer">
+                          {handle.label}
+                          <ExternalLink size={13} aria-hidden="true" />
+                        </a>
+                      ))}
+                    </div>
+                  </PreviewSection>
+                )}
 
-              {projectPosts.length > 0 && <PreviewPostSection icon={Briefcase} posts={projectPosts} title="Projects" />}
-              {normalPosts.length > 0 && <PreviewPostSection icon={Grid2X2} posts={normalPosts} title="All Posts" />}
+                <ProfilePostsSection disableSeeAll normalPosts={normalPosts} projectPosts={projectPosts} profileUser={user} />
 
-              {experiences.length > 0 && (
-                <PreviewSection icon={Briefcase} spacious title="Experience">
-                  <div className="portfolio-preview-profile-timeline">
-                    {experiences.map((experience, index) => (
-                      <article key={`${experience.companyName}-${index}`}>
-                        <i><Briefcase size={16} aria-hidden="true" /></i>
-                        <span>
-                          <strong>{experience.companyName}</strong>
-                          {experience.role && <small><Briefcase size={14} aria-hidden="true" />{experience.role}</small>}
-                          <small className="is-pill"><Calendar size={14} aria-hidden="true" />{experience.timePeriod}</small>
-                        </span>
-                      </article>
-                    ))}
-                  </div>
-                </PreviewSection>
-              )}
+                {experiences.length > 0 && (
+                  <PreviewSection icon={Briefcase} spacious title="Experience">
+                    <div className="profile-timeline-list">
+                      {experiences.map((experience, index) => (
+                        <article key={`${experience.companyName}-${index}`}>
+                          <i><Briefcase size={16} aria-hidden="true" /></i>
+                          <span>
+                            <strong>{experience.companyName}</strong>
+                            {experience.role && <small><Briefcase size={14} aria-hidden="true" />{experience.role}</small>}
+                            <small className="is-pill"><Calendar size={14} aria-hidden="true" />{experience.timePeriod}</small>
+                          </span>
+                        </article>
+                      ))}
+                    </div>
+                  </PreviewSection>
+                )}
 
-              {educations.length > 0 && (
-                <PreviewSection icon={GraduationCap} spacious title="Education">
-                  <div className="portfolio-preview-profile-timeline">
-                    {educations.map((education, index) => (
-                      <article key={`${education.collegeName}-${index}`}>
-                        <i><GraduationCap size={16} aria-hidden="true" /></i>
-                        <span>
-                          <strong>{education.collegeName}</strong>
-                          <small><BookOpen size={14} aria-hidden="true" />{education.course}</small>
-                          <small className="is-pill"><Calendar size={14} aria-hidden="true" />{education.timePeriod}</small>
-                        </span>
-                      </article>
-                    ))}
-                  </div>
-                </PreviewSection>
-              )}
+                {educations.length > 0 && (
+                  <PreviewSection icon={GraduationCap} spacious title="Education">
+                    <div className="profile-timeline-list">
+                      {educations.map((education, index) => (
+                        <article key={`${education.collegeName}-${index}`}>
+                          <i><GraduationCap size={16} aria-hidden="true" /></i>
+                          <span>
+                            <strong>{education.collegeName}</strong>
+                            <small><BookOpen size={14} aria-hidden="true" />{education.course}</small>
+                            <small className="is-pill"><Calendar size={14} aria-hidden="true" />{education.timePeriod}</small>
+                          </span>
+                        </article>
+                      ))}
+                    </div>
+                  </PreviewSection>
+                )}
 
-              {languages.length > 0 && (
-                <PreviewSection icon={Languages} title="Languages"><div className="portfolio-preview-profile-chips">{languages.map((language) => <span key={language}>{language}</span>)}</div></PreviewSection>
-              )}
+                {languages.length > 0 && (
+                  <PreviewSection icon={Languages} title="Languages"><div className="chip-list">{languages.map((language) => <span key={language}>{language}</span>)}</div></PreviewSection>
+                )}
 
-              {interests.length > 0 && (
-                <PreviewSection icon={Heart} title="Interests"><div className="portfolio-preview-profile-chips">{interests.map((interest) => <span key={interest}>{interest}</span>)}</div></PreviewSection>
-              )}
+                {interests.length > 0 && (
+                  <PreviewSection icon={Heart} title="Interests"><div className="chip-list">{interests.map((interest) => <span key={interest}>{interest}</span>)}</div></PreviewSection>
+                )}
+              </div>
             </div>
           )}
         </div>
