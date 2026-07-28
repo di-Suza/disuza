@@ -7,6 +7,7 @@ import {
   Sparkles,
   Users,
 } from 'lucide-react';
+import { memo } from 'react';
 import { Link } from 'react-router-dom';
 
 import logo from '@/shared/assets/images/logo.png';
@@ -44,12 +45,14 @@ const audience = [
   'Creators collecting structured feedback',
 ];
 
-const SectionLabel = ({ children }: { children: string }) => (
+const SectionLabel = memo(({ children }: { children: string }) => (
   <span className="landing-v1-label">
     <Sparkles size={14} aria-hidden="true" />
     {children}
   </span>
-);
+));
+
+SectionLabel.displayName = 'SectionLabel';
 
 const LandingPage = () => (
   <main className="landing-v1-page">
@@ -192,4 +195,4 @@ feed.post({
   </main>
 );
 
-export default LandingPage;
+export default memo(LandingPage);
