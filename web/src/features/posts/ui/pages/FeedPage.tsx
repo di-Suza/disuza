@@ -1,5 +1,6 @@
 import { Eye, RefreshCw, Sparkles, UserRound } from 'lucide-react';
-import { Fragment, memo, useEffect, useMemo, useRef, useState } from 'react';
+import { useWindowVirtualizer } from '@tanstack/react-virtual';
+import { memo, useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
 import { useGetUserRecommendationsQuery } from '@/features/users/api/user.api';
@@ -81,10 +82,12 @@ FeedPostItem.displayName = 'FeedPostItem';
 
 const FEED_RENDER_BATCH_SIZE = 8;
 
+type FeedVirtualItem =
+  | { id: string; type: 'post'; post: Post }
+  | { id: string; type: 'recommendations' };
+
 const FeedPage = () => {
   const [recommendationInsertIndex] = useState(() => Math.floor(Math.random() * 3) + 2);
-  const loadMoreRef = useRef<HTMLDivElement | null>(null);
-  const renderMoreRef = useRef<HTMLDivElement | null>(null);
   const [visiblePostCount, setVisiblePostCount] = useState(FEED_RENDER_BATCH_SIZE);
   const { feedType, hasMore, isError, isFetching, isLoading, loadMore, posts, refetch, user } = useFeedPage();
   const { data: recommendationsData } = useGetUserRecommendationsQuery({ limit: 12 });
@@ -92,7 +95,27 @@ const FeedPage = () => {
   const hasRecommendations = recommendations.length > 0;
   const inlineRecommendationIndex = posts.length >= 2 ? Math.min(recommendationInsertIndex, posts.length) : null;
   const visiblePosts = useMemo(() => posts.slice(0, visiblePostCount), [posts, visiblePostCount]);
+  const feedItems = useMemo<FeedVirtualItem[]>(() => {
+    const items: FeedVirtualItem[] = [];
+
+    visiblePosts.forEach((post, index) => {
+      items.push({ id: post._id, type: 'post', post });
+      if (hasRecommendations && inlineRecommendationIndex === index + 1) {
+        items.push({ id: 'inline-recommendations', type: 'recommendations' });
+      }
+    });
+
+    return items;
+  }, [hasRecommendations, inlineRecommendationIndex, visiblePosts]);
   const hasHiddenLoadedPosts = visiblePostCount < posts.length;
+  const rowVirtualizer = useWindowVirtualizer({
+    count: feedItems.length,
+    estimateSize: (index) => (feedItems[index]?.type === 'recommendations' ? 230 : 760),
+    getItemKey: (index) => feedItems[index]?.id || index,
+    overscan: 4,
+  });
+  const virtualItems = rowVirtualizer.getVirtualItems();
+  const lastVirtualIndex = virtualItems[virtualItems.length - 1]?.index ?? -1;
 
   const fallbackAuthor = useMemo<PostAuthor | undefined>(() => {
     if (!user) return undefined;
@@ -104,24 +127,15 @@ const FeedPage = () => {
   }, [feedType]);
 
   useEffect(() => {
-    const sentinel = hasHiddenLoadedPosts ? renderMoreRef.current : loadMoreRef.current;
-    if (!sentinel || (!hasHiddenLoadedPosts && !hasMore)) return undefined;
+    if (lastVirtualIndex < Math.max(0, feedItems.length - 3)) return;
 
-    const observer = new IntersectionObserver((entries) => {
-      if (!entries[0]?.isIntersecting) return;
+    if (hasHiddenLoadedPosts) {
+      setVisiblePostCount((current) => Math.min(posts.length, current + FEED_RENDER_BATCH_SIZE));
+      return;
+    }
 
-      if (hasHiddenLoadedPosts) {
-        setVisiblePostCount((current) => Math.min(posts.length, current + FEED_RENDER_BATCH_SIZE));
-        return;
-      }
-
-      loadMore();
-    }, { rootMargin: '720px 0px' });
-
-    observer.observe(sentinel);
-
-    return () => observer.disconnect();
-  }, [hasHiddenLoadedPosts, hasMore, loadMore, posts.length]);
+    if (hasMore && !isFetching) loadMore();
+  }, [feedItems.length, hasHiddenLoadedPosts, hasMore, isFetching, lastVirtualIndex, loadMore, posts.length]);
 
   return (
     <div className={hasRecommendations ? 'home-feed-exact has-recommendations' : 'home-feed-exact'}>
@@ -137,20 +151,39 @@ const FeedPage = () => {
           <p className="home-feed-exact__empty">{feedType === 'following' ? 'No posts from people you follow yet' : 'No posts yet'}</p>
         ) : (
           <>
-            {visiblePosts.map((post, index) => (
-              <Fragment key={post._id}>
-                <ErrorBoundary variant="section" title="This post could not be rendered." resetKeys={[post._id]} showReload={false}>
-                  <FeedPostItem post={post} viewerId={user?._id} fallbackAuthor={fallbackAuthor} />
-                </ErrorBoundary>
-                {hasRecommendations && inlineRecommendationIndex === index + 1 && (
-                  <ErrorBoundary variant="section" title="Recommendations could not be rendered." showReload={false}>
-                    <UserRecommendations recommendations={recommendations} variant="slider" />
-                  </ErrorBoundary>
-                )}
-              </Fragment>
-            ))}
+            <div className="home-feed-exact__virtual-list" style={{ height: `${rowVirtualizer.getTotalSize()}px` }}>
+              {virtualItems.map((virtualItem) => {
+                const item = feedItems[virtualItem.index];
+                if (!item) return null;
+
+                return (
+                  <div
+                    key={virtualItem.key}
+                    ref={rowVirtualizer.measureElement}
+                    data-index={virtualItem.index}
+                    className="home-feed-exact__virtual-row"
+                    style={{ transform: `translateY(${virtualItem.start}px)` }}
+                  >
+                    {item.type === 'post' ? (
+                      <ErrorBoundary variant="section" title="This post could not be rendered." resetKeys={[item.post._id]} showReload={false}>
+                        <FeedPostItem post={item.post} viewerId={user?._id} fallbackAuthor={fallbackAuthor} />
+                      </ErrorBoundary>
+                    ) : (
+                      <ErrorBoundary variant="section" title="Recommendations could not be rendered." showReload={false}>
+                        <UserRecommendations recommendations={recommendations} variant="slider" />
+                      </ErrorBoundary>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+            {hasRecommendations && !feedItems.some((item) => item.type === 'recommendations') && inlineRecommendationIndex !== null && visiblePosts.length >= inlineRecommendationIndex && (
+              <ErrorBoundary variant="section" title="Recommendations could not be rendered." showReload={false}>
+                <UserRecommendations recommendations={recommendations} variant="slider" />
+              </ErrorBoundary>
+            )}
             {hasHiddenLoadedPosts ? (
-              <div ref={renderMoreRef} className="home-feed-exact__sentinel">
+              <div className="home-feed-exact__sentinel">
                 <button
                   type="button"
                   onClick={() => setVisiblePostCount((current) => Math.min(posts.length, current + FEED_RENDER_BATCH_SIZE))}
@@ -159,7 +192,7 @@ const FeedPage = () => {
                 </button>
               </div>
             ) : hasMore && (
-              <div ref={loadMoreRef} className="home-feed-exact__sentinel">
+              <div className="home-feed-exact__sentinel">
                 <button type="button" onClick={loadMore} disabled={isFetching}>Load more</button>
               </div>
             )}
