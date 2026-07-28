@@ -1,4 +1,5 @@
 import { Code2, DoorOpen, Lock, RefreshCw, UserRound, Users } from 'lucide-react';
+import { memo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import {
@@ -11,6 +12,8 @@ import Button from '@/shared/ui/Button';
 import LoadingSpinner from '@/shared/ui/LoadingSpinner';
 import { getErrorMessage } from '@/shared/utils/getErrorMessage';
 
+const EMPTY_ROOMS: CollabRoomListItem[] = [];
+
 const getAvatarUrl = (url: unknown): string | null => (typeof url === 'string' && url.trim() ? url : null);
 
 const formatDate = (date?: string) => {
@@ -22,7 +25,7 @@ const formatDate = (date?: string) => {
   });
 };
 
-const RoomCard = ({ onOpen, room }: { onOpen: (roomId: string) => void; room: CollabRoomListItem }) => {
+const RoomCard = memo(({ onOpen, room }: { onOpen: (roomId: string) => void; room: CollabRoomListItem }) => {
   const isPersonal = room.roomType === 'personal';
   const isSolo = room.accessMode === 'solo_due_to_block';
   const avatar = getAvatarUrl(room.otherUser?.profilePicture?.url);
@@ -52,27 +55,29 @@ const RoomCard = ({ onOpen, room }: { onOpen: (roomId: string) => void; room: Co
       </span>
     </button>
   );
-};
+});
+
+RoomCard.displayName = 'RoomCard';
 
 const DashboardRoomsPanel = () => {
   const navigate = useNavigate();
   const { showError } = useToast();
   const { data, error, isError, isFetching, isLoading, refetch } = useGetMyCollabRoomsQuery();
   const [getPersonalRoom, { isLoading: isPersonalLoading }] = useGetPersonalRoomMutation();
-  const rooms = data?.data?.rooms || [];
+  const rooms = data?.data?.rooms || EMPTY_ROOMS;
 
-  const openRoom = (roomId?: string) => {
+  const openRoom = useCallback((roomId?: string) => {
     if (roomId) navigate(`/collab/${roomId}`);
-  };
+  }, [navigate]);
 
-  const handleOpenPersonalRoom = async () => {
+  const handleOpenPersonalRoom = useCallback(async () => {
     try {
       const response = await getPersonalRoom().unwrap();
       openRoom(response?.data?._id);
     } catch (apiError) {
       showError(getErrorMessage(apiError, 'Personal room could not be opened.'));
     }
-  };
+  }, [getPersonalRoom, openRoom, showError]);
 
   return (
     <section className="dashboard-rooms-v1">
@@ -109,4 +114,4 @@ const DashboardRoomsPanel = () => {
   );
 };
 
-export default DashboardRoomsPanel;
+export default memo(DashboardRoomsPanel);
