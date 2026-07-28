@@ -1,4 +1,5 @@
 import { Bell, Check, Loader2, LogIn, RefreshCw, Trash2, UserRound } from 'lucide-react';
+import { memo, type MouseEvent } from 'react';
 
 import {
   getNotificationIcon,
@@ -28,6 +29,107 @@ const formatNotificationDate = (value?: string) => {
 
   return new Intl.DateTimeFormat('en', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }).format(date);
 };
+
+type NotificationCardProps = {
+  isActionActive: boolean;
+  isDeletingOne: boolean;
+  notification: NotificationItem;
+  onAcceptCollab: (event: MouseEvent, notification: NotificationItem) => void;
+  onAcceptGroupInvite: (event: MouseEvent, notification: NotificationItem) => void;
+  onClick: (notification: NotificationItem) => void;
+  onDelete: (event: MouseEvent, notificationId: string) => void;
+  onEnterRoom: (event: MouseEvent, notification: NotificationItem) => void;
+  onSenderClick: (event: MouseEvent, senderId: string) => void;
+};
+
+const NotificationCard = memo(({
+  isActionActive,
+  isDeletingOne,
+  notification,
+  onAcceptCollab,
+  onAcceptGroupInvite,
+  onClick,
+  onDelete,
+  onEnterRoom,
+  onSenderClick,
+}: NotificationCardProps) => {
+  const avatarUrl = getAvatarUrl(notification);
+  const thumbnailUrl = getNotificationThumbnailUrl(notification);
+  const isUnread = !notification.isRead;
+
+  return (
+    <article
+      className={`notification-card ${isUnread ? 'is-unread' : ''}`}
+      onClick={() => onClick(notification)}
+    >
+      <span className="notification-card__type">{getNotificationIcon(notification.type)}</span>
+      <button
+        type="button"
+        className="notification-card__avatar"
+        onClick={(event) => onSenderClick(event, notification.sender._id)}
+        aria-label={`Open ${notification.sender.userName}'s profile`}
+      >
+        {avatarUrl ? <img src={avatarUrl} alt="" /> : <UserRound size={18} aria-hidden="true" />}
+      </button>
+
+      <div className="notification-card__body">
+        <p>{getNotificationText(notification)}</p>
+        <span>{formatNotificationDate(notification.createdAt)}</span>
+        {notification.type === 'COLLAB_REQUEST' && (
+          <button
+            type="button"
+            className="notification-card__action"
+            disabled={isActionActive}
+            onClick={(event) => onAcceptCollab(event, notification)}
+          >
+            {isActionActive ? <Loader2 className="spin" size={14} aria-hidden="true" /> : <Check size={14} aria-hidden="true" />}
+            {!isActionActive && 'Accept Request'}
+          </button>
+        )}
+        {notification.type === 'COLLAB_ACCEPTED' && (
+          <button
+            type="button"
+            className="notification-card__action"
+            disabled={isActionActive}
+            onClick={(event) => onEnterRoom(event, notification)}
+          >
+            {isActionActive ? <Loader2 className="spin" size={14} aria-hidden="true" /> : <LogIn size={14} aria-hidden="true" />}
+            {!isActionActive && 'Enter Room'}
+          </button>
+        )}
+        {notification.type === 'GROUP_INVITE' && (
+          <button
+            type="button"
+            className="notification-card__action"
+            disabled={isActionActive}
+            onClick={(event) => onAcceptGroupInvite(event, notification)}
+          >
+            {isActionActive ? <Loader2 className="spin" size={14} aria-hidden="true" /> : <Check size={14} aria-hidden="true" />}
+            {!isActionActive && 'Accept Invite'}
+          </button>
+        )}
+      </div>
+
+      {thumbnailUrl && (
+        <span className="notification-card__thumbnail">
+          <img src={thumbnailUrl} alt="" />
+        </span>
+      )}
+
+      <Button
+        variant="ghost"
+        className="button--icon notification-card__delete"
+        onClick={(event) => onDelete(event, notification._id)}
+        disabled={isDeletingOne}
+        aria-label="Delete notification"
+      >
+        <Trash2 size={16} aria-hidden="true" />
+      </Button>
+    </article>
+  );
+});
+
+NotificationCard.displayName = 'NotificationCard';
 
 const NotificationsPage = () => {
   const {
@@ -87,90 +189,27 @@ const NotificationsPage = () => {
           <LoadingSpinner className="post-empty-state notifications-state" label="Loading notifications" />
         ) : notifications.length > 0 ? (
           <section className="notifications-list" aria-label="Notifications list">
-            {notifications.map((notification) => {
-              const avatarUrl = getAvatarUrl(notification);
-              const thumbnailUrl = getNotificationThumbnailUrl(notification);
-              const isUnread = !notification.isRead;
-
-              return (
-                <ErrorBoundary
-                  key={notification._id}
-                  variant="section"
-                  title="Notification could not be rendered."
-                  resetKeys={[notification._id, notification.isRead]}
-                  showReload={false}
-                >
-                  <article
-                    className={`notification-card ${isUnread ? 'is-unread' : ''}`}
-                    onClick={() => handleNotificationClick(notification)}
-                  >
-                    <span className="notification-card__type">{getNotificationIcon(notification.type)}</span>
-                    <button
-                      type="button"
-                      className="notification-card__avatar"
-                      onClick={(event) => handleSenderClick(event, notification.sender._id)}
-                      aria-label={`Open ${notification.sender.userName}'s profile`}
-                    >
-                      {avatarUrl ? <img src={avatarUrl} alt="" /> : <UserRound size={18} aria-hidden="true" />}
-                    </button>
-
-                    <div className="notification-card__body">
-                      <p>{getNotificationText(notification)}</p>
-                      <span>{formatNotificationDate(notification.createdAt)}</span>
-                      {notification.type === 'COLLAB_REQUEST' && (
-                        <button
-                          type="button"
-                          className="notification-card__action"
-                          disabled={activeActionId === notification._id}
-                          onClick={(event) => handleAcceptCollabFromNotification(event, notification)}
-                        >
-                          {activeActionId === notification._id ? <Loader2 className="spin" size={14} aria-hidden="true" /> : <Check size={14} aria-hidden="true" />}
-                          {activeActionId !== notification._id && 'Accept Request'}
-                        </button>
-                      )}
-                      {notification.type === 'COLLAB_ACCEPTED' && (
-                        <button
-                          type="button"
-                          className="notification-card__action"
-                          disabled={activeActionId === notification._id}
-                          onClick={(event) => handleEnterRoomFromNotification(event, notification)}
-                        >
-                          {activeActionId === notification._id ? <Loader2 className="spin" size={14} aria-hidden="true" /> : <LogIn size={14} aria-hidden="true" />}
-                          {activeActionId !== notification._id && 'Enter Room'}
-                        </button>
-                      )}
-                      {notification.type === 'GROUP_INVITE' && (
-                        <button
-                          type="button"
-                          className="notification-card__action"
-                          disabled={activeActionId === notification._id}
-                          onClick={(event) => handleAcceptGroupInviteFromNotification(event, notification)}
-                        >
-                          {activeActionId === notification._id ? <Loader2 className="spin" size={14} aria-hidden="true" /> : <Check size={14} aria-hidden="true" />}
-                          {activeActionId !== notification._id && 'Accept Invite'}
-                        </button>
-                      )}
-                    </div>
-
-                    {thumbnailUrl && (
-                      <span className="notification-card__thumbnail">
-                        <img src={thumbnailUrl} alt="" />
-                      </span>
-                    )}
-
-                    <Button
-                      variant="ghost"
-                      className="button--icon notification-card__delete"
-                      onClick={(event) => handleDeleteNotification(event, notification._id)}
-                      disabled={isDeletingOne}
-                      aria-label="Delete notification"
-                    >
-                      <Trash2 size={16} aria-hidden="true" />
-                    </Button>
-                  </article>
-                </ErrorBoundary>
-              );
-            })}
+            {notifications.map((notification) => (
+              <ErrorBoundary
+                key={notification._id}
+                variant="section"
+                title="Notification could not be rendered."
+                resetKeys={[notification._id, notification.isRead]}
+                showReload={false}
+              >
+                <NotificationCard
+                  isActionActive={activeActionId === notification._id}
+                  isDeletingOne={isDeletingOne}
+                  notification={notification}
+                  onAcceptCollab={handleAcceptCollabFromNotification}
+                  onAcceptGroupInvite={handleAcceptGroupInviteFromNotification}
+                  onClick={handleNotificationClick}
+                  onDelete={handleDeleteNotification}
+                  onEnterRoom={handleEnterRoomFromNotification}
+                  onSenderClick={handleSenderClick}
+                />
+              </ErrorBoundary>
+            ))}
 
             {notificationsData?.hasMore && (
               <div className="notifications-load-more">
