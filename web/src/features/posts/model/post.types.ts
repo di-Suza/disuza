@@ -320,4 +320,5 @@ export type PostsQueryArgs = {
 
 export type UserRepostsQueryArgs = PostsQueryArgs & {
   userId: string;
+  viewportWidth?: number;
 };

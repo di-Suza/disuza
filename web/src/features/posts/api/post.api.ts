@@ -99,7 +99,7 @@ export const postApi = api.injectEndpoints({
       providesTags: ['Posts'],
     }),
     getUserReposts: builder.query<RepostListResponse, UserRepostsQueryArgs>({
-      query: ({ userId, page = 1, limit }) => `/post/reposts/user/${userId}?${toQueryString({ page, limit })}`,
+      query: ({ userId, page = 1, limit, viewportWidth }) => `/post/reposts/user/${userId}?${toQueryString({ page, limit, viewportWidth })}`,
       providesTags: (_result, _error, { userId }) => [{ type: 'Reposts', id: userId }, 'Reposts'],
     }),
     getRepost: builder.query<SingleRepostResponse, string>({

@@ -374,7 +374,7 @@ button.profile-preview-stat:hover:not(:disabled) {
   display: inline-flex;
   min-width: 0;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
   text-align: left;
 }
 
@@ -428,6 +428,12 @@ button.profile-preview-stat:hover:not(:disabled) {
   color: var(--accent);
 }
 
+.profile-posts-section__footer {
+  display: flex;
+  justify-content: center;
+  padding-top: 12px;
+}
+
 .profile-page-panel .profile-posts-section {
   display: grid;
   grid-column: auto;
@@ -446,7 +452,7 @@ button.profile-preview-stat:hover:not(:disabled) {
   padding: 12px;
 }
 
-.profile-page-panel .dashboard-post-preview-card {
+:where(.profile-page-panel, .profile-post-gallery-modal) .dashboard-post-preview-card {
   display: block;
   width: 100%;
   min-width: 0;
@@ -462,12 +468,12 @@ button.profile-preview-stat:hover:not(:disabled) {
   transition: background 160ms ease, border-color 160ms ease;
 }
 
-.profile-page-panel .dashboard-post-preview-card:hover {
+:where(.profile-page-panel, .profile-post-gallery-modal) .dashboard-post-preview-card:hover {
   border-color: rgba(59, 99, 255, 0.45);
   background: var(--surface-deep);
 }
 
-.profile-page-panel .dashboard-post-preview-card__media {
+:where(.profile-page-panel, .profile-post-gallery-modal) .dashboard-post-preview-card__media {
   position: relative;
   display: block;
   width: 100%;
@@ -476,20 +482,20 @@ button.profile-preview-stat:hover:not(:disabled) {
   background: var(--bg-main);
 }
 
-.profile-page-panel .dashboard-post-preview-card__media img,
-.profile-page-panel .dashboard-post-preview-card__media video {
+:where(.profile-page-panel, .profile-post-gallery-modal) .dashboard-post-preview-card__media img,
+:where(.profile-page-panel, .profile-post-gallery-modal) .dashboard-post-preview-card__media video {
   width: 100%;
   height: 100%;
   object-fit: cover;
   transition: transform 500ms ease;
 }
 
-.profile-page-panel .dashboard-post-preview-card:hover .dashboard-post-preview-card__media img,
-.profile-page-panel .dashboard-post-preview-card:hover .dashboard-post-preview-card__media video {
+:where(.profile-page-panel, .profile-post-gallery-modal) .dashboard-post-preview-card:hover .dashboard-post-preview-card__media img,
+:where(.profile-page-panel, .profile-post-gallery-modal) .dashboard-post-preview-card:hover .dashboard-post-preview-card__media video {
   transform: scale(1.05);
 }
 
-.profile-page-panel .dashboard-post-preview-card__media::after {
+:where(.profile-page-panel, .profile-post-gallery-modal) .dashboard-post-preview-card__media::after {
   position: absolute;
   right: 0;
   bottom: 0;
@@ -499,8 +505,9 @@ button.profile-preview-stat:hover:not(:disabled) {
   content: '';
 }
 
-.profile-page-panel .dashboard-post-preview-card__media em,
-.profile-page-panel .dashboard-post-preview-card__media i {
+:where(.profile-page-panel, .profile-post-gallery-modal) .dashboard-post-preview-card__media em,
+:where(.profile-page-panel, .profile-post-gallery-modal) .dashboard-post-preview-card__media i,
+:where(.profile-page-panel, .profile-post-gallery-modal) .profile-post-preview-card__badge {
   position: absolute;
   z-index: 1;
   display: flex;
@@ -511,7 +518,7 @@ button.profile-preview-stat:hover:not(:disabled) {
   backdrop-filter: blur(12px);
 }
 
-.profile-page-panel .dashboard-post-preview-card__media em {
+:where(.profile-page-panel, .profile-post-gallery-modal) .dashboard-post-preview-card__media em {
   top: 8px;
   right: 8px;
   width: 28px;
@@ -521,7 +528,7 @@ button.profile-preview-stat:hover:not(:disabled) {
   background: rgba(0, 0, 0, 0.35);
 }
 
-.profile-page-panel .dashboard-post-preview-card__media i {
+:where(.profile-page-panel, .profile-post-gallery-modal) .dashboard-post-preview-card__media i {
   top: 8px;
   left: 8px;
   width: 28px;
@@ -530,13 +537,31 @@ button.profile-preview-stat:hover:not(:disabled) {
   background: rgba(59, 99, 255, 0.65);
 }
 
-.profile-page-panel .dashboard-post-preview-card__body {
+:where(.profile-page-panel, .profile-post-gallery-modal) .profile-post-preview-card__badge {
+  bottom: 8px;
+  left: 8px;
+  width: 28px;
+  height: 28px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 999px;
+  background: rgba(2, 6, 23, 0.58);
+}
+
+:where(.profile-page-panel, .profile-post-gallery-modal) .profile-post-preview-card__badge.is-project {
+  color: #6ee7b7;
+}
+
+:where(.profile-page-panel, .profile-post-gallery-modal) .profile-post-preview-card__badge.is-repost {
+  color: #a78bfa;
+}
+
+:where(.profile-page-panel, .profile-post-gallery-modal) .dashboard-post-preview-card__body {
   display: grid;
   gap: 8px;
   padding: 12px;
 }
 
-.profile-page-panel .dashboard-post-preview-card__body strong {
+:where(.profile-page-panel, .profile-post-gallery-modal) .dashboard-post-preview-card__body strong {
   display: -webkit-box;
   min-height: 34px;
   overflow: hidden;
@@ -549,7 +574,7 @@ button.profile-preview-stat:hover:not(:disabled) {
   -webkit-line-clamp: 2;
 }
 
-.profile-page-panel .dashboard-post-preview-card__body small {
+:where(.profile-page-panel, .profile-post-gallery-modal) .dashboard-post-preview-card__body small {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -560,7 +585,7 @@ button.profile-preview-stat:hover:not(:disabled) {
   font-weight: 600;
 }
 
-.profile-page-panel .dashboard-post-preview-card__body small span {
+:where(.profile-page-panel, .profile-post-gallery-modal) .dashboard-post-preview-card__body small span {
   display: inline-flex;
   align-items: center;
   gap: 4px;
@@ -569,12 +594,12 @@ button.profile-preview-stat:hover:not(:disabled) {
   padding: 2px 8px;
 }
 
-.profile-page-panel .dashboard-post-preview-card__body small span:first-child {
+:where(.profile-page-panel, .profile-post-gallery-modal) .dashboard-post-preview-card__body small span:first-child {
   background: rgba(239, 68, 68, 0.1);
   color: #fca5a5;
 }
 
-.profile-page-panel .repost-preview-card__empty {
+:where(.profile-page-panel, .profile-post-gallery-modal) .repost-preview-card__empty {
   display: grid;
   width: 100%;
   height: 100%;
@@ -583,6 +608,13 @@ button.profile-preview-stat:hover:not(:disabled) {
     radial-gradient(circle at top left, rgba(59, 99, 255, 0.18), transparent 44%),
     var(--bg-main);
   color: var(--accent);
+}
+
+.profile-posts-section__loading-tile {
+  display: grid;
+  min-height: 72px;
+  place-items: center;
+  grid-column: 1 / -1;
 }
 
 .profile-page-panel .repost-preview-card__meta {
@@ -1411,7 +1443,7 @@ button.profile-preview-stat:hover:not(:disabled) {
   }
 
   .profile-preview-header__title-row {
-    position: relative;
+    position: static;
     align-items: center;
     justify-content: center;
     flex-direction: row;
@@ -1439,6 +1471,7 @@ button.profile-preview-stat:hover:not(:disabled) {
   }
 
   .profile-preview-header__top {
+    position: relative;
     align-items: center;
     gap: 12px;
     padding: 14px 12px;
@@ -1461,9 +1494,9 @@ button.profile-preview-stat:hover:not(:disabled) {
 
   .profile-preview-header__title-row .profile-hero__menu {
     position: absolute;
-    right: 0;
-    top: 50%;
-    transform: translateY(-50%);
+    right: 8px;
+    top: 8px;
+    transform: none;
   }
 
   .profile-preview-header__title-row p {
@@ -1728,5 +1761,27 @@ button.profile-preview-stat:hover:not(:disabled) {
 
   .profile-timeline-list article {
     padding: 10px;
+  }
+}
+
+@media (max-width: 399px) {
+  .profile-preview-header__stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .profile-preview-header__stats .profile-preview-stat:nth-child(1) {
+    order: 1;
+  }
+
+  .profile-preview-header__stats .profile-preview-stat:nth-child(4) {
+    order: 2;
+  }
+
+  .profile-preview-header__stats .profile-preview-stat:nth-child(2) {
+    order: 3;
+  }
+
+  .profile-preview-header__stats .profile-preview-stat:nth-child(3) {
+    order: 4;
   }
 }
