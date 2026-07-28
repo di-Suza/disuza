@@ -1,5 +1,5 @@
-import { Bell, Check, Loader2, LogIn, RefreshCw, Trash2, UserRound } from 'lucide-react';
-import { memo, type MouseEvent } from 'react';
+import { Bell, Check, Loader2, LogIn, MoreHorizontal, RefreshCw, Trash2, UserRound } from 'lucide-react';
+import { memo, useEffect, useMemo, useState, type MouseEvent } from 'react';
 
 import {
   getNotificationIcon,
@@ -17,9 +17,50 @@ import { useNotificationsPage } from './useNotificationsPage';
 import './NotificationsPage.css';
 import '@/app/layouts/ProductShell.css';
 
+type NotificationFilter = 'all' | 'comments' | 'follows' | 'likes';
+
+type NotificationSection = {
+  label: string;
+  notifications: NotificationItem[];
+};
+
+const NOTIFICATION_FILTERS: Array<{ id: NotificationFilter; label: string }> = [
+  { id: 'all', label: 'All' },
+  { id: 'comments', label: 'Comments' },
+  { id: 'follows', label: 'Follows' },
+  { id: 'likes', label: 'Likes' },
+];
+
 const getAvatarUrl = (notification: NotificationItem) => {
   const url = notification.sender?.profilePicture?.url;
   return typeof url === 'string' && url.trim() ? url : null;
+};
+
+const isSameLocalDay = (first: Date, second: Date) => (
+  first.getFullYear() === second.getFullYear()
+  && first.getMonth() === second.getMonth()
+  && first.getDate() === second.getDate()
+);
+
+const getDateGroupLabel = (value?: string) => {
+  if (!value) return 'Earlier';
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return 'Earlier';
+
+  const today = new Date();
+  const yesterday = new Date();
+  yesterday.setDate(today.getDate() - 1);
+
+  if (isSameLocalDay(date, today)) return 'Today';
+  if (isSameLocalDay(date, yesterday)) return 'Yesterday';
+
+  const includeYear = date.getFullYear() !== today.getFullYear();
+  return new Intl.DateTimeFormat('en', {
+    day: 'numeric',
+    month: 'short',
+    ...(includeYear ? { year: 'numeric' } : {}),
+  }).format(date);
 };
 
 const formatNotificationDate = (value?: string) => {
@@ -32,9 +73,30 @@ const formatNotificationDate = (value?: string) => {
   return new Intl.DateTimeFormat('en', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }).format(date);
 };
 
+const filterNotifications = (notifications: NotificationItem[], filter: NotificationFilter) => {
+  if (filter === 'all') return notifications;
+  if (filter === 'comments') return notifications.filter((notification) => notification.type === 'COMMENT' || notification.type === 'COMMENT_REPLY');
+  if (filter === 'follows') return notifications.filter((notification) => notification.type === 'FOLLOW');
+  return notifications.filter((notification) => notification.type === 'LIKE');
+};
+
+const groupNotificationsByDate = (notifications: NotificationItem[]): NotificationSection[] => notifications.reduce<NotificationSection[]>((sections, notification) => {
+  const label = getDateGroupLabel(notification.createdAt);
+  const currentSection = sections[sections.length - 1];
+
+  if (currentSection?.label === label) {
+    currentSection.notifications.push(notification);
+    return sections;
+  }
+
+  sections.push({ label, notifications: [notification] });
+  return sections;
+}, []);
+
 type NotificationCardProps = {
   isActionActive: boolean;
   isDeletingOne: boolean;
+  isMenuOpen: boolean;
   notification: NotificationItem;
   onAcceptCollab: (event: MouseEvent, notification: NotificationItem) => void;
   onAcceptGroupInvite: (event: MouseEvent, notification: NotificationItem) => void;
@@ -42,11 +104,13 @@ type NotificationCardProps = {
   onDelete: (event: MouseEvent, notificationId: string) => void;
   onEnterRoom: (event: MouseEvent, notification: NotificationItem) => void;
   onSenderClick: (event: MouseEvent, senderId: string) => void;
+  onToggleMenu: (event: MouseEvent, notificationId: string) => void;
 };
 
 const NotificationCard = memo(({
   isActionActive,
   isDeletingOne,
+  isMenuOpen,
   notification,
   onAcceptCollab,
   onAcceptGroupInvite,
@@ -54,6 +118,7 @@ const NotificationCard = memo(({
   onDelete,
   onEnterRoom,
   onSenderClick,
+  onToggleMenu,
 }: NotificationCardProps) => {
   const avatarUrl = getAvatarUrl(notification);
   const thumbnailUrl = getNotificationThumbnailUrl(notification);
@@ -118,15 +183,26 @@ const NotificationCard = memo(({
         </span>
       )}
 
-      <Button
-        variant="ghost"
-        className="button--icon notification-card__delete"
-        onClick={(event) => onDelete(event, notification._id)}
-        disabled={isDeletingOne}
-        aria-label="Delete notification"
-      >
-        <Trash2 size={16} aria-hidden="true" />
-      </Button>
+      <div className="notification-card__menu" onClick={(event) => event.stopPropagation()}>
+        <Button
+          variant="ghost"
+          className="button--icon notification-card__menu-trigger"
+          onClick={(event) => onToggleMenu(event, notification._id)}
+          disabled={isDeletingOne}
+          aria-expanded={isMenuOpen}
+          aria-label="Notification actions"
+        >
+          <MoreHorizontal size={17} aria-hidden="true" />
+        </Button>
+        {isMenuOpen && (
+          <div className="notification-card__menu-dropdown" role="menu">
+            <button type="button" onClick={(event) => onDelete(event, notification._id)} disabled={isDeletingOne} role="menuitem">
+              <Trash2 size={14} aria-hidden="true" />
+              Delete
+            </button>
+          </div>
+        )}
+      </div>
     </article>
   );
 });
@@ -134,6 +210,8 @@ const NotificationCard = memo(({
 NotificationCard.displayName = 'NotificationCard';
 
 const NotificationsPage = () => {
+  const [activeFilter, setActiveFilter] = useState<NotificationFilter>('all');
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const {
     activeActionId,
     error,
@@ -155,6 +233,37 @@ const NotificationsPage = () => {
     refetch,
     unreadCount,
   } = useNotificationsPage();
+  const filteredNotifications = useMemo(() => filterNotifications(notifications, activeFilter), [activeFilter, notifications]);
+  const notificationSections = useMemo(() => groupNotificationsByDate(filteredNotifications), [filteredNotifications]);
+  const emptyMessage = activeFilter === 'all' ? 'No notifications yet.' : `No ${NOTIFICATION_FILTERS.find((filter) => filter.id === activeFilter)?.label.toLowerCase()} notifications yet.`;
+
+  useEffect(() => {
+    if (!openMenuId) return undefined;
+
+    const closeMenu = (event: PointerEvent) => {
+      const target = event.target instanceof Element ? event.target : null;
+      if (target?.closest('.notification-card__menu')) return;
+      setOpenMenuId(null);
+    };
+
+    document.addEventListener('pointerdown', closeMenu);
+    return () => document.removeEventListener('pointerdown', closeMenu);
+  }, [openMenuId]);
+
+  const handleFilterChange = (filter: NotificationFilter) => {
+    setActiveFilter(filter);
+    setOpenMenuId(null);
+  };
+
+  const handleToggleMenu = (event: MouseEvent, notificationId: string) => {
+    event.stopPropagation();
+    setOpenMenuId((currentId) => (currentId === notificationId ? null : notificationId));
+  };
+
+  const handleDeleteFromMenu = (event: MouseEvent, notificationId: string) => {
+    setOpenMenuId(null);
+    handleDeleteNotification(event, notificationId);
+  };
 
   return (
     <main className="dashboard-shell dashboard-shell--wide notifications-shell">
@@ -181,6 +290,19 @@ const NotificationsPage = () => {
           </div>
         </header>
 
+        <nav className="notifications-tabs" aria-label="Notification filters">
+          {NOTIFICATION_FILTERS.map((filter) => (
+            <button
+              type="button"
+              key={filter.id}
+              className={activeFilter === filter.id ? 'is-active' : ''}
+              onClick={() => handleFilterChange(filter.id)}
+            >
+              {filter.label}
+            </button>
+          ))}
+        </nav>
+
         {isError ? (
           <section className="post-empty-state notifications-state">
             <RefreshCw size={24} aria-hidden="true" />
@@ -189,29 +311,43 @@ const NotificationsPage = () => {
           </section>
         ) : isLoading ? (
           <LoadingSpinner className="post-empty-state notifications-state" label="Loading notifications" />
-        ) : notifications.length > 0 ? (
+        ) : (
           <section className="notifications-list" aria-label="Notifications list">
-            {notifications.map((notification) => (
-              <ErrorBoundary
-                key={notification._id}
-                variant="section"
-                title="Notification could not be rendered."
-                resetKeys={[notification._id, notification.isRead]}
-                showReload={false}
-              >
-                <NotificationCard
-                  isActionActive={activeActionId === notification._id}
-                  isDeletingOne={isDeletingOne}
-                  notification={notification}
-                  onAcceptCollab={handleAcceptCollabFromNotification}
-                  onAcceptGroupInvite={handleAcceptGroupInviteFromNotification}
-                  onClick={handleNotificationClick}
-                  onDelete={handleDeleteNotification}
-                  onEnterRoom={handleEnterRoomFromNotification}
-                  onSenderClick={handleSenderClick}
-                />
-              </ErrorBoundary>
-            ))}
+            {notificationSections.length > 0 ? (
+              notificationSections.map((section) => (
+                <div className="notifications-section" key={section.label}>
+                  <span className="notifications-section__label">{section.label}</span>
+                  {section.notifications.map((notification) => (
+                    <ErrorBoundary
+                      key={notification._id}
+                      variant="section"
+                      title="Notification could not be rendered."
+                      resetKeys={[notification._id, notification.isRead]}
+                      showReload={false}
+                    >
+                      <NotificationCard
+                        isActionActive={activeActionId === notification._id}
+                        isDeletingOne={isDeletingOne}
+                        isMenuOpen={openMenuId === notification._id}
+                        notification={notification}
+                        onAcceptCollab={handleAcceptCollabFromNotification}
+                        onAcceptGroupInvite={handleAcceptGroupInviteFromNotification}
+                        onClick={handleNotificationClick}
+                        onDelete={handleDeleteFromMenu}
+                        onEnterRoom={handleEnterRoomFromNotification}
+                        onSenderClick={handleSenderClick}
+                        onToggleMenu={handleToggleMenu}
+                      />
+                    </ErrorBoundary>
+                  ))}
+                </div>
+              ))
+            ) : (
+              <section className="post-empty-state notifications-state">
+                <Bell size={26} aria-hidden="true" />
+                <p>{emptyMessage}</p>
+              </section>
+            )}
 
             {notificationsData?.hasMore && (
               <div className="notifications-load-more">
@@ -221,11 +357,6 @@ const NotificationsPage = () => {
                 </Button>
               </div>
             )}
-          </section>
-        ) : (
-          <section className="post-empty-state notifications-state">
-            <Bell size={26} aria-hidden="true" />
-            <p>No notifications yet.</p>
           </section>
         )}
       </section>
