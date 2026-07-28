@@ -7,16 +7,16 @@ import {
   useGetPersonalRoomMutation,
 } from '@/features/collab/api/collab.api';
 import type { CollabRoomListItem } from '@/features/collab/model/collab.types';
+import AvatarImage from '@/shared/components/Avatar/AvatarImage';
 import { useToast } from '@/shared/hooks/useToast';
 import Button from '@/shared/ui/Button';
 import LoadingSpinner from '@/shared/ui/LoadingSpinner';
 import { getErrorMessage } from '@/shared/utils/getErrorMessage';
-import { getOptimizedImage } from '@/shared/utils/getOptimizedImage';
 
 const EMPTY_ROOMS: CollabRoomListItem[] = [];
 
 const getAvatarUrl = (url: unknown): string | null => (
-  typeof url === 'string' && url.trim() ? getOptimizedImage(url, 'avatarSmall') || url : null
+  typeof url === 'string' && url.trim() ? url : null
 );
 
 const formatDate = (date?: string) => {
@@ -36,7 +36,7 @@ const RoomCard = memo(({ onOpen, room }: { onOpen: (roomId: string) => void; roo
   return (
     <button type="button" onClick={() => onOpen(room._id)} className="dashboard-room-card">
       <span className={isPersonal ? 'dashboard-room-card__icon' : 'dashboard-room-card__avatar'}>
-        {isPersonal ? <Code2 size={20} aria-hidden="true" /> : avatar ? <img src={avatar} alt="" /> : <UserRound size={20} aria-hidden="true" />}
+        {isPersonal ? <Code2 size={20} aria-hidden="true" /> : <AvatarImage src={avatar} fallback={<UserRound size={20} aria-hidden="true" />} />}
       </span>
 
       <span className="dashboard-room-card__body">

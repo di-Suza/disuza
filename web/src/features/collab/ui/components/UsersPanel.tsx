@@ -2,7 +2,7 @@ import { Mic, MicOff, PanelRightClose, PhoneOff, UserRound, Users } from 'lucide
 import { memo, type RefObject } from 'react';
 
 import type { CollabParticipant } from '@/features/collab/model/collab.types';
-import { getOptimizedImage } from '@/shared/utils/getOptimizedImage';
+import AvatarImage from '@/shared/components/Avatar/AvatarImage';
 
 type UsersPanelProps = {
   usersData: Array<CollabParticipant & { isInAudio?: boolean; micEnabled?: boolean }>;
@@ -53,7 +53,7 @@ const UsersPanel = ({
         {usersData.map((user) => (
           <article key={user._id}>
             <div className="collab-avatar-wrap">
-              {user.profilePicture?.url ? <img src={getOptimizedImage(user.profilePicture.url, 'avatarSmall') || user.profilePicture.url} alt="" /> : <UserRound size={18} aria-hidden="true" />}
+              <AvatarImage src={user.profilePicture?.url || ''} fallback={<UserRound size={18} aria-hidden="true" />} />
               {user.roomPresence === 'in_room' && <span />}
             </div>
             <div>

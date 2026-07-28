@@ -6,8 +6,8 @@ import { useAppSelector } from '@/app/store/hooks';
 import { useGetAllPostsQuery, useGetUserRepostsQuery } from '@/features/posts/api/post.api';
 import { getPostMedia, isVideoMedia } from '@/features/posts/model/post.helpers';
 import type { Post } from '@/features/posts/model/post.types';
+import Image from '@/shared/components/Image/Image';
 import LoadingSpinner from '@/shared/ui/LoadingSpinner';
-import { getOptimizedImage } from '@/shared/utils/getOptimizedImage';
 import RepostPreviewCard from './RepostPreviewCard';
 import '../posts.css';
 
@@ -19,7 +19,6 @@ const PostPreviewCard = memo(({ post }: { post: Post }) => {
   const navigate = useNavigate();
   const media = useMemo(() => getPostMedia(post), [post]);
   const firstMedia = media[0];
-  const thumbnailUrl = firstMedia ? getOptimizedImage(firstMedia.thumbnailUrl || firstMedia.url, 'thumbnail') || firstMedia.thumbnailUrl || firstMedia.url : '';
   const caption = post.caption || 'Untitled post';
   const openPost = useCallback(() => navigate(`/post/${post._id}`), [navigate, post._id]);
 
@@ -32,7 +31,7 @@ const PostPreviewCard = memo(({ post }: { post: Post }) => {
             <i><Play size={14} aria-hidden="true" /></i>
           </>
         ) : firstMedia ? (
-          <img src={thumbnailUrl} alt="Post" loading="lazy" />
+          <Image src={firstMedia.thumbnailUrl || firstMedia.url} type="thumbnail" alt="Post" />
         ) : null}
         <em><Eye size={14} aria-hidden="true" /></em>
       </span>

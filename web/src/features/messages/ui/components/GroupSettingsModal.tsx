@@ -10,11 +10,11 @@ import {
 import type { ChatConversation, ChatUser } from '@/features/messages/model/chat.types';
 import { useGetFollowersQuery, useGetFollowingQuery } from '@/features/users/api/user.api';
 import type { UserProfile } from '@/features/users/model/user.types';
+import AvatarImage from '@/shared/components/Avatar/AvatarImage';
 import Button from '@/shared/ui/Button';
 import Input from '@/shared/ui/Input';
 import { useToast } from '@/shared/hooks/useToast';
 import { getErrorMessage } from '@/shared/utils/getErrorMessage';
-import { getOptimizedImage } from '@/shared/utils/getOptimizedImage';
 
 type GroupSettingsModalProps = {
   conversation: ChatConversation;
@@ -42,7 +42,7 @@ type GroupInviteOptionProps = {
 
 const getAvatarUrl = (user: Pick<ChatUser | UserProfile, 'profilePicture'>) => {
   const url = user.profilePicture?.url;
-  return typeof url === 'string' && url.trim() ? getOptimizedImage(url, 'avatarSmall') || url : null;
+  return typeof url === 'string' && url.trim() ? url : null;
 };
 
 const GroupMemberRow = memo(({
@@ -63,7 +63,7 @@ const GroupMemberRow = memo(({
   return (
     <article>
       <span className="messages-v1-person-card__avatar">
-        {avatarUrl ? <img src={avatarUrl} alt="" /> : <UserRound size={16} aria-hidden="true" />}
+        <AvatarImage src={avatarUrl} fallback={<UserRound size={16} aria-hidden="true" />} />
       </span>
       <span>
         <strong>{member.userName || 'User'}</strong>
@@ -96,7 +96,7 @@ const GroupInviteOption = memo(({ onToggle, selected, user }: GroupInviteOptionP
       onClick={() => onToggle(user._id)}
     >
       <span className="messages-v1-person-card__avatar">
-        {avatarUrl ? <img src={avatarUrl} alt="" /> : <UserRound size={16} aria-hidden="true" />}
+        <AvatarImage src={avatarUrl} fallback={<UserRound size={16} aria-hidden="true" />} />
       </span>
       <span>
         <strong>{user.userName || 'User'}</strong>

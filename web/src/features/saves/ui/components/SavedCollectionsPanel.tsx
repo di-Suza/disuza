@@ -10,6 +10,7 @@ import {
 } from '@/features/posts/api/post.api';
 import type { SavedCollection } from '@/features/posts/model/post.types';
 import PostList from '@/features/posts/ui/components/PostList';
+import Image from '@/shared/components/Image/Image';
 import { useToast } from '@/shared/hooks/useToast';
 import Button from '@/shared/ui/Button';
 import ConfirmDialog from '@/shared/ui/ConfirmDialog';
@@ -159,7 +160,7 @@ const SavedCollectionsPanel = ({ viewerId }: SavedCollectionsPanelProps) => {
                 <article className={cn('saved-panel__collection', isSelected && 'is-selected')} key={collection._id}>
                   <button type="button" className="saved-panel__collection-main" onClick={() => setSelectedCollectionId(collection._id)}>
                     <span className="saved-panel__collection-cover">
-                      {collection.coverImage ? <img src={collection.coverImage} alt="" /> : <ImageIcon size={22} aria-hidden="true" />}
+                      {collection.coverImage ? <Image src={collection.coverImage} type="thumbnail" alt="" /> : <ImageIcon size={22} aria-hidden="true" />}
                     </span>
                     <span>
                       <strong>{collection.name}</strong>

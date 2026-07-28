@@ -2,10 +2,10 @@ import { Code2, ImagePlus, Link2, MoreHorizontal, Plus, Send, Trash2, UserRound,
 import { memo, useCallback, useId, useMemo, useState } from 'react';
 
 import { useAppSelector } from '@/app/store/hooks';
+import AvatarImage from '@/shared/components/Avatar/AvatarImage';
 import Button from '@/shared/ui/Button';
 import Input from '@/shared/ui/Input';
 import { cn } from '@/shared/utils/cn';
-import { getOptimizedImage } from '@/shared/utils/getOptimizedImage';
 import { usePostComposer } from '../hooks/usePostComposer';
 import '../posts.css';
 
@@ -16,9 +16,7 @@ const noopComposerClose = () => undefined;
 const InlinePostComposer = () => {
   const fileInputId = useId();
   const user = useAppSelector((state) => state.auth.user);
-  const avatarUrl = user?.profilePicture?.url
-    ? getOptimizedImage(user.profilePicture.url, 'avatarSmall') || user.profilePicture.url
-    : '';
+  const avatarUrl = user?.profilePicture?.url || '';
   const [activePanel, setActivePanel] = useState<ComposerPanel>(null);
   const {
     addLink,
@@ -62,7 +60,7 @@ const InlinePostComposer = () => {
     <form className="inline-post-composer" onSubmit={handleSubmit}>
       <div className="inline-post-composer__main">
         <span className="inline-post-composer__avatar">
-          {avatarUrl ? <img src={avatarUrl} alt="" /> : <UserRound size={22} aria-hidden="true" />}
+          <AvatarImage src={avatarUrl} fallback={<UserRound size={22} aria-hidden="true" />} />
         </span>
         <textarea
           value={caption}

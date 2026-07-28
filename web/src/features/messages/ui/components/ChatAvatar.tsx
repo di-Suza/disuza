@@ -3,6 +3,7 @@ import { memo } from 'react';
 
 import { getUserAvatarUrl, getUserInitial } from '@/features/messages/model/chat.helpers';
 import type { ChatUser } from '@/features/messages/model/chat.types';
+import AvatarImage from '@/shared/components/Avatar/AvatarImage';
 import { cn } from '@/shared/utils/cn';
 import './ChatAvatar.css';
 
@@ -16,13 +17,10 @@ const ChatAvatar = ({ className, user }: ChatAvatarProps) => {
 
   return (
     <span className={cn('chat-avatar', className)}>
-      {avatarUrl ? (
-        <img src={avatarUrl} alt="" loading="lazy" />
-      ) : user?.userName ? (
-        <span>{getUserInitial(user)}</span>
-      ) : (
-        <UserRound size={18} aria-hidden="true" />
-      )}
+      <AvatarImage
+        src={avatarUrl}
+        fallback={user?.userName ? <span>{getUserInitial(user)}</span> : <UserRound size={18} aria-hidden="true" />}
+      />
     </span>
   );
 };

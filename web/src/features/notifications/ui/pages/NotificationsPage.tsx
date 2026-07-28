@@ -7,23 +7,20 @@ import {
   getNotificationThumbnailUrl,
 } from '@/features/notifications/model/notification.helpers';
 import type { NotificationItem } from '@/features/notifications/model/notification.types';
+import AvatarImage from '@/shared/components/Avatar/AvatarImage';
 import ErrorBoundary from '@/shared/components/ErrorBoundary/ErrorBoundary';
+import Image from '@/shared/components/Image/Image';
 import Button from '@/shared/ui/Button';
 import LoadingSpinner from '@/shared/ui/LoadingSpinner';
 import { getErrorMessage } from '@/shared/utils/getErrorMessage';
-import { getOptimizedImage } from '@/shared/utils/getOptimizedImage';
 import { useNotificationsPage } from './useNotificationsPage';
 import './NotificationsPage.css';
 import '@/app/layouts/ProductShell.css';
 
 const getAvatarUrl = (notification: NotificationItem) => {
   const url = notification.sender?.profilePicture?.url;
-  return typeof url === 'string' && url.trim() ? getOptimizedImage(url, 'avatarSmall') || url : null;
+  return typeof url === 'string' && url.trim() ? url : null;
 };
-
-const getOptimizedThumbnailUrl = (url: string | null) => (
-  url ? getOptimizedImage(url, 'thumbnail') || url : null
-);
 
 const formatNotificationDate = (value?: string) => {
   if (!value) return '';
@@ -59,7 +56,7 @@ const NotificationCard = memo(({
   onSenderClick,
 }: NotificationCardProps) => {
   const avatarUrl = getAvatarUrl(notification);
-  const thumbnailUrl = getOptimizedThumbnailUrl(getNotificationThumbnailUrl(notification));
+  const thumbnailUrl = getNotificationThumbnailUrl(notification);
   const isUnread = !notification.isRead;
 
   return (
@@ -74,7 +71,7 @@ const NotificationCard = memo(({
         onClick={(event) => onSenderClick(event, notification.sender._id)}
         aria-label={`Open ${notification.sender.userName}'s profile`}
       >
-        {avatarUrl ? <img src={avatarUrl} alt="" /> : <UserRound size={18} aria-hidden="true" />}
+        <AvatarImage src={avatarUrl} fallback={<UserRound size={18} aria-hidden="true" />} />
       </button>
 
       <div className="notification-card__body">
@@ -117,7 +114,7 @@ const NotificationCard = memo(({
 
       {thumbnailUrl && (
         <span className="notification-card__thumbnail">
-          <img src={thumbnailUrl} alt="" />
+          <Image src={thumbnailUrl} type="thumbnail" alt="" />
         </span>
       )}
 

@@ -16,12 +16,12 @@ import { createPortal } from 'react-dom';
 
 import { useLazyGetPostAnalyticsQuery } from '@/features/posts/api/post.api';
 import type { PostAnalyticsItem, PostAnalyticsOverview, PostAnalyticsSection } from '@/features/posts/model/post.types';
+import AvatarImage from '@/shared/components/Avatar/AvatarImage';
 import { useLockBodyScroll } from '@/shared/hooks/useLockBodyScroll';
 import { useToast } from '@/shared/hooks/useToast';
 import Button from '@/shared/ui/Button';
 import LoadingSpinner from '@/shared/ui/LoadingSpinner';
 import { getErrorMessage } from '@/shared/utils/getErrorMessage';
-import { getOptimizedImage } from '@/shared/utils/getOptimizedImage';
 import '../posts.css';
 
 type PostAnalyticsModalProps = {
@@ -53,7 +53,7 @@ const formatDate = (value?: string) => {
 
 const getUserAvatar = (item: PostAnalyticsItem) => {
   const url = item.user?.profilePicture?.url || '';
-  return getOptimizedImage(url, 'avatarSmall') || url;
+  return url;
 };
 
 const getUserName = (item: PostAnalyticsItem) => item.user?.userName || 'User';
@@ -69,7 +69,7 @@ const AnalyticsUserRow = ({ item, section }: { item: PostAnalyticsItem; section:
   return (
     <article className="post-analytics-modal__activity-row">
       <span className="post-analytics-modal__avatar">
-        {avatarUrl ? <img src={avatarUrl} alt="" /> : <UserRound size={18} aria-hidden="true" />}
+        <AvatarImage src={avatarUrl} fallback={<UserRound size={18} aria-hidden="true" />} />
       </span>
       <span className="post-analytics-modal__activity-copy">
         <strong>{getUserName(item)}</strong>

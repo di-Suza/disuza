@@ -8,8 +8,8 @@ import logo from '@/shared/assets/images/logo.png';
 import useUnreadMessagesCount from '@/shared/hooks/useUnreadMessagesCount';
 import { useUnreadNotificationsCount } from '@/shared/hooks/useUnreadNotificationsCount';
 import { useToast } from '@/shared/hooks/useToast';
+import AvatarImage from '@/shared/components/Avatar/AvatarImage';
 import { getErrorMessage } from '@/shared/utils/getErrorMessage';
-import { getOptimizedImage } from '@/shared/utils/getOptimizedImage';
 import './Sidebar.css';
 
 const sidebarItems = [
@@ -79,9 +79,7 @@ const Sidebar = () => {
   const notificationCount = useUnreadNotificationsCount();
   const messageCount = useUnreadMessagesCount();
   const activeFeedType = new URLSearchParams(search).get('type') === 'following' ? 'following' : 'all';
-  const profilePictureUrl = typeof user?.profilePicture?.url === 'string'
-    ? getOptimizedImage(user.profilePicture.url, 'avatarSmall') || user.profilePicture.url
-    : '';
+  const profilePictureUrl = typeof user?.profilePicture?.url === 'string' ? user.profilePicture.url : '';
 
   const isItemActive = (itemPath: string) => pathname === itemPath || pathname.startsWith(`${itemPath}/`);
 
@@ -212,11 +210,11 @@ const Sidebar = () => {
             }}
             aria-label="Open profile"
           >
-            {profilePictureUrl ? (
-              <img className="app-mobile-navbar__avatar" src={profilePictureUrl} alt="" />
-            ) : (
-              <UserRound size={22} aria-hidden="true" />
-            )}
+            <AvatarImage
+              className="app-mobile-navbar__avatar"
+              src={profilePictureUrl}
+              fallback={<UserRound size={22} aria-hidden="true" />}
+            />
           </Link>
           <button
             type="button"
@@ -298,11 +296,11 @@ const Sidebar = () => {
                 }}
               >
                 <span className="app-sidebar__icon-wrap">
-                  {profilePictureUrl ? (
-                    <img className="app-sidebar__profile-avatar" src={profilePictureUrl} alt="" />
-                  ) : (
-                    <UserRound size={24} aria-hidden="true" />
-                  )}
+                  <AvatarImage
+                    className="app-sidebar__profile-avatar"
+                    src={profilePictureUrl}
+                    fallback={<UserRound size={24} aria-hidden="true" />}
+                  />
                 </span>
                 <span className="app-sidebar__label">Profile</span>
               </Link>

@@ -35,11 +35,12 @@ import type { Post, PostAuthor, PostLink } from '@/features/posts/model/post.typ
 import { usePostLike } from '@/features/posts/ui/hooks/usePostLike';
 import { usePostRepost } from '@/features/posts/ui/hooks/usePostRepost';
 import { usePostSave } from '@/features/saves/ui/hooks/usePostSave';
+import AvatarImage from '@/shared/components/Avatar/AvatarImage';
+import Image from '@/shared/components/Image/Image';
 import { useLockBodyScroll } from '@/shared/hooks/useLockBodyScroll';
 import { useToast } from '@/shared/hooks/useToast';
 import { cn } from '@/shared/utils/cn';
 import { getErrorMessage } from '@/shared/utils/getErrorMessage';
-import { getOptimizedImage } from '@/shared/utils/getOptimizedImage';
 import '../posts.css';
 
 type PostCardProps = {
@@ -237,9 +238,6 @@ const PostCard = ({ className, fallbackAuthor, hideFeedbackAction = false, post,
   const avatarUrl = getPostImageUrl(author);
   const media = useMemo(() => getPostMedia(post), [post]);
   const activeMedia = media[currentIndex];
-  const activeMediaBgUrl = activeMedia && !isVideoMedia(activeMedia) ? getOptimizedImage(activeMedia.url, 'card') || activeMedia.url : '';
-  const activeMediaPostUrl = activeMedia && !isVideoMedia(activeMedia) ? getOptimizedImage(activeMedia.url, 'post') || activeMedia.url : '';
-  const activeMediaPreviewUrl = activeMedia && !isVideoMedia(activeMedia) ? getOptimizedImage(activeMedia.url, 'preview') || activeMedia.url : '';
   const mediaStageStyle = useMemo(() => {
     if (!activeMedia?.width || !activeMedia.height) return undefined;
 
@@ -431,7 +429,7 @@ const PostCard = ({ className, fallbackAuthor, hideFeedbackAction = false, post,
         <header className="v1-post-card__header">
           <button type="button" onClick={() => navigate(author?._id ? `/profile/${author._id}` : '/dashboard')} className="v1-post-card__author">
             <span className="v1-post-card__avatar">
-              {avatarUrl ? <img src={avatarUrl} alt="" /> : <UserRound size={22} aria-hidden="true" />}
+              <AvatarImage src={avatarUrl} fallback={<UserRound size={22} aria-hidden="true" />} />
             </span>
             <span className="v1-post-card__author-copy">
               <strong>{userName}</strong>
@@ -530,7 +528,7 @@ const PostCard = ({ className, fallbackAuthor, hideFeedbackAction = false, post,
         {shouldShowMedia && activeMedia && (
           <section className="v1-post-card__media-shell">
             <div className="v1-post-card__media-stage" style={mediaStageStyle}>
-              {!isVideoMedia(activeMedia) && <img className="v1-post-card__media-bg" src={activeMediaBgUrl} alt="" aria-hidden="true" />}
+              {!isVideoMedia(activeMedia) && <Image className="v1-post-card__media-bg" src={activeMedia.url} type="card" alt="" aria-hidden="true" />}
               <div className="v1-post-card__media-overlay" />
               {isVideoMedia(activeMedia) ? (
                 <PostVideoPlayer
@@ -541,7 +539,7 @@ const PostCard = ({ className, fallbackAuthor, hideFeedbackAction = false, post,
                   onOpenPreview={openMediaPreview}
                 />
               ) : (
-                <img className="v1-post-card__media-main" src={activeMediaPostUrl} alt={`Post content ${currentIndex + 1}`} loading="lazy" />
+                <Image className="v1-post-card__media-main" src={activeMedia.url} type="post" alt={`Post content ${currentIndex + 1}`} />
               )}
               {!isVideoMedia(activeMedia) && <button type="button" className="v1-post-card__media-open" onClick={openMediaPreview} aria-label="Open media preview" />}
 
@@ -621,7 +619,7 @@ const PostCard = ({ className, fallbackAuthor, hideFeedbackAction = false, post,
                 variant="preview"
               />
             ) : (
-              <img className="v1-post-card__media-preview-media" src={activeMediaPreviewUrl} alt={`Post content ${currentIndex + 1}`} />
+              <Image className="v1-post-card__media-preview-media" src={activeMedia.url} type="preview" alt={`Post content ${currentIndex + 1}`} />
             )}
           </div>
           <button type="button" className="v1-post-card__media-preview-close" onClick={closeMediaPreview} aria-label="Close media preview">

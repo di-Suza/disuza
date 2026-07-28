@@ -5,10 +5,10 @@ import { Link } from 'react-router-dom';
 
 import { useGetFollowersQuery, useGetFollowingQuery } from '@/features/users/api/user.api';
 import type { UserProfile } from '@/features/users/model/user.types';
+import AvatarImage from '@/shared/components/Avatar/AvatarImage';
 import { useLockBodyScroll } from '@/shared/hooks/useLockBodyScroll';
 import Button from '@/shared/ui/Button';
 import LoadingSpinner from '@/shared/ui/LoadingSpinner';
-import { getOptimizedImage } from '@/shared/utils/getOptimizedImage';
 
 type DashboardUserListType = 'followers' | 'following';
 
@@ -25,7 +25,7 @@ type DashboardUserRowProps = {
 };
 
 const getAvatarUrl = (url: unknown): string | null => (
-  typeof url === 'string' && url.trim() ? getOptimizedImage(url, 'avatarSmall') || url : null
+  typeof url === 'string' && url.trim() ? url : null
 );
 
 const getModalCopy = (type: DashboardUserListType) => (
@@ -51,7 +51,7 @@ const DashboardUserRow = memo(({ onClose, profile }: DashboardUserRowProps) => {
   return (
     <Link to={`/profile/${profile._id}`} className="dashboard-modal__row" onClick={onClose}>
       <span className="user-row__avatar">
-        {avatarUrl ? <img src={avatarUrl} alt="" /> : <UserRound size={18} aria-hidden="true" />}
+        <AvatarImage src={avatarUrl} fallback={<UserRound size={18} aria-hidden="true" />} />
       </span>
       <span><strong>{profile.userName}</strong><small>{profile.headline || 'Disuza member'}</small></span>
     </Link>

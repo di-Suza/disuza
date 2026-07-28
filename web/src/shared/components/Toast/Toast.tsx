@@ -2,7 +2,7 @@ import { AlertCircle, Bell, CheckCircle2, Info, X, XCircle } from 'lucide-react'
 import { memo } from 'react';
 
 import type { ToastItem } from '@/app/providers/toast/ToastContext';
-import { getOptimizedImage } from '@/shared/utils/getOptimizedImage';
+import AvatarImage from '@/shared/components/Avatar/AvatarImage';
 
 type ToastProps = {
   toast: ToastItem;
@@ -19,12 +19,11 @@ const toastIcon = {
 
 const Toast = ({ toast, onClose }: ToastProps) => {
   const Icon = toastIcon[toast.type];
-  const toastImage = toast.image ? getOptimizedImage(toast.image, 'avatarSmall') || toast.image : '';
 
   return (
     <div className={`toast toast--${toast.type}`} role="status">
-      {toast.type === 'notify' && toastImage ? (
-        <img className="toast__avatar" src={toastImage} alt="" />
+      {toast.type === 'notify' && toast.image ? (
+        <AvatarImage className="toast__avatar" src={toast.image} fallback={<Icon className="toast__icon" aria-hidden="true" />} />
       ) : (
         <Icon className="toast__icon" aria-hidden="true" />
       )}

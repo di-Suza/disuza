@@ -7,12 +7,12 @@ import { useGetConversationsQuery, useSendMessageMutation } from '@/features/mes
 import { getConversationTitle } from '@/features/messages/model/chat.helpers';
 import type { ChatConversation } from '@/features/messages/model/chat.types';
 import type { Post } from '@/features/posts/model/post.types';
+import AvatarImage from '@/shared/components/Avatar/AvatarImage';
 import { useLockBodyScroll } from '@/shared/hooks/useLockBodyScroll';
 import { useToast } from '@/shared/hooks/useToast';
 import Button from '@/shared/ui/Button';
 import LoadingSpinner from '@/shared/ui/LoadingSpinner';
 import { getErrorMessage } from '@/shared/utils/getErrorMessage';
-import { getOptimizedImage } from '@/shared/utils/getOptimizedImage';
 import '../posts.css';
 
 type SharePostModalProps = {
@@ -23,7 +23,7 @@ type SharePostModalProps = {
 
 const getConversationAvatar = (conversation: ChatConversation) => {
   const url = conversation.otherUser?.profilePicture?.url;
-  return typeof url === 'string' && url.trim() ? getOptimizedImage(url, 'avatarSmall') || url : '';
+  return typeof url === 'string' && url.trim() ? url : '';
 };
 
 const SharePostModal = ({ isOpen, onClose, post }: SharePostModalProps) => {
@@ -139,7 +139,7 @@ const SharePostModal = ({ isOpen, onClose, post }: SharePostModalProps) => {
                     disabled={isUnavailable}
                     onClick={() => setSelectedConversationId(conversation._id)}
                   >
-                    <span>{avatarUrl ? <img src={avatarUrl} alt="" /> : <UserRound size={18} aria-hidden="true" />}</span>
+                    <span><AvatarImage src={avatarUrl} fallback={<UserRound size={18} aria-hidden="true" />} /></span>
                     <strong>{getConversationTitle(conversation)}</strong>
                     {isUnavailable && <small>Unavailable</small>}
                   </button>

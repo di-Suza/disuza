@@ -3,7 +3,7 @@ import { memo } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import type { Repost } from '@/features/posts/model/post.types';
-import { getOptimizedImage } from '@/shared/utils/getOptimizedImage';
+import AvatarImage from '@/shared/components/Avatar/AvatarImage';
 import PostCard from './PostCard';
 import '../posts.css';
 
@@ -32,16 +32,14 @@ const formatTime = (value?: string) => {
 const RepostDetailCard = ({ repost, viewerId }: RepostDetailCardProps) => {
   const navigate = useNavigate();
   const reposter = repost.user;
-  const avatarUrl = reposter?.profilePicture?.url
-    ? getOptimizedImage(reposter.profilePicture.url, 'avatarSmall') || reposter.profilePicture.url
-    : '';
+  const avatarUrl = reposter?.profilePicture?.url || '';
 
   return (
     <article className="repost-detail-card">
       <header className="repost-detail-card__header">
         <button type="button" className="repost-detail-card__user" onClick={() => navigate(`/profile/${reposter._id}`)}>
           <span>
-            {avatarUrl ? <img src={avatarUrl} alt="" /> : <UserRound size={20} aria-hidden="true" />}
+            <AvatarImage src={avatarUrl} fallback={<UserRound size={20} aria-hidden="true" />} />
           </span>
           <span>
             <strong>{reposter.userName || 'User'}</strong>

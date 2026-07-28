@@ -5,11 +5,11 @@ import { createPortal } from 'react-dom';
 import { canDeleteComment, formatCommentTime, getCommentAvatarUrl } from '@/features/comments/model/comment.helpers';
 import type { CommentItem } from '@/features/comments/model/comment.types';
 import type { Post } from '@/features/posts/model/post.types';
+import AvatarImage from '@/shared/components/Avatar/AvatarImage';
 import Button from '@/shared/ui/Button';
 import Input from '@/shared/ui/Input';
 import LoadingSpinner from '@/shared/ui/LoadingSpinner';
 import { cn } from '@/shared/utils/cn';
-import { getOptimizedImage } from '@/shared/utils/getOptimizedImage';
 import CommentReplies from './CommentReplies';
 import { useCommentModal } from '../hooks/useCommentModal';
 import './Comments.css';
@@ -44,7 +44,7 @@ const CommentThread = memo(({
     <div className="comment-thread">
       <article className={cn('comment-item', isMine && 'comment-item--mine')}>
         <span className="comment-avatar">
-          {avatarUrl ? <img src={avatarUrl} alt="" /> : <UserRound size={18} aria-hidden="true" />}
+          <AvatarImage src={avatarUrl} fallback={<UserRound size={18} aria-hidden="true" />} />
         </span>
         <div className="comment-item__body">
           <div className="comment-item__meta">
@@ -94,9 +94,7 @@ const CommentModal = ({ isOpen, onClose, post }: CommentModalProps) => {
     replyTarget,
     setCommentText,
   } = useCommentModal({ isOpen, onClose, post });
-  const currentUserAvatar = currentUser?.profilePicture?.url
-    ? getOptimizedImage(currentUser.profilePicture.url, 'avatarSmall') || currentUser.profilePicture.url
-    : '';
+  const currentUserAvatar = currentUser?.profilePicture?.url || '';
 
   if (!isOpen) return null;
 
@@ -162,7 +160,7 @@ const CommentModal = ({ isOpen, onClose, post }: CommentModalProps) => {
           )}
           <div className="comments-composer__row">
             <span className="comment-avatar comment-avatar--small">
-              {currentUserAvatar ? <img src={currentUserAvatar} alt="" /> : <UserRound size={15} aria-hidden="true" />}
+              <AvatarImage src={currentUserAvatar} fallback={<UserRound size={15} aria-hidden="true" />} />
             </span>
             <Input
               ref={inputRef}

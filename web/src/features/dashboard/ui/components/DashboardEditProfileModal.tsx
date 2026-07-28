@@ -12,10 +12,10 @@ import {
 import { memo, useCallback, useEffect, useState, type ChangeEvent, type FormEvent } from 'react';
 import { createPortal } from 'react-dom';
 
+import AvatarImage from '@/shared/components/Avatar/AvatarImage';
 import { useLockBodyScroll } from '@/shared/hooks/useLockBodyScroll';
 import Button from '@/shared/ui/Button';
 import Input from '@/shared/ui/Input';
-import { getOptimizedImage } from '@/shared/utils/getOptimizedImage';
 import type { useDashboardPage } from '../pages/useDashboardPage';
 
 type DashboardPageState = ReturnType<typeof useDashboardPage>;
@@ -80,9 +80,7 @@ const DashboardEditProfileModal = ({
     setShowPasswords({ current: false, next: false, confirm: false });
   }, [isOpen]);
 
-  const avatarUrl = filePreview || (identityForm.profilePictureUrl
-    ? getOptimizedImage(identityForm.profilePictureUrl, 'avatar') || identityForm.profilePictureUrl
-    : '');
+  const avatarUrl = filePreview || identityForm.profilePictureUrl || '';
   const passwordsMatch = Boolean(passwordForm.newPassword) && passwordForm.newPassword === confirmPassword;
   const isGoogleUser = Boolean(user?.isGoogleUser);
 
@@ -129,7 +127,12 @@ const DashboardEditProfileModal = ({
           <form id="dashboard-edit-identity-form" className="dashboard-edit-v1__identity" onSubmit={handleIdentitySubmit}>
             <div className="dashboard-edit-v1__avatar-wrap">
               <div className="dashboard-edit-v1__avatar">
-                {avatarUrl ? <img src={avatarUrl} alt="Profile preview" /> : <UserRound size={42} aria-hidden="true" />}
+                <AvatarImage
+                  src={avatarUrl}
+                  imageType="avatar"
+                  alt="Profile preview"
+                  fallback={<UserRound size={42} aria-hidden="true" />}
+                />
                 <label htmlFor="dashboard-profile-upload">
                   <Camera size={28} aria-hidden="true" />
                   <span>Change Photo</span>

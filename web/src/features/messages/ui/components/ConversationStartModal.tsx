@@ -7,11 +7,11 @@ import { useCreateGroupMutation, useStartConversationMutation } from '@/features
 import type { ChatConversation } from '@/features/messages/model/chat.types';
 import { useGetFollowersQuery, useGetFollowingQuery } from '@/features/users/api/user.api';
 import type { UserProfile } from '@/features/users/model/user.types';
+import AvatarImage from '@/shared/components/Avatar/AvatarImage';
 import Button from '@/shared/ui/Button';
 import Input from '@/shared/ui/Input';
 import LoadingSpinner from '@/shared/ui/LoadingSpinner';
 import { getErrorMessage } from '@/shared/utils/getErrorMessage';
-import { getOptimizedImage } from '@/shared/utils/getOptimizedImage';
 import { useToast } from '@/shared/hooks/useToast';
 
 type ConversationStartMode = 'chat' | 'group';
@@ -26,7 +26,7 @@ type ConversationStartModalProps = {
 
 const getAvatarUrl = (user: UserProfile) => {
   const url = user.profilePicture?.url;
-  return typeof url === 'string' && url.trim() ? getOptimizedImage(url, 'avatarSmall') || url : null;
+  return typeof url === 'string' && url.trim() ? url : null;
 };
 
 const getInitial = (user: UserProfile) => user.userName?.trim().charAt(0).toUpperCase() || 'U';
@@ -47,7 +47,7 @@ const ConversationPersonCard = memo(({ onToggle, selected, user }: ConversationP
       onClick={() => onToggle(user._id)}
     >
       <span className="messages-v1-person-card__avatar">
-        {avatarUrl ? <img src={avatarUrl} alt="" /> : <UserRound size={16} aria-hidden="true" />}
+        <AvatarImage src={avatarUrl} fallback={<UserRound size={16} aria-hidden="true" />} />
       </span>
       <span>
         <strong>{user.userName || getInitial(user)}</strong>

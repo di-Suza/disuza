@@ -4,6 +4,7 @@ import { memo, useState } from 'react';
 import { useGetRepliesQuery } from '@/features/comments/api/comment.api';
 import { canDeleteComment, formatCommentTime, getCommentAvatarUrl } from '@/features/comments/model/comment.helpers';
 import type { CommentItem } from '@/features/comments/model/comment.types';
+import AvatarImage from '@/shared/components/Avatar/AvatarImage';
 import Button from '@/shared/ui/Button';
 import LoadingSpinner from '@/shared/ui/LoadingSpinner';
 
@@ -51,7 +52,7 @@ const CommentReplies = ({ onDeleteComment, parentComment, userId }: CommentRepli
             return (
               <article className="comment-item comment-item--reply" key={reply._id}>
                 <span className="comment-avatar comment-avatar--small">
-                  {avatarUrl ? <img src={avatarUrl} alt="" /> : <UserRound size={15} aria-hidden="true" />}
+                  <AvatarImage src={avatarUrl} fallback={<UserRound size={15} aria-hidden="true" />} />
                 </span>
                 <div className="comment-item__body">
                   <div className="comment-item__meta">

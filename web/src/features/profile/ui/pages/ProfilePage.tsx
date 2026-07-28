@@ -29,17 +29,17 @@ import {
 import { lazy, memo, Suspense, useCallback, useMemo, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 
+import AvatarImage from '@/shared/components/Avatar/AvatarImage';
 import ErrorBoundary from '@/shared/components/ErrorBoundary/ErrorBoundary';
 import Button from '@/shared/ui/Button';
 import LoadingSpinner from '@/shared/ui/LoadingSpinner';
 import { getErrorMessage } from '@/shared/utils/getErrorMessage';
-import { getOptimizedImage, type ImageOptimizationType } from '@/shared/utils/getOptimizedImage';
 import { useProfilePage } from './useProfilePage';
 import './ProfilePage.css';
 import '@/app/layouts/ProductShell.css';
 
-const avatarUrl = (url: unknown, type: ImageOptimizationType = 'avatarSmall'): string | null => (
-  typeof url === 'string' && url.trim() ? getOptimizedImage(url, type) || url : null
+const avatarUrl = (url: unknown): string | null => (
+  typeof url === 'string' && url.trim() ? url : null
 );
 const listToChips = (items: unknown): string[] => Array.isArray(items) ? items.filter((item): item is string => typeof item === 'string') : [];
 const listToRecords = <T,>(items: unknown): T[] => Array.isArray(items) ? items.filter((item): item is T => typeof item === 'object' && item !== null) : [];
@@ -204,7 +204,7 @@ const ProfilePage = () => {
     projectPosts,
     refetch,
   } = useProfilePage();
-  const image = useMemo(() => avatarUrl(profileUser?.profilePicture?.url, 'avatar'), [profileUser?.profilePicture?.url]);
+  const image = useMemo(() => avatarUrl(profileUser?.profilePicture?.url), [profileUser?.profilePicture?.url]);
   const skills = useMemo(() => listToChips(profileUser?.skills), [profileUser?.skills]);
   const handles = useMemo(() => listToHandles(profileUser?.handles), [profileUser?.handles]);
   const interests = useMemo(() => listToChips(profileUser?.interests), [profileUser?.interests]);
@@ -291,7 +291,7 @@ const ProfilePage = () => {
         {profileBlockedByViewer ? (
           <div className="profile-hero profile-hero--blocked">
             <span className="dashboard-profile__avatar dashboard-profile__avatar--image profile-hero__avatar">
-              {image ? <img src={image} alt={profileUser.userName} /> : <UserRound size={42} aria-hidden="true" />}
+              <AvatarImage src={image} imageType="avatar" alt={profileUser.userName} fallback={<UserRound size={42} aria-hidden="true" />} />
             </span>
             <div className="profile-hero__content">
               <p className="state-panel__eyebrow">Developer Profile</p>
@@ -309,7 +309,7 @@ const ProfilePage = () => {
               <div className="profile-preview-header__top">
                 <span className="profile-preview-header__avatar-wrap">
                   <span className="profile-preview-header__avatar">
-                    {image ? <img src={image} alt={profileUser.userName} /> : <UserRound size={42} aria-hidden="true" />}
+                    <AvatarImage src={image} imageType="avatar" alt={profileUser.userName} fallback={<UserRound size={42} aria-hidden="true" />} />
                   </span>
                 </span>
                 <div className="profile-preview-header__main">
@@ -522,7 +522,7 @@ const ProfilePage = () => {
 
                   return (
                     <Link to={`/profile/${user._id}`} className="user-row user-row__main" key={user._id} onClick={closeList}>
-                      <span className="user-row__avatar">{userAvatarUrl ? <img src={userAvatarUrl} alt="" /> : <UserRound size={18} />}</span>
+                      <span className="user-row__avatar"><AvatarImage src={userAvatarUrl} fallback={<UserRound size={18} aria-hidden="true" />} /></span>
                       <span><strong>{user.userName}</strong><small>{user.headline || 'Disuza member'}</small></span>
                     </Link>
                   );

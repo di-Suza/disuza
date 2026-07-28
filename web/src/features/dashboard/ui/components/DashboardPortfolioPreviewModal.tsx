@@ -31,10 +31,11 @@ import { useGetAllPostsQuery } from '@/features/posts/api/post.api';
 import { getPostMedia, isVideoMedia } from '@/features/posts/model/post.helpers';
 import type { Post } from '@/features/posts/model/post.types';
 import type { PortfolioHandle, UserProfile } from '@/features/users/model/user.types';
+import AvatarImage from '@/shared/components/Avatar/AvatarImage';
+import Image from '@/shared/components/Image/Image';
 import { useLockBodyScroll } from '@/shared/hooks/useLockBodyScroll';
 import Button from '@/shared/ui/Button';
 import LoadingSpinner from '@/shared/ui/LoadingSpinner';
-import { getOptimizedImage } from '@/shared/utils/getOptimizedImage';
 import ContributionHeatmap from './ContributionHeatmap';
 
 type DashboardPortfolioPreviewModalProps = {
@@ -78,10 +79,6 @@ const formatAddress = (address: UserProfile['address']): string => (
     .join(', ')
 );
 
-const optimizedMediaUrl = (url?: string, type: 'avatar' | 'thumbnail' = 'thumbnail'): string | undefined => (
-  url ? getOptimizedImage(url, type) || url : undefined
-);
-
 const PreviewSection = ({ children, icon: Icon, spacious = false, title }: PreviewSectionProps) => (
   <section className={spacious ? 'portfolio-preview-profile-section is-spacious' : 'portfolio-preview-profile-section'}>
     <header>
@@ -109,7 +106,7 @@ const PreviewPostCard = ({ post }: { post: Post }) => {
         {firstMedia && isVideoMedia(firstMedia) ? (
           <><video src={firstMedia.url} preload="metadata" muted /><i><Play size={14} aria-hidden="true" /></i></>
         ) : firstMedia ? (
-          <img src={optimizedMediaUrl(firstMedia.thumbnailUrl || firstMedia.url, 'thumbnail')} alt="Post" loading="lazy" />
+          <Image src={firstMedia.thumbnailUrl || firstMedia.url} type="thumbnail" alt="Post" />
         ) : null}
         <em><Eye size={14} aria-hidden="true" /></em>
       </span>
@@ -151,9 +148,7 @@ const DashboardPortfolioPreviewModal = ({ isOpen, onClose, user }: DashboardPort
   const languages = listOfStrings(user.languages);
   const experiences = Array.isArray(user.experiences) ? [...user.experiences].reverse() : [];
   const educations = Array.isArray(user.educations) ? [...user.educations].reverse() : [];
-  const avatar = typeof user.profilePicture?.url === 'string' && user.profilePicture.url.trim()
-    ? optimizedMediaUrl(user.profilePicture.url, 'avatar') || user.profilePicture.url
-    : null;
+  const avatar = typeof user.profilePicture?.url === 'string' && user.profilePicture.url.trim() ? user.profilePicture.url : null;
   const address = formatAddress(user.address);
 
   return createPortal(
@@ -178,7 +173,12 @@ const DashboardPortfolioPreviewModal = ({ isOpen, onClose, user }: DashboardPort
                 <div className="portfolio-preview-profile-header__top">
                   <span className="portfolio-preview-profile-header__avatar-wrap">
                     <span className="portfolio-preview-profile-header__avatar">
-                      {avatar ? <img src={avatar} alt={user.userName} /> : <UserRound size={42} aria-hidden="true" />}
+                      <AvatarImage
+                        src={avatar}
+                        imageType="avatar"
+                        alt={user.userName}
+                        fallback={<UserRound size={42} aria-hidden="true" />}
+                      />
                     </span>
                   </span>
                   <div className="portfolio-preview-profile-header__main">

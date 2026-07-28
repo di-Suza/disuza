@@ -1,5 +1,4 @@
 import type { Post, PostAuthor, PostMedia } from './post.types';
-import { getOptimizedImage } from '@/shared/utils/getOptimizedImage';
 
 const hasMediaUrl = (media: PostMedia): boolean => typeof media.url === 'string' && media.url.trim().length > 0;
 
@@ -26,5 +25,5 @@ export const getPostOwnerId = (post: Post, fallbackAuthor?: PostAuthor): string 
 
 export const getPostImageUrl = (author?: PostAuthor | null): string | null => {
   const url = author?.profilePicture?.url;
-  return typeof url === 'string' && url.trim() ? getOptimizedImage(url, 'avatarSmall') || url : null;
+  return typeof url === 'string' && url.trim() ? url : null;
 };

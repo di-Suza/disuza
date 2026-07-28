@@ -29,9 +29,9 @@ import {
   UserX,
 } from 'lucide-react';
 
+import AvatarImage from '@/shared/components/Avatar/AvatarImage';
 import ErrorBoundary from '@/shared/components/ErrorBoundary/ErrorBoundary';
 import LoadingSpinner from '@/shared/ui/LoadingSpinner';
-import { getOptimizedImage } from '@/shared/utils/getOptimizedImage';
 import HeatmapRules from '../components/HeatmapRules';
 import type { DashboardAccountModalMode } from '../components/DashboardAccountModal';
 import type { DashboardActivityType } from '../components/DashboardActivitiesModal';
@@ -85,7 +85,7 @@ const getInitialTheme = (): Theme => {
 };
 
 const getAvatarUrl = (url: unknown): string | null => (
-  typeof url === 'string' && url.trim() ? getOptimizedImage(url, 'avatar') || url : null
+  typeof url === 'string' && url.trim() ? url : null
 );
 
 const SettingsRow = ({
@@ -178,7 +178,12 @@ const DashboardPage = () => {
               <div className="dashboard-v1-user">
                 <span className="dashboard-v1-avatar-wrap">
                   <span className="dashboard-v1-avatar">
-                    {avatarUrl ? <img src={avatarUrl} alt={user?.userName || 'Profile'} /> : <UserRound size={34} aria-hidden="true" />}
+                    <AvatarImage
+                      src={avatarUrl}
+                      imageType="avatar"
+                      alt={user?.userName || 'Profile'}
+                      fallback={<UserRound size={34} aria-hidden="true" />}
+                    />
                   </span>
                 </span>
                 <span className="dashboard-v1-user__copy">

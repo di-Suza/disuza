@@ -1,5 +1,4 @@
 import type { ChatConversation, ChatLastMessage, ChatMessage, ChatUser, FeedbackDetails, SharedPostDetails } from './chat.types';
-import { getOptimizedImage } from '@/shared/utils/getOptimizedImage';
 
 export const formatChatMessageTime = (createdAt?: string) => {
   if (!createdAt) return '';
@@ -55,7 +54,7 @@ export const getUserInitial = (user?: Pick<ChatUser, 'userName'> | null) => (
 
 export const getUserAvatarUrl = (user?: Pick<ChatUser, 'profilePicture'> | null) => {
   const url = user?.profilePicture?.url;
-  return typeof url === 'string' && url.trim() ? getOptimizedImage(url, 'avatarSmall') || url : null;
+  return typeof url === 'string' && url.trim() ? url : null;
 };
 
 export const getConversationTitle = (conversation?: ChatConversation | null) => {
@@ -71,7 +70,7 @@ export const getFeedbackMediaUrl = (details?: FeedbackDetails | null) => {
       ? media.url
       : '';
 
-  return url ? getOptimizedImage(url, 'thumbnail') || url : null;
+  return url || null;
 };
 
 export const getSharedPostMediaUrl = (details?: SharedPostDetails | null) => {
@@ -79,7 +78,7 @@ export const getSharedPostMediaUrl = (details?: SharedPostDetails | null) => {
   const thumbnailUrl = typeof media?.thumbnailUrl === 'string' && media.thumbnailUrl.trim() ? media.thumbnailUrl : '';
   const mediaUrl = typeof media?.url === 'string' && media.url.trim() ? media.url : '';
   const url = thumbnailUrl || mediaUrl;
-  return url ? getOptimizedImage(url, 'thumbnail') || url : null;
+  return url || null;
 };
 
 export const getConversationPreview = (lastMessage?: ChatLastMessage | null) => {
