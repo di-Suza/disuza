@@ -1,12 +1,12 @@
 import { Eye, RefreshCw, Sparkles, UserRound } from 'lucide-react';
 import { useWindowVirtualizer } from '@tanstack/react-virtual';
-import { memo, useEffect, useMemo, useState } from 'react';
+import { memo, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
 import { useAppSelector } from '@/app/store/hooks';
 import { useGetUserRecommendationsQuery } from '@/features/users/api/user.api';
 import type { UserProfile } from '@/features/users/model/user.types';
-import type { Post, PostAuthor } from '@/features/posts/model/post.types';
+import type { FeedType, Post, PostAuthor } from '@/features/posts/model/post.types';
 import AvatarImage from '@/shared/components/Avatar/AvatarImage';
 import ErrorBoundary from '@/shared/components/ErrorBoundary/ErrorBoundary';
 import LoadingSpinner from '@/shared/ui/LoadingSpinner';
@@ -85,14 +85,24 @@ FeedPostItem.displayName = 'FeedPostItem';
 
 const FEED_RENDER_BATCH_SIZE = 8;
 
+const preservedHomeFeedView: { feedType: FeedType; scrollY: number; visiblePostCount: number } = {
+  feedType: 'all',
+  scrollY: 0,
+  visiblePostCount: FEED_RENDER_BATCH_SIZE,
+};
+
 type FeedVirtualItem =
   | { id: string; type: 'post'; post: Post }
   | { id: string; type: 'recommendations' };
 
 const FeedPage = () => {
   const [recommendationInsertIndex] = useState(() => Math.floor(Math.random() * 3) + 2);
-  const [visiblePostCount, setVisiblePostCount] = useState(FEED_RENDER_BATCH_SIZE);
   const { feedType, hasMore, isError, isFetching, isLoading, loadMore, posts, refetch, user } = useFeedPage();
+  const [visiblePostCount, setVisiblePostCount] = useState(() => (
+    preservedHomeFeedView.feedType === feedType ? preservedHomeFeedView.visiblePostCount : FEED_RENDER_BATCH_SIZE
+  ));
+  const hasRestoredScrollRef = useRef(false);
+  const previousFeedTypeRef = useRef(feedType);
   const pendingUploads = useAppSelector((state) => state.postUploads.tasks);
   const { data: recommendationsData } = useGetUserRecommendationsQuery({ limit: 12 });
   const recommendations = recommendationsData?.recommendations || EMPTY_RECOMMENDATIONS;
@@ -124,6 +134,7 @@ const FeedPage = () => {
     overscan: 4,
   });
   const virtualItems = rowVirtualizer.getVirtualItems();
+  const virtualListHeight = rowVirtualizer.getTotalSize();
   const lastVirtualIndex = virtualItems[virtualItems.length - 1]?.index ?? -1;
 
   const fallbackAuthor = useMemo<PostAuthor | undefined>(() => {
@@ -132,8 +143,56 @@ const FeedPage = () => {
   }, [user]);
 
   useEffect(() => {
+    if (previousFeedTypeRef.current === feedType) return;
+
+    previousFeedTypeRef.current = feedType;
+    preservedHomeFeedView.feedType = feedType;
+    preservedHomeFeedView.scrollY = 0;
+    preservedHomeFeedView.visiblePostCount = FEED_RENDER_BATCH_SIZE;
+    hasRestoredScrollRef.current = true;
     setVisiblePostCount(FEED_RENDER_BATCH_SIZE);
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
   }, [feedType]);
+
+  useEffect(() => {
+    preservedHomeFeedView.feedType = feedType;
+    preservedHomeFeedView.visiblePostCount = visiblePostCount;
+  }, [feedType, visiblePostCount]);
+
+  useEffect(() => {
+    const rememberScrollPosition = () => {
+      preservedHomeFeedView.feedType = feedType;
+      preservedHomeFeedView.scrollY = window.scrollY;
+      preservedHomeFeedView.visiblePostCount = visiblePostCount;
+    };
+
+    window.addEventListener('scroll', rememberScrollPosition, { passive: true });
+    window.addEventListener('beforeunload', rememberScrollPosition);
+
+    return () => {
+      rememberScrollPosition();
+      window.removeEventListener('scroll', rememberScrollPosition);
+      window.removeEventListener('beforeunload', rememberScrollPosition);
+    };
+  }, [feedType, visiblePostCount]);
+
+  useLayoutEffect(() => {
+    if (hasRestoredScrollRef.current || isLoading || preservedHomeFeedView.feedType !== feedType) return;
+
+    const scrollY = preservedHomeFeedView.scrollY;
+    if (scrollY <= 0) {
+      hasRestoredScrollRef.current = true;
+      return;
+    }
+
+    const maxScrollY = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+    if (maxScrollY <= 0) return;
+
+    hasRestoredScrollRef.current = true;
+    window.requestAnimationFrame(() => {
+      window.scrollTo({ top: Math.min(scrollY, maxScrollY), left: 0, behavior: 'auto' });
+    });
+  }, [feedType, isLoading, readyPosts.length, virtualListHeight]);
 
   useEffect(() => {
     if (lastVirtualIndex < Math.max(0, feedItems.length - 3)) return;
@@ -165,7 +224,7 @@ const FeedPage = () => {
           <p className="home-feed-exact__empty">{feedType === 'following' ? 'No posts from people you follow yet' : 'No posts yet'}</p>
         ) : (
           <>
-            <div className="home-feed-exact__virtual-list" style={{ height: `${rowVirtualizer.getTotalSize()}px` }}>
+            <div className="home-feed-exact__virtual-list" style={{ height: `${virtualListHeight}px` }}>
               {virtualItems.map((virtualItem) => {
                 const item = feedItems[virtualItem.index];
                 if (!item) return null;

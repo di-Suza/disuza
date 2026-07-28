@@ -482,7 +482,6 @@ const PostCard = ({ className, fallbackAuthor, hideFeedbackAction = false, post,
   const [showFullCaption, setShowFullCaption] = useState(false);
   const [showFullCode, setShowFullCode] = useState(false);
   const [activeAttachmentPanel, setActiveAttachmentPanel] = useState<PostAttachmentPanel>('code');
-  const [hasManuallySelectedAttachmentPanel, setHasManuallySelectedAttachmentPanel] = useState(false);
   const [isMediaPreviewOpen, setMediaPreviewOpen] = useState(false);
   const [videoRestoreRequest, setVideoRestoreRequest] = useState<VideoRestoreRequest | null>(null);
   const [showSaveTooltip, setShowSaveTooltip] = useState(false);
@@ -604,29 +603,17 @@ const PostCard = ({ className, fallbackAuthor, hideFeedbackAction = false, post,
 
   const selectAttachmentPanel = useCallback((panel: PostAttachmentPanel) => {
     setActiveAttachmentPanel(panel);
-    setHasManuallySelectedAttachmentPanel(true);
   }, []);
 
   useLockBodyScroll(isMediaPreviewOpen);
 
   useEffect(() => {
     setActiveAttachmentPanel('code');
-    setHasManuallySelectedAttachmentPanel(false);
     setShowFullCode(false);
     setCurrentIndex(0);
     setVideoRestoreRequest(null);
     previewRestoreRef.current = null;
   }, [post._id]);
-
-  useEffect(() => {
-    if (!hasAttachmentSwitcher || hasManuallySelectedAttachmentPanel) return;
-
-    const intervalId = window.setInterval(() => {
-      setActiveAttachmentPanel((current) => (current === 'code' ? 'media' : 'code'));
-    }, 4000);
-
-    return () => window.clearInterval(intervalId);
-  }, [hasAttachmentSwitcher, hasManuallySelectedAttachmentPanel]);
 
   useEffect(() => {
     if (!isMediaPreviewOpen) return;

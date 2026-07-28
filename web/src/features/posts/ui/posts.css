@@ -2176,6 +2176,10 @@
   contain-intrinsic-size: 760px;
 }
 
+.home-feed-exact__post-shell .v1-post-card-outer {
+  margin: 0 auto;
+}
+
 .home-feed-exact__virtual-list {
   position: relative;
   width: 100%;
@@ -2186,7 +2190,7 @@
   top: 0;
   left: 0;
   width: 100%;
-  padding-bottom: 16px;
+  padding-bottom: 10px;
 }
 
 .home-feed-exact__sentinel {
