@@ -1,5 +1,5 @@
 import { Code2, ImagePlus, Link2, MoreHorizontal, Plus, Send, Trash2, UserRound, Video, X } from 'lucide-react';
-import { memo, useId, useState } from 'react';
+import { memo, useCallback, useId, useMemo, useState } from 'react';
 
 import { useAppSelector } from '@/app/store/hooks';
 import Button from '@/shared/ui/Button';
@@ -9,6 +9,8 @@ import { usePostComposer } from '../hooks/usePostComposer';
 import '../posts.css';
 
 type ComposerPanel = 'code' | 'link' | 'more' | null;
+
+const noopComposerClose = () => undefined;
 
 const InlinePostComposer = () => {
   const fileInputId = useId();
@@ -36,16 +38,22 @@ const InlinePostComposer = () => {
     updateLink,
     updateProjectLink,
     updateSetting,
-  } = usePostComposer({ isOpen: true, mode: 'create', onClose: () => undefined });
+  } = usePostComposer({ isOpen: true, mode: 'create', onClose: noopComposerClose });
 
-  const openLinkPanel = () => {
+  const openLinkPanel = useCallback(() => {
     if (links.length === 0) addLink();
     setActivePanel((current) => (current === 'link' ? null : 'link'));
-  };
+  }, [addLink, links.length]);
 
-  const closePanel = () => setActivePanel(null);
-  const hasProjectLinks = isProjectPost && Boolean(projectLinks.liveDemoUrl.trim() || projectLinks.repositoryUrl.trim());
-  const visibleLinks = links.filter((link) => link.label.trim() && link.url.trim());
+  const closePanel = useCallback(() => setActivePanel(null), []);
+  const hasProjectLinks = useMemo(
+    () => isProjectPost && Boolean(projectLinks.liveDemoUrl.trim() || projectLinks.repositoryUrl.trim()),
+    [isProjectPost, projectLinks.liveDemoUrl, projectLinks.repositoryUrl],
+  );
+  const visibleLinks = useMemo(
+    () => links.filter((link) => link.label.trim() && link.url.trim()),
+    [links],
+  );
 
   return (
     <form className="inline-post-composer" onSubmit={handleSubmit}>
