@@ -1,5 +1,5 @@
 import { MessageSquare, RefreshCw, Send } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react';
 
 import { useAppSelector } from '@/app/store/hooks';
 import { useGetMessagesQuery, useMarkAsReadMutation, useSendMessageMutation } from '@/features/messages/api/chat.api';
@@ -273,4 +273,4 @@ const ChatPanel = ({ conversationId, otherUser, participants = [] }: RoomChatPan
   );
 };
 
-export default ChatPanel;
+export default memo(ChatPanel);
