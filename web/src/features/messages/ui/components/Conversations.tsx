@@ -1,5 +1,5 @@
 import { Loader2, MessageSquarePlus, MoreVertical, Pin, PinOff, Search, Trash2, Users, X } from 'lucide-react';
-import { memo, useEffect, useMemo, useState, type KeyboardEvent, type MouseEvent } from 'react';
+import { lazy, memo, Suspense, useEffect, useMemo, useState, type KeyboardEvent, type MouseEvent } from 'react';
 
 import { useAppDispatch } from '@/app/store/hooks';
 import { useDeleteConversationMutation, usePinConversationMutation } from '@/features/messages/api/chat.api';
@@ -11,7 +11,6 @@ import Input from '@/shared/ui/Input';
 import LoadingSpinner from '@/shared/ui/LoadingSpinner';
 import { getErrorMessage } from '@/shared/utils/getErrorMessage';
 import ChatAvatar from './ChatAvatar';
-import ConversationStartModal from './ConversationStartModal';
 import { useConversations } from './useConversations';
 
 type ConversationsProps = {
@@ -22,6 +21,7 @@ type ConversationsProps = {
 };
 
 const CONVERSATION_PAGE_SIZE = 12;
+const ConversationStartModal = lazy(() => import('./ConversationStartModal'));
 
 const Conversations = ({ conversations, getConversationsLoading, handleChatSelect, selectedChat }: ConversationsProps) => {
   const dispatch = useAppDispatch();
@@ -297,15 +297,17 @@ const Conversations = ({ conversations, getConversationsLoading, handleChatSelec
         </div>
       )}
 
-      {startMode && (
-        <ConversationStartModal
-          existingConversations={conversations}
-          isOpen={Boolean(startMode)}
-          mode={startMode}
-          onClose={() => setStartMode(null)}
-          onConversationReady={handleSelectChat}
-        />
-      )}
+      <Suspense fallback={null}>
+        {startMode && (
+          <ConversationStartModal
+            existingConversations={conversations}
+            isOpen={Boolean(startMode)}
+            mode={startMode}
+            onClose={() => setStartMode(null)}
+            onConversationReady={handleSelectChat}
+          />
+        )}
+      </Suspense>
     </aside>
   );
 };
