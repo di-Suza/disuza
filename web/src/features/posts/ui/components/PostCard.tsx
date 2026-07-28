@@ -81,7 +81,7 @@ const formatTime = (value?: string) => {
   return new Intl.DateTimeFormat('en', { month: 'short', day: 'numeric' }).format(date);
 };
 
-const ActionItem = ({
+const ActionItem = memo(({
   active,
   count,
   disabled,
@@ -102,7 +102,9 @@ const ActionItem = ({
     </span>
     {count !== undefined && <small>{count}</small>}
   </button>
-);
+));
+
+ActionItem.displayName = 'ActionItem';
 
 const normalizeLink = (url?: string) => {
   const trimmedUrl = url?.trim();
@@ -112,7 +114,7 @@ const normalizeLink = (url?: string) => {
 
 const truncateUrl = (url: string) => url.replace(/^https?:\/\//i, '').replace(/\/$/, '');
 
-const PostVideoPlayer = ({
+const PostVideoPlayer = memo(({
   ariaLabel,
   className,
   onOpenPreview,
@@ -199,7 +201,9 @@ const PostVideoPlayer = ({
       </div>
     </div>
   );
-};
+});
+
+PostVideoPlayer.displayName = 'PostVideoPlayer';
 
 const PostCard = ({ className, fallbackAuthor, hideFeedbackAction = false, post, viewerId }: PostCardProps) => {
   const navigate = useNavigate();
