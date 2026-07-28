@@ -1,5 +1,5 @@
 import { Activity, Heart, Loader2, MessageCircle, UserPlus, X } from 'lucide-react';
-import { useCallback, useEffect, useLayoutEffect, useMemo, useState } from 'react';
+import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 import { useDeleteCommentMutation } from '@/features/comments/api/comment.api';
@@ -22,6 +22,15 @@ type DashboardActivitiesModalProps = {
 };
 
 type ActivityRecord = Record<string, unknown>;
+
+type DashboardActivityModalRowProps = {
+  activity: unknown;
+  index: number;
+  isLoading: boolean;
+  onActivityAction: (activity: unknown, index: number) => void;
+  onNavigate: () => void;
+  type: DashboardActivityType;
+};
 
 const activityCopy: Record<DashboardActivityType, { empty: string; eyebrow: string; title: string }> = {
   likes: { eyebrow: 'Activity History', title: 'Liked Posts', empty: 'No liked posts yet.' },
@@ -53,6 +62,31 @@ const mergeActivities = (current: unknown[], next: unknown[]): unknown[] => {
   const existingIds = new Set(current.map((activity, index) => getActivityId(activity, index)));
   return [...current, ...next.filter((activity, index) => !existingIds.has(getActivityId(activity, index)))];
 };
+
+const DashboardActivityModalRow = memo(({
+  activity,
+  index,
+  isLoading,
+  onActivityAction,
+  onNavigate,
+  type,
+}: DashboardActivityModalRowProps) => {
+  const handleAction = useCallback(() => {
+    onActivityAction(activity, index);
+  }, [activity, index, onActivityAction]);
+
+  return (
+    <DashboardActivityItem
+      activity={activity}
+      isLoading={isLoading}
+      onAction={handleAction}
+      onNavigate={onNavigate}
+      type={type}
+    />
+  );
+});
+
+DashboardActivityModalRow.displayName = 'DashboardActivityModalRow';
 
 const DashboardActivitiesModal = ({ isOpen, onClose, type }: DashboardActivitiesModalProps) => {
   const [page, setPage] = useState(1);
@@ -135,6 +169,10 @@ const DashboardActivitiesModal = ({ isOpen, onClose, type }: DashboardActivities
     }
   }, [deleteComment, removeActivity, showError, showSuccess, type, unfollowUser, unlikePost, unsendMessage]);
 
+  const handleLoadMore = useCallback(() => {
+    setPage((current) => current + 1);
+  }, []);
+
   if (!isOpen) return null;
 
   return createPortal(
@@ -153,11 +191,12 @@ const DashboardActivitiesModal = ({ isOpen, onClose, type }: DashboardActivities
           {!isFetching && visibleActivities.length === 0 && activitiesType === type && <p className="empty-copy">{copy.empty}</p>}
           <div className="dashboard-activity-v1-list" aria-busy={isFetching}>
             {visibleActivities.map((activity, index) => (
-              <DashboardActivityItem
+              <DashboardActivityModalRow
                 key={getActivityId(activity, index)}
                 activity={activity}
+                index={index}
                 isLoading={isActionLoading}
-                onAction={() => handleActivityAction(activity, index)}
+                onActivityAction={handleActivityAction}
                 onNavigate={onClose}
                 type={type}
               />
@@ -168,7 +207,7 @@ const DashboardActivitiesModal = ({ isOpen, onClose, type }: DashboardActivities
         <footer className="report-modal__footer">
           <Button variant="secondary" onClick={onClose}>Close</Button>
           {activitiesType === type && currentData?.hasMore && (
-            <Button onClick={() => setPage((current) => current + 1)} isLoading={isFetching} loadingLabel="Loading activity">
+            <Button onClick={handleLoadMore} isLoading={isFetching} loadingLabel="Loading activity">
               <Activity size={17} aria-hidden="true" />
               Load more
             </Button>
@@ -180,5 +219,5 @@ const DashboardActivitiesModal = ({ isOpen, onClose, type }: DashboardActivities
   );
 };
 
-export default DashboardActivitiesModal;
+export default memo(DashboardActivitiesModal);
 export type { DashboardActivityType };
