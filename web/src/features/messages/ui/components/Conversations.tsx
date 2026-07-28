@@ -1,5 +1,5 @@
 import { Loader2, MessageSquarePlus, MoreVertical, Pin, PinOff, Search, Trash2, Users, X } from 'lucide-react';
-import { lazy, memo, Suspense, useEffect, useMemo, useState, type KeyboardEvent, type MouseEvent } from 'react';
+import { lazy, memo, Suspense, useCallback, useEffect, useMemo, useState, type KeyboardEvent, type MouseEvent } from 'react';
 
 import { useAppDispatch } from '@/app/store/hooks';
 import { useDeleteConversationMutation, usePinConversationMutation } from '@/features/messages/api/chat.api';
@@ -22,6 +22,102 @@ type ConversationsProps = {
 
 const CONVERSATION_PAGE_SIZE = 12;
 const ConversationStartModal = lazy(() => import('./ConversationStartModal'));
+
+type ConversationItemProps = {
+  chat: ChatConversation;
+  deletingConversation: boolean;
+  isActive: boolean;
+  isMenuOpen: boolean;
+  onDeleteChat: (event: MouseEvent<HTMLButtonElement>, chat: ChatConversation) => void;
+  onKeyDown: (event: KeyboardEvent<HTMLElement>, chat: ChatConversation) => void;
+  onMenuToggle: (event: MouseEvent<HTMLButtonElement>, chatId: string) => void;
+  onPinChat: (event: MouseEvent<HTMLButtonElement>, chat: ChatConversation) => void;
+  onSelectChat: (chat: ChatConversation) => void;
+  pinningConversation: boolean;
+  userId?: string;
+};
+
+const ConversationItem = memo(({
+  chat,
+  deletingConversation,
+  isActive,
+  isMenuOpen,
+  onDeleteChat,
+  onKeyDown,
+  onMenuToggle,
+  onPinChat,
+  onSelectChat,
+  pinningConversation,
+  userId,
+}: ConversationItemProps) => {
+  const unreadCount = Math.max(0, Number(chat.unreadCount || 0));
+  const hasUnread = Boolean((chat.isUnread || unreadCount > 0) && chat.lastMessage?.sender !== userId);
+  const visibleUnreadCount = unreadCount > 0 ? unreadCount : hasUnread ? 1 : 0;
+  const visibleMemberCount = chat.participants?.length || 0;
+  const currentUserIsGroupAdmin = Boolean(chat.isGroup && userId && chat.admins?.includes(userId));
+  const isSoloGroupAdmin = Boolean(chat.isGroup && currentUserIsGroupAdmin && visibleMemberCount <= 1);
+  const groupAdminCannotLeave = Boolean(chat.isGroup && currentUserIsGroupAdmin && visibleMemberCount > 1);
+  const removeLabel = chat.isGroup ? (isSoloGroupAdmin ? 'Delete group' : 'Leave') : 'Delete';
+  const title = getConversationTitle(chat);
+
+  return (
+    <article
+      role="button"
+      tabIndex={0}
+      className={`messages-v1-conversation ${isActive ? 'is-active' : ''}`}
+      onClick={() => onSelectChat(chat)}
+      onKeyDown={(event) => onKeyDown(event, chat)}
+    >
+      <ChatAvatar user={chat.isGroup ? { userName: title, profilePicture: chat.groupAvatar } : chat.otherUser} className="messages-v1-conversation__avatar" />
+
+      <div className="messages-v1-conversation__body">
+        <div className="messages-v1-conversation__topline">
+          <span>{title}</span>
+          <div className="messages-v1-conversation__meta">
+            <small>{formatChatMessageTime(chat.updatedAt)}</small>
+            <button
+              type="button"
+              className="messages-v1-icon-button messages-v1-conversation__menu-button"
+              data-conversation-menu-root
+              onClick={(event) => onMenuToggle(event, chat._id)}
+              aria-label="Conversation options"
+            >
+              <MoreVertical size={16} aria-hidden="true" />
+            </button>
+
+            {isMenuOpen && (
+              <div className="messages-v1-menu messages-v1-conversation__menu" data-conversation-menu-root onClick={(event) => event.stopPropagation()}>
+                <button type="button" onClick={(event) => onPinChat(event, chat)} disabled={pinningConversation}>
+                  {chat.isPinned ? <PinOff size={16} aria-hidden="true" /> : <Pin size={16} aria-hidden="true" />}
+                  {chat.isPinned ? 'Unpin' : 'Pin'}
+                </button>
+                <button
+                  type="button"
+                  className="is-danger"
+                  onClick={(event) => onDeleteChat(event, chat)}
+                  disabled={deletingConversation || groupAdminCannotLeave}
+                  title={groupAdminCannotLeave ? 'Remove all members before leaving this group.' : undefined}
+                >
+                  {deletingConversation ? <Loader2 className="spin" size={16} aria-hidden="true" /> : <Trash2 size={16} aria-hidden="true" />}
+                  {!deletingConversation && removeLabel}
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="messages-v1-conversation__preview">
+          <p className={hasUnread ? 'is-unread' : ''}>
+            {chat.isBlocked || chat.hasBlockedMe ? 'Chat unavailable' : getConversationPreview(chat.lastMessage)}
+          </p>
+          {hasUnread && <span className="messages-v1-unread-count" aria-label={`${visibleUnreadCount} unread messages`}>{Math.min(visibleUnreadCount, 99)}</span>}
+        </div>
+      </div>
+    </article>
+  );
+});
+
+ConversationItem.displayName = 'ConversationItem';
 
 const Conversations = ({ conversations, getConversationsLoading, handleChatSelect, selectedChat }: ConversationsProps) => {
   const dispatch = useAppDispatch();
@@ -93,25 +189,25 @@ const Conversations = ({ conversations, getConversationsLoading, handleChatSelec
     };
   }, [isCreateMenuOpen]);
 
-  const handleSelectChat = (chat: ChatConversation) => {
+  const handleSelectChat = useCallback((chat: ChatConversation) => {
     handleConversationSelect(chat);
     setSearchQuery('');
     setOpenMenuId(null);
-  };
+  }, [handleConversationSelect]);
 
-  const handleConversationKeyDown = (event: KeyboardEvent<HTMLElement>, chat: ChatConversation) => {
+  const handleConversationKeyDown = useCallback((event: KeyboardEvent<HTMLElement>, chat: ChatConversation) => {
     if (event.key !== 'Enter' && event.key !== ' ') return;
 
     event.preventDefault();
     handleSelectChat(chat);
-  };
+  }, [handleSelectChat]);
 
-  const handleMenuToggle = (event: MouseEvent<HTMLButtonElement>, chatId: string) => {
+  const handleMenuToggle = useCallback((event: MouseEvent<HTMLButtonElement>, chatId: string) => {
     event.stopPropagation();
     setOpenMenuId((current) => (current === chatId ? null : chatId));
-  };
+  }, []);
 
-  const handleDeleteChat = async (event: MouseEvent<HTMLButtonElement>, chat: ChatConversation) => {
+  const handleDeleteChat = useCallback(async (event: MouseEvent<HTMLButtonElement>, chat: ChatConversation) => {
     event.stopPropagation();
 
     if (!chat._id || deletingConversation) return;
@@ -128,9 +224,9 @@ const Conversations = ({ conversations, getConversationsLoading, handleChatSelec
     } catch (error) {
       showError(getErrorMessage(error, 'Conversation could not be removed!'));
     }
-  };
+  }, [deleteConversation, deletingConversation, dispatch, handleChatSelect, selectedChat?._id, showError, showSuccess]);
 
-  const handlePinChat = async (event: MouseEvent<HTMLButtonElement>, chat: ChatConversation) => {
+  const handlePinChat = useCallback(async (event: MouseEvent<HTMLButtonElement>, chat: ChatConversation) => {
     event.stopPropagation();
 
     if (!chat._id || pinningConversation) return;
@@ -141,7 +237,7 @@ const Conversations = ({ conversations, getConversationsLoading, handleChatSelec
     } catch (error) {
       showError(getErrorMessage(error, chat.isPinned ? 'Conversation could not be unpinned!' : 'Conversation could not be pinned!'));
     }
-  };
+  }, [pinConversation, pinningConversation, showError]);
 
   return (
     <aside className={`messages-v1-sidebar ${selectedChat ? 'is-hidden-mobile' : ''}`}>
@@ -210,71 +306,21 @@ const Conversations = ({ conversations, getConversationsLoading, handleChatSelec
           {filteredConversations.length > 0 ? (
             <>
               {visibleConversations.map((chat) => {
-              const isActive = selectedChat?._id === chat._id;
-              const unreadCount = Math.max(0, Number(chat.unreadCount || 0));
-              const hasUnread = Boolean((chat.isUnread || unreadCount > 0) && chat.lastMessage?.sender !== userId);
-              const visibleUnreadCount = unreadCount > 0 ? unreadCount : hasUnread ? 1 : 0;
-              const visibleMemberCount = chat.participants?.length || 0;
-              const currentUserIsGroupAdmin = Boolean(chat.isGroup && userId && chat.admins?.includes(userId));
-              const isSoloGroupAdmin = Boolean(chat.isGroup && currentUserIsGroupAdmin && visibleMemberCount <= 1);
-              const groupAdminCannotLeave = Boolean(chat.isGroup && currentUserIsGroupAdmin && visibleMemberCount > 1);
-              const removeLabel = chat.isGroup ? (isSoloGroupAdmin ? 'Delete group' : 'Leave') : 'Delete';
-
               return (
-                <article
+                <ConversationItem
                   key={chat._id || chat.otherUser?._id}
-                  role="button"
-                  tabIndex={0}
-                  className={`messages-v1-conversation ${isActive ? 'is-active' : ''}`}
-                  onClick={() => handleSelectChat(chat)}
-                  onKeyDown={(event) => handleConversationKeyDown(event, chat)}
-                >
-                  <ChatAvatar user={chat.isGroup ? { userName: getConversationTitle(chat), profilePicture: chat.groupAvatar } : chat.otherUser} className="messages-v1-conversation__avatar" />
-
-                  <div className="messages-v1-conversation__body">
-                    <div className="messages-v1-conversation__topline">
-                      <span>{getConversationTitle(chat)}</span>
-                      <div className="messages-v1-conversation__meta">
-                        <small>{formatChatMessageTime(chat.updatedAt)}</small>
-                        <button
-                          type="button"
-                          className="messages-v1-icon-button messages-v1-conversation__menu-button"
-                          data-conversation-menu-root
-                          onClick={(event) => handleMenuToggle(event, chat._id)}
-                          aria-label="Conversation options"
-                        >
-                          <MoreVertical size={16} aria-hidden="true" />
-                        </button>
-
-                        {openMenuId === chat._id && (
-                          <div className="messages-v1-menu messages-v1-conversation__menu" data-conversation-menu-root onClick={(event) => event.stopPropagation()}>
-                            <button type="button" onClick={(event) => handlePinChat(event, chat)} disabled={pinningConversation}>
-                              {chat.isPinned ? <PinOff size={16} aria-hidden="true" /> : <Pin size={16} aria-hidden="true" />}
-                              {chat.isPinned ? 'Unpin' : 'Pin'}
-                            </button>
-                            <button
-                              type="button"
-                              className="is-danger"
-                              onClick={(event) => handleDeleteChat(event, chat)}
-                              disabled={deletingConversation || groupAdminCannotLeave}
-                              title={groupAdminCannotLeave ? 'Remove all members before leaving this group.' : undefined}
-                            >
-                              {deletingConversation ? <Loader2 className="spin" size={16} aria-hidden="true" /> : <Trash2 size={16} aria-hidden="true" />}
-                              {!deletingConversation && removeLabel}
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="messages-v1-conversation__preview">
-                      <p className={hasUnread ? 'is-unread' : ''}>
-                        {chat.isBlocked || chat.hasBlockedMe ? 'Chat unavailable' : getConversationPreview(chat.lastMessage)}
-                      </p>
-                      {hasUnread && <span className="messages-v1-unread-count" aria-label={`${visibleUnreadCount} unread messages`}>{Math.min(visibleUnreadCount, 99)}</span>}
-                    </div>
-                  </div>
-                </article>
+                  chat={chat}
+                  deletingConversation={deletingConversation}
+                  isActive={selectedChat?._id === chat._id}
+                  isMenuOpen={openMenuId === chat._id}
+                  onDeleteChat={handleDeleteChat}
+                  onKeyDown={handleConversationKeyDown}
+                  onMenuToggle={handleMenuToggle}
+                  onPinChat={handlePinChat}
+                  onSelectChat={handleSelectChat}
+                  pinningConversation={pinningConversation}
+                  userId={userId}
+                />
               );
             })}
 
