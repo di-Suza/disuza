@@ -31,20 +31,39 @@
 .app-mobile-navbar__profile-link {
   width: 42px;
   height: 42px;
+  overflow: hidden;
+  border-radius: 999px;
 }
 
 .app-mobile-navbar__profile-toggle {
   width: 32px;
   height: 42px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--text-secondary);
 }
 
 .app-mobile-navbar__menu:hover,
-.app-mobile-navbar__profile-link:hover,
-.app-mobile-navbar__profile-toggle:hover,
-.app-mobile-navbar__profile-toggle[aria-expanded='true'] {
+.app-mobile-navbar__profile-link:hover {
   border-color: rgba(59, 99, 255, 0.58);
   background: rgba(59, 99, 255, 0.14);
   color: var(--accent);
+}
+
+.app-mobile-navbar__profile-toggle:hover,
+.app-mobile-navbar__profile-toggle[aria-expanded='true'] {
+  border-color: transparent;
+  background: transparent;
+  color: var(--accent);
+}
+
+.app-mobile-navbar__profile-toggle svg {
+  transition: transform 160ms ease, color 160ms ease;
+}
+
+.app-mobile-navbar__profile-toggle svg.is-open {
+  transform: rotate(180deg);
 }
 
 .app-mobile-navbar__brand {
@@ -75,10 +94,12 @@
 }
 
 .app-mobile-navbar__avatar {
+  display: block;
   width: 100%;
   height: 100%;
   border-radius: 999px;
   object-fit: cover;
+  object-position: center;
 }
 
 .app-mobile-navbar__profile-menu {
@@ -407,11 +428,13 @@
 }
 
 .app-sidebar__profile-avatar {
+  display: block;
   width: 28px;
   height: 28px;
   border: 1px solid var(--border-secondary);
-  border-radius: 8px;
+  border-radius: 999px;
   object-fit: cover;
+  object-position: center;
 }
 
 .app-sidebar__label {
@@ -500,6 +523,8 @@
 .app-sidebar__profile-link .app-sidebar__icon-wrap {
   width: 28px;
   height: 28px;
+  overflow: hidden;
+  border-radius: 999px;
 }
 
 .app-sidebar__profile-link .app-sidebar__label {

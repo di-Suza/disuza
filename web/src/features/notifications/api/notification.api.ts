@@ -3,6 +3,7 @@ import type {
   NotificationMutationResponse,
   NotificationsQueryArgs,
   NotificationsResponse,
+  UnreadNotificationsCountResponse,
 } from '../model/notification.types';
 
 const toQueryString = (params: Record<string, string | number | undefined>) => {
@@ -37,6 +38,10 @@ export const notificationApi = api.injectEndpoints({
       },
       forceRefetch: ({ currentArg, previousArg }) => currentArg?.page !== previousArg?.page || currentArg?.limit !== previousArg?.limit,
     }),
+    getUnreadNotificationsCount: builder.query<UnreadNotificationsCountResponse, void>({
+      query: () => '/notification/getUnreadCount',
+      providesTags: ['Notifications'],
+    }),
     markAllAsRead: builder.mutation<NotificationMutationResponse, void>({
       query: () => ({
         url: '/notification/markAllAsRead',
@@ -51,11 +56,17 @@ export const notificationApi = api.injectEndpoints({
             });
           }),
         );
+        const countPatch = dispatch(
+          notificationApi.util.updateQueryData('getUnreadNotificationsCount', undefined, (draft) => {
+            draft.unreadCount = 0;
+          }),
+        );
 
         try {
           await queryFulfilled;
         } catch {
           patchResult.undo();
+          countPatch.undo();
         }
       },
     }),
@@ -65,13 +76,20 @@ export const notificationApi = api.injectEndpoints({
         method: 'DELETE',
       }),
       async onQueryStarted(notificationId, { dispatch, queryFulfilled }) {
+        let removedUnread = false;
         const patchResult = dispatch(
           notificationApi.util.updateQueryData('getNotifications', { page: 1, limit: 10 }, (draft) => {
             const deletedNotification = draft.notifications.find((notification) => notification._id === notificationId);
             draft.notifications = draft.notifications.filter((notification) => notification._id !== notificationId);
             if (deletedNotification && !deletedNotification.isRead) {
+              removedUnread = true;
               draft.unreadCount = Math.max(0, draft.unreadCount - 1);
             }
+          }),
+        );
+        const countPatch = dispatch(
+          notificationApi.util.updateQueryData('getUnreadNotificationsCount', undefined, (draft) => {
+            if (removedUnread) draft.unreadCount = Math.max(0, draft.unreadCount - 1);
           }),
         );
 
@@ -79,6 +97,7 @@ export const notificationApi = api.injectEndpoints({
           await queryFulfilled;
         } catch {
           patchResult.undo();
+          countPatch.undo();
         }
       },
     }),
@@ -95,11 +114,17 @@ export const notificationApi = api.injectEndpoints({
             draft.hasMore = false;
           }),
         );
+        const countPatch = dispatch(
+          notificationApi.util.updateQueryData('getUnreadNotificationsCount', undefined, (draft) => {
+            draft.unreadCount = 0;
+          }),
+        );
 
         try {
           await queryFulfilled;
         } catch {
           patchResult.undo();
+          countPatch.undo();
         }
       },
     }),
@@ -109,6 +134,7 @@ export const notificationApi = api.injectEndpoints({
 export const {
   useDeleteAllNotificationsMutation,
   useDeleteNotificationMutation,
+  useGetUnreadNotificationsCountQuery,
   useGetNotificationsQuery,
   useMarkAllAsReadMutation,
 } = notificationApi;

@@ -1,7 +1,10 @@
 import { Crown, Loader2, RefreshCw, Search, Sparkles, TrendingUp, X } from 'lucide-react';
+import { memo } from 'react';
 
 import SearchPostCard from '@/features/search/ui/components/SearchPostCard';
 import SearchUserCard from '@/features/search/ui/components/SearchUserCard';
+import type { SearchUser } from '@/features/search/model/search.types';
+import type { Post } from '@/features/posts/model/post.types';
 import ErrorBoundary from '@/shared/components/ErrorBoundary/ErrorBoundary';
 import Button from '@/shared/ui/Button';
 import Input from '@/shared/ui/Input';
@@ -9,6 +12,42 @@ import { getErrorMessage } from '@/shared/utils/getErrorMessage';
 import { useSearchPage } from './useSearchPage';
 import './SearchPage.css';
 import '@/app/layouts/ProductShell.css';
+
+type SearchUserGridProps = {
+  boundaryTitle: string;
+  className?: string;
+  currentUserId?: string;
+  users: SearchUser[];
+};
+
+const SearchUserGrid = memo(({ boundaryTitle, className, currentUserId, users }: SearchUserGridProps) => (
+  <div className={['search-user-grid', className].filter(Boolean).join(' ')}>
+    {users.map((user, index) => (
+      <ErrorBoundary key={user._id} variant="section" title={boundaryTitle} resetKeys={[user._id]} showReload={false}>
+        <SearchUserCard user={user} index={index} currentUserId={currentUserId} />
+      </ErrorBoundary>
+    ))}
+  </div>
+));
+
+SearchUserGrid.displayName = 'SearchUserGrid';
+
+type SearchPostGridProps = {
+  boundaryTitle: string;
+  posts: Post[];
+};
+
+const SearchPostGrid = memo(({ boundaryTitle, posts }: SearchPostGridProps) => (
+  <div className="search-post-grid">
+    {posts.map((post) => (
+      <ErrorBoundary key={post._id} variant="section" title={boundaryTitle} resetKeys={[post._id]} showReload={false}>
+        <SearchPostCard post={post} />
+      </ErrorBoundary>
+    ))}
+  </div>
+));
+
+SearchPostGrid.displayName = 'SearchPostGrid';
 
 const SearchPage = () => {
   const {
@@ -45,8 +84,7 @@ const SearchPage = () => {
       <section className="dashboard-panel dashboard-panel--wide search-panel">
         <header className="search-header">
           <div>
-            <p className="state-panel__eyebrow">Explore</p>
-            <h1>Search</h1>
+            <h1>Explore</h1>
             <p>{hasActiveSearchQuery ? `${totalUsers + totalPosts} result${totalUsers + totalPosts === 1 ? '' : 's'}` : 'Discover people and posts'}</p>
           </div>
           <div className="search-header__actions">
@@ -63,8 +101,8 @@ const SearchPage = () => {
             onChange={handleSearchChange}
             onFocus={handleSearchFocus}
             onBlur={handleSearchBlur}
-            placeholder="Search people or posts"
-            aria-label="Search people or posts"
+            placeholder="Anything you want to explore..."
+            aria-label="Anything you want to explore..."
           />
           {searchQuery && (
             <Button variant="ghost" className="button--icon" onClick={handleClearSearch} aria-label="Clear search">
@@ -84,7 +122,6 @@ const SearchPage = () => {
             {isSearchPending ? (
               <section className="post-empty-state search-state">
                 <Loader2 className="spin" size={24} aria-hidden="true" />
-                <p>Searching...</p>
               </section>
             ) : totalUsers + totalPosts === 0 ? (
               <section className="post-empty-state search-state">
@@ -99,17 +136,11 @@ const SearchPage = () => {
                       <Crown size={19} aria-hidden="true" />
                       <h2>People</h2>
                     </div>
-                    <div className="search-user-grid">
-                      {matchedUsers.map((user, index) => (
-                        <ErrorBoundary key={user._id} variant="section" title="User result could not be rendered." resetKeys={[user._id]} showReload={false}>
-                          <SearchUserCard user={user} index={index} currentUserId={currentUserId} />
-                        </ErrorBoundary>
-                      ))}
-                    </div>
+                    <SearchUserGrid users={matchedUsers} currentUserId={currentUserId} boundaryTitle="User result could not be rendered." />
                     {hasMoreSearchUsers && (
                       <div className="search-load-more">
-                        <Button variant="secondary" onClick={handleLoadMoreSearchUsers} disabled={isFetching}>
-                          {isFetching ? <Loader2 className="spin" size={18} aria-hidden="true" /> : <RefreshCw size={18} aria-hidden="true" />}
+                        <Button variant="secondary" onClick={handleLoadMoreSearchUsers} isLoading={isFetching} loadingLabel="Loading users">
+                          <RefreshCw size={18} aria-hidden="true" />
                           Load more users
                         </Button>
                       </div>
@@ -123,17 +154,11 @@ const SearchPage = () => {
                       <TrendingUp size={19} aria-hidden="true" />
                       <h2>Posts</h2>
                     </div>
-                    <div className="search-post-grid">
-                      {matchedPosts.map((post) => (
-                        <ErrorBoundary key={post._id} variant="section" title="Post result could not be rendered." resetKeys={[post._id]} showReload={false}>
-                          <SearchPostCard post={post} />
-                        </ErrorBoundary>
-                      ))}
-                    </div>
+                    <SearchPostGrid posts={matchedPosts} boundaryTitle="Post result could not be rendered." />
                     {hasMoreSearchPosts && (
                       <div className="search-load-more">
-                        <Button variant="secondary" onClick={handleLoadMoreSearchPosts} disabled={isFetching}>
-                          {isFetching ? <Loader2 className="spin" size={18} aria-hidden="true" /> : <RefreshCw size={18} aria-hidden="true" />}
+                        <Button variant="secondary" onClick={handleLoadMoreSearchPosts} isLoading={isFetching} loadingLabel="Loading posts">
+                          <RefreshCw size={18} aria-hidden="true" />
                           Load more posts
                         </Button>
                       </div>
@@ -150,13 +175,12 @@ const SearchPage = () => {
                 <Crown size={19} aria-hidden="true" />
                 <h2>Top Contributors</h2>
               </div>
-              <div className="search-user-grid">
-                {topContributors.map((user, index) => (
-                  <ErrorBoundary key={user._id} variant="section" title="Contributor card could not be rendered." resetKeys={[user._id]} showReload={false}>
-                    <SearchUserCard user={user} index={index} currentUserId={currentUserId} />
-                  </ErrorBoundary>
-                ))}
-              </div>
+              <SearchUserGrid
+                users={topContributors}
+                currentUserId={currentUserId}
+                boundaryTitle="Contributor card could not be rendered."
+                className="search-user-grid--contributors"
+              />
             </section>
 
             <section className="search-section">
@@ -165,13 +189,7 @@ const SearchPage = () => {
                 <h2>Trending Posts</h2>
               </div>
               {trendingPosts.length > 0 ? (
-                <div className="search-post-grid">
-                  {trendingPosts.map((post) => (
-                    <ErrorBoundary key={post._id} variant="section" title="Trending post could not be rendered." resetKeys={[post._id]} showReload={false}>
-                      <SearchPostCard post={post} />
-                    </ErrorBoundary>
-                  ))}
-                </div>
+                <SearchPostGrid posts={trendingPosts} boundaryTitle="Trending post could not be rendered." />
               ) : (
                 <section className="post-empty-state search-state">
                   <Sparkles size={24} aria-hidden="true" />
@@ -180,8 +198,8 @@ const SearchPage = () => {
               )}
               {hasMoreTrendingPosts && (
                 <div className="search-load-more">
-                  <Button variant="secondary" onClick={handleLoadMoreTrendingPosts} disabled={isDiscoverFetching}>
-                    {isDiscoverFetching ? <Loader2 className="spin" size={18} aria-hidden="true" /> : <RefreshCw size={18} aria-hidden="true" />}
+                  <Button variant="secondary" onClick={handleLoadMoreTrendingPosts} isLoading={isDiscoverFetching} loadingLabel="Loading posts">
+                    <RefreshCw size={18} aria-hidden="true" />
                     Load more posts
                   </Button>
                 </div>

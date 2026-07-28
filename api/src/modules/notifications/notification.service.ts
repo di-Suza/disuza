@@ -78,6 +78,11 @@ class NotificationService {
     };
   }
 
+  async getUnreadCount(userId: string) {
+    const blockedUserIds = await this.blockRules.getBlockedUserIds(userId);
+    return this.notifications.countUnreadByRecipient(userId, blockedUserIds);
+  }
+
   async markAllAsRead(userId: string) {
     await this.notifications.markAllRead(userId);
   }
@@ -88,6 +93,7 @@ class NotificationService {
     if (deletedNotification) {
       this.realtime.emitToUser(userId, 'delete_notification', {
         notificationId: deletedNotification._id.toString(),
+        wasUnread: !deletedNotification.isRead,
       });
     }
   }
@@ -135,6 +141,7 @@ class NotificationService {
     if (deletedNotification) {
       this.realtime.emitToUser(input.recipientId.toString(), 'delete_notification', {
         notificationId: deletedNotification._id.toString(),
+        wasUnread: !deletedNotification.isRead,
       });
     }
 
@@ -152,6 +159,7 @@ class NotificationService {
     notifications.forEach((notification) => {
       this.realtime.emitToUser(notification.recipient.toString(), 'delete_notification', {
         notificationId: notification._id.toString(),
+        wasUnread: !notification.isRead,
       });
     });
 

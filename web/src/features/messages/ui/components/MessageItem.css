@@ -114,8 +114,25 @@
 }
 
 .messages-v1-message:hover .messages-v1-message__actions,
-.messages-v1-message:focus-within .messages-v1-message__actions {
+.messages-v1-message:focus-within .messages-v1-message__actions,
+.messages-v1-message__actions.is-visible {
   opacity: 1;
+}
+
+.messages-v1-message__action-placeholder,
+.messages-v1-send-error-indicator {
+  display: grid;
+  width: 28px;
+  height: 28px;
+  place-items: center;
+}
+
+.messages-v1-send-error-indicator {
+  border: 1px solid rgba(239, 68, 68, 0.32);
+  border-radius: 999px;
+  background: rgba(239, 68, 68, 0.12);
+  color: #f87171;
+  box-shadow: var(--shadow-media);
 }
 
 .messages-v1-message__menu {
@@ -458,6 +475,10 @@
 
 .messages-v1-delivery-status.is-seen {
   color: #22c55e;
+}
+
+.messages-v1-delivery-status.is-pending {
+  color: rgba(255, 255, 255, 0.62);
 }
 
 @keyframes message-in {

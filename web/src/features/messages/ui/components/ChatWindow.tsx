@@ -1,5 +1,5 @@
 import { ArrowLeft, Code2, MoreVertical, Paperclip, RefreshCw, Send, UserX, X } from 'lucide-react';
-import { lazy, memo, Suspense, useEffect, useMemo, useRef, useState, type MouseEvent } from 'react';
+import { lazy, memo, Suspense, useEffect, useMemo, useRef, useState, type MouseEvent, type RefObject } from 'react';
 
 import {
   formatChatDateDivider,
@@ -31,8 +31,75 @@ type ContextMenu = {
   y: number;
 };
 
+type ThreadedMessage = {
+  message: ChatMessage;
+  showDateDivider: boolean;
+};
+
+type MessageThreadProps = {
+  groupParticipantNameById: Map<string, string>;
+  hasMoreMessages: boolean;
+  isFetchingMessages: boolean;
+  isGroupChat: boolean;
+  loadMore: () => void;
+  messagesContainerRef: RefObject<HTMLDivElement | null>;
+  threadedMessages: ThreadedMessage[];
+};
+
 const CollabPermissionModal = lazy(() => import('@/features/collab/ui/components/CollabPermissionModal'));
 const GroupSettingsModal = lazy(() => import('./GroupSettingsModal'));
+
+const MessageThread = memo(({
+  groupParticipantNameById,
+  hasMoreMessages,
+  isFetchingMessages,
+  isGroupChat,
+  loadMore,
+  messagesContainerRef,
+  threadedMessages,
+}: MessageThreadProps) => {
+  const getGroupMessageSenderName = (message: ChatMessage) => {
+    if (!isGroupChat || message.messageType === 'system') return undefined;
+
+    return message.senderInfo?.userName?.trim()
+      || groupParticipantNameById.get(message.sender)
+      || 'Unknown member';
+  };
+
+  return (
+    <div className="messages-v1-thread" ref={messagesContainerRef}>
+      {isFetchingMessages ? (
+        <div className="messages-v1-thread__loader">
+          <LoadingSpinner inline label="Loading messages" size={18} />
+        </div>
+      ) : hasMoreMessages ? (
+        <div className="messages-v1-load-more">
+          <button type="button" onClick={loadMore} aria-label="Load older messages">
+            <RefreshCw size={16} aria-hidden="true" />
+            <span>Load more</span>
+          </button>
+        </div>
+      ) : null}
+
+      {threadedMessages.map(({ message, showDateDivider }) => {
+        const messageKey = message.clientMessageId || message._id;
+
+        return (
+          <div key={messageKey}>
+            {showDateDivider && (
+              <div className="messages-v1-date-divider">
+                <span>{formatChatDateDivider(message.createdAt)}</span>
+              </div>
+            )}
+            <MessageItem message={message} senderName={getGroupMessageSenderName(message)} />
+          </div>
+        );
+      })}
+    </div>
+  );
+});
+
+MessageThread.displayName = 'MessageThread';
 
 const ChatWindow = ({
   allMessages,
@@ -95,14 +162,6 @@ const ChatWindow = ({
 
     return { message, showDateDivider };
   }), [allMessages]);
-  const getGroupMessageSenderName = (message: ChatMessage) => {
-    if (!selectedChat?.isGroup || message.messageType === 'system') return undefined;
-
-    return message.senderInfo?.userName?.trim()
-      || groupParticipantNameById.get(message.sender)
-      || 'Unknown member';
-  };
-
   useEffect(() => {
     if (!contextMenu) return;
 
@@ -209,32 +268,15 @@ const ChatWindow = ({
                 </div>
               )}
 
-              <div className="messages-v1-thread" ref={messagesContainerRef}>
-                {isFetchingMessages ? (
-                  <div className="messages-v1-thread__loader">
-                    <LoadingSpinner inline label="Loading messages" size={18} />
-                  </div>
-                ) : hasMoreMessages ? (
-                  <div className="messages-v1-load-more">
-                    <button type="button" onClick={loadMore} aria-label="Load older messages">
-                      <RefreshCw size={16} aria-hidden="true" />
-                      <span>Load more</span>
-                    </button>
-                  </div>
-                ) : null}
-
-                {threadedMessages.map(({ message, showDateDivider }, index) => (
-                  <div key={`${message._id}_${index}`}>
-                    {showDateDivider && (
-                      <div className="messages-v1-date-divider">
-                        <span>{formatChatDateDivider(message.createdAt)}</span>
-                      </div>
-                    )}
-                    <MessageItem message={message} senderName={getGroupMessageSenderName(message)} />
-                  </div>
-                ))}
-
-              </div>
+              <MessageThread
+                groupParticipantNameById={groupParticipantNameById}
+                hasMoreMessages={hasMoreMessages}
+                isFetchingMessages={isFetchingMessages}
+                isGroupChat={Boolean(selectedChat.isGroup)}
+                loadMore={loadMore}
+                messagesContainerRef={messagesContainerRef}
+                threadedMessages={threadedMessages}
+              />
 
               <footer className="messages-v1-composer">
                 {selectedAttachment && (

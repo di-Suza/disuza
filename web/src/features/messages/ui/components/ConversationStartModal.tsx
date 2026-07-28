@@ -1,5 +1,5 @@
-import { Check, Loader2, Search, UserRound, Users, X } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { Check, Search, UserRound, Users, X } from 'lucide-react';
+import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 import { useAppSelector } from '@/app/store/hooks';
@@ -16,6 +16,7 @@ import { useToast } from '@/shared/hooks/useToast';
 type ConversationStartMode = 'chat' | 'group';
 
 type ConversationStartModalProps = {
+  existingConversations?: ChatConversation[];
   isOpen: boolean;
   mode: ConversationStartMode;
   onClose: () => void;
@@ -29,7 +30,62 @@ const getAvatarUrl = (user: UserProfile) => {
 
 const getInitial = (user: UserProfile) => user.userName?.trim().charAt(0).toUpperCase() || 'U';
 
-const ConversationStartModal = ({ isOpen, mode, onClose, onConversationReady }: ConversationStartModalProps) => {
+type ConversationPersonCardProps = {
+  onToggle: (userId: string) => void;
+  selected: boolean;
+  user: UserProfile;
+};
+
+const ConversationPersonCard = memo(({ onToggle, selected, user }: ConversationPersonCardProps) => {
+  const avatarUrl = getAvatarUrl(user);
+
+  return (
+    <button
+      type="button"
+      className={`messages-v1-person-card ${selected ? 'is-selected' : ''}`}
+      onClick={() => onToggle(user._id)}
+    >
+      <span className="messages-v1-person-card__avatar">
+        {avatarUrl ? <img src={avatarUrl} alt="" /> : <UserRound size={16} aria-hidden="true" />}
+      </span>
+      <span>
+        <strong>{user.userName || getInitial(user)}</strong>
+        <small>{user.headline || 'Disuza member'}</small>
+      </span>
+      {selected && <Check size={16} aria-hidden="true" />}
+    </button>
+  );
+});
+
+ConversationPersonCard.displayName = 'ConversationPersonCard';
+
+const getDirectConversationUserIds = (conversations: ChatConversation[], currentUserId?: string) => {
+  const userIds = new Set<string>();
+
+  conversations.forEach((conversation) => {
+    if (conversation.isGroup) return;
+
+    const otherUserId = conversation.otherUser?._id;
+    if (otherUserId) {
+      userIds.add(otherUserId);
+      return;
+    }
+
+    conversation.participants?.forEach((participant) => {
+      if (participant._id && participant._id !== currentUserId) userIds.add(participant._id);
+    });
+  });
+
+  return userIds;
+};
+
+const ConversationStartModal = ({
+  existingConversations = [],
+  isOpen,
+  mode,
+  onClose,
+  onConversationReady,
+}: ConversationStartModalProps) => {
   const currentUserId = useAppSelector((state) => state.auth.user?._id);
   const { showError, showSuccess } = useToast();
   const [query, setQuery] = useState('');
@@ -47,6 +103,10 @@ const ConversationStartModal = ({ isOpen, mode, onClose, onConversationReady }: 
   const [createGroup, { isLoading: isCreatingGroup }] = useCreateGroupMutation();
   const isGroupMode = mode === 'group';
   const isSubmitting = isStartingConversation || isCreatingGroup;
+  const existingDirectChatUserIds = useMemo(
+    () => getDirectConversationUserIds(existingConversations, currentUserId),
+    [currentUserId, existingConversations],
+  );
 
   const users = useMemo(() => {
     const userMap = new Map<string, UserProfile>();
@@ -55,10 +115,12 @@ const ConversationStartModal = ({ isOpen, mode, onClose, onConversationReady }: 
       if (user._id && user._id !== currentUserId) userMap.set(user._id, user);
     });
 
-    return Array.from(userMap.values()).sort((first, second) => (
+    return Array.from(userMap.values()).filter((user) => (
+      isGroupMode || !existingDirectChatUserIds.has(user._id)
+    )).sort((first, second) => (
       (first.userName || '').localeCompare(second.userName || '')
     ));
-  }, [currentUserId, followersData?.followers, followingData?.following]);
+  }, [currentUserId, existingDirectChatUserIds, followersData?.followers, followingData?.following, isGroupMode]);
 
   const filteredUsers = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
@@ -77,9 +139,7 @@ const ConversationStartModal = ({ isOpen, mode, onClose, onConversationReady }: 
     setSelectedIds([]);
   }, [isOpen, mode]);
 
-  if (!isOpen) return null;
-
-  const toggleUser = (userId: string) => {
+  const toggleUser = useCallback((userId: string) => {
     setSelectedIds((current) => {
       if (isGroupMode) {
         return current.includes(userId) ? current.filter((id) => id !== userId) : [...current, userId];
@@ -87,9 +147,9 @@ const ConversationStartModal = ({ isOpen, mode, onClose, onConversationReady }: 
 
       return current.includes(userId) ? [] : [userId];
     });
-  };
+  }, [isGroupMode]);
 
-  const handleSubmit = async () => {
+  const handleSubmit = useCallback(async () => {
     if (isSubmitting) return;
 
     try {
@@ -121,7 +181,20 @@ const ConversationStartModal = ({ isOpen, mode, onClose, onConversationReady }: 
     } catch (error) {
       showError(getErrorMessage(error, isGroupMode ? 'Group could not be created.' : 'Conversation could not be started.'));
     }
-  };
+  }, [
+    createGroup,
+    groupName,
+    isGroupMode,
+    isSubmitting,
+    onClose,
+    onConversationReady,
+    selectedIds,
+    showError,
+    showSuccess,
+    startConversation,
+  ]);
+
+  if (!isOpen) return null;
 
   return createPortal(
     <div className="messages-v1-modal-backdrop" role="presentation" onMouseDown={onClose}>
@@ -173,24 +246,14 @@ const ConversationStartModal = ({ isOpen, mode, onClose, onConversationReady }: 
           ) : filteredUsers.length > 0 ? (
             filteredUsers.map((user) => {
               const selected = selectedIds.includes(user._id);
-              const avatarUrl = getAvatarUrl(user);
 
               return (
-                <button
+                <ConversationPersonCard
                   key={user._id}
-                  type="button"
-                  className={`messages-v1-person-card ${selected ? 'is-selected' : ''}`}
-                  onClick={() => toggleUser(user._id)}
-                >
-                  <span className="messages-v1-person-card__avatar">
-                    {avatarUrl ? <img src={avatarUrl} alt="" /> : <UserRound size={16} aria-hidden="true" />}
-                  </span>
-                  <span>
-                    <strong>{user.userName || getInitial(user)}</strong>
-                    <small>{user.headline || 'Disuza member'}</small>
-                  </span>
-                  {selected && <Check size={16} aria-hidden="true" />}
-                </button>
+                  onToggle={toggleUser}
+                  selected={selected}
+                  user={user}
+                />
               );
             })
           ) : (
@@ -204,9 +267,10 @@ const ConversationStartModal = ({ isOpen, mode, onClose, onConversationReady }: 
           <small>{isGroupMode ? `${selectedIds.length}/2 minimum selected` : selectedIds.length ? 'Ready to start' : 'Select one person'}</small>
           <Button
             onClick={handleSubmit}
-            disabled={isSubmitting || (isGroupMode ? selectedIds.length < 2 : selectedIds.length !== 1)}
+            disabled={isGroupMode ? selectedIds.length < 2 : selectedIds.length !== 1}
+            isLoading={isSubmitting}
+            loadingLabel={isGroupMode ? 'Creating group' : 'Starting conversation'}
           >
-            {isSubmitting && <Loader2 className="spin" size={16} aria-hidden="true" />}
             {isGroupMode ? 'Create Group' : 'Start Messaging'}
           </Button>
         </footer>
@@ -216,4 +280,4 @@ const ConversationStartModal = ({ isOpen, mode, onClose, onConversationReady }: 
   );
 };
 
-export default ConversationStartModal;
+export default memo(ConversationStartModal);

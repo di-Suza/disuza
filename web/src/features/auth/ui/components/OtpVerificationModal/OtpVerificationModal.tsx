@@ -1,4 +1,5 @@
-import { ArrowLeft, ArrowRight, RotateCcw, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Loader2, RotateCcw, ShieldCheck } from 'lucide-react';
+import { memo } from 'react';
 import { createPortal } from 'react-dom';
 
 import type { OtpResponse } from '@/features/auth/model/auth.types';
@@ -72,8 +73,8 @@ const OtpVerificationModal = (props: OtpVerificationModalProps) => {
           <div className="modal-inline-zone">
             {canResend ? (
               <button type="button" className="auth-inline-action" onClick={handleResend} disabled={isSendOtpLoading}>
-                <RotateCcw size={16} aria-hidden="true" />
-                {isSendOtpLoading ? 'Sending...' : 'Resend OTP'}
+                {isSendOtpLoading ? <Loader2 className="spin" size={16} aria-hidden="true" /> : <RotateCcw size={16} aria-hidden="true" />}
+                {!isSendOtpLoading && 'Resend OTP'}
               </button>
             ) : (
               <p>Resend code in <strong>{timer}s</strong></p>
@@ -81,8 +82,8 @@ const OtpVerificationModal = (props: OtpVerificationModalProps) => {
           </div>
         )}
 
-        <Button onClick={handleVerify} disabled={!isComplete || isVerifyLoading}>
-          {isVerifyLoading ? 'Verifying...' : 'Verify'}
+        <Button onClick={handleVerify} disabled={!isComplete} isLoading={isVerifyLoading} loadingLabel="Verifying OTP">
+          Verify
           <ArrowRight size={18} aria-hidden="true" />
         </Button>
 
@@ -96,4 +97,4 @@ const OtpVerificationModal = (props: OtpVerificationModalProps) => {
   );
 };
 
-export default OtpVerificationModal;
+export default memo(OtpVerificationModal);

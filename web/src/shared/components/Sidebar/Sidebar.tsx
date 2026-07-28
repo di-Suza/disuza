@@ -1,10 +1,9 @@
 import { Bell, ChevronDown, ChevronUp, Earth, Home, LogOut, Menu, SendHorizonal, SquarePen, UserRound } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { lazy, memo, Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
 import { useAppSelector } from '@/app/store/hooks';
 import { useLogoutMutation } from '@/features/auth/api/auth.api';
-import PostComposerModal from '@/features/posts/ui/components/PostComposerModal';
 import logo from '@/shared/assets/images/logo.png';
 import useUnreadMessagesCount from '@/shared/hooks/useUnreadMessagesCount';
 import { useUnreadNotificationsCount } from '@/shared/hooks/useUnreadNotificationsCount';
@@ -24,6 +23,47 @@ const feedOptions = [
   { label: 'Following', value: 'following' },
 ] as const;
 
+const PostComposerModal = lazy(() => import('@/features/posts/ui/components/PostComposerModal'));
+
+type SidebarItem = (typeof sidebarItems)[number];
+
+type SidebarNavLinkProps = {
+  item: SidebarItem;
+  isActive: boolean;
+  badgeCount: number;
+};
+
+const SidebarNavLink = memo(({ item, isActive, badgeCount }: SidebarNavLinkProps) => {
+  const Icon = item.icon;
+
+  return (
+    <Link key={item.id} title={item.label} to={item.path} className={isActive ? 'app-sidebar__link is-active' : 'app-sidebar__link'}>
+      <span className="app-sidebar__icon-wrap">
+        <Icon size={24} aria-hidden="true" />
+        {badgeCount > 0 && <small>{badgeCount > 99 ? '99+' : badgeCount}</small>}
+      </span>
+      <span className="app-sidebar__label">{item.label}</span>
+    </Link>
+  );
+});
+
+SidebarNavLink.displayName = 'SidebarNavLink';
+
+type SidebarComposeButtonProps = {
+  onClick: () => void;
+};
+
+const SidebarComposeButton = memo(({ onClick }: SidebarComposeButtonProps) => (
+  <button type="button" className="app-sidebar__link app-sidebar__compose-button" onClick={onClick}>
+    <span className="app-sidebar__icon-wrap">
+      <SquarePen size={22} aria-hidden="true" />
+    </span>
+    <span className="app-sidebar__label">Add Post</span>
+  </button>
+));
+
+SidebarComposeButton.displayName = 'SidebarComposeButton';
+
 const Sidebar = () => {
   const { pathname, search } = useLocation();
   const [isExpanded, setExpanded] = useState(false);
@@ -42,18 +82,18 @@ const Sidebar = () => {
 
   const isItemActive = (itemPath: string) => pathname === itemPath || pathname.startsWith(`${itemPath}/`);
 
-  const handleOpenComposer = () => {
+  const handleOpenComposer = useCallback(() => {
     setExpanded(false);
     setFeedMenuOpen(false);
     setProfileMenuOpen(false);
     setComposerOpen(true);
-  };
+  }, []);
 
-  const handleToggleFeedMenu = () => {
+  const handleToggleFeedMenu = useCallback(() => {
     setExpanded(false);
     setProfileMenuOpen(false);
     setFeedMenuOpen((current) => !current);
-  };
+  }, []);
 
   const handleLogout = async () => {
     try {
@@ -186,7 +226,7 @@ const Sidebar = () => {
             aria-haspopup="menu"
             aria-label={isProfileMenuOpen ? 'Close profile actions' : 'Open profile actions'}
           >
-            <ChevronUp size={16} aria-hidden="true" />
+            <ChevronDown className={isProfileMenuOpen ? 'is-open' : undefined} size={16} aria-hidden="true" />
           </button>
           {isProfileMenuOpen && (
             <div className="app-mobile-navbar__profile-menu" role="menu">
@@ -221,26 +261,12 @@ const Sidebar = () => {
         <nav className="app-sidebar__panel" aria-label="Main navigation">
           <div className="app-sidebar__items">
             {sidebarItems.map((item) => {
-              const Icon = item.icon;
               const isActive = isItemActive(item.path);
               const badgeCount = item.id === 'messages' ? messageCount : item.id === 'notifications' ? notificationCount : 0;
 
-              return (
-                <Link key={item.id} title={item.label} to={item.path} className={isActive ? 'app-sidebar__link is-active' : 'app-sidebar__link'}>
-                  <span className="app-sidebar__icon-wrap">
-                    <Icon size={24} aria-hidden="true" />
-                    {badgeCount > 0 && <small>{badgeCount > 99 ? '99+' : badgeCount}</small>}
-                  </span>
-                  <span className="app-sidebar__label">{item.label}</span>
-                </Link>
-              );
+              return <SidebarNavLink key={item.id} item={item} isActive={isActive} badgeCount={badgeCount} />;
             })}
-            <button type="button" className="app-sidebar__link app-sidebar__compose-button" onClick={handleOpenComposer}>
-              <span className="app-sidebar__icon-wrap">
-                <SquarePen size={22} aria-hidden="true" />
-              </span>
-              <span className="app-sidebar__label">Add Post</span>
-            </button>
+            <SidebarComposeButton onClick={handleOpenComposer} />
           </div>
 
           <div className="app-sidebar__footer">
@@ -292,7 +318,9 @@ const Sidebar = () => {
         </nav>
       </aside>
 
-      <PostComposerModal isOpen={isComposerOpen} mode="create" onClose={() => setComposerOpen(false)} />
+      <Suspense fallback={null}>
+        {isComposerOpen && <PostComposerModal isOpen={isComposerOpen} mode="create" onClose={() => setComposerOpen(false)} />}
+      </Suspense>
     </>
   );
 };

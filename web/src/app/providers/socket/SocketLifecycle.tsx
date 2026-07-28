@@ -76,11 +76,15 @@ const normalizeNotification = (payload: unknown): NotificationItem | null => {
   };
 };
 
-const normalizeDeleteNotificationPayload = (payload: unknown): { notificationId: string } | null => {
+const normalizeDeleteNotificationPayload = (payload: unknown): { notificationId: string; wasUnread?: boolean } | null => {
   if (typeof payload !== 'object' || payload === null) return null;
 
-  const notificationId = toIdString((payload as { notificationId?: unknown }).notificationId);
-  return notificationId ? { notificationId } : null;
+  const data = payload as { notificationId?: unknown; wasUnread?: unknown };
+  const notificationId = toIdString(data.notificationId);
+  return notificationId ? {
+    notificationId,
+    wasUnread: typeof data.wasUnread === 'boolean' ? data.wasUnread : undefined,
+  } : null;
 };
 
 const normalizeMessageUnsentPayload = (payload: unknown): {
@@ -280,6 +284,13 @@ const SocketLifecycle = () => {
           if (!notification.isRead) draft.unreadCount += 1;
         }),
       );
+      if (!notification.isRead) {
+        dispatch(
+          notificationApi.util.updateQueryData('getUnreadNotificationsCount', undefined, (draft) => {
+            draft.unreadCount = Number(draft.unreadCount || 0) + 1;
+          }),
+        );
+      }
     };
     const handleDeleteNotification = (payload: unknown) => {
       const deletePayload = normalizeDeleteNotificationPayload(payload);
@@ -289,10 +300,12 @@ const SocketLifecycle = () => {
       }
 
       let removedFromCache = false;
+      let removedUnreadFromCache = false;
       dispatch(
         notificationApi.util.updateQueryData('getNotifications', { page: 1, limit: 10 }, (draft) => {
           const deletedNotification = draft.notifications.find((item) => item._id === deletePayload.notificationId);
           removedFromCache = Boolean(deletedNotification);
+          removedUnreadFromCache = Boolean(deletedNotification && !deletedNotification.isRead);
           draft.notifications = draft.notifications.filter((item) => item._id !== deletePayload.notificationId);
 
           if (deletedNotification && !deletedNotification.isRead) {
@@ -300,6 +313,15 @@ const SocketLifecycle = () => {
           }
         }),
       );
+      const shouldDecrementUnread = deletePayload.wasUnread ?? removedUnreadFromCache;
+
+      if (shouldDecrementUnread) {
+        dispatch(
+          notificationApi.util.updateQueryData('getUnreadNotificationsCount', undefined, (draft) => {
+            draft.unreadCount = Math.max(0, Number(draft.unreadCount || 0) - 1);
+          }),
+        );
+      }
 
       if (!removedFromCache) {
         dispatch(notificationApi.util.invalidateTags(['Notifications']));
@@ -358,6 +380,11 @@ const SocketLifecycle = () => {
       }
 
       if (!isOwnMessage && !isActiveConversation) {
+        dispatch(
+          chatApi.util.updateQueryData('getUnreadMessagesCount', undefined, (draft) => {
+            draft.unreadCount = Number(draft.unreadCount || 0) + 1;
+          }),
+        );
         dispatch(setLastReceivedMessage(message));
       }
     };
@@ -366,7 +393,6 @@ const SocketLifecycle = () => {
       if (!unsentMessage) return;
 
       const { selectedChatId: activeChatId } = chatActivityRef.current;
-      let conversationWasPresent = false;
 
       if (activeChatId === unsentMessage.conversationId) {
         dispatch(
@@ -379,7 +405,6 @@ const SocketLifecycle = () => {
       dispatch(
         chatApi.util.updateQueryData('getConversations', undefined, (draft) => {
           const conversationIndex = draft.conversations.findIndex((conversation) => conversation._id === unsentMessage.conversationId);
-          conversationWasPresent = conversationIndex !== -1;
           if (conversationIndex === -1 || !unsentMessage.wasLastMessage) return;
 
           draft.conversations[conversationIndex].lastMessage = unsentMessage.lastMessage || null;
@@ -392,9 +417,7 @@ const SocketLifecycle = () => {
         }),
       );
 
-      if (!conversationWasPresent) {
-        dispatch(chatApi.util.invalidateTags(['Conversations']));
-      }
+      dispatch(chatApi.util.invalidateTags(['Conversations']));
     };
     const handleMessagesSeen = (payload: unknown) => {
       const seenPayload = normalizeSeenPayload(payload);

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { useSavePostMutation, useUnsavePostMutation } from '@/features/posts/api/post.api';
 import type { Post } from '@/features/posts/model/post.types';
@@ -6,10 +6,12 @@ import { useToast } from '@/shared/hooks/useToast';
 import { getErrorMessage } from '@/shared/utils/getErrorMessage';
 
 type PostSaveState = {
+  postId: string;
   isSaved: boolean;
 };
 
 const getPostSaveState = (post: Post): PostSaveState => ({
+  postId: post._id,
   isSaved: Boolean(post.isSaved),
 });
 
@@ -18,6 +20,7 @@ export const usePostSave = (post: Post) => {
   const [savePost, { isLoading: isSaving }] = useSavePostMutation();
   const [unsavePost, { isLoading: isUnsaving }] = useUnsavePostMutation();
   const [saveState, setSaveState] = useState<PostSaveState>(() => getPostSaveState(post));
+  const pendingSaveRef = useRef(false);
 
   useEffect(() => {
     setSaveState(getPostSaveState(post));
@@ -26,15 +29,16 @@ export const usePostSave = (post: Post) => {
   const isSaveUpdating = isSaving || isUnsaving;
 
   const markSaved = useCallback(() => {
-    setSaveState({ isSaved: true });
+    setSaveState((currentState) => ({ postId: currentState.postId, isSaved: true }));
   }, []);
 
   const toggleSave = useCallback(async () => {
-    if (!post._id || isSaveUpdating) return false;
+    if (!post._id || pendingSaveRef.current) return false;
 
     const previousState = saveState;
     const nextSaved = !previousState.isSaved;
-    setSaveState({ isSaved: nextSaved });
+    pendingSaveRef.current = true;
+    setSaveState({ postId: post._id, isSaved: nextSaved });
 
     try {
       if (nextSaved) {
@@ -47,8 +51,10 @@ export const usePostSave = (post: Post) => {
       setSaveState(previousState);
       showError(getErrorMessage(error));
       return false;
+    } finally {
+      pendingSaveRef.current = false;
     }
-  }, [isSaveUpdating, post._id, savePost, saveState, showError, unsavePost]);
+  }, [post._id, savePost, saveState, showError, unsavePost]);
 
   return {
     isSaved: saveState.isSaved,

@@ -29,6 +29,7 @@ const protectedEndpoints: Endpoint[] = [
   { method: 'POST', path: `/api/chat/groups/${objectId}/invite` },
   { method: 'DELETE', path: `/api/chat/groups/${objectId}/members/${anotherObjectId}` },
   { method: 'GET', path: '/api/chat/getConversations' },
+  { method: 'GET', path: '/api/chat/getUnreadCount' },
   { method: 'GET', path: `/api/chat/getMessages/${objectId}` },
   { method: 'GET', path: `/api/chat/attachments/${objectId}/file-1` },
   { method: 'PATCH', path: `/api/chat/markAsRead/${objectId}` },
@@ -50,6 +51,7 @@ const protectedEndpoints: Endpoint[] = [
   { method: 'GET', path: '/api/media/upload-auth' },
 
   { method: 'GET', path: '/api/notification/getNotifications' },
+  { method: 'GET', path: '/api/notification/getUnreadCount' },
   { method: 'PATCH', path: '/api/notification/markAllAsRead' },
   { method: 'DELETE', path: `/api/notification/deleteNotification/${objectId}` },
   { method: 'DELETE', path: '/api/notification/deleteAllNotifications' },

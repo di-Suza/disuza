@@ -9,7 +9,7 @@ import {
   UserRound,
   X,
 } from 'lucide-react';
-import { useEffect, useState, type FormEvent } from 'react';
+import { memo, useCallback, useEffect, useState, type ChangeEvent, type FormEvent } from 'react';
 import { createPortal } from 'react-dom';
 
 import { useLockBodyScroll } from '@/shared/hooks/useLockBodyScroll';
@@ -79,13 +79,11 @@ const DashboardEditProfileModal = ({
     setShowPasswords({ current: false, next: false, confirm: false });
   }, [isOpen]);
 
-  if (!isOpen) return null;
-
   const avatarUrl = filePreview || identityForm.profilePictureUrl;
   const passwordsMatch = Boolean(passwordForm.newPassword) && passwordForm.newPassword === confirmPassword;
   const isGoogleUser = Boolean(user?.isGoogleUser);
 
-  const submitPassword = (event: FormEvent<HTMLFormElement>) => {
+  const submitPassword = useCallback((event: FormEvent<HTMLFormElement>) => {
     if (!passwordsMatch) {
       event.preventDefault();
       return;
@@ -93,11 +91,25 @@ const DashboardEditProfileModal = ({
 
     void handlePasswordSubmit(event);
     setConfirmPassword('');
-  };
+  }, [handlePasswordSubmit, passwordsMatch]);
 
-  const togglePassword = (field: keyof typeof showPasswords) => {
+  const togglePassword = useCallback((field: keyof typeof showPasswords) => {
     setShowPasswords((current) => ({ ...current, [field]: !current[field] }));
-  };
+  }, []);
+
+  const togglePasswordSection = useCallback(() => {
+    setShowPasswordSection((current) => !current);
+  }, []);
+
+  const toggleCurrentPassword = useCallback(() => togglePassword('current'), [togglePassword]);
+  const toggleNextPassword = useCallback(() => togglePassword('next'), [togglePassword]);
+  const toggleConfirmPassword = useCallback(() => togglePassword('confirm'), [togglePassword]);
+
+  const handleConfirmPasswordChange = useCallback((event: ChangeEvent<HTMLInputElement>) => {
+    setConfirmPassword(event.target.value);
+  }, []);
+
+  if (!isOpen) return null;
 
   return createPortal(
     <div className="dashboard-edit-v1-backdrop" role="dialog" aria-modal="true" aria-labelledby="dashboard-edit-title">
@@ -152,7 +164,7 @@ const DashboardEditProfileModal = ({
           {!isGoogleUser && (
             <section className="dashboard-edit-v1__password">
               <span>Password</span>
-              <button type="button" onClick={() => setShowPasswordSection((current) => !current)}>
+              <button type="button" onClick={togglePasswordSection}>
                 <strong>Update Password</strong>
                 {showPasswordSection ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
               </button>
@@ -170,7 +182,7 @@ const DashboardEditProfileModal = ({
                         minLength={8}
                         required
                       />
-                      <button type="button" onClick={() => togglePassword('current')} aria-label="Toggle current password visibility">
+                      <button type="button" onClick={toggleCurrentPassword} aria-label="Toggle current password visibility">
                         {showPasswords.current ? <EyeOff size={16} /> : <Eye size={16} />}
                       </button>
                     </div>
@@ -187,7 +199,7 @@ const DashboardEditProfileModal = ({
                         minLength={8}
                         required
                       />
-                      <button type="button" onClick={() => togglePassword('next')} aria-label="Toggle new password visibility">
+                      <button type="button" onClick={toggleNextPassword} aria-label="Toggle new password visibility">
                         {showPasswords.next ? <EyeOff size={16} /> : <Eye size={16} />}
                       </button>
                     </div>
@@ -199,12 +211,12 @@ const DashboardEditProfileModal = ({
                       <Input
                         type={showPasswords.confirm ? 'text' : 'password'}
                         value={confirmPassword}
-                        onChange={(event) => setConfirmPassword(event.target.value)}
+                        onChange={handleConfirmPasswordChange}
                         placeholder="Confirm new password"
                         minLength={8}
                         required
                       />
-                      <button type="button" onClick={() => togglePassword('confirm')} aria-label="Toggle confirm password visibility">
+                      <button type="button" onClick={toggleConfirmPassword} aria-label="Toggle confirm password visibility">
                         {showPasswords.confirm ? <EyeOff size={16} /> : <Eye size={16} />}
                       </button>
                     </div>
@@ -219,8 +231,8 @@ const DashboardEditProfileModal = ({
                     Forgot Password?
                   </button>
 
-                  <Button type="submit" disabled={!passwordsMatch || isPasswordUpdating}>
-                    {isPasswordUpdating ? 'Updating Password...' : 'Update Password'}
+                  <Button type="submit" disabled={!passwordsMatch} isLoading={isPasswordUpdating} loadingLabel="Updating password">
+                    Update Password
                   </Button>
                 </form>
               )}
@@ -229,7 +241,7 @@ const DashboardEditProfileModal = ({
         </div>
 
         <footer className="dashboard-edit-v1__footer">
-          <Button type="submit" form="dashboard-edit-identity-form" disabled={isBusy}>Update</Button>
+          <Button type="submit" form="dashboard-edit-identity-form" isLoading={isBusy} loadingLabel="Updating profile">Update</Button>
         </footer>
       </section>
     </div>,
@@ -237,4 +249,4 @@ const DashboardEditProfileModal = ({
   );
 };
 
-export default DashboardEditProfileModal;
+export default memo(DashboardEditProfileModal);

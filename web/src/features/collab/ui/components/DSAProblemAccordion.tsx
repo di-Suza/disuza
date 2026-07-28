@@ -1,5 +1,5 @@
-import { CheckCircle, ChevronDown, ChevronUp, Code2, Plus, Sparkles, Tag, Zap } from 'lucide-react';
-import { useState } from 'react';
+import { CheckCircle, ChevronDown, ChevronUp, Code2, Loader2, Plus, Sparkles, Tag, Zap } from 'lucide-react';
+import { memo, useCallback, useState } from 'react';
 
 import { useAddProblemToRoomMutation } from '@/features/collab/api/problem.api';
 import type { Problem } from '@/features/collab/model/collab.types';
@@ -23,18 +23,18 @@ const DSAProblemAccordion = ({ problem, roomId, onProblemAdded }: DSAProblemAcco
   const [addProblemToRoom, { isLoading: isAdding }] = useAddProblemToRoomMutation();
   const isAdded = Boolean(problem.isAdded);
 
-  const toggleProblemDetails = () => {
+  const toggleProblemDetails = useCallback(() => {
     setIsOpen((value) => !value);
-  };
+  }, []);
 
-  const handleSummaryKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+  const handleSummaryKeyDown = useCallback((event: React.KeyboardEvent<HTMLDivElement>) => {
     if (event.key !== 'Enter' && event.key !== ' ') return;
 
     event.preventDefault();
     toggleProblemDetails();
-  };
+  }, [toggleProblemDetails]);
 
-  const handleAddProblem = async (event: React.MouseEvent) => {
+  const handleAddProblem = useCallback(async (event: React.MouseEvent) => {
     event.stopPropagation();
     if (isAdded || isAdding || !roomId) return;
 
@@ -44,7 +44,7 @@ const DSAProblemAccordion = ({ problem, roomId, onProblemAdded }: DSAProblemAcco
     } catch {
       // The modal keeps the previous state when the add request fails.
     }
-  };
+  }, [addProblemToRoom, isAdded, isAdding, onProblemAdded, problem._id, roomId]);
 
   return (
     <article className="collab-dsa-card">
@@ -86,7 +86,7 @@ const DSAProblemAccordion = ({ problem, roomId, onProblemAdded }: DSAProblemAcco
             onClick={handleAddProblem}
             disabled={isAdded || isAdding}
           >
-            {isAdded ? 'Added' : isAdding ? 'Adding' : (
+            {isAdded ? 'Added' : isAdding ? <Loader2 className="spin" size={15} aria-hidden="true" /> : (
               <>
                 <Plus size={15} aria-hidden="true" />
                 <span>Add</span>
@@ -137,4 +137,4 @@ const DSAProblemAccordion = ({ problem, roomId, onProblemAdded }: DSAProblemAcco
   );
 };
 
-export default DSAProblemAccordion;
+export default memo(DSAProblemAccordion);

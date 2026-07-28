@@ -152,8 +152,8 @@ const SharePostModal = ({ isOpen, onClose, post }: SharePostModalProps) => {
 
         <footer className="share-post-modal__footer">
           <Button variant="ghost" onClick={onClose}>Cancel</Button>
-          <Button type="submit" disabled={!selectedConversationId || isSending}>
-            {isSending ? <Loader2 className="spin" size={17} aria-hidden="true" /> : <Send size={17} aria-hidden="true" />}
+          <Button type="submit" disabled={!selectedConversationId} isLoading={isSending} loadingLabel="Sending post">
+            <Send size={17} aria-hidden="true" />
             Send
           </Button>
         </footer>

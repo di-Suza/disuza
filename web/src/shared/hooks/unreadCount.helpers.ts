@@ -23,7 +23,9 @@ export const getUnreadMessagesCount = (
   }, 0);
 };
 
-export const getUnreadNotificationsCount = (value: unknown) => {
+export const getUnreadCountValue = (value: unknown) => {
   const count = Number(value || 0);
   return Number.isFinite(count) && count > 0 ? count : 0;
 };
+
+export const getUnreadNotificationsCount = getUnreadCountValue;

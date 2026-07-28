@@ -1,5 +1,5 @@
 import { ArrowLeft, Code2, Hash, Loader2, Search, Sparkles, TrendingUp, Wand2, X, Zap } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 import { useGenerateAIProblemMutation, useGetProblemsQuery } from '@/features/collab/api/problem.api';
@@ -28,6 +28,8 @@ const suggestionSections = [
   { title: 'Popular Patterns', icon: TrendingUp, items: problemSuggestions.popular },
 ];
 
+const EMPTY_PROBLEMS: Problem[] = [];
+
 const AIProblemModal = ({ isOpen, onClose, roomId, addedProblemIds = [] }: AIProblemModalProps) => {
   useLockBodyScroll(isOpen);
   const [searchQuery, setSearchQuery] = useState('');
@@ -52,11 +54,15 @@ const AIProblemModal = ({ isOpen, onClose, roomId, addedProblemIds = [] }: AIPro
   const hasMore = Boolean(problemsData?.hasMore);
 
   const problems = useMemo(() => {
-    const remoteProblems = problemsData?.data || [];
+    const remoteProblems = problemsData?.data || EMPTY_PROBLEMS;
     const remoteIds = new Set(remoteProblems.map((problem) => problem._id));
     const localOnlyProblems = generatedProblems.filter((problem) => !remoteIds.has(problem._id));
     return [...localOnlyProblems, ...remoteProblems];
   }, [generatedProblems, problemsData?.data]);
+  const visibleAddedProblemIds = useMemo(
+    () => [...addedProblemIds, ...locallyAddedProblemIds],
+    [addedProblemIds, locallyAddedProblemIds],
+  );
 
   useEffect(() => {
     setPage(1);
@@ -67,13 +73,13 @@ const AIProblemModal = ({ isOpen, onClose, roomId, addedProblemIds = [] }: AIPro
     setLocallyAddedProblemIds([]);
   }, [isOpen, roomId]);
 
-  const handleProblemAdded = (problemId: string) => {
+  const handleProblemAdded = useCallback((problemId: string) => {
     setLocallyAddedProblemIds((currentIds) => (
       currentIds.includes(problemId) ? currentIds : [...currentIds, problemId]
     ));
-  };
+  }, []);
 
-  const handleGenerateProblem = async () => {
+  const handleGenerateProblem = useCallback(async () => {
     if (!roomId || isGenerating) return;
 
     const trimmedPrompt = prompt.trim();
@@ -92,7 +98,7 @@ const AIProblemModal = ({ isOpen, onClose, roomId, addedProblemIds = [] }: AIPro
     } catch (apiError) {
       showError(getErrorMessage(apiError, 'AI problem could not be generated. Please try again.'));
     }
-  };
+  }, [generateAIProblem, isGenerating, prompt, roomId, showError, showSuccess]);
 
   if (!isOpen) return null;
 
@@ -133,7 +139,7 @@ const AIProblemModal = ({ isOpen, onClose, roomId, addedProblemIds = [] }: AIPro
                 <span>{prompt.trim().length}/1200</span>
                 <button type="button" className="collab-ai-generate-button" onClick={handleGenerateProblem} disabled={isGenerating}>
                   {isGenerating ? <Loader2 className="spin" size={16} aria-hidden="true" /> : <Wand2 size={16} aria-hidden="true" />}
-                  <span>{isGenerating ? 'Generating' : 'Generate'}</span>
+                  {!isGenerating && <span>Generate</span>}
                 </button>
               </div>
             </section>
@@ -185,7 +191,7 @@ const AIProblemModal = ({ isOpen, onClose, roomId, addedProblemIds = [] }: AIPro
                       title="AI Generated Problems"
                       problems={problems}
                       roomId={roomId}
-                      addedProblemIds={[...addedProblemIds, ...locallyAddedProblemIds]}
+                      addedProblemIds={visibleAddedProblemIds}
                       onProblemAdded={handleProblemAdded}
                     />
                   ) : (
@@ -193,8 +199,8 @@ const AIProblemModal = ({ isOpen, onClose, roomId, addedProblemIds = [] }: AIPro
                   )}
 
                   {hasMore && (
-                    <button type="button" className="collab-load-more" onClick={() => setPage((currentPage) => currentPage + 1)}>
-                      Load more
+                    <button type="button" className="collab-load-more" onClick={() => setPage((currentPage) => currentPage + 1)} disabled={isFetching}>
+                      {isFetching ? <LoadingSpinner inline label="Loading AI problems" size={16} /> : 'Load more'}
                     </button>
                   )}
                 </>
@@ -208,4 +214,4 @@ const AIProblemModal = ({ isOpen, onClose, roomId, addedProblemIds = [] }: AIPro
   );
 };
 
-export default AIProblemModal;
+export default memo(AIProblemModal);

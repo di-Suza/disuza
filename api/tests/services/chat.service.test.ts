@@ -19,6 +19,7 @@ describe('ChatService', () => {
         isPinned: true,
         updatedAt: new Date('2026-01-01T00:00:00.000Z'),
       }],
+      getUnreadMessagesCount: async () => 4,
       findConversationForUser: async () => createConversation(),
       setPinnedForUser: async () => ({ _id: oid(conversationId) }),
     } as never, {} as never, {} as never, {} as never, {
@@ -28,6 +29,7 @@ describe('ChatService', () => {
     const conversations = await service.getConversations(userId);
     assert.equal(conversations[0].participants.length, 1);
     assert.equal(conversations[0].unreadCount, 2);
+    assert.equal(await service.getUnreadMessagesCount(userId), 4);
 
     const pinned = await service.setConversationPinned(userId, conversationId, true);
     assert.equal(pinned.conversation?._id.toString(), conversationId);

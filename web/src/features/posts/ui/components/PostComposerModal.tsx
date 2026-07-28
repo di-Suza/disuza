@@ -8,7 +8,6 @@ import {
   GitFork,
   ImagePlus,
   Link2,
-  Loader2,
   Plus,
   Send,
   Settings,
@@ -17,6 +16,7 @@ import {
   X,
 } from 'lucide-react';
 import { memo, useId, useState } from 'react';
+import { createPortal } from 'react-dom';
 
 import type { Post } from '@/features/posts/model/post.types';
 import Button from '@/shared/ui/Button';
@@ -70,14 +70,14 @@ const PostComposerModal = ({ isOpen, isPostLoading = false, mode, onClose, post 
 
   if (!isOpen) return null;
 
-  const submitLabel = isSubmitting ? 'Saving...' : isEditMode ? 'Save changes' : 'Post';
+  const submitLabel = isEditMode ? 'Save changes' : 'Post';
   const showProjectSection = !isEditMode || isEditingProjectPost;
   const projectLinksRequired = canEditProjectLinks && (isProjectPost || isEditingProjectPost);
   const projectLinksComplete = Boolean(projectLinks.liveDemoUrl.trim() && projectLinks.repositoryUrl.trim());
   const isPostEnabled = !isSubmitting && (isEditMode || hasComposerContent) && (!projectLinksRequired || projectLinksComplete);
   const toggleProjectPost = () => setIsProjectPost((current) => !current);
 
-  return (
+  return createPortal(
     <div className="modal-backdrop post-composer-v1-backdrop" role="dialog" aria-modal="true" aria-label={isEditMode ? 'Edit post' : 'Create post'}>
       <section className="post-composer-v1">
         {isPostLoading ? (
@@ -308,15 +308,16 @@ const PostComposerModal = ({ isOpen, isPostLoading = false, mode, onClose, post 
                 )}
               </div>
 
-              <Button type="submit" disabled={!isPostEnabled}>
-                {isSubmitting ? <Loader2 className="spin" size={17} aria-hidden="true" /> : <Send size={17} aria-hidden="true" />}
+              <Button type="submit" disabled={!isPostEnabled} isLoading={isSubmitting} loadingLabel={isEditMode ? 'Saving post' : 'Publishing post'}>
+                <Send size={17} aria-hidden="true" />
                 {submitLabel}
               </Button>
             </footer>
           </form>
         )}
       </section>
-    </div>
+    </div>,
+    document.body,
   );
 };
 

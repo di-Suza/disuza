@@ -2,6 +2,7 @@ import { api } from '@/shared/api/api';
 import { getSocket } from '@/shared/services/socket';
 import type {
   ChatConversation,
+  ChatAttachment,
   ChatMessage,
   CreateGroupRequest,
   CreateGroupResponse,
@@ -19,6 +20,7 @@ import type {
   StartConversationResponse,
   SendMessageRequest,
   SendMessageResponse,
+  UnreadMessagesCountResponse,
   UnsendMessageRequest,
   UnsendMessageResponse,
   UpdateGroupRequest,
@@ -134,8 +136,55 @@ const buildSendMessageBody = (body: SendMessageRequest) => {
   return formData;
 };
 
+const getAttachmentMediaType = (file: File): ChatAttachment['mediaType'] => {
+  if (file.type.startsWith('image/')) return 'image';
+  if (file.type.startsWith('video/')) return 'video';
+  if (file.type.startsWith('audio/')) return 'audio';
+  return 'file';
+};
+
+const buildOptimisticAttachment = (attachment: File, fileId: string): ChatAttachment => ({
+  fileId,
+  name: attachment.name,
+  mime: attachment.type,
+  size: attachment.size,
+  mediaType: getAttachmentMediaType(attachment),
+});
+
 const removeUnsentMessageFromDraft = (draft: GetMessagesResponse, messageId: string) => {
   draft.messages = draft.messages.filter((message) => message._id !== messageId);
+};
+
+const applyDeliveredMessageToDraft = (draft: GetMessagesResponse, tempMessageId: string, deliveredMessage: ChatMessage) => {
+  const tempIndex = draft.messages.findIndex((item) => item._id === tempMessageId || item.clientMessageId === tempMessageId);
+  const deliveredIndex = draft.messages.findIndex((item) => item._id === deliveredMessage._id);
+  const deliveredWithStableKey = {
+    ...deliveredMessage,
+    clientMessageId: tempIndex !== -1 ? draft.messages[tempIndex].clientMessageId || tempMessageId : deliveredMessage.clientMessageId,
+    sendState: undefined,
+  };
+
+  if (tempIndex !== -1) {
+    draft.messages[tempIndex] = deliveredWithStableKey;
+    draft.messages = draft.messages.filter((item, index) => index === tempIndex || item._id !== deliveredMessage._id);
+    return;
+  }
+
+  if (deliveredIndex !== -1) {
+    draft.messages[deliveredIndex] = {
+      ...draft.messages[deliveredIndex],
+      ...deliveredMessage,
+    };
+    return;
+  }
+
+  draft.messages.push(deliveredMessage);
+};
+
+const markOptimisticMessageFailed = (draft: GetMessagesResponse, tempMessageId: string) => {
+  const tempMessage = draft.messages.find((item) => item._id === tempMessageId || item.clientMessageId === tempMessageId);
+  if (!tempMessage) return;
+  tempMessage.sendState = 'failed';
 };
 
 const normalizeMessagesForDisplay = (messages: ChatMessage[]) => [...messages]
@@ -299,6 +348,10 @@ export const chatApi = api.injectEndpoints({
         socket.io.off('reconnect', handleReconnect);
       },
     }),
+    getUnreadMessagesCount: builder.query<UnreadMessagesCountResponse, void>({
+      query: () => '/chat/getUnreadCount',
+      providesTags: ['Conversations'],
+    }),
     sendMessage: builder.mutation<SendMessageResponse, SendMessageRequest>({
       query: (body) => ({
         url: '/chat/sendMessage',
@@ -306,34 +359,24 @@ export const chatApi = api.injectEndpoints({
         body: buildSendMessageBody(body),
       }),
       async onQueryStarted({ conversationId, message, messageType, sharedPostId, attachment }, { dispatch, getState, queryFulfilled }) {
-        const tempMessageId = `temp-${Date.now()}`;
+        const tempMessageId = `temp-${Date.now()}-${Math.random().toString(36).slice(2)}`;
         const userId = (getState() as { auth?: { user?: { _id?: string } } }).auth?.user?._id || '';
         const previewText = message.trim() || (attachment ? 'Sent an attachment' : messageType === 'post' ? 'Shared a post' : message);
-        let messagePatch: { undo: () => void } | undefined;
+        const optimisticAttachment = attachment ? buildOptimisticAttachment(attachment, tempMessageId) : undefined;
 
         if (conversationId) {
-          messagePatch = dispatch(
+          dispatch(
             chatApi.util.updateQueryData('getMessages', { conversationId, page: 1 }, (draft) => {
               const tempMessage: ChatMessage = {
                 _id: tempMessageId,
+                clientMessageId: tempMessageId,
                 sender: userId,
                 text: previewText,
                 conversationId,
                 messageType: attachment ? 'attachment' : messageType,
                 sharedPost: sharedPostId,
-                attachment: attachment ? {
-                  fileId: tempMessageId,
-                  name: attachment.name,
-                  mime: attachment.type,
-                  size: attachment.size,
-                  mediaType: attachment.type.startsWith('image/')
-                    ? 'image'
-                    : attachment.type.startsWith('video/')
-                      ? 'video'
-                      : attachment.type.startsWith('audio/')
-                        ? 'audio'
-                        : 'file',
-                } : undefined,
+                attachment: optimisticAttachment,
+                sendState: 'pending',
                 createdAt: new Date().toISOString(),
               };
               draft.messages.push(tempMessage);
@@ -359,19 +402,7 @@ export const chatApi = api.injectEndpoints({
               sender: userId,
               messageType: attachment ? 'attachment' : messageType,
               sharedPost: sharedPostId,
-              attachment: attachment ? {
-                fileId: tempMessageId,
-                name: attachment.name,
-                mime: attachment.type,
-                size: attachment.size,
-                mediaType: attachment.type.startsWith('image/')
-                  ? 'image'
-                  : attachment.type.startsWith('video/')
-                    ? 'video'
-                    : attachment.type.startsWith('audio/')
-                      ? 'audio'
-                      : 'file',
-              } : undefined,
+              attachment: optimisticAttachment,
             };
             const [updatedConversation] = draft.conversations.splice(conversationIndex, 1);
             draft.conversations.unshift(updatedConversation);
@@ -387,17 +418,20 @@ export const chatApi = api.injectEndpoints({
           if (conversationId) {
             dispatch(
               chatApi.util.updateQueryData('getMessages', { conversationId, page: 1 }, (draft) => {
-                const tempIndex = draft.messages.findIndex((item) => item._id === tempMessageId);
-                if (tempIndex !== -1) {
-                  draft.messages[tempIndex] = deliveredMessage;
-                }
+                applyDeliveredMessageToDraft(draft, tempMessageId, deliveredMessage);
               }),
             );
           } else if (newConversationId) {
             dispatch(chatApi.util.invalidateTags(['Conversations', { type: 'Messages', id: newConversationId }]));
           }
         } catch {
-          messagePatch?.undo();
+          if (conversationId) {
+            dispatch(
+              chatApi.util.updateQueryData('getMessages', { conversationId, page: 1 }, (draft) => {
+                markOptimisticMessageFailed(draft, tempMessageId);
+              }),
+            );
+          }
           sidebarPatch.undo();
         }
       },
@@ -553,13 +587,20 @@ export const chatApi = api.injectEndpoints({
       async onQueryStarted(conversationId, { dispatch, getState, queryFulfilled }) {
         const currentUserId = (getState() as { auth?: { user?: { _id?: string } } }).auth?.user?._id || '';
         const seenAt = new Date().toISOString();
+        let clearedUnreadCount = 0;
         const conversationPatch = dispatch(
           chatApi.util.updateQueryData('getConversations', undefined, (draft) => {
             const conversation = draft.conversations.find((item) => item._id === conversationId);
             if (conversation) {
+              clearedUnreadCount = Number(conversation.unreadCount || 0);
               conversation.isUnread = false;
               conversation.unreadCount = 0;
             }
+          }),
+        );
+        const countPatch = dispatch(
+          chatApi.util.updateQueryData('getUnreadMessagesCount', undefined, (draft) => {
+            draft.unreadCount = Math.max(0, Number(draft.unreadCount || 0) - clearedUnreadCount);
           }),
         );
         const messagesPatch = currentUserId
@@ -584,6 +625,7 @@ export const chatApi = api.injectEndpoints({
           await queryFulfilled;
         } catch {
           conversationPatch.undo();
+          countPatch.undo();
           messagesPatch?.undo();
         }
       },
@@ -665,6 +707,7 @@ export const {
   useCreateGroupMutation,
   useDeleteConversationMutation,
   useGetConversationsQuery,
+  useGetUnreadMessagesCountQuery,
   useGetMessagesQuery,
   useInviteGroupMembersMutation,
   useMarkAsReadMutation,

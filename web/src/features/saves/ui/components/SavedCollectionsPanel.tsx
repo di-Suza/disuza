@@ -1,5 +1,5 @@
 import { Bookmark, Check, FolderOpen, ImageIcon, Loader2, Pencil, Plus, RefreshCw, Trash2, X } from 'lucide-react';
-import { useEffect, useMemo, useState, type FormEvent } from 'react';
+import { memo, useEffect, useMemo, useState, type FormEvent } from 'react';
 
 import {
   useCreateCollectionMutation,
@@ -18,6 +18,8 @@ import LoadingSpinner from '@/shared/ui/LoadingSpinner';
 import { cn } from '@/shared/utils/cn';
 import { getErrorMessage } from '@/shared/utils/getErrorMessage';
 import './Saves.css';
+
+const EMPTY_COLLECTIONS: SavedCollection[] = [];
 
 type SavedCollectionsPanelProps = {
   viewerId?: string;
@@ -44,8 +46,11 @@ const SavedCollectionsPanel = ({ viewerId }: SavedCollectionsPanelProps) => {
   const [updateCollection, { isLoading: isUpdating }] = useUpdateCollectionMutation();
   const [deleteCollection, { isLoading: isDeleting }] = useDeleteCollectionMutation();
 
-  const collections = useMemo(() => data?.collections || [], [data?.collections]);
-  const selectedCollection = collections.find((collection) => collection._id === selectedCollectionId);
+  const collections = data?.collections || EMPTY_COLLECTIONS;
+  const selectedCollection = useMemo(
+    () => collections.find((collection) => collection._id === selectedCollectionId),
+    [collections, selectedCollectionId],
+  );
   const {
     data: savedPostsData,
     isError: isPostsError,
@@ -116,7 +121,7 @@ const SavedCollectionsPanel = ({ viewerId }: SavedCollectionsPanelProps) => {
       <header className="profile-card__header saved-panel__header">
         <div>
           <h2>Saved Collections</h2>
-          <p>{isFetching ? 'Refreshing saved posts...' : 'Organize posts you want to revisit.'}</p>
+          <p>Organize posts you want to revisit.</p>
         </div>
         <Button variant="ghost" className="button--icon" onClick={() => refetch()} disabled={isFetching} aria-label="Refresh saved collections">
           {isFetching ? <Loader2 className="spin" size={18} aria-hidden="true" /> : <RefreshCw size={18} aria-hidden="true" />}
@@ -130,8 +135,8 @@ const SavedCollectionsPanel = ({ viewerId }: SavedCollectionsPanelProps) => {
           placeholder="New collection name"
           maxLength={50}
         />
-        <Button type="submit" disabled={isCreating}>
-          {isCreating ? <Loader2 className="spin" size={17} aria-hidden="true" /> : <Plus size={17} aria-hidden="true" />}
+        <Button type="submit" isLoading={isCreating} loadingLabel="Creating collection">
+          <Plus size={17} aria-hidden="true" />
           Create
         </Button>
       </form>
@@ -170,8 +175,8 @@ const SavedCollectionsPanel = ({ viewerId }: SavedCollectionsPanelProps) => {
                         autoFocus
                         maxLength={50}
                       />
-                      <Button className="button--icon" onClick={handleUpdateCollection} disabled={isUpdating} aria-label="Save collection name">
-                        {isUpdating ? <Loader2 className="spin" size={16} aria-hidden="true" /> : <Check size={16} aria-hidden="true" />}
+                      <Button className="button--icon" onClick={handleUpdateCollection} isLoading={isUpdating} loadingLabel="Saving collection name" aria-label="Save collection name">
+                        <Check size={16} aria-hidden="true" />
                       </Button>
                       <Button variant="ghost" className="button--icon" onClick={() => setEditingCollection(null)} aria-label="Cancel rename">
                         <X size={16} aria-hidden="true" />
@@ -200,8 +205,8 @@ const SavedCollectionsPanel = ({ viewerId }: SavedCollectionsPanelProps) => {
                 <Bookmark size={18} aria-hidden="true" />
                 <strong>{selectedCollection?.name || 'Saved posts'}</strong>
               </span>
-              <Button variant="ghost" className="button--icon" onClick={() => refetchSavedPosts()} disabled={!selectedCollectionId || isPostsFetching} aria-label="Refresh saved posts">
-                {isPostsFetching ? <Loader2 className="spin" size={17} aria-hidden="true" /> : <RefreshCw size={17} aria-hidden="true" />}
+              <Button variant="ghost" className="button--icon" onClick={() => refetchSavedPosts()} disabled={!selectedCollectionId} isLoading={isPostsFetching} loadingLabel="Refreshing saved posts" aria-label="Refresh saved posts">
+                <RefreshCw size={17} aria-hidden="true" />
               </Button>
             </div>
 
@@ -239,4 +244,4 @@ const SavedCollectionsPanel = ({ viewerId }: SavedCollectionsPanelProps) => {
   );
 };
 
-export default SavedCollectionsPanel;
+export default memo(SavedCollectionsPanel);

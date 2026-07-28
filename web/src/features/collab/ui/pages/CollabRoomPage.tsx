@@ -1,5 +1,5 @@
-import { PanelLeftOpen, PanelRightOpen } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen } from 'lucide-react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import * as Y from 'yjs';
 
@@ -133,6 +133,24 @@ const CollabRoomPage = () => {
   const { usersWithPresence } = useCollabRoom({ roomId: isSoloRoom ? undefined : roomId, usersData, currentUserId });
   const audioCall = useAudioCall({ roomId: isSoloRoom ? null : roomId, usersData: usersWithPresence, currentUserId });
   const otherUser = isSoloRoom ? null : usersData.find((item) => item._id !== currentUserId)?._id || null;
+  const handleToggleLeftPanel = useCallback(() => {
+    setIsLeftPanelCollapsed((isCollapsed) => !isCollapsed);
+  }, []);
+  const handleOpenLeftPanel = useCallback(() => {
+    setIsLeftPanelCollapsed(false);
+  }, []);
+  const handleCollapseLeftPanel = useCallback(() => {
+    setIsLeftPanelCollapsed(true);
+  }, []);
+  const handleToggleRightPanel = useCallback(() => {
+    setIsRightPanelCollapsed((isCollapsed) => !isCollapsed);
+  }, []);
+  const handleOpenRightPanel = useCallback(() => {
+    setIsRightPanelCollapsed(false);
+  }, []);
+  const handleCollapseRightPanel = useCallback(() => {
+    setIsRightPanelCollapsed(true);
+  }, []);
 
   const getAvailableSideWidth = (panel: 'left' | 'right') => {
     const shellWidth = roomShellRef.current?.clientWidth || window.innerWidth;
@@ -445,9 +463,30 @@ const CollabRoomPage = () => {
   return (
     <main className="collab-room-page">
       <div ref={roomShellRef} className="collab-room-shell">
+        <div className="collab-mobile-panel-controls" aria-label="Room panel controls">
+          <button
+            type="button"
+            className="collab-icon-button"
+            onClick={handleToggleLeftPanel}
+            aria-label={isLeftPanelCollapsed ? 'Open problems panel' : 'Close problems panel'}
+          >
+            {isLeftPanelCollapsed ? <PanelLeftOpen size={18} aria-hidden="true" /> : <PanelLeftClose size={18} aria-hidden="true" />}
+          </button>
+          {!isSoloRoom && (
+            <button
+              type="button"
+              className="collab-icon-button"
+              onClick={handleToggleRightPanel}
+              aria-label={isRightPanelCollapsed ? 'Open chat panel' : 'Close chat panel'}
+            >
+              {isRightPanelCollapsed ? <PanelRightOpen size={18} aria-hidden="true" /> : <PanelRightClose size={18} aria-hidden="true" />}
+            </button>
+          )}
+        </div>
+
         {isLeftPanelCollapsed ? (
           <div className="collab-collapse-rail is-left">
-            <button type="button" className="collab-icon-button" onClick={() => setIsLeftPanelCollapsed(false)} aria-label="Open problems panel">
+            <button type="button" className="collab-icon-button" onClick={handleOpenLeftPanel} aria-label="Open problems panel">
               <PanelLeftOpen size={18} aria-hidden="true" />
             </button>
           </div>
@@ -460,7 +499,7 @@ const CollabRoomPage = () => {
                   selectedProblem={selectedRoomProblem}
                   roomId={roomId}
                   isSelectionLocked={isRoomExecutionLocked}
-                  onCollapse={() => setIsLeftPanelCollapsed(true)}
+                  onCollapse={handleCollapseLeftPanel}
                 />
               </ErrorBoundary>
             </div>
@@ -516,7 +555,7 @@ const CollabRoomPage = () => {
 
         {!isSoloRoom && isRightPanelCollapsed ? (
           <div className="collab-collapse-rail is-right">
-            <button type="button" className="collab-icon-button" onClick={() => setIsRightPanelCollapsed(false)} aria-label="Open chat panel">
+            <button type="button" className="collab-icon-button" onClick={handleOpenRightPanel} aria-label="Open chat panel">
               <PanelRightOpen size={18} aria-hidden="true" />
             </button>
           </div>
@@ -525,7 +564,7 @@ const CollabRoomPage = () => {
             <div role="separator" aria-orientation="vertical" className="collab-resize-handle is-vertical" onPointerDown={(event) => startHorizontalResize('right', event)} />
             <aside className="collab-right-panel" style={{ width: clamp(rightPanelWidth, 220, getAvailableSideWidth('right')) }}>
               <ErrorBoundary variant="section" title="Participants panel could not be rendered." resetKeys={[roomId]} showReload={false}>
-                <UsersPanel usersData={audioCall.usersWithVoice} onCollapse={() => setIsRightPanelCollapsed(true)} {...audioCall} />
+                <UsersPanel usersData={audioCall.usersWithVoice} onCollapse={handleCollapseRightPanel} {...audioCall} />
               </ErrorBoundary>
               <div className="collab-chat-region">
                 <ErrorBoundary variant="section" title="Room chat could not be rendered." resetKeys={[roomDetails?.conversationId?._id, roomId]} showReload={false}>

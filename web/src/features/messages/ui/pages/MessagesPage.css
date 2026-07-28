@@ -939,6 +939,30 @@
   color: #22c55e;
 }
 
+.messages-v1-delivery-status.is-pending {
+  color: rgba(255, 255, 255, 0.62);
+}
+
+.messages-v1-message__actions.is-visible {
+  opacity: 1;
+}
+
+.messages-v1-message__action-placeholder,
+.messages-v1-send-error-indicator {
+  display: grid;
+  width: 28px;
+  height: 28px;
+  place-items: center;
+}
+
+.messages-v1-send-error-indicator {
+  border: 1px solid rgba(239, 68, 68, 0.32);
+  border-radius: 999px;
+  background: rgba(239, 68, 68, 0.12);
+  color: #f87171;
+  box-shadow: var(--shadow-media);
+}
+
 .messages-v1-message.is-theirs .messages-v1-bubble time {
   color: var(--text-secondary);
 }
@@ -1411,6 +1435,91 @@ video.messages-v1-attachment-media {
   text-align: center;
 }
 
+@media (max-width: 768px) {
+  .messages-v1-modal-backdrop {
+    padding: 12px;
+  }
+
+  .messages-v1-start-modal {
+    width: min(100%, calc(100vw - 24px));
+    max-height: calc(100dvh - 24px);
+    border-radius: 10px;
+  }
+
+  .messages-v1-start-modal header {
+    gap: 10px;
+    padding: 12px;
+  }
+
+  .messages-v1-start-modal header > span {
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+  }
+
+  .messages-v1-start-modal header h2 {
+    font-size: 17px;
+  }
+
+  .messages-v1-start-modal header button {
+    width: 32px;
+    height: 32px;
+  }
+
+  .messages-v1-start-modal__field,
+  .messages-v1-start-modal__search,
+  .messages-v1-start-modal__list,
+  .messages-v1-group-settings__section,
+  .messages-v1-group-settings__actions {
+    padding-right: 12px;
+    padding-left: 12px;
+  }
+
+  .messages-v1-start-modal__list {
+    min-height: 180px;
+  }
+
+  .messages-v1-person-card,
+  .messages-v1-group-members article {
+    gap: 8px;
+    border-radius: 8px;
+    padding: 8px;
+  }
+
+  .messages-v1-person-card__avatar {
+    width: 36px;
+    height: 36px;
+  }
+
+  .messages-v1-person-card strong,
+  .messages-v1-group-members strong {
+    font-size: 13px;
+  }
+
+  .messages-v1-person-card small,
+  .messages-v1-group-members small,
+  .messages-v1-group-settings__empty {
+    font-size: 11px;
+  }
+
+  .messages-v1-start-modal footer {
+    align-items: stretch;
+    flex-direction: column;
+    padding: 12px;
+  }
+
+  .messages-v1-start-modal footer .button {
+    width: 100%;
+    min-height: 38px;
+  }
+
+  .messages-v1-group-members article button {
+    min-height: 30px;
+    padding: 0 8px;
+    font-size: 11px;
+  }
+}
+
 @keyframes message-in {
   from {
     opacity: 0;
@@ -1461,7 +1570,7 @@ video.messages-v1-attachment-media {
 
 @media (max-width: 767px) {
   .messages-v1-page {
-    height: calc(100dvh - 82px);
+    height: calc(100dvh - var(--app-mobile-content-top, 68px) - 8px);
     min-height: 0;
     padding-bottom: 0;
   }
@@ -1672,7 +1781,7 @@ video.messages-v1-attachment-media {
 
 @media (max-width: 992px) {
   .messages-v1-page {
-    height: calc(100dvh - var(--app-mobile-content-top, 80px) - 12px);
+    height: calc(100dvh - var(--app-mobile-content-top, 68px) - 8px);
     min-height: 0;
     overflow: hidden;
   }

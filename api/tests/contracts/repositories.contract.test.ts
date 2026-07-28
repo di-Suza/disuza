@@ -25,6 +25,7 @@ const expectedRepositories: Record<string, string[]> = {
     'createGroupConversation',
     'createMessage',
     'getConversations',
+    'getUnreadMessagesCount',
     'getMessages',
     'findMessageById',
     'findMessageForAttachment',

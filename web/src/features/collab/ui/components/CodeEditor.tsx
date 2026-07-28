@@ -1,6 +1,6 @@
 import Editor, { type Monaco, type OnMount } from '@monaco-editor/react';
 import { Play } from 'lucide-react';
-import { useCallback, useEffect, useRef } from 'react';
+import { memo, useCallback, useEffect, useRef } from 'react';
 import type { editor as MonacoEditor } from 'monaco-editor';
 
 import type { ProblemLanguage } from '@/features/collab/model/collab.types';
@@ -153,4 +153,4 @@ const CodeEditor = ({ code, language, onCodeChange, onLanguageChange, onRun, isR
   );
 };
 
-export default CodeEditor;
+export default memo(CodeEditor);

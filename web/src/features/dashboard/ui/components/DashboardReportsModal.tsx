@@ -1,5 +1,5 @@
 import { AlertTriangle, FileText, Loader2, MessageSquare, RotateCw, ShieldCheck, UserRound, X } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { memo, useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 import { useGetMyReportsQuery } from '@/features/reports/api/report.api';
@@ -12,6 +12,8 @@ type DashboardReportsModalProps = {
   isOpen: boolean;
   onClose: () => void;
 };
+
+const EMPTY_REPORTS: Report[] = [];
 
 const formatDate = (value?: string): string => {
   if (!value) return '';
@@ -33,11 +35,33 @@ const getTargetTitle = (report: Report): string => {
 
 const getStatusClass = (status: Report['status']): string => `is-${status.toLowerCase()}`;
 
+const DashboardReportRow = memo(({ report }: { report: Report }) => {
+  const Icon = report.onModel === 'User' ? UserRound : report.onModel === 'Message' ? MessageSquare : FileText;
+
+  return (
+    <article className="dashboard-report-v1">
+      <header>
+        <span><Icon size={20} aria-hidden="true" /></span>
+        <div><h3>Report on {report.onModel}</h3><p>{formatDate(report.createdAt)}</p></div>
+        <em className={getStatusClass(report.status)}>{report.status}</em>
+      </header>
+      <div>
+        <section><small>Target</small><strong>{getTargetTitle(report)}</strong></section>
+        <section><small>Reason</small><strong>{report.reason}</strong></section>
+        <section className="is-wide"><small>Description</small><p>{report.description || 'No description provided.'}</p></section>
+        {report.response && <section className="is-wide"><small>Response</small><p>{report.response}</p></section>}
+      </div>
+    </article>
+  );
+});
+
+DashboardReportRow.displayName = 'DashboardReportRow';
+
 const DashboardReportsModal = ({ isOpen, onClose }: DashboardReportsModalProps) => {
   const [page, setPage] = useState(1);
   const [reports, setReports] = useState<Report[]>([]);
   const { data, isError, isFetching, refetch } = useGetMyReportsQuery({ page, limit: 10 }, { skip: !isOpen });
-  const latestReports = data?.reports || [];
+  const latestReports = data?.reports || EMPTY_REPORTS;
 
   useLockBodyScroll(isOpen);
 
@@ -80,30 +104,14 @@ const DashboardReportsModal = ({ isOpen, onClose }: DashboardReportsModalProps) 
               </div>
 
               <div className="dashboard-reports-v1__list">
-                {reports.map((report) => {
-                  const Icon = report.onModel === 'User' ? UserRound : report.onModel === 'Message' ? MessageSquare : FileText;
-                  return (
-                    <article className="dashboard-report-v1" key={report._id}>
-                      <header>
-                        <span><Icon size={20} aria-hidden="true" /></span>
-                        <div><h3>Report on {report.onModel}</h3><p>{formatDate(report.createdAt)}</p></div>
-                        <em className={getStatusClass(report.status)}>{report.status}</em>
-                      </header>
-                      <div>
-                        <section><small>Target</small><strong>{getTargetTitle(report)}</strong></section>
-                        <section><small>Reason</small><strong>{report.reason}</strong></section>
-                        <section className="is-wide"><small>Description</small><p>{report.description || 'No description provided.'}</p></section>
-                        {report.response && <section className="is-wide"><small>Response</small><p>{report.response}</p></section>}
-                      </div>
-                    </article>
-                  );
-                })}
+                {reports.map((report) => <DashboardReportRow key={report._id} report={report} />)}
               </div>
 
               {data?.hasMore && (
                 <div className="dashboard-reports-v1__load-more">
                   <button type="button" onClick={() => setPage((current) => current + 1)} disabled={isFetching}>
-                    {isFetching ? <Loader2 className="spin" size={16} /> : <RotateCw size={16} />}Load more
+                    {isFetching ? <Loader2 className="spin" size={16} /> : <RotateCw size={16} />}
+                    {!isFetching && 'Load more'}
                   </button>
                 </div>
               )}
@@ -118,4 +126,4 @@ const DashboardReportsModal = ({ isOpen, onClose }: DashboardReportsModalProps) 
   );
 };
 
-export default DashboardReportsModal;
+export default memo(DashboardReportsModal);

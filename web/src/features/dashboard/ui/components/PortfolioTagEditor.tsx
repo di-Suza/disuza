@@ -1,5 +1,7 @@
 import { Plus, X, type LucideIcon } from 'lucide-react';
-import { useMemo, useRef, useState, type KeyboardEvent } from 'react';
+import { memo, useCallback, useMemo, useRef, useState, type ChangeEvent, type KeyboardEvent, type MouseEvent } from 'react';
+
+import LoadingSpinner from '@/shared/ui/LoadingSpinner';
 
 type PortfolioTagEditorProps = {
   actionNoun?: string;
@@ -40,25 +42,30 @@ const PortfolioTagEditor = ({
   const [inputValue, setInputValue] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
   const tags = useMemo(() => getTags(value), [value]);
+  const normalizedTags = useMemo(() => new Set(tags.map((tag) => tag.toLowerCase())), [tags]);
 
-  const setTags = (nextTags: string[]) => {
+  const setTags = useCallback((nextTags: string[]) => {
     onValueChange(nextTags.join(', '));
     onCommit();
-  };
+  }, [onCommit, onValueChange]);
 
-  const addTag = (tagValue: string) => {
+  const addTag = useCallback((tagValue: string) => {
     const nextTag = tagValue.trim();
     if (!nextTag || tags.some((tag) => tag.toLowerCase() === nextTag.toLowerCase())) return;
 
     setTags([...tags, nextTag]);
     setInputValue('');
-  };
+  }, [setTags, tags]);
 
-  const removeTag = (index: number) => {
+  const removeTag = useCallback((index: number) => {
     setTags(tags.filter((_tag, tagIndex) => tagIndex !== index));
-  };
+  }, [setTags, tags]);
 
-  const handleKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+  const handleInputChange = useCallback((event: ChangeEvent<HTMLInputElement>) => {
+    setInputValue(event.target.value);
+  }, []);
+
+  const handleKeyDown = useCallback((event: KeyboardEvent<HTMLInputElement>) => {
     if (event.key === ',' || event.key === 'Enter') {
       event.preventDefault();
       addTag(inputValue);
@@ -69,10 +76,17 @@ const PortfolioTagEditor = ({
       event.preventDefault();
       removeTag(tags.length - 1);
     }
-  };
+  }, [addTag, inputValue, removeTag, tags.length]);
 
-  const visibleSuggestions = suggestions
-    .filter((suggestion) => !tags.some((tag) => tag.toLowerCase() === suggestion.toLowerCase()));
+  const handleTagRemoveClick = useCallback((event: MouseEvent<HTMLButtonElement>, index: number) => {
+    event.stopPropagation();
+    removeTag(index);
+  }, [removeTag]);
+
+  const visibleSuggestions = useMemo(
+    () => suggestions.filter((suggestion) => !normalizedTags.has(suggestion.toLowerCase())),
+    [normalizedTags, suggestions],
+  );
 
   return (
     <div className="portfolio-section-v1">
@@ -80,7 +94,7 @@ const PortfolioTagEditor = ({
         <label htmlFor={`portfolio-${label.toLowerCase()}`}>
           {label}<span>*</span>
         </label>
-        <small>{isSaving ? 'saving...' : 'Up to date!'}</small>
+        <small>{isSaving ? <LoadingSpinner inline label="Saving portfolio" size={13} /> : 'Up to date!'}</small>
       </div>
 
       <div
@@ -94,10 +108,7 @@ const PortfolioTagEditor = ({
               {tag}
               <button
                 type="button"
-                onClick={(event) => {
-                  event.stopPropagation();
-                  removeTag(index);
-                }}
+                onClick={(event) => handleTagRemoveClick(event, index)}
                 aria-label={`Remove ${tag}`}
               >
                 <X size={12} aria-hidden="true" />
@@ -112,7 +123,7 @@ const PortfolioTagEditor = ({
             ref={inputRef}
             id={`portfolio-${label.toLowerCase()}`}
             value={inputValue}
-            onChange={(event) => setInputValue(event.target.value)}
+            onChange={handleInputChange}
             onKeyDown={handleKeyDown}
             placeholder={tags.length === 0 ? placeholder : `Add more ${countLabel}...`}
           />
@@ -142,4 +153,4 @@ const PortfolioTagEditor = ({
   );
 };
 
-export default PortfolioTagEditor;
+export default memo(PortfolioTagEditor);

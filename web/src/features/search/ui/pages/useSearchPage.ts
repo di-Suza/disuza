@@ -166,6 +166,14 @@ export const useSearchPage = () => {
     resetSearchResults('');
   }, [resetSearchResults, setSearchParams]);
 
+  const handleSearchBlur = useCallback(() => {
+    setSearchFocused(false);
+  }, []);
+
+  const handleSearchFocus = useCallback(() => {
+    setSearchFocused(true);
+  }, []);
+
   const handleLoadMoreTrendingPosts = useCallback(() => {
     if (!isDiscoverFetching && hasMoreTrendingPosts) {
       setDiscoverPage((currentPage) => currentPage + 1);
@@ -198,9 +206,9 @@ export const useSearchPage = () => {
     handleLoadMoreSearchPosts,
     handleLoadMoreSearchUsers,
     handleLoadMoreTrendingPosts,
-    handleSearchBlur: () => setSearchFocused(false),
+    handleSearchBlur,
     handleSearchChange,
-    handleSearchFocus: () => setSearchFocused(true),
+    handleSearchFocus,
     hasActiveSearchQuery,
     hasMoreSearchPosts: searchMeta.hasMorePosts,
     hasMoreSearchUsers: searchMeta.hasMoreUsers,

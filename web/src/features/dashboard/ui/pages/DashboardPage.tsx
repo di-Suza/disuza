@@ -10,6 +10,7 @@ import {
   Grid,
   Heart,
   HelpCircle,
+  Loader2,
   Lock,
   LogOut,
   MessageCircle,
@@ -87,22 +88,24 @@ const getAvatarUrl = (url: unknown): string | null => (typeof url === 'string' &
 const SettingsRow = ({
   description,
   icon: Icon,
+  isLoading = false,
   onClick,
   title,
   tone = 'accent',
 }: {
   description: string;
   icon: typeof Activity;
+  isLoading?: boolean;
   onClick: () => void;
   title: string;
   tone?: 'accent' | 'danger';
 }) => (
-  <button type="button" onClick={onClick} className={tone === 'danger' ? 'settings-row settings-row--danger' : 'settings-row'}>
+  <button type="button" onClick={onClick} className={tone === 'danger' ? 'settings-row settings-row--danger' : 'settings-row'} disabled={isLoading} aria-busy={isLoading || undefined}>
     <span className="settings-row__main">
-      <span className="settings-row__icon"><Icon size={20} aria-hidden="true" /></span>
-      <span><strong>{title}</strong><small>{description}</small></span>
+      <span className="settings-row__icon">{isLoading ? <Loader2 className="spin" size={20} aria-hidden="true" /> : <Icon size={20} aria-hidden="true" />}</span>
+      {!isLoading && <span><strong>{title}</strong><small>{description}</small></span>}
     </span>
-    <ChevronRight size={20} aria-hidden="true" />
+    {!isLoading && <ChevronRight size={20} aria-hidden="true" />}
   </button>
 );
 
@@ -327,8 +330,8 @@ const DashboardPage = () => {
                       <div><h2>Privacy & Security</h2><p>Manage your account security and privacy</p></div>
                       {!user?.isGoogleUser && <SettingsRow icon={Lock} title="Change Password" description="Update your account password" onClick={() => setForgotPasswordOpen(true)} />}
                       <SettingsRow icon={UserX} title="Blocked Users" description="Manage your blocked accounts" onClick={() => setBlockedUsersModalOpen(true)} tone="danger" />
-                      <SettingsRow icon={LogOut} title={dashboard.isLogoutLoading ? 'Logging Out...' : 'Log Out'} description="Sign out from this device" onClick={dashboard.handleLogout} tone="danger" />
-                      <SettingsRow icon={LogOut} title={dashboard.isLogoutAllLoading ? 'Logging Out Everywhere...' : 'Log Out From All Devices'} description="End active sessions on every device" onClick={dashboard.handleLogoutAllDevices} tone="danger" />
+                      <SettingsRow icon={LogOut} title="Log Out" description="Sign out from this device" onClick={dashboard.handleLogout} tone="danger" isLoading={dashboard.isLogoutLoading} />
+                      <SettingsRow icon={LogOut} title="Log Out From All Devices" description="End active sessions on every device" onClick={dashboard.handleLogoutAllDevices} tone="danger" isLoading={dashboard.isLogoutAllLoading} />
                       <SettingsRow icon={Trash2} title="Delete Account" description="Permanently delete your account and data" onClick={() => setAccountModal('delete')} tone="danger" />
                     </div>
                   )}

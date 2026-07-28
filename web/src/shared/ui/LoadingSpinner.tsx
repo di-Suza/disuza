@@ -1,4 +1,5 @@
 import { Loader2 } from 'lucide-react';
+import { memo } from 'react';
 
 import { cn } from '@/shared/utils/cn';
 import './Spinner.css';
@@ -16,4 +17,4 @@ const LoadingSpinner = ({ className, inline = false, label = 'Loading', size = 2
   </div>
 );
 
-export default LoadingSpinner;
+export default memo(LoadingSpinner);

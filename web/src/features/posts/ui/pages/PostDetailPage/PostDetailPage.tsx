@@ -59,7 +59,7 @@ const PostDetailPage = () => {
       <section className="dashboard-panel dashboard-panel--wide post-detail-panel">
         <header className="post-detail-header">
           <BackButton />
-          {isFetching ? <span>Refreshing {isRepostDetail ? 'repost' : 'post'}...</span> : null}
+          {isFetching ? <LoadingSpinner inline label={`Refreshing ${isRepostDetail ? 'repost' : 'post'}`} size={16} /> : null}
         </header>
         <ErrorBoundary variant="section" title="Post content could not be rendered." resetKeys={[postId, repostId]} showReload={false}>
           {isRepostDetail && repost ? (

@@ -1,5 +1,5 @@
-import { Check, Loader2, Search, Trash2, UserMinus, UserRound, Users, X } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { Check, Search, Trash2, UserMinus, UserRound, Users, X } from 'lucide-react';
+import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useAppSelector } from '@/app/store/hooks';
 import {
@@ -23,10 +23,90 @@ type GroupSettingsModalProps = {
   onLeftGroup: () => void;
 };
 
+type GroupMemberRowProps = {
+  admins?: string[];
+  isAdmin: boolean;
+  isRemoving: boolean;
+  member: ChatUser;
+  onRemove: (memberId: string) => void;
+  participantCount: number;
+  userId?: string;
+};
+
+type GroupInviteOptionProps = {
+  onToggle: (userId: string) => void;
+  selected: boolean;
+  user: UserProfile;
+};
+
 const getAvatarUrl = (user: Pick<ChatUser | UserProfile, 'profilePicture'>) => {
   const url = user.profilePicture?.url;
   return typeof url === 'string' && url.trim() ? url : null;
 };
+
+const GroupMemberRow = memo(({
+  admins,
+  isAdmin,
+  isRemoving,
+  member,
+  onRemove,
+  participantCount,
+  userId,
+}: GroupMemberRowProps) => {
+  const avatarUrl = getAvatarUrl(member);
+  const memberIsMe = member._id === userId;
+  const canRemove = memberIsMe || (isAdmin && member._id !== userId);
+  const adminCannotLeave = Boolean(memberIsMe && isAdmin);
+  const adminLeaveLabel = participantCount > 1 ? 'Remove members first' : 'Delete from inbox';
+
+  return (
+    <article>
+      <span className="messages-v1-person-card__avatar">
+        {avatarUrl ? <img src={avatarUrl} alt="" /> : <UserRound size={16} aria-hidden="true" />}
+      </span>
+      <span>
+        <strong>{member.userName || 'User'}</strong>
+        <small>{admins?.includes(member._id) ? 'Admin' : 'Member'}</small>
+      </span>
+      {canRemove && (
+        <button
+          type="button"
+          onClick={() => onRemove(member._id)}
+          disabled={isRemoving || adminCannotLeave}
+          title={adminCannotLeave ? 'Use the conversation menu to delete the group after removing members.' : undefined}
+        >
+          {memberIsMe ? <Trash2 size={15} aria-hidden="true" /> : <UserMinus size={15} aria-hidden="true" />}
+          {adminCannotLeave ? adminLeaveLabel : memberIsMe ? 'Leave' : 'Remove'}
+        </button>
+      )}
+    </article>
+  );
+});
+
+GroupMemberRow.displayName = 'GroupMemberRow';
+
+const GroupInviteOption = memo(({ onToggle, selected, user }: GroupInviteOptionProps) => {
+  const avatarUrl = getAvatarUrl(user);
+
+  return (
+    <button
+      type="button"
+      className={`messages-v1-person-card ${selected ? 'is-selected' : ''}`}
+      onClick={() => onToggle(user._id)}
+    >
+      <span className="messages-v1-person-card__avatar">
+        {avatarUrl ? <img src={avatarUrl} alt="" /> : <UserRound size={16} aria-hidden="true" />}
+      </span>
+      <span>
+        <strong>{user.userName || 'User'}</strong>
+        <small>{user.headline || 'Disuza member'}</small>
+      </span>
+      {selected && <Check size={16} aria-hidden="true" />}
+    </button>
+  );
+});
+
+GroupInviteOption.displayName = 'GroupInviteOption';
 
 const GroupSettingsModal = ({
   conversation,
@@ -75,9 +155,7 @@ const GroupSettingsModal = ({
     setSelectedInviteIds([]);
   }, [conversation.groupName, isOpen]);
 
-  if (!isOpen) return null;
-
-  const handleUpdateGroup = async () => {
+  const handleUpdateGroup = useCallback(async () => {
     if (!conversation._id || !groupName.trim() || isUpdating) return;
 
     try {
@@ -87,9 +165,9 @@ const GroupSettingsModal = ({
     } catch (error) {
       showError(getErrorMessage(error, 'Group update failed.'));
     }
-  };
+  }, [conversation._id, groupName, isUpdating, onConversationUpdated, showError, showSuccess, updateGroup]);
 
-  const handleInviteMembers = async () => {
+  const handleInviteMembers = useCallback(async () => {
     if (!conversation._id || selectedInviteIds.length === 0 || isInviting) return;
 
     try {
@@ -100,9 +178,9 @@ const GroupSettingsModal = ({
     } catch (error) {
       showError(getErrorMessage(error, 'Invites could not be sent.'));
     }
-  };
+  }, [conversation._id, inviteMembers, isInviting, onConversationUpdated, selectedInviteIds, showError, showSuccess]);
 
-  const handleRemoveMember = async (memberId: string) => {
+  const handleRemoveMember = useCallback(async (memberId: string) => {
     if (!conversation._id || isRemoving) return;
 
     try {
@@ -117,13 +195,15 @@ const GroupSettingsModal = ({
     } catch (error) {
       showError(getErrorMessage(error, 'Member could not be removed.'));
     }
-  };
+  }, [conversation._id, currentUserId, isRemoving, onClose, onConversationUpdated, onLeftGroup, removeMember, showError, showSuccess]);
 
-  const toggleInvite = (userId: string) => {
+  const toggleInvite = useCallback((userId: string) => {
     setSelectedInviteIds((current) => (
       current.includes(userId) ? current.filter((id) => id !== userId) : [...current, userId]
     ));
-  };
+  }, []);
+
+  if (!isOpen) return null;
 
   return (
     <div className="messages-v1-modal-backdrop" role="presentation" onMouseDown={onClose}>
@@ -152,8 +232,7 @@ const GroupSettingsModal = ({
           </label>
           {isAdmin && (
             <div className="messages-v1-group-settings__actions">
-              <Button onClick={handleUpdateGroup} disabled={isUpdating || !groupName.trim()}>
-                {isUpdating && <Loader2 className="spin" size={16} aria-hidden="true" />}
+              <Button onClick={handleUpdateGroup} disabled={!groupName.trim()} isLoading={isUpdating} loadingLabel="Saving group">
                 Save
               </Button>
             </div>
@@ -162,36 +241,18 @@ const GroupSettingsModal = ({
           <section className="messages-v1-group-settings__section">
             <h3>Members</h3>
             <div className="messages-v1-group-members">
-              {(conversation.participants || []).map((member) => {
-                const avatarUrl = getAvatarUrl(member);
-                const memberIsMe = member._id === currentUserId;
-                const canRemove = memberIsMe || (isAdmin && member._id !== currentUserId);
-                const adminCannotLeave = Boolean(memberIsMe && isAdmin);
-                const adminLeaveLabel = (conversation.participants?.length || 0) > 1 ? 'Remove members first' : 'Delete from inbox';
-
-                return (
-                  <article key={member._id}>
-                    <span className="messages-v1-person-card__avatar">
-                      {avatarUrl ? <img src={avatarUrl} alt="" /> : <UserRound size={16} aria-hidden="true" />}
-                    </span>
-                    <span>
-                      <strong>{member.userName || 'User'}</strong>
-                      <small>{conversation.admins?.includes(member._id) ? 'Admin' : 'Member'}</small>
-                    </span>
-                    {canRemove && (
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveMember(member._id)}
-                        disabled={isRemoving || adminCannotLeave}
-                        title={adminCannotLeave ? 'Use the conversation menu to delete the group after removing members.' : undefined}
-                      >
-                        {memberIsMe ? <Trash2 size={15} aria-hidden="true" /> : <UserMinus size={15} aria-hidden="true" />}
-                        {adminCannotLeave ? adminLeaveLabel : memberIsMe ? 'Leave' : 'Remove'}
-                      </button>
-                    )}
-                  </article>
-                );
-              })}
+              {(conversation.participants || []).map((member) => (
+                <GroupMemberRow
+                  key={member._id}
+                  admins={conversation.admins}
+                  isAdmin={isAdmin}
+                  isRemoving={isRemoving}
+                  member={member}
+                  onRemove={handleRemoveMember}
+                  participantCount={conversation.participants?.length || 0}
+                  userId={currentUserId}
+                />
+              ))}
             </div>
           </section>
 
@@ -203,31 +264,16 @@ const GroupSettingsModal = ({
                 <Input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search people" />
               </label>
               <div className="messages-v1-group-invite-list">
-                {inviteOptions.length > 0 ? inviteOptions.map((user) => {
-                  const selected = selectedInviteIds.includes(user._id);
-                  const avatarUrl = getAvatarUrl(user);
-
-                  return (
-                    <button
-                      key={user._id}
-                      type="button"
-                      className={`messages-v1-person-card ${selected ? 'is-selected' : ''}`}
-                      onClick={() => toggleInvite(user._id)}
-                    >
-                      <span className="messages-v1-person-card__avatar">
-                        {avatarUrl ? <img src={avatarUrl} alt="" /> : <UserRound size={16} aria-hidden="true" />}
-                      </span>
-                      <span>
-                        <strong>{user.userName || 'User'}</strong>
-                        <small>{user.headline || 'Disuza member'}</small>
-                      </span>
-                      {selected && <Check size={16} aria-hidden="true" />}
-                    </button>
-                  );
-                }) : <p className="messages-v1-group-settings__empty">No people available</p>}
+                {inviteOptions.length > 0 ? inviteOptions.map((user) => (
+                  <GroupInviteOption
+                    key={user._id}
+                    onToggle={toggleInvite}
+                    selected={selectedInviteIds.includes(user._id)}
+                    user={user}
+                  />
+                )) : <p className="messages-v1-group-settings__empty">No people available</p>}
               </div>
-              <Button onClick={handleInviteMembers} disabled={isInviting || selectedInviteIds.length === 0}>
-                {isInviting && <Loader2 className="spin" size={16} aria-hidden="true" />}
+              <Button onClick={handleInviteMembers} disabled={selectedInviteIds.length === 0} isLoading={isInviting} loadingLabel="Inviting members">
                 Invite selected
               </Button>
             </section>

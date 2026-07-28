@@ -39,6 +39,7 @@ class ChatRoutes {
     this.router.post('/groups/:conversationId/invite', inviteGroupMembersRules, validateRequest, chatController.inviteGroupMembers);
     this.router.delete('/groups/:conversationId/members/:memberId', removeGroupMemberRules, validateRequest, chatController.removeGroupMember);
     this.router.get('/getConversations', chatController.getConversations);
+    this.router.get('/getUnreadCount', chatController.getUnreadCount);
     this.router.get('/getMessages/:conversationId', getMessagesRules, validateRequest, chatController.getMessages);
     this.router.get('/attachments/:messageId/:fileId', attachmentRules, validateRequest, chatController.getAttachment);
     this.router.patch('/markAsRead/:conversationId', markAsReadRules, validateRequest, chatController.markAsRead);

@@ -1,8 +1,9 @@
 import { Code2, Hash, Search, TrendingUp, X, Zap } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 import { useGetProblemsQuery } from '@/features/collab/api/problem.api';
+import type { Problem } from '@/features/collab/model/collab.types';
 import problemSuggestions from '@/features/collab/model/problemSuggestions';
 import useDebounce from '@/shared/hooks/useDebounce';
 import { useLockBodyScroll } from '@/shared/hooks/useLockBodyScroll';
@@ -26,6 +27,8 @@ const suggestionSections = [
   { title: 'Top Companies', icon: Code2, items: problemSuggestions.companies },
 ];
 
+const EMPTY_PROBLEMS: Problem[] = [];
+
 const SelectProblemModal = ({ isOpen, onClose, roomId, addedProblemIds = [] }: SelectProblemModalProps) => {
   useLockBodyScroll(isOpen);
   const [searchQuery, setSearchQuery] = useState('');
@@ -42,8 +45,12 @@ const SelectProblemModal = ({ isOpen, onClose, roomId, addedProblemIds = [] }: S
     { query: debouncedSearchQuery, page, roomId: roomId || '', source: 'manual' },
     { skip: debouncedSearchQuery.trim() === '' || !roomId },
   );
-  const problems = problemsData?.data || [];
+  const problems = problemsData?.data || EMPTY_PROBLEMS;
   const hasMore = Boolean(problemsData?.hasMore);
+  const visibleAddedProblemIds = useMemo(
+    () => [...addedProblemIds, ...locallyAddedProblemIds],
+    [addedProblemIds, locallyAddedProblemIds],
+  );
 
   useEffect(() => {
     setPage(1);
@@ -53,11 +60,11 @@ const SelectProblemModal = ({ isOpen, onClose, roomId, addedProblemIds = [] }: S
     setLocallyAddedProblemIds([]);
   }, [roomId]);
 
-  const handleProblemAdded = (problemId: string) => {
+  const handleProblemAdded = useCallback((problemId: string) => {
     setLocallyAddedProblemIds((currentIds) => (
       currentIds.includes(problemId) ? currentIds : [...currentIds, problemId]
     ));
-  };
+  }, []);
 
   if (!isOpen) return null;
 
@@ -96,7 +103,7 @@ const SelectProblemModal = ({ isOpen, onClose, roomId, addedProblemIds = [] }: S
                 <DSAProblemList
                   problems={problems}
                   roomId={roomId}
-                  addedProblemIds={[...addedProblemIds, ...locallyAddedProblemIds]}
+                  addedProblemIds={visibleAddedProblemIds}
                   onProblemAdded={handleProblemAdded}
                 />
               ) : (
@@ -104,8 +111,8 @@ const SelectProblemModal = ({ isOpen, onClose, roomId, addedProblemIds = [] }: S
               )}
 
               {hasMore && (
-                <button type="button" className="collab-load-more" onClick={() => setPage((currentPage) => currentPage + 1)}>
-                  Load more
+                <button type="button" className="collab-load-more" onClick={() => setPage((currentPage) => currentPage + 1)} disabled={isFetching}>
+                  {isFetching ? <LoadingSpinner inline label="Loading problems" size={16} /> : 'Load more'}
                 </button>
               )}
             </>
@@ -133,4 +140,4 @@ const SelectProblemModal = ({ isOpen, onClose, roomId, addedProblemIds = [] }: S
   );
 };
 
-export default SelectProblemModal;
+export default memo(SelectProblemModal);

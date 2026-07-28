@@ -1,5 +1,5 @@
-import { Check, FolderOpen, ImageIcon, Loader2, Plus, X } from 'lucide-react';
-import { useEffect, useMemo, useState, type FormEvent } from 'react';
+import { Check, FolderOpen, ImageIcon, Plus, X } from 'lucide-react';
+import { memo, useEffect, useState, type FormEvent } from 'react';
 import { createPortal } from 'react-dom';
 
 import {
@@ -16,6 +16,8 @@ import LoadingSpinner from '@/shared/ui/LoadingSpinner';
 import { cn } from '@/shared/utils/cn';
 import { getErrorMessage } from '@/shared/utils/getErrorMessage';
 import './Saves.css';
+
+const EMPTY_COLLECTIONS: SavedCollection[] = [];
 
 type ManageSaveCollectionsModalProps = {
   isOpen: boolean;
@@ -39,7 +41,7 @@ const ManageSaveCollectionsModal = ({ isOpen, onClose, onSaved, postId }: Manage
 
   useLockBodyScroll(isOpen);
 
-  const collections = useMemo(() => data?.collections || [], [data?.collections]);
+  const collections = data?.collections || EMPTY_COLLECTIONS;
 
   useEffect(() => {
     if (!isOpen || collections.length === 0) return;
@@ -115,8 +117,8 @@ const ManageSaveCollectionsModal = ({ isOpen, onClose, onSaved, postId }: Manage
                 autoFocus
                 maxLength={50}
               />
-              <Button type="submit" disabled={isCreating}>
-                {isCreating ? <Loader2 className="spin" size={17} aria-hidden="true" /> : <Check size={17} aria-hidden="true" />}
+              <Button type="submit" isLoading={isCreating} loadingLabel="Creating collection">
+                <Check size={17} aria-hidden="true" />
                 Create
               </Button>
               <Button variant="ghost" className="button--icon" onClick={() => setIsAdding(false)} aria-label="Cancel collection create">
@@ -168,8 +170,8 @@ const ManageSaveCollectionsModal = ({ isOpen, onClose, onSaved, postId }: Manage
 
         <footer className="saves-modal__footer">
           <Button variant="secondary" onClick={onClose}>Cancel</Button>
-          <Button onClick={handleSaveToCollection} disabled={isChanging || !selectedCollectionId}>
-            {isChanging ? <Loader2 className="spin" size={17} aria-hidden="true" /> : <Check size={17} aria-hidden="true" />}
+          <Button onClick={handleSaveToCollection} disabled={!selectedCollectionId} isLoading={isChanging} loadingLabel="Saving collection">
+            <Check size={17} aria-hidden="true" />
             Save
           </Button>
         </footer>
@@ -179,4 +181,4 @@ const ManageSaveCollectionsModal = ({ isOpen, onClose, onSaved, postId }: Manage
   );
 };
 
-export default ManageSaveCollectionsModal;
+export default memo(ManageSaveCollectionsModal);

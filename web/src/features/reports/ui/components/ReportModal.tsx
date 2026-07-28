@@ -1,4 +1,5 @@
-import { AlertTriangle, Loader2, X } from 'lucide-react';
+import { AlertTriangle, X } from 'lucide-react';
+import { memo, useCallback, type ChangeEvent } from 'react';
 import { createPortal } from 'react-dom';
 
 import type { ReportReason, ReportTargetModel } from '@/features/reports/model/report.types';
@@ -31,6 +32,17 @@ const reportCopy: Record<ReportTargetModel, { title: string; description: string
   },
 };
 
+const ReportReasonOptions = memo(({ reasons }: { reasons: readonly ReportReason[] }) => (
+  <>
+    <option value="" disabled>Select a reason</option>
+    {reasons.map((option) => (
+      <option value={option} key={option}>{option}</option>
+    ))}
+  </>
+));
+
+ReportReasonOptions.displayName = 'ReportReasonOptions';
+
 const ReportModal = ({ isOpen, onClose, onModel, targetId }: ReportModalProps) => {
   const {
     description,
@@ -43,6 +55,14 @@ const ReportModal = ({ isOpen, onClose, onModel, targetId }: ReportModalProps) =
     setReason,
   } = useReportModal({ isOpen, onClose, onModel, targetId });
   const copy = reportCopy[onModel];
+
+  const handleReasonChange = useCallback((event: ChangeEvent<HTMLSelectElement>) => {
+    setReason(event.target.value as ReportReason);
+  }, [setReason]);
+
+  const handleDescriptionChange = useCallback((event: ChangeEvent<HTMLTextAreaElement>) => {
+    setDescription(event.target.value);
+  }, [setDescription]);
 
   if (!isOpen || !targetId) return null;
 
@@ -67,11 +87,8 @@ const ReportModal = ({ isOpen, onClose, onModel, targetId }: ReportModalProps) =
 
           <label className="field">
             <span>Report type</span>
-            <select className="input report-modal__select" value={reason} onChange={(event) => setReason(event.target.value as ReportReason)}>
-              <option value="" disabled>Select a reason</option>
-              {reportReasons.map((option) => (
-                <option value={option} key={option}>{option}</option>
-              ))}
+            <select className="input report-modal__select" value={reason} onChange={handleReasonChange}>
+              <ReportReasonOptions reasons={reportReasons} />
             </select>
           </label>
 
@@ -80,7 +97,7 @@ const ReportModal = ({ isOpen, onClose, onModel, targetId }: ReportModalProps) =
             <textarea
               className="input textarea report-modal__textarea"
               value={description}
-              onChange={(event) => setDescription(event.target.value)}
+              onChange={handleDescriptionChange}
               placeholder="Please provide more details about why you're reporting this content."
               maxLength={500}
             />
@@ -90,9 +107,9 @@ const ReportModal = ({ isOpen, onClose, onModel, targetId }: ReportModalProps) =
 
         <footer className="report-modal__footer">
           <Button variant="secondary" onClick={handleClose}>Cancel</Button>
-          <Button variant="danger" onClick={handleSubmit} disabled={!reason || !description.trim() || isSubmitting}>
-            {isSubmitting ? <Loader2 className="spin" size={17} aria-hidden="true" /> : <AlertTriangle size={17} aria-hidden="true" />}
-            {isSubmitting ? 'Submitting...' : 'Submit report'}
+          <Button variant="danger" onClick={handleSubmit} disabled={!reason || !description.trim()} isLoading={isSubmitting} loadingLabel="Submitting report">
+            <AlertTriangle size={17} aria-hidden="true" />
+            Submit report
           </Button>
         </footer>
       </section>
@@ -101,4 +118,4 @@ const ReportModal = ({ isOpen, onClose, onModel, targetId }: ReportModalProps) =
   );
 };
 
-export default ReportModal;
+export default memo(ReportModal);

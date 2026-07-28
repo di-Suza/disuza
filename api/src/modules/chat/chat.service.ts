@@ -615,6 +615,10 @@ class ChatService {
     }));
   }
 
+  getUnreadMessagesCount(userId: string) {
+    return this.chats.getUnreadMessagesCount(userId);
+  }
+
   async getMessages(conversationId: string, userId: string, pageInput: unknown, limitInput: unknown) {
     const conversation = await this.chats.findConversationForUser(conversationId, userId);
 

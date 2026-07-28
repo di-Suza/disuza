@@ -3,6 +3,7 @@ import { memo } from 'react';
 import { createPortal } from 'react-dom';
 
 import { canDeleteComment, formatCommentTime, getCommentAvatarUrl } from '@/features/comments/model/comment.helpers';
+import type { CommentItem } from '@/features/comments/model/comment.types';
 import type { Post } from '@/features/posts/model/post.types';
 import Button from '@/shared/ui/Button';
 import Input from '@/shared/ui/Input';
@@ -17,6 +18,56 @@ type CommentModalProps = {
   onClose: () => void;
   post: Post;
 };
+
+type CommentThreadProps = {
+  comment: CommentItem;
+  currentUserId?: string;
+  highlightMyComments: boolean;
+  isDeleting: boolean;
+  onDeleteComment: (commentId: string, parentCommentId?: string | null) => void;
+  onStartReply: (comment: CommentItem) => void;
+};
+
+const CommentThread = memo(({
+  comment,
+  currentUserId,
+  highlightMyComments,
+  isDeleting,
+  onDeleteComment,
+  onStartReply,
+}: CommentThreadProps) => {
+  const avatarUrl = getCommentAvatarUrl(comment);
+  const isMine = highlightMyComments && comment.user?._id === currentUserId;
+
+  return (
+    <div className="comment-thread">
+      <article className={cn('comment-item', isMine && 'comment-item--mine')}>
+        <span className="comment-avatar">
+          {avatarUrl ? <img src={avatarUrl} alt="" /> : <UserRound size={18} aria-hidden="true" />}
+        </span>
+        <div className="comment-item__body">
+          <div className="comment-item__meta">
+            <strong>{comment.user?.userName || 'Disuza user'}</strong>
+            <span>{formatCommentTime(comment.createdAt)}</span>
+          </div>
+          <p>{comment.comment}</p>
+          <button type="button" className="comment-item__reply" onClick={() => onStartReply(comment)}>
+            <MessageCircleReply size={14} aria-hidden="true" />Reply
+          </button>
+        </div>
+        {canDeleteComment(comment, currentUserId) && (
+          <Button variant="danger" className="button--icon comment-item__delete" onClick={() => onDeleteComment(comment._id)} disabled={isDeleting} aria-label="Delete comment">
+            <Trash2 size={15} aria-hidden="true" />
+          </Button>
+        )}
+      </article>
+
+      <CommentReplies parentComment={comment} userId={currentUserId} onDeleteComment={onDeleteComment} />
+    </div>
+  );
+});
+
+CommentThread.displayName = 'CommentThread';
 
 const CommentModal = ({ isOpen, onClose, post }: CommentModalProps) => {
   const {
@@ -37,6 +88,7 @@ const CommentModal = ({ isOpen, onClose, post }: CommentModalProps) => {
     isError,
     isFetching,
     isLoading,
+    isPosting,
     refetch,
     replyTarget,
     setCommentText,
@@ -73,45 +125,25 @@ const CommentModal = ({ isOpen, onClose, post }: CommentModalProps) => {
             </div>
           ) : (
             <div className="comments-list">
-              {allComments.map((comment) => {
-                const avatarUrl = getCommentAvatarUrl(comment);
-                const isMine = highlightMyComments && comment.user?._id === currentUser?._id;
-
-                return (
-                  <div className="comment-thread" key={comment._id}>
-                    <article className={cn('comment-item', isMine && 'comment-item--mine')}>
-                      <span className="comment-avatar">
-                        {avatarUrl ? <img src={avatarUrl} alt="" /> : <UserRound size={18} aria-hidden="true" />}
-                      </span>
-                      <div className="comment-item__body">
-                        <div className="comment-item__meta">
-                          <strong>{comment.user?.userName || 'Disuza user'}</strong>
-                          <span>{formatCommentTime(comment.createdAt)}</span>
-                        </div>
-                        <p>{comment.comment}</p>
-                        <button type="button" className="comment-item__reply" onClick={() => handleStartReply(comment)}>
-                          <MessageCircleReply size={14} aria-hidden="true" />Reply
-                        </button>
-                      </div>
-                      {canDeleteComment(comment, currentUser?._id) && (
-                        <Button variant="danger" className="button--icon comment-item__delete" onClick={() => handleDeleteComment(comment._id)} disabled={isDeleting} aria-label="Delete comment">
-                          <Trash2 size={15} aria-hidden="true" />
-                        </Button>
-                      )}
-                    </article>
-
-                    <CommentReplies parentComment={comment} userId={currentUser?._id} onDeleteComment={handleDeleteComment} />
-                  </div>
-                );
-              })}
+              {allComments.map((comment) => (
+                <CommentThread
+                  key={comment._id}
+                  comment={comment}
+                  currentUserId={currentUser?._id}
+                  highlightMyComments={highlightMyComments}
+                  isDeleting={isDeleting}
+                  onDeleteComment={handleDeleteComment}
+                  onStartReply={handleStartReply}
+                />
+              ))}
             </div>
           )}
 
           {hasMore && (
             <div className="comments-load-more">
-              <Button variant="secondary" onClick={handleLoadMore} disabled={isFetching}>
-                {isFetching ? <LoadingSpinner inline label="Loading comments" size={16} /> : <ChevronDown size={16} aria-hidden="true" />}
-                {!isFetching && 'Load more comments'}
+              <Button variant="secondary" onClick={handleLoadMore} isLoading={isFetching} loadingLabel="Loading comments">
+                <ChevronDown size={16} aria-hidden="true" />
+                Load more comments
               </Button>
             </div>
           )}
@@ -136,7 +168,7 @@ const CommentModal = ({ isOpen, onClose, post }: CommentModalProps) => {
               className={cn('comments-composer__input', emptyError && 'comments-composer__input--error')}
               maxLength={1000}
             />
-            <Button type="submit" className="button--icon" aria-label={replyTarget ? 'Post reply' : 'Post comment'}>
+            <Button type="submit" className="button--icon" isLoading={isPosting} loadingLabel={replyTarget ? 'Posting reply' : 'Posting comment'} aria-label={replyTarget ? 'Post reply' : 'Post comment'}>
               <Send size={18} aria-hidden="true" />
             </Button>
           </div>

@@ -26,7 +26,7 @@ import {
   Users,
   type LucideIcon,
 } from 'lucide-react';
-import { lazy, Suspense, useState, type ReactNode } from 'react';
+import { lazy, memo, Suspense, useCallback, useMemo, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 
 import ErrorBoundary from '@/shared/components/ErrorBoundary/ErrorBoundary';
@@ -98,7 +98,7 @@ const ProfileSection = ({
   </ErrorBoundary>
 );
 
-const ProfileStat = ({
+const ProfileStat = memo(({
   disabled,
   icon: Icon,
   label,
@@ -127,9 +127,11 @@ const ProfileStat = ({
   }
 
   return <span className="profile-preview-stat">{content}</span>;
-};
+});
 
-const BlockConfirmModal = ({
+ProfileStat.displayName = 'ProfileStat';
+
+const BlockConfirmModal = memo(({
   isLoading,
   isOpen,
   onClose,
@@ -157,15 +159,16 @@ const BlockConfirmModal = ({
         <p>They will not be able to follow you, message you, send collab requests, or interact with your profile until you unblock them.</p>
         <footer className="report-modal__footer">
           <Button variant="secondary" onClick={onClose} disabled={isLoading}>Cancel</Button>
-          <Button variant="danger" onClick={onConfirm} disabled={isLoading}>
-            {isLoading && <Loader2 className="spin" size={17} aria-hidden="true" />}
+          <Button variant="danger" onClick={onConfirm} isLoading={isLoading} loadingLabel="Blocking user">
             Block
           </Button>
         </footer>
       </section>
     </div>
   );
-};
+});
+
+BlockConfirmModal.displayName = 'BlockConfirmModal';
 
 const ProfilePage = () => {
   const [isFeedbackOpen, setFeedbackOpen] = useState(false);
@@ -198,6 +201,54 @@ const ProfilePage = () => {
     projectPosts,
     refetch,
   } = useProfilePage();
+  const image = useMemo(() => avatarUrl(profileUser?.profilePicture?.url), [profileUser?.profilePicture?.url]);
+  const skills = useMemo(() => listToChips(profileUser?.skills), [profileUser?.skills]);
+  const handles = useMemo(() => listToHandles(profileUser?.handles), [profileUser?.handles]);
+  const interests = useMemo(() => listToChips(profileUser?.interests), [profileUser?.interests]);
+  const languages = useMemo(() => listToChips(profileUser?.languages), [profileUser?.languages]);
+  const experiences = useMemo(
+    () => listToRecords<{ companyName?: string; role?: string; timePeriod?: string }>(profileUser?.experiences),
+    [profileUser?.experiences],
+  );
+  const educations = useMemo(
+    () => listToRecords<{ collegeName?: string; course?: string; timePeriod?: string }>(profileUser?.educations),
+    [profileUser?.educations],
+  );
+  const profileAddress = useMemo(() => formatAddress(profileUser?.address), [profileUser?.address]);
+  const handleToggleProfileMenu = useCallback(() => {
+    setProfileMenuOpen((isOpen) => !isOpen);
+  }, []);
+  const handleOpenFeedback = useCallback(() => {
+    setFeedbackOpen(true);
+  }, []);
+  const handleCloseFeedback = useCallback(() => {
+    setFeedbackOpen(false);
+  }, []);
+  const handleOpenFollowers = useCallback(() => {
+    openList('followers');
+  }, [openList]);
+  const handleOpenFollowing = useCallback(() => {
+    openList('following');
+  }, [openList]);
+  const handleOpenReport = useCallback(() => {
+    setProfileMenuOpen(false);
+    openReport();
+  }, [openReport]);
+  const handleOpenBlockConfirm = useCallback(() => {
+    setProfileMenuOpen(false);
+    setBlockConfirmOpen(true);
+  }, []);
+  const handleCloseBlockConfirm = useCallback(() => {
+    setBlockConfirmOpen(false);
+  }, []);
+  const handleConfirmBlock = useCallback(async () => {
+    await handleBlockToggle();
+    setBlockConfirmOpen(false);
+  }, [handleBlockToggle]);
+  const handleUnblock = useCallback(async () => {
+    setProfileMenuOpen(false);
+    await handleBlockToggle();
+  }, [handleBlockToggle]);
 
   if (isOwnProfile) {
     return null;
@@ -224,40 +275,12 @@ const ProfilePage = () => {
     );
   }
 
-  const image = avatarUrl(profileUser.profilePicture?.url);
-  const skills = listToChips(profileUser.skills);
-  const handles = listToHandles(profileUser.handles);
-  const interests = listToChips(profileUser.interests);
-  const languages = listToChips(profileUser.languages);
-  const experiences = listToRecords<{ companyName?: string; role?: string; timePeriod?: string }>(profileUser.experiences);
-  const educations = listToRecords<{ collegeName?: string; course?: string; timePeriod?: string }>(profileUser.educations);
   const relationshipList = listMode === 'followers' ? followers : following;
   const isLimitedProfile = Boolean(profileUser.blockedProfile || profileUser.isBlocked || profileUser.hasBlockedMe);
   const canReportProfile = !isLimitedProfile;
   const canSendFeedback = canReportProfile && Boolean(profileUser._id && profileUser._id !== currentUserId);
   const profileBlockedByViewer = Boolean(profileUser.isBlocked);
   const profileBlockedViewer = Boolean(profileUser.hasBlockedMe);
-  const profileAddress = formatAddress(profileUser.address);
-
-  const handleOpenReport = () => {
-    setProfileMenuOpen(false);
-    openReport();
-  };
-
-  const handleOpenBlockConfirm = () => {
-    setProfileMenuOpen(false);
-    setBlockConfirmOpen(true);
-  };
-
-  const handleConfirmBlock = async () => {
-    await handleBlockToggle();
-    setBlockConfirmOpen(false);
-  };
-
-  const handleUnblock = async () => {
-    setProfileMenuOpen(false);
-    await handleBlockToggle();
-  };
 
   return (
     <main className="dashboard-shell dashboard-shell--wide">
@@ -272,8 +295,8 @@ const ProfilePage = () => {
               <h1>{profileUser.userName}</h1>
               <p className="profile-warning">You blocked this user.</p>
             </div>
-            <Button onClick={handleUnblock} disabled={isMutating} className="profile-hero__unblock">
-              {isMutating ? <Loader2 className="spin" size={17} aria-hidden="true" /> : <LockOpen size={18} aria-hidden="true" />}
+            <Button onClick={handleUnblock} className="profile-hero__unblock" isLoading={isMutating} loadingLabel="Unblocking user">
+              <LockOpen size={18} aria-hidden="true" />
               Unblock User
             </Button>
           </div>
@@ -297,7 +320,7 @@ const ProfilePage = () => {
                         type="button"
                         aria-label="Profile options"
                         className="profile-hero__menu-button"
-                        onClick={() => setProfileMenuOpen((isOpen) => !isOpen)}
+                        onClick={handleToggleProfileMenu}
                       >
                         <MoreVertical size={18} aria-hidden="true" />
                       </button>
@@ -327,8 +350,8 @@ const ProfilePage = () => {
                   )}
                   <div className="profile-preview-header__stats">
                     <ProfileStat label="Posts" value={Number(profileUser.postsCount || normalPosts.length + projectPosts.length || 0)} />
-                    <ProfileStat icon={Users} label="Followers" value={followersCount} onClick={() => openList('followers')} disabled={profileBlockedViewer} />
-                    <ProfileStat icon={UserCheck} label="Following" value={followingCount} onClick={() => openList('following')} disabled={profileBlockedViewer} />
+                    <ProfileStat icon={Users} label="Followers" value={followersCount} onClick={handleOpenFollowers} disabled={profileBlockedViewer} />
+                    <ProfileStat icon={UserCheck} label="Following" value={followingCount} onClick={handleOpenFollowing} disabled={profileBlockedViewer} />
                     <ProfileStat icon={Star} label="Score" value={Number(profileUser.profileContributions || 0)} />
                   </div>
                 </div>
@@ -341,12 +364,12 @@ const ProfilePage = () => {
                 </Button>
               ) : (
                 <>
-                  <Button onClick={handleFollowToggle} disabled={isMutating} variant={profileUser.isFollowed ? 'secondary' : 'primary'} className="profile-hero__follow">
+                  <Button onClick={handleFollowToggle} variant={profileUser.isFollowed ? 'secondary' : 'primary'} className="profile-hero__follow" isLoading={isMutating} loadingLabel={profileUser.isFollowed ? 'Unfollowing user' : 'Following user'}>
                     {profileUser.isFollowed ? <Users size={18} aria-hidden="true" /> : <UserPlus size={18} aria-hidden="true" />}
                     {profileUser.isFollowed ? 'Following' : 'Follow'}
                   </Button>
                   {canSendFeedback && (
-                    <Button onClick={() => setFeedbackOpen(true)} variant="secondary" className="profile-hero__feedback">
+                    <Button onClick={handleOpenFeedback} variant="secondary" className="profile-hero__feedback">
                       <SendHorizontal size={18} aria-hidden="true" />
                       Send Feedback
                     </Button>
@@ -371,7 +394,7 @@ const ProfilePage = () => {
             {profileUser.about && (
               <ProfileSection icon={User} title="About">
                 <p className="profile-copy">{profileUser.about}</p>
-                {isFetching && <small className="profile-refresh-note">Refreshing profile...</small>}
+                {isFetching && <ProfileSectionLoader />}
               </ProfileSection>
             )}
 
@@ -461,7 +484,7 @@ const ProfilePage = () => {
           <ErrorBoundary variant="inline" title="Feedback modal could not be rendered." resetKeys={[isFeedbackOpen]} showReload={false}>
             <SendFeedbackModal
               isOpen={isFeedbackOpen}
-              onClose={() => setFeedbackOpen(false)}
+              onClose={handleCloseFeedback}
               feedbackOn="User"
               receiverId={profileUser._id}
               receiverName={profileUser.userName}
@@ -475,7 +498,7 @@ const ProfilePage = () => {
         <BlockConfirmModal
           isOpen={isBlockConfirmOpen}
           isLoading={isMutating}
-          onClose={() => setBlockConfirmOpen(false)}
+          onClose={handleCloseBlockConfirm}
           onConfirm={handleConfirmBlock}
           userName={profileUser.userName}
         />

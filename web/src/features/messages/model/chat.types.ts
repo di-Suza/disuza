@@ -54,6 +54,7 @@ export type ChatUser = {
 
 export type ChatMessage = {
   _id: string;
+  clientMessageId?: string;
   conversationId: string;
   sender: string;
   senderInfo?: ChatUser;
@@ -72,6 +73,7 @@ export type ChatMessage = {
   deliveredTo?: string[];
   receiverId?: string;
   conversationIsUnread?: boolean;
+  sendState?: 'pending' | 'failed';
   createdAt?: string;
   updatedAt?: string;
 };
@@ -101,6 +103,12 @@ export type GetConversationsResponse = {
   success: boolean;
   message: string;
   conversations: ChatConversation[];
+};
+
+export type UnreadMessagesCountResponse = {
+  success: boolean;
+  message: string;
+  unreadCount: number;
 };
 
 export type GetMessagesQueryArgs = {

@@ -1,4 +1,5 @@
 import { HeartOff, Loader2, MessageSquare, SendHorizontal, Trash2, UserMinus, UserRound, type LucideIcon } from 'lucide-react';
+import { memo } from 'react';
 import { Link } from 'react-router-dom';
 
 import { getPostMedia, isVideoMedia } from '@/features/posts/model/post.helpers';
@@ -55,8 +56,12 @@ const ActionButton = ({ children, icon: Icon, isLoading, onClick }: {
   onClick: () => void;
 }) => (
   <button type="button" className={children ? 'activity-action-v1' : 'activity-action-v1 is-icon'} onClick={onClick} disabled={isLoading}>
-    {isLoading ? <Loader2 className="spin" size={14} aria-hidden="true" /> : <Icon size={14} aria-hidden="true" />}
-    {children}
+    {isLoading ? <Loader2 className="spin" size={14} aria-hidden="true" /> : (
+      <>
+        <Icon size={14} aria-hidden="true" />
+        {children}
+      </>
+    )}
   </button>
 );
 
@@ -137,5 +142,5 @@ const DashboardActivityItem = ({ activity, isLoading, onAction, onNavigate, type
   );
 };
 
-export default DashboardActivityItem;
+export default memo(DashboardActivityItem);
 export type { DashboardActivityKind };

@@ -1,5 +1,5 @@
-import { Loader2, Send, X } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useState, type FormEvent, type KeyboardEvent } from 'react';
+import { Send, X } from 'lucide-react';
+import { memo, useCallback, useEffect, useMemo, useState, type ChangeEvent, type FormEvent, type KeyboardEvent } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 
@@ -49,6 +49,14 @@ const SendFeedbackModal = ({ feedbackOn, isOpen, onClose, postId, receiverId, re
   }, [isOpen, onClose]);
 
   const receiverLabel = useMemo(() => receiverName?.trim() || 'this user', [receiverName]);
+
+  const handleMessageChange = useCallback((event: ChangeEvent<HTMLTextAreaElement>) => {
+    setMessage(event.target.value);
+  }, []);
+
+  const handleFeedbackToggle = useCallback((event: ChangeEvent<HTMLInputElement>) => {
+    setSendAsFeedback(event.target.checked);
+  }, []);
 
   const handleSubmit = useCallback(async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -121,7 +129,7 @@ const SendFeedbackModal = ({ feedbackOn, isOpen, onClose, postId, receiverId, re
           <h1>Send Your Feedback to {receiverLabel}</h1>
           <label className="feedback-modal-v1__toggle">
             <span>As feedback</span>
-            <input type="checkbox" checked={sendAsFeedback} onChange={(event) => setSendAsFeedback(event.target.checked)} />
+            <input type="checkbox" checked={sendAsFeedback} onChange={handleFeedbackToggle} />
             <span className={`feedback-modal-v1__switch ${sendAsFeedback ? 'is-on' : ''}`} aria-hidden="true">
               <span />
             </span>
@@ -134,7 +142,7 @@ const SendFeedbackModal = ({ feedbackOn, isOpen, onClose, postId, receiverId, re
             <textarea
               className="feedback-modal-v1__textarea"
               value={message}
-              onChange={(event) => setMessage(event.target.value)}
+              onChange={handleMessageChange}
               onKeyDown={handleTextareaKeyDown}
               placeholder="Type here..."
               maxLength={2000}
@@ -144,9 +152,9 @@ const SendFeedbackModal = ({ feedbackOn, isOpen, onClose, postId, receiverId, re
           </label>
           <div className="feedback-modal-v1__footer">
             <small>{message.length}/2000</small>
-            <Button type="submit" variant="secondary" disabled={isLoading}>
-            {isLoading ? <Loader2 className="spin" size={17} aria-hidden="true" /> : <Send size={17} aria-hidden="true" />}
-            Send
+            <Button type="submit" variant="secondary" isLoading={isLoading} loadingLabel="Sending feedback">
+              <Send size={17} aria-hidden="true" />
+              Send
             </Button>
           </div>
         </div>
@@ -156,4 +164,4 @@ const SendFeedbackModal = ({ feedbackOn, isOpen, onClose, postId, receiverId, re
   );
 };
 
-export default SendFeedbackModal;
+export default memo(SendFeedbackModal);

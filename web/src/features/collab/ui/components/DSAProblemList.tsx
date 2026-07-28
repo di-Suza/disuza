@@ -1,5 +1,9 @@
+import { memo, useMemo } from 'react';
+
 import type { Problem } from '@/features/collab/model/collab.types';
 import DSAProblemAccordion from './DSAProblemAccordion';
+
+const EMPTY_ADDED_PROBLEM_IDS: string[] = [];
 
 type DSAProblemListProps = {
   problems: Problem[];
@@ -9,16 +13,19 @@ type DSAProblemListProps = {
   onProblemAdded?: (problemId: string) => void;
 };
 
-const DSAProblemList = ({ problems, title = 'DSA Problems', roomId, addedProblemIds = [], onProblemAdded }: DSAProblemListProps) => {
-  const addedProblemIdSet = new Set(addedProblemIds);
+const DSAProblemList = ({ problems, title = 'DSA Problems', roomId, addedProblemIds = EMPTY_ADDED_PROBLEM_IDS, onProblemAdded }: DSAProblemListProps) => {
+  const addedProblemIdSet = useMemo(() => new Set(addedProblemIds), [addedProblemIds]);
+  const problemsWithAddedState = useMemo(() => problems.map((problem) => (
+    addedProblemIdSet.has(problem._id) ? { ...problem, isAdded: true } : problem
+  )), [addedProblemIdSet, problems]);
 
   return (
     <div className="collab-dsa-list">
       <h2>{title}</h2>
-      {problems.map((problem) => (
+      {problemsWithAddedState.map((problem) => (
         <DSAProblemAccordion
           key={problem._id}
-          problem={addedProblemIdSet.has(problem._id) ? { ...problem, isAdded: true } : problem}
+          problem={problem}
           roomId={roomId}
           onProblemAdded={onProblemAdded}
         />
@@ -27,4 +34,4 @@ const DSAProblemList = ({ problems, title = 'DSA Problems', roomId, addedProblem
   );
 };
 
-export default DSAProblemList;
+export default memo(DSAProblemList);

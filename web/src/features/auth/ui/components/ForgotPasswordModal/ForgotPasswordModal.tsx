@@ -1,4 +1,5 @@
-import { ArrowRight, Check, Eye, EyeOff, Mail, X } from 'lucide-react';
+import { ArrowRight, Check, Eye, EyeOff, Loader2, Mail, X } from 'lucide-react';
+import { memo } from 'react';
 import { createPortal } from 'react-dom';
 
 import Button from '@/shared/ui/Button';
@@ -77,8 +78,8 @@ const ForgotPasswordModal = ({ isOpen, onClose }: ForgotPasswordModalProps) => {
               )}
             </label>
             {error && <p className="form-error">{error}</p>}
-            <Button onClick={handleSendOtp} disabled={!isEmailStepActionEnabled || isSendingOtp}>
-              {isSendingOtp ? 'Sending OTP...' : 'Send OTP'}
+            <Button onClick={handleSendOtp} disabled={!isEmailStepActionEnabled} isLoading={isSendingOtp} loadingLabel="Sending OTP">
+              Send OTP
               <ArrowRight size={18} aria-hidden="true" />
             </Button>
           </div>
@@ -93,10 +94,10 @@ const ForgotPasswordModal = ({ isOpen, onClose }: ForgotPasswordModalProps) => {
             {otpResponse && <p className="otp-attempts">Remaining Attempts: {otpResponse.remainingAttempts}</p>}
             {error && <p className="form-error">{error}</p>}
             <button type="button" className="auth-inline-action" onClick={handleSendOtp} disabled={isSendingOtp}>
-              {isSendingOtp ? 'Re-sending OTP...' : 'Resend Code'}
+              {isSendingOtp ? <Loader2 className="spin" size={16} aria-hidden="true" /> : 'Resend Code'}
             </button>
-            <Button onClick={handleVerifyOtp} disabled={!isOtpReady || isVerifyingOtp}>
-              {isVerifyingOtp ? 'Verifying...' : 'Verify Code'}
+            <Button onClick={handleVerifyOtp} disabled={!isOtpReady} isLoading={isVerifyingOtp} loadingLabel="Verifying OTP">
+              Verify Code
               <ArrowRight size={18} aria-hidden="true" />
             </Button>
           </div>
@@ -127,8 +128,8 @@ const ForgotPasswordModal = ({ isOpen, onClose }: ForgotPasswordModalProps) => {
                 {doPasswordsMatch ? 'Passwords match' : "Passwords don't match"}
               </p>
             )}
-            <Button onClick={handleResetPassword} disabled={!canUpdatePassword || isUpdatingPassword}>
-              {isUpdatingPassword ? 'Updating Password...' : 'Update Password'}
+            <Button onClick={handleResetPassword} disabled={!canUpdatePassword} isLoading={isUpdatingPassword} loadingLabel="Updating password">
+              Update Password
               <Check size={18} aria-hidden="true" />
             </Button>
           </div>
@@ -143,4 +144,4 @@ const ForgotPasswordModal = ({ isOpen, onClose }: ForgotPasswordModalProps) => {
   );
 };
 
-export default ForgotPasswordModal;
+export default memo(ForgotPasswordModal);
