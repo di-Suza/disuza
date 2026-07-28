@@ -1,4 +1,5 @@
 import { X } from 'lucide-react';
+import { memo, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 
@@ -41,16 +42,16 @@ const CollabPermissionModal = ({ isOpen, onClose, otherUser = 'this user', conve
   const statusData = collabStatus?.data;
   const isBusy = isStatusLoading || isStatusFetching || isSendingRequest || isAcceptingRequest;
 
-  const handleSendCollabRequest = async () => {
+  const handleSendCollabRequest = useCallback(async () => {
     if (!conversationId) return;
     try {
       await sendCollabRequest(conversationId).unwrap();
     } catch (error) {
       showError(getErrorMessage(error, 'Something went wrong while fetching status'));
     }
-  };
+  }, [conversationId, sendCollabRequest, showError]);
 
-  const handleOpenAcceptedRoom = async () => {
+  const handleOpenAcceptedRoom = useCallback(async () => {
     if (!statusData || statusData.status !== 'accepted') return;
     const notificationId = statusData.acceptedNotificationId;
 
@@ -61,9 +62,9 @@ const CollabPermissionModal = ({ isOpen, onClose, otherUser = 'this user', conve
     } finally {
       navigate(`/collab/${statusData.roomId}`);
     }
-  };
+  }, [deleteNotification, navigate, statusData]);
 
-  const handleAcceptCollab = async () => {
+  const handleAcceptCollab = useCallback(async () => {
     if (!conversationId) return;
 
     try {
@@ -76,7 +77,11 @@ const CollabPermissionModal = ({ isOpen, onClose, otherUser = 'this user', conve
     } catch (error) {
       showError(getErrorMessage(error, 'Something went wrong while accepting collab request'));
     }
-  };
+  }, [acceptCollabRequest, conversationId, navigate, onClose, showError]);
+
+  const handleRetryStatus = useCallback(() => {
+    void refetchStatus();
+  }, [refetchStatus]);
 
   if (!isOpen) return null;
 
@@ -93,7 +98,7 @@ const CollabPermissionModal = ({ isOpen, onClose, otherUser = 'this user', conve
           <div className="collab-modal-state">
             <h3>Collab status could not be loaded</h3>
             <p>{getErrorMessage(statusError, 'Please try again.')}</p>
-            <Button variant="secondary" onClick={() => refetchStatus()}>Retry</Button>
+            <Button variant="secondary" onClick={handleRetryStatus}>Retry</Button>
           </div>
         ) : (
           <>
@@ -142,4 +147,4 @@ const CollabPermissionModal = ({ isOpen, onClose, otherUser = 'this user', conve
   );
 };
 
-export default CollabPermissionModal;
+export default memo(CollabPermissionModal);

@@ -1,4 +1,5 @@
 import { AlertCircle, CheckCircle, Clock, Loader, XCircle } from 'lucide-react';
+import { memo } from 'react';
 
 import type { CodeRunResult } from '@/features/collab/model/collab.types';
 import { getCodeRunSummary } from '../../model/codeExecution.helpers.js';
@@ -66,4 +67,4 @@ const ResultsPanel = ({ results, isRunning }: ResultsPanelProps) => {
   );
 };
 
-export default ResultsPanel;
+export default memo(ResultsPanel);

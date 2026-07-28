@@ -2012,6 +2012,19 @@
   contain-intrinsic-size: 760px;
 }
 
+.home-feed-exact__virtual-list {
+  position: relative;
+  width: 100%;
+}
+
+.home-feed-exact__virtual-row {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  padding-bottom: 16px;
+}
+
 .home-feed-exact__sentinel {
   display: flex;
   justify-content: center;

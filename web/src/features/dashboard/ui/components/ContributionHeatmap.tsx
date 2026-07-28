@@ -1,5 +1,5 @@
 import { Activity, BarChart3, Eye, FileText, Heart, MessageCircle, MessageSquareText, Repeat2, UserPlus } from 'lucide-react';
-import { useState } from 'react';
+import { memo, useMemo, useState } from 'react';
 
 import { useGetDashboardAnalyticsQuery } from '@/features/users/api/user.api';
 import type { DashboardAnalyticsRange, DashboardAnalyticsTotals } from '@/features/users/model/user.types';
@@ -44,13 +44,14 @@ const ContributionHeatmap = ({ heatmap, showAnalytics = false }: ContributionHea
     { range: analyticsRange },
     { skip: !showAnalytics },
   );
-  const sourceDays = toContributionDays(heatmap);
-  const days = getSixMonthDays(sourceDays);
-  const total = sourceDays.reduce((sum, day) => sum + Number(day.totalCount || 0), 0);
+  const todayKey = new Date().toDateString();
+  const sourceDays = useMemo(() => toContributionDays(heatmap), [heatmap]);
+  const days = useMemo(() => getSixMonthDays(sourceDays), [sourceDays, todayKey]);
+  const total = useMemo(() => sourceDays.reduce((sum, day) => sum + Number(day.totalCount || 0), 0), [sourceDays]);
   const analytics = analyticsQuery.data?.analytics;
   const totals = analytics?.totals;
-  const series = analytics?.series || [];
-  const maxReach = Math.max(1, ...series.map((day) => Number(day.reach || 0)));
+  const series = useMemo(() => analytics?.series || [], [analytics?.series]);
+  const maxReach = useMemo(() => Math.max(1, ...series.map((day) => Number(day.reach || 0))), [series]);
 
   return (
     <section className="dashboard-heatmap-v1">
@@ -133,4 +134,4 @@ const ContributionHeatmap = ({ heatmap, showAnalytics = false }: ContributionHea
   );
 };
 
-export default ContributionHeatmap;
+export default memo(ContributionHeatmap);

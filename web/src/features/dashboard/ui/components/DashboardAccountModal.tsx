@@ -1,5 +1,5 @@
 import { Shield, Trash2, X } from 'lucide-react';
-import { useEffect, useState, type FormEvent } from 'react';
+import { memo, useCallback, useEffect, useState, type ChangeEvent, type FormEvent } from 'react';
 import { createPortal } from 'react-dom';
 
 import { useAppSelector } from '@/app/store/hooks';
@@ -47,7 +47,15 @@ const DashboardAccountModal = ({ isOpen, mode, onClose }: DashboardAccountModalP
     }
   }, [isOpen]);
 
-  const handlePasswordSubmit = async (event: FormEvent<HTMLFormElement>) => {
+  const handlePasswordChange = useCallback((event: ChangeEvent<HTMLInputElement>) => {
+    setPassword(event.target.value);
+  }, []);
+
+  const handleOtpChange = useCallback((event: ChangeEvent<HTMLInputElement>) => {
+    setOtp(event.target.value);
+  }, []);
+
+  const handlePasswordSubmit = useCallback(async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     try {
@@ -66,9 +74,9 @@ const DashboardAccountModal = ({ isOpen, mode, onClose }: DashboardAccountModalP
     } catch (error) {
       showError(getErrorMessage(error));
     }
-  };
+  }, [deleteAccount, isGoogleUser, onClose, password, sendOtp, showError, showSuccess, verifyPassword]);
 
-  const handleOtpSubmit = async (event: FormEvent<HTMLFormElement>) => {
+  const handleOtpSubmit = useCallback(async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     try {
@@ -80,7 +88,7 @@ const DashboardAccountModal = ({ isOpen, mode, onClose }: DashboardAccountModalP
     } catch (error) {
       showError(getErrorMessage(error));
     }
-  };
+  }, [deleteAccount, onClose, otp, showError, showSuccess, verifyOtp]);
 
   if (!isOpen) return null;
 
@@ -110,7 +118,7 @@ const DashboardAccountModal = ({ isOpen, mode, onClose }: DashboardAccountModalP
               {!isGoogleUser && (
                 <label className="field">
                   <span>Password</span>
-                  <Input type="password" value={password} onChange={(event) => setPassword(event.target.value)} placeholder="Current password" minLength={8} required />
+                  <Input type="password" value={password} onChange={handlePasswordChange} placeholder="Current password" minLength={8} required />
                 </label>
               )}
               <footer className="report-modal__footer">
@@ -126,7 +134,7 @@ const DashboardAccountModal = ({ isOpen, mode, onClose }: DashboardAccountModalP
               <p className="empty-copy">Enter the OTP sent to your account email.</p>
               <label className="field">
                 <span>OTP</span>
-                <Input value={otp} onChange={(event) => setOtp(event.target.value)} placeholder="6 digit OTP" inputMode="numeric" maxLength={6} required />
+                <Input value={otp} onChange={handleOtpChange} placeholder="6 digit OTP" inputMode="numeric" maxLength={6} required />
               </label>
               <footer className="report-modal__footer">
                 <Button variant="secondary" onClick={onClose}>Cancel</Button>
@@ -157,5 +165,5 @@ const DashboardAccountModal = ({ isOpen, mode, onClose }: DashboardAccountModalP
   );
 };
 
-export default DashboardAccountModal;
+export default memo(DashboardAccountModal);
 export type { DashboardAccountModalMode };

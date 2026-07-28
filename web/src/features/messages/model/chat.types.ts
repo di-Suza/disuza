@@ -105,6 +105,12 @@ export type GetConversationsResponse = {
   conversations: ChatConversation[];
 };
 
+export type UnreadMessagesCountResponse = {
+  success: boolean;
+  message: string;
+  unreadCount: number;
+};
+
 export type GetMessagesQueryArgs = {
   conversationId: string;
   page?: number;

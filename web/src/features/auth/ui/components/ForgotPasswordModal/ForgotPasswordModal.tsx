@@ -1,4 +1,5 @@
 import { ArrowRight, Check, Eye, EyeOff, Loader2, Mail, X } from 'lucide-react';
+import { memo } from 'react';
 import { createPortal } from 'react-dom';
 
 import Button from '@/shared/ui/Button';
@@ -143,4 +144,4 @@ const ForgotPasswordModal = ({ isOpen, onClose }: ForgotPasswordModalProps) => {
   );
 };
 
-export default ForgotPasswordModal;
+export default memo(ForgotPasswordModal);

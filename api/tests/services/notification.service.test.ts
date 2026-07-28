@@ -25,6 +25,7 @@ describe('NotificationService', () => {
     assert.equal(result.notifications.length, 1);
     assert.equal(result.notifications[0].contentId, undefined);
     assert.deepEqual(deletedIds, [notificationId]);
+    assert.equal(await service.getUnreadCount(userId), 3);
   });
 
   it('skips self and blocked notifications, emits creates/deletes, and removes content notifications', async () => {

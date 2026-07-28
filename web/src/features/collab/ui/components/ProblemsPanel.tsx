@@ -1,5 +1,5 @@
 import { CheckCircle, Clock, Code2, FileCode, Loader2, PanelLeftClose, Plus, Sparkles, Trash2 } from 'lucide-react';
-import { useEffect, useState, type MouseEvent } from 'react';
+import { memo, useEffect, useMemo, useState, type MouseEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { useRemoveProblemFromRoomMutation, useSelectProblemMutation } from '@/features/collab/api/problem.api';
@@ -51,7 +51,7 @@ const ProblemsPanel = ({ selectedProblem, problems, roomId, isSelectionLocked = 
   const [selectProblem, { isLoading: isSelecting }] = useSelectProblemMutation();
   const [removeProblemFromRoom, { isLoading: isRemoving }] = useRemoveProblemFromRoomMutation();
   const { showError } = useToast();
-  const addedProblemIds = problems.map((problem) => problem.problemId._id);
+  const addedProblemIds = useMemo(() => problems.map((problem) => problem.problemId._id), [problems]);
 
   useEffect(() => {
     if (!contextMenu) return;
@@ -222,4 +222,4 @@ const ProblemsPanel = ({ selectedProblem, problems, roomId, isSelectionLocked = 
   );
 };
 
-export default ProblemsPanel;
+export default memo(ProblemsPanel);

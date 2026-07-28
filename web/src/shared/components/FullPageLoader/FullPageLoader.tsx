@@ -1,3 +1,5 @@
+import { memo } from 'react';
+
 import './FullPageLoader.css';
 import LoadingSpinner from '@/shared/ui/LoadingSpinner';
 
@@ -11,4 +13,4 @@ const FullPageLoader = ({ label = 'Syncing workspace' }: FullPageLoaderProps) =>
   </div>
 );
 
-export default FullPageLoader;
+export default memo(FullPageLoader);

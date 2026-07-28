@@ -81,7 +81,7 @@ const formatTime = (value?: string) => {
   return new Intl.DateTimeFormat('en', { month: 'short', day: 'numeric' }).format(date);
 };
 
-const ActionItem = ({
+const ActionItem = memo(({
   active,
   count,
   disabled,
@@ -102,7 +102,9 @@ const ActionItem = ({
     </span>
     {count !== undefined && <small>{count}</small>}
   </button>
-);
+));
+
+ActionItem.displayName = 'ActionItem';
 
 const normalizeLink = (url?: string) => {
   const trimmedUrl = url?.trim();
@@ -112,7 +114,7 @@ const normalizeLink = (url?: string) => {
 
 const truncateUrl = (url: string) => url.replace(/^https?:\/\//i, '').replace(/\/$/, '');
 
-const PostVideoPlayer = ({
+const PostVideoPlayer = memo(({
   ariaLabel,
   className,
   onOpenPreview,
@@ -199,7 +201,9 @@ const PostVideoPlayer = ({
       </div>
     </div>
   );
-};
+});
+
+PostVideoPlayer.displayName = 'PostVideoPlayer';
 
 const PostCard = ({ className, fallbackAuthor, hideFeedbackAction = false, post, viewerId }: PostCardProps) => {
   const navigate = useNavigate();
@@ -267,6 +271,62 @@ const PostCard = ({ className, fallbackAuthor, hideFeedbackAction = false, post,
     setCurrentIndex((current) => (current + 1) % media.length);
   }, [media.length]);
 
+  const closeComments = useCallback(() => {
+    setCommentsOpen(false);
+  }, []);
+
+  const closeCollections = useCallback(() => {
+    setCollectionsOpen(false);
+  }, []);
+
+  const closeEdit = useCallback(() => {
+    setEditOpen(false);
+  }, []);
+
+  const closeFeedback = useCallback(() => {
+    setFeedbackOpen(false);
+  }, []);
+
+  const closeMediaPreview = useCallback(() => {
+    setMediaPreviewOpen(false);
+  }, []);
+
+  const closeReport = useCallback(() => {
+    setReportOpen(false);
+  }, []);
+
+  const closeShare = useCallback(() => {
+    setShareOpen(false);
+  }, []);
+
+  const closeAnalytics = useCallback(() => {
+    setAnalyticsOpen(false);
+  }, []);
+
+  const openComments = useCallback(() => {
+    setCommentsOpen(true);
+  }, []);
+
+  const openFeedback = useCallback(() => {
+    setFeedbackOpen(true);
+  }, []);
+
+  const openMediaPreview = useCallback(() => {
+    setMediaPreviewOpen(true);
+  }, []);
+
+  const toggleDropdown = useCallback(() => {
+    setShowDropdown((current) => !current);
+  }, []);
+
+  const closeDropdown = useCallback(() => {
+    setShowDropdown(false);
+  }, []);
+
+  const closeDeleteConfirm = useCallback(() => {
+    setDeleteConfirmOpen(false);
+  }, []);
+
   const selectAttachmentPanel = useCallback((panel: PostAttachmentPanel) => {
     setActiveAttachmentPanel(panel);
     setHasManuallySelectedAttachmentPanel(true);
@@ -295,12 +355,12 @@ const PostCard = ({ className, fallbackAuthor, hideFeedbackAction = false, post,
     if (!isMediaPreviewOpen) return;
 
     const handleEscape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setMediaPreviewOpen(false);
+      if (event.key === 'Escape') closeMediaPreview();
     };
 
     window.addEventListener('keydown', handleEscape);
     return () => window.removeEventListener('keydown', handleEscape);
-  }, [isMediaPreviewOpen]);
+  }, [closeMediaPreview, isMediaPreviewOpen]);
 
   const handleDelete = useCallback(async () => {
     try {
@@ -378,12 +438,12 @@ const PostCard = ({ className, fallbackAuthor, hideFeedbackAction = false, post,
           <div className="v1-post-card__top-actions">
             {post.isProjectPost && <span className="v1-post-card__project"><Sparkles size={12} aria-hidden="true" />Project</span>}
             <div className="v1-post-card__menu">
-              <button type="button" onClick={() => setShowDropdown((current) => !current)} aria-label="Post options">
+              <button type="button" onClick={toggleDropdown} aria-label="Post options">
                 <MoreHorizontal size={20} aria-hidden="true" />
               </button>
               {showDropdown && (
                 <>
-                  <button type="button" className="v1-post-card__scrim" onClick={() => setShowDropdown(false)} aria-label="Close post options" />
+                  <button type="button" className="v1-post-card__scrim" onClick={closeDropdown} aria-label="Close post options" />
                   <div className="v1-post-card__dropdown">
                     <button type="button" onClick={() => { setShowDropdown(false); setShareOpen(true); }}><Share2 size={16} />Share</button>
                     {isOwner && <button type="button" onClick={() => { setShowDropdown(false); setEditOpen(true); }}><Edit3 size={16} />Edit</button>}
@@ -474,12 +534,12 @@ const PostCard = ({ className, fallbackAuthor, hideFeedbackAction = false, post,
                   className="v1-post-card__media-main"
                   src={activeMedia.url}
                   variant="card"
-                  onOpenPreview={() => setMediaPreviewOpen(true)}
+                  onOpenPreview={openMediaPreview}
                 />
               ) : (
                 <img className="v1-post-card__media-main" src={activeMedia.url} alt={`Post content ${currentIndex + 1}`} loading="lazy" />
               )}
-              {!isVideoMedia(activeMedia) && <button type="button" className="v1-post-card__media-open" onClick={() => setMediaPreviewOpen(true)} aria-label="Open media preview" />}
+              {!isVideoMedia(activeMedia) && <button type="button" className="v1-post-card__media-open" onClick={openMediaPreview} aria-label="Open media preview" />}
 
               {media.length > 1 && currentIndex > 0 && <button type="button" className="v1-post-card__media-nav v1-post-card__media-nav--left" onClick={goToPrevious} aria-label="Previous media"><ChevronLeft size={20} /></button>}
               {media.length > 1 && currentIndex < media.length - 1 && <button type="button" className="v1-post-card__media-nav v1-post-card__media-nav--right" onClick={goToNext} aria-label="Next media"><ChevronRight size={20} /></button>}
@@ -502,9 +562,9 @@ const PostCard = ({ className, fallbackAuthor, hideFeedbackAction = false, post,
         <section className="v1-post-card__actions rich-post-card__actions">
           <div className="rich-post-card__action-left">
             <ActionItem label="Like" count={hideLikesCount ? undefined : Number(likesCount || 0)} active={isLiked} onClick={toggleLike} icon={<Heart size={20} className={isLiked ? 'is-filled' : ''} />} />
-            {!commentsDisabled && <ActionItem label="Comment" count={Number(counts.comments || 0)} onClick={() => setCommentsOpen(true)} icon={<MessageCircle size={20} />} />}
+            {!commentsDisabled && <ActionItem label="Comment" count={Number(counts.comments || 0)} onClick={openComments} icon={<MessageCircle size={20} />} />}
             {!isOwner && <ActionItem label="Repost" count={Number(repostsCount || 0)} active={isReposted} disabled={isRepostUpdating} onClick={toggleRepost} icon={<Repeat2 size={20} />} />}
-            {!hideFeedbackAction && !isOwner && ownerId && <ActionItem label="Feedback" count={Number(counts.feedbacks || 0)} onClick={() => setFeedbackOpen(true)} icon={<SendHorizontal size={20} />} />}
+            {!hideFeedbackAction && !isOwner && ownerId && <ActionItem label="Feedback" count={Number(counts.feedbacks || 0)} onClick={openFeedback} icon={<SendHorizontal size={20} />} />}
           </div>
           <div className="v1-post-card__save-action rich-post-card__save-right">
             <ActionItem label="Save" active={isSaved} disabled={isSaveUpdating} onClick={handleSaveClick} icon={<Bookmark size={20} className={isSaved ? 'is-filled' : ''} />} />
@@ -527,12 +587,12 @@ const PostCard = ({ className, fallbackAuthor, hideFeedbackAction = false, post,
       </div>
 
       <Suspense fallback={null}>
-        {isEditOpen && <PostComposerModal isOpen={isEditOpen} mode="edit" onClose={() => setEditOpen(false)} post={editablePost || post} isPostLoading={isPostFetching && !editablePost} />}
-        {isCommentsOpen && <CommentModal isOpen={isCommentsOpen} onClose={() => setCommentsOpen(false)} post={post} />}
-        {isCollectionsOpen && <ManageSaveCollectionsModal isOpen={isCollectionsOpen} onClose={() => setCollectionsOpen(false)} postId={post._id} onSaved={markSaved} />}
-        {isReportOpen && <ReportModal isOpen={isReportOpen} onClose={() => setReportOpen(false)} targetId={post._id} onModel="Post" />}
-        {isShareOpen && <SharePostModal isOpen={isShareOpen} onClose={() => setShareOpen(false)} post={post} />}
-        {isAnalyticsOpen && <PostAnalyticsModal isOpen={isAnalyticsOpen} onClose={() => setAnalyticsOpen(false)} postId={post._id} />}
+        {isEditOpen && <PostComposerModal isOpen={isEditOpen} mode="edit" onClose={closeEdit} post={editablePost || post} isPostLoading={isPostFetching && !editablePost} />}
+        {isCommentsOpen && <CommentModal isOpen={isCommentsOpen} onClose={closeComments} post={post} />}
+        {isCollectionsOpen && <ManageSaveCollectionsModal isOpen={isCollectionsOpen} onClose={closeCollections} postId={post._id} onSaved={markSaved} />}
+        {isReportOpen && <ReportModal isOpen={isReportOpen} onClose={closeReport} targetId={post._id} onModel="Post" />}
+        {isShareOpen && <SharePostModal isOpen={isShareOpen} onClose={closeShare} post={post} />}
+        {isAnalyticsOpen && <PostAnalyticsModal isOpen={isAnalyticsOpen} onClose={closeAnalytics} postId={post._id} />}
         {isDeleteConfirmOpen && (
           <ConfirmDialog
             isOpen={isDeleteConfirmOpen}
@@ -540,14 +600,14 @@ const PostCard = ({ className, fallbackAuthor, hideFeedbackAction = false, post,
             title="Delete post?"
             description="This post will be permanently removed from your profile, feed, saves, and related activity."
             confirmLabel="Delete"
-            onCancel={() => setDeleteConfirmOpen(false)}
+            onCancel={closeDeleteConfirm}
             onConfirm={handleDelete}
           />
         )}
       </Suspense>
       {isMediaPreviewOpen && activeMedia && createPortal(
         <div className="v1-post-card__media-preview" role="dialog" aria-modal="true" aria-label="Media preview">
-          <button type="button" className="v1-post-card__media-preview-backdrop" onClick={() => setMediaPreviewOpen(false)} aria-label="Close media preview" />
+          <button type="button" className="v1-post-card__media-preview-backdrop" onClick={closeMediaPreview} aria-label="Close media preview" />
           <div className="v1-post-card__media-preview-stage">
             {isVideoMedia(activeMedia) ? (
               <PostVideoPlayer
@@ -560,7 +620,7 @@ const PostCard = ({ className, fallbackAuthor, hideFeedbackAction = false, post,
               <img className="v1-post-card__media-preview-media" src={activeMedia.url} alt={`Post content ${currentIndex + 1}`} />
             )}
           </div>
-          <button type="button" className="v1-post-card__media-preview-close" onClick={() => setMediaPreviewOpen(false)} aria-label="Close media preview">
+          <button type="button" className="v1-post-card__media-preview-close" onClick={closeMediaPreview} aria-label="Close media preview">
             <X size={22} aria-hidden="true" />
           </button>
         </div>,
@@ -570,7 +630,7 @@ const PostCard = ({ className, fallbackAuthor, hideFeedbackAction = false, post,
         {isFeedbackOpen && ownerId && (
           <SendFeedbackModal
             isOpen={isFeedbackOpen}
-            onClose={() => setFeedbackOpen(false)}
+            onClose={closeFeedback}
             feedbackOn="Post"
             receiverId={ownerId}
             receiverName={userName}

@@ -5,12 +5,14 @@ import notificationService, { type NotificationService } from './notification.se
 
 class NotificationController {
   readonly getNotifications: RequestHandler;
+  readonly getUnreadCount: RequestHandler;
   readonly markAllAsRead: RequestHandler;
   readonly deleteNotification: RequestHandler;
   readonly deleteAllNotifications: RequestHandler;
 
   constructor(private readonly service: NotificationService = notificationService) {
     this.getNotifications = asyncHandler(this.handleGetNotifications.bind(this));
+    this.getUnreadCount = asyncHandler(this.handleGetUnreadCount.bind(this));
     this.markAllAsRead = asyncHandler(this.handleMarkAllAsRead.bind(this));
     this.deleteNotification = asyncHandler(this.handleDeleteNotification.bind(this));
     this.deleteAllNotifications = asyncHandler(this.handleDeleteAllNotifications.bind(this));
@@ -23,6 +25,16 @@ class NotificationController {
       success: true,
       message: 'Notifications fetched successfully',
       ...result,
+    });
+  }
+
+  private async handleGetUnreadCount(req: Request, res: Response) {
+    const unreadCount = await this.service.getUnreadCount(req.user!.id);
+
+    res.status(200).json({
+      success: true,
+      message: 'Unread notifications count fetched successfully',
+      unreadCount,
     });
   }
 

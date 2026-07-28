@@ -1,4 +1,5 @@
 import { Info } from 'lucide-react';
+import { memo } from 'react';
 
 const HeatmapRules = () => (
   <span className="heatmap-rules-v1" onClick={(event) => event.stopPropagation()}>
@@ -15,4 +16,4 @@ const HeatmapRules = () => (
   </span>
 );
 
-export default HeatmapRules;
+export default memo(HeatmapRules);

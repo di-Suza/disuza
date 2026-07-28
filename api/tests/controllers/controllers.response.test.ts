@@ -139,6 +139,7 @@ describe('Controller response contracts', () => {
     const controller = new ChatController({
       saveMessage: async () => ({ _id: objectId, message: 'Hello' }),
       getConversations: async () => [],
+      getUnreadMessagesCount: async () => 2,
       getMessages: async () => ({ messages: [], hasMore: false }),
       markAsRead: async () => ({ updated: true }),
       unsendMessage: async () => ({ messageId: objectId }),
@@ -161,6 +162,7 @@ describe('Controller response contracts', () => {
     try {
       assert.equal((await invokeController(controller.sendMessage, { body: { conversationId: objectId, message: 'Hello' } })).statusCode, 201);
       assert.equal((await invokeController(controller.getConversations)).statusCode, 200);
+      assert.equal((await invokeController(controller.getUnreadCount)).statusCode, 200);
       assert.equal((await invokeController(controller.startConversation, { body: { receiverId: otherObjectId } })).statusCode, 201);
       assert.equal((await invokeController(controller.pinConversation, { params: { conversationId: objectId }, body: { pinned: true } })).statusCode, 200);
       assert.equal((await invokeController(controller.createGroup, { body: { memberIds: [objectId, otherObjectId] } })).statusCode, 201);
@@ -256,6 +258,7 @@ describe('Controller response contracts', () => {
     } as never);
     const notificationController = new NotificationController({
       getNotifications: async () => ({ notifications: [], hasMore: false }),
+      getUnreadCount: async () => 2,
       markAllAsRead: async () => undefined,
       deleteNotification: async () => undefined,
       deleteAllNotifications: async () => undefined,
@@ -296,6 +299,7 @@ describe('Controller response contracts', () => {
     assert.equal((await invokeController(userController.getUserRecommendations)).statusCode, 200);
 
     assert.equal((await invokeController(notificationController.getNotifications)).statusCode, 200);
+    assert.equal((await invokeController(notificationController.getUnreadCount)).statusCode, 200);
     assert.equal((await invokeController(notificationController.markAllAsRead)).statusCode, 200);
     assert.equal((await invokeController(notificationController.deleteNotification, { params: { notificationId: objectId } })).statusCode, 200);
     assert.equal((await invokeController(notificationController.deleteAllNotifications)).statusCode, 200);

@@ -1,5 +1,5 @@
 import { Check, FolderOpen, ImageIcon, Plus, X } from 'lucide-react';
-import { useEffect, useMemo, useState, type FormEvent } from 'react';
+import { memo, useEffect, useState, type FormEvent } from 'react';
 import { createPortal } from 'react-dom';
 
 import {
@@ -16,6 +16,8 @@ import LoadingSpinner from '@/shared/ui/LoadingSpinner';
 import { cn } from '@/shared/utils/cn';
 import { getErrorMessage } from '@/shared/utils/getErrorMessage';
 import './Saves.css';
+
+const EMPTY_COLLECTIONS: SavedCollection[] = [];
 
 type ManageSaveCollectionsModalProps = {
   isOpen: boolean;
@@ -39,7 +41,7 @@ const ManageSaveCollectionsModal = ({ isOpen, onClose, onSaved, postId }: Manage
 
   useLockBodyScroll(isOpen);
 
-  const collections = useMemo(() => data?.collections || [], [data?.collections]);
+  const collections = data?.collections || EMPTY_COLLECTIONS;
 
   useEffect(() => {
     if (!isOpen || collections.length === 0) return;
@@ -179,4 +181,4 @@ const ManageSaveCollectionsModal = ({ isOpen, onClose, onSaved, postId }: Manage
   );
 };
 
-export default ManageSaveCollectionsModal;
+export default memo(ManageSaveCollectionsModal);

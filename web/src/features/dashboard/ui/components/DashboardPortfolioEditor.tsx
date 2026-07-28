@@ -15,13 +15,12 @@ import {
   Sparkles,
   X,
 } from 'lucide-react';
-import { useRef, useState, type ChangeEvent } from 'react';
+import { lazy, memo, Suspense, useCallback, useMemo, useRef, useState, type ChangeEvent } from 'react';
 
 import Button from '@/shared/ui/Button';
 import Input from '@/shared/ui/Input';
 import LoadingSpinner from '@/shared/ui/LoadingSpinner';
 import type { UserProfile } from '@/features/users/model/user.types';
-import DashboardPortfolioPreviewModal from './DashboardPortfolioPreviewModal';
 import PortfolioTagEditor from './PortfolioTagEditor';
 import type { useDashboardPage } from '../pages/useDashboardPage';
 
@@ -76,10 +75,13 @@ const interestSuggestions = [
   'Data Science',
 ];
 const languageSuggestions = ['Hindi', 'English', 'Spanish', 'French', 'German', 'Mandarin', 'Japanese', 'Korean', 'Arabic', 'Portuguese'];
+const DashboardPortfolioPreviewModal = lazy(() => import('./DashboardPortfolioPreviewModal'));
 
-const SaveStatus = ({ isSaving, label }: { isSaving: boolean; label: string }) => (
+const SaveStatus = memo(({ isSaving, label }: { isSaving: boolean; label: string }) => (
   <small>{isSaving ? <LoadingSpinner inline label="Saving portfolio" size={13} /> : label}</small>
-);
+));
+
+SaveStatus.displayName = 'SaveStatus';
 
 const inputChange = (value: string): ChangeEvent<HTMLInputElement> => ({
   target: { value },
@@ -127,13 +129,28 @@ const DashboardPortfolioEditor = ({
   const professionalFormRef = useRef<HTMLFormElement>(null);
   const addressIsFocused = focusedGeneralField === 'city' || focusedGeneralField === 'state' || focusedGeneralField === 'country';
 
-  const scheduleProfessionalSave = () => {
+  const scheduleProfessionalSave = useCallback(() => {
     window.setTimeout(() => professionalFormRef.current?.requestSubmit(), 0);
-  };
+  }, []);
 
-  const setProfessionalValue = (field: ProfessionalTextField, value: string) => {
+  const setProfessionalValue = useCallback((field: ProfessionalTextField, value: string) => {
     updateProfessionalField(field)(inputChange(value));
-  };
+  }, [updateProfessionalField]);
+
+  const handleSkillsChange = useCallback((value: string) => {
+    setProfessionalValue('skills', value);
+  }, [setProfessionalValue]);
+
+  const handleInterestsChange = useCallback((value: string) => {
+    setProfessionalValue('interests', value);
+  }, [setProfessionalValue]);
+
+  const handleLanguagesChange = useCallback((value: string) => {
+    setProfessionalValue('languages', value);
+  }, [setProfessionalValue]);
+
+  const openPreview = useCallback(() => setPreviewOpen(true), []);
+  const closePreview = useCallback(() => setPreviewOpen(false), []);
 
   const beginAddingExperience = () => {
     const emptyIndex = professionalForm.experiences.findIndex((experience) => !hasExperience(experience));
@@ -171,28 +188,43 @@ const DashboardPortfolioEditor = ({
     setAddingHandleIndex(nextIndex);
   };
 
-  const experienceRows = professionalForm.experiences
-    .map((experience, index) => ({ experience, index }))
-    .filter(({ experience, index }) => index !== addingExperienceIndex && hasExperience(experience));
+  const experienceRows = useMemo(
+    () => professionalForm.experiences
+      .map((experience, index) => ({ experience, index }))
+      .filter(({ experience, index }) => index !== addingExperienceIndex && hasExperience(experience)),
+    [addingExperienceIndex, professionalForm.experiences],
+  );
 
-  const educationRows = professionalForm.educations
-    .map((education, index) => ({ education, index }))
-    .filter(({ education, index }) => index !== addingEducationIndex && hasEducation(education));
+  const educationRows = useMemo(
+    () => professionalForm.educations
+      .map((education, index) => ({ education, index }))
+      .filter(({ education, index }) => index !== addingEducationIndex && hasEducation(education)),
+    [addingEducationIndex, professionalForm.educations],
+  );
 
-  const handleRows = professionalForm.handles
-    .map((handle, index) => ({ handle, index }))
-    .filter(({ handle, index }) => index !== addingHandleIndex && hasHandle(handle));
+  const handleRows = useMemo(
+    () => professionalForm.handles
+      .map((handle, index) => ({ handle, index }))
+      .filter(({ handle, index }) => index !== addingHandleIndex && hasHandle(handle)),
+    [addingHandleIndex, professionalForm.handles],
+  );
 
-  const addingExperience = addingExperienceIndex === null
-    ? null
-    : professionalForm.experiences[addingExperienceIndex];
-  const addingEducation = addingEducationIndex === null
-    ? null
-    : professionalForm.educations[addingEducationIndex];
-  const addingHandle = addingHandleIndex === null
-    ? null
-    : professionalForm.handles[addingHandleIndex];
-  const activeTabLabel = portfolioTabs.find((tab) => tab.id === activeTab)?.label || 'Info';
+  const addingExperience = useMemo(
+    () => addingExperienceIndex === null ? null : professionalForm.experiences[addingExperienceIndex],
+    [addingExperienceIndex, professionalForm.experiences],
+  );
+  const addingEducation = useMemo(
+    () => addingEducationIndex === null ? null : professionalForm.educations[addingEducationIndex],
+    [addingEducationIndex, professionalForm.educations],
+  );
+  const addingHandle = useMemo(
+    () => addingHandleIndex === null ? null : professionalForm.handles[addingHandleIndex],
+    [addingHandleIndex, professionalForm.handles],
+  );
+  const activeTabLabel = useMemo(
+    () => portfolioTabs.find((tab) => tab.id === activeTab)?.label || 'Info',
+    [activeTab],
+  );
 
   const finishAddingExperience = () => {
     if (!addingExperience?.companyName.trim() || !addingExperience.timePeriod.trim()) return;
@@ -262,7 +294,7 @@ const DashboardPortfolioEditor = ({
               </div>
             )}
           </div>
-          <Button variant="secondary" className="button--icon portfolio-preview-button-v1" onClick={() => setPreviewOpen(true)} aria-label="Preview portfolio">
+          <Button variant="secondary" className="button--icon portfolio-preview-button-v1" onClick={openPreview} aria-label="Preview portfolio">
             <Presentation size={17} aria-hidden="true" />
           </Button>
         </section>
@@ -366,7 +398,7 @@ const DashboardPortfolioEditor = ({
                   actionNoun=" skill"
                   countSuffix=" added"
                   onCommit={scheduleProfessionalSave}
-                  onValueChange={(value) => setProfessionalValue('skills', value)}
+                  onValueChange={handleSkillsChange}
                   placeholder="Type a skill and press comma, space, or enter..."
                   showSuggestionsBelow={1}
                   suggestionLabel="Popular skills:"
@@ -433,7 +465,7 @@ const DashboardPortfolioEditor = ({
                   isSaving={isBusy}
                   label="Interests"
                   onCommit={scheduleProfessionalSave}
-                  onValueChange={(value) => setProfessionalValue('interests', value)}
+                  onValueChange={handleInterestsChange}
                   placeholder="Type an interest and press comma, space, or enter..."
                   showSuggestionsBelow={3}
                   suggestionLabel="Popular interests:"
@@ -449,7 +481,7 @@ const DashboardPortfolioEditor = ({
                   isSaving={isBusy}
                   label="Languages"
                   onCommit={scheduleProfessionalSave}
-                  onValueChange={(value) => setProfessionalValue('languages', value)}
+                  onValueChange={handleLanguagesChange}
                   placeholder="Type a language and press comma, space, or enter..."
                   showSuggestionsBelow={3}
                   suggestionLabel="Common languages:"
@@ -568,11 +600,15 @@ const DashboardPortfolioEditor = ({
         </section>
       </div>
 
-      <DashboardPortfolioPreviewModal
-        isOpen={isPreviewOpen}
-        onClose={() => setPreviewOpen(false)}
-        user={(user as UserProfile | null) || null}
-      />
+      <Suspense fallback={null}>
+        {isPreviewOpen && (
+          <DashboardPortfolioPreviewModal
+            isOpen={isPreviewOpen}
+            onClose={closePreview}
+            user={(user as UserProfile | null) || null}
+          />
+        )}
+      </Suspense>
     </div>
   );
 };
