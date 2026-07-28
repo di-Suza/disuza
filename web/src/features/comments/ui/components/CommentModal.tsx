@@ -121,7 +121,7 @@ const CommentModal = ({ isOpen, onClose, post }: CommentModalProps) => {
               <Button variant="secondary" onClick={() => refetch()}>Retry</Button>
             </div>
           ) : allComments.length === 0 ? (
-            <div className="comment-state">
+            <div className="comment-state comment-state--empty">
               <MessageCircleReply size={24} aria-hidden="true" />
               <p>No comments yet.</p>
             </div>
