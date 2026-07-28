@@ -1,10 +1,9 @@
 import { Bell, ChevronDown, ChevronUp, Earth, Home, LogOut, Menu, SendHorizonal, SquarePen, UserRound } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
 import { useAppSelector } from '@/app/store/hooks';
 import { useLogoutMutation } from '@/features/auth/api/auth.api';
-import PostComposerModal from '@/features/posts/ui/components/PostComposerModal';
 import logo from '@/shared/assets/images/logo.png';
 import useUnreadMessagesCount from '@/shared/hooks/useUnreadMessagesCount';
 import { useUnreadNotificationsCount } from '@/shared/hooks/useUnreadNotificationsCount';
@@ -23,6 +22,8 @@ const feedOptions = [
   { label: 'All', value: 'all' },
   { label: 'Following', value: 'following' },
 ] as const;
+
+const PostComposerModal = lazy(() => import('@/features/posts/ui/components/PostComposerModal'));
 
 const Sidebar = () => {
   const { pathname, search } = useLocation();
@@ -292,7 +293,9 @@ const Sidebar = () => {
         </nav>
       </aside>
 
-      <PostComposerModal isOpen={isComposerOpen} mode="create" onClose={() => setComposerOpen(false)} />
+      <Suspense fallback={null}>
+        {isComposerOpen && <PostComposerModal isOpen={isComposerOpen} mode="create" onClose={() => setComposerOpen(false)} />}
+      </Suspense>
     </>
   );
 };
