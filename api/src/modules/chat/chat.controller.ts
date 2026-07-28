@@ -6,6 +6,7 @@ import chatService, { type ChatService } from './chat.service.js';
 class ChatController {
   readonly sendMessage: RequestHandler;
   readonly getConversations: RequestHandler;
+  readonly getUnreadCount: RequestHandler;
   readonly getMessages: RequestHandler;
   readonly markAsRead: RequestHandler;
   readonly unsendMessage: RequestHandler;
@@ -22,6 +23,7 @@ class ChatController {
   constructor(private readonly service: ChatService = chatService) {
     this.sendMessage = asyncHandler(this.handleSendMessage.bind(this));
     this.getConversations = asyncHandler(this.handleGetConversations.bind(this));
+    this.getUnreadCount = asyncHandler(this.handleGetUnreadCount.bind(this));
     this.getMessages = asyncHandler(this.handleGetMessages.bind(this));
     this.markAsRead = asyncHandler(this.handleMarkAsRead.bind(this));
     this.unsendMessage = asyncHandler(this.handleUnsendMessage.bind(this));
@@ -53,6 +55,16 @@ class ChatController {
       success: true,
       message: 'Conversations fetched successfully!',
       conversations,
+    });
+  }
+
+  private async handleGetUnreadCount(req: Request, res: Response) {
+    const unreadCount = await this.service.getUnreadMessagesCount(req.user!.id);
+
+    res.status(200).json({
+      success: true,
+      message: 'Unread messages count fetched successfully!',
+      unreadCount,
     });
   }
 

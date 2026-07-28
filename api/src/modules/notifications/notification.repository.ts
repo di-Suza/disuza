@@ -95,7 +95,7 @@ class NotificationRepository {
       contentId: { $in: filter.contentIds },
       ...(filter.types?.length ? { type: { $in: filter.types } } : {}),
     })
-      .select('_id recipient')
+      .select('_id recipient isRead')
       .lean();
   }
 

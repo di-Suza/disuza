@@ -246,6 +246,31 @@ class ChatRepository {
     ]);
   }
 
+  async getUnreadMessagesCount(userId: string | Types.ObjectId) {
+    const currentUserId = new mongoose.Types.ObjectId(userId.toString());
+    const [result] = await ConversationModel.aggregate<{ unreadCount: number }>([
+      { $match: { participants: currentUserId, hiddenBy: { $ne: currentUserId } } },
+      {
+        $project: {
+          unreadCount: {
+            $ifNull: [
+              {
+                $getField: {
+                  field: currentUserId.toString(),
+                  input: { $ifNull: ['$unreadCounts', {}] },
+                },
+              },
+              0,
+            ],
+          },
+        },
+      },
+      { $group: { _id: null, unreadCount: { $sum: '$unreadCount' } } },
+    ]);
+
+    return Number(result?.unreadCount || 0);
+  }
+
   getMessages(conversationId: string | Types.ObjectId, page: number, limit: number) {
     return MessageModel.find({ conversationId })
       .sort({ createdAt: -1 })

@@ -46,6 +46,12 @@ export type NotificationsResponse = {
   hasMore: boolean;
 };
 
+export type UnreadNotificationsCountResponse = {
+  success: boolean;
+  message: string;
+  unreadCount: number;
+};
+
 export type NotificationsQueryArgs = {
   page?: number;
   limit?: number;

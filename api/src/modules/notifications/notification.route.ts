@@ -16,6 +16,7 @@ class NotificationRoutes {
     this.router.use(authenticate);
 
     this.router.get('/getNotifications', getNotificationRules, validateRequest, notificationController.getNotifications);
+    this.router.get('/getUnreadCount', notificationController.getUnreadCount);
     this.router.patch('/markAllAsRead', notificationController.markAllAsRead);
     this.router.delete('/deleteNotification/:notificationId', notificationIdParamRules, validateRequest, notificationController.deleteNotification);
     this.router.delete('/deleteAllNotifications', notificationController.deleteAllNotifications);
