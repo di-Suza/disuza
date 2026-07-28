@@ -15,7 +15,7 @@ import {
   Sparkles,
   X,
 } from 'lucide-react';
-import { useRef, useState, type ChangeEvent } from 'react';
+import { useMemo, useRef, useState, type ChangeEvent } from 'react';
 
 import Button from '@/shared/ui/Button';
 import Input from '@/shared/ui/Input';
@@ -171,28 +171,43 @@ const DashboardPortfolioEditor = ({
     setAddingHandleIndex(nextIndex);
   };
 
-  const experienceRows = professionalForm.experiences
-    .map((experience, index) => ({ experience, index }))
-    .filter(({ experience, index }) => index !== addingExperienceIndex && hasExperience(experience));
+  const experienceRows = useMemo(
+    () => professionalForm.experiences
+      .map((experience, index) => ({ experience, index }))
+      .filter(({ experience, index }) => index !== addingExperienceIndex && hasExperience(experience)),
+    [addingExperienceIndex, professionalForm.experiences],
+  );
 
-  const educationRows = professionalForm.educations
-    .map((education, index) => ({ education, index }))
-    .filter(({ education, index }) => index !== addingEducationIndex && hasEducation(education));
+  const educationRows = useMemo(
+    () => professionalForm.educations
+      .map((education, index) => ({ education, index }))
+      .filter(({ education, index }) => index !== addingEducationIndex && hasEducation(education)),
+    [addingEducationIndex, professionalForm.educations],
+  );
 
-  const handleRows = professionalForm.handles
-    .map((handle, index) => ({ handle, index }))
-    .filter(({ handle, index }) => index !== addingHandleIndex && hasHandle(handle));
+  const handleRows = useMemo(
+    () => professionalForm.handles
+      .map((handle, index) => ({ handle, index }))
+      .filter(({ handle, index }) => index !== addingHandleIndex && hasHandle(handle)),
+    [addingHandleIndex, professionalForm.handles],
+  );
 
-  const addingExperience = addingExperienceIndex === null
-    ? null
-    : professionalForm.experiences[addingExperienceIndex];
-  const addingEducation = addingEducationIndex === null
-    ? null
-    : professionalForm.educations[addingEducationIndex];
-  const addingHandle = addingHandleIndex === null
-    ? null
-    : professionalForm.handles[addingHandleIndex];
-  const activeTabLabel = portfolioTabs.find((tab) => tab.id === activeTab)?.label || 'Info';
+  const addingExperience = useMemo(
+    () => addingExperienceIndex === null ? null : professionalForm.experiences[addingExperienceIndex],
+    [addingExperienceIndex, professionalForm.experiences],
+  );
+  const addingEducation = useMemo(
+    () => addingEducationIndex === null ? null : professionalForm.educations[addingEducationIndex],
+    [addingEducationIndex, professionalForm.educations],
+  );
+  const addingHandle = useMemo(
+    () => addingHandleIndex === null ? null : professionalForm.handles[addingHandleIndex],
+    [addingHandleIndex, professionalForm.handles],
+  );
+  const activeTabLabel = useMemo(
+    () => portfolioTabs.find((tab) => tab.id === activeTab)?.label || 'Info',
+    [activeTab],
+  );
 
   const finishAddingExperience = () => {
     if (!addingExperience?.companyName.trim() || !addingExperience.timePeriod.trim()) return;

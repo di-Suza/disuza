@@ -42,6 +42,7 @@ const PortfolioTagEditor = ({
   const [inputValue, setInputValue] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
   const tags = useMemo(() => getTags(value), [value]);
+  const normalizedTags = useMemo(() => new Set(tags.map((tag) => tag.toLowerCase())), [tags]);
 
   const setTags = (nextTags: string[]) => {
     onValueChange(nextTags.join(', '));
@@ -73,8 +74,10 @@ const PortfolioTagEditor = ({
     }
   };
 
-  const visibleSuggestions = suggestions
-    .filter((suggestion) => !tags.some((tag) => tag.toLowerCase() === suggestion.toLowerCase()));
+  const visibleSuggestions = useMemo(
+    () => suggestions.filter((suggestion) => !normalizedTags.has(suggestion.toLowerCase())),
+    [normalizedTags, suggestions],
+  );
 
   return (
     <div className="portfolio-section-v1">
