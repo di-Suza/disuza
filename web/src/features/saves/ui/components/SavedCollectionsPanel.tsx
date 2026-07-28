@@ -1,5 +1,5 @@
 import { Bookmark, Check, FolderOpen, ImageIcon, Loader2, Pencil, Plus, RefreshCw, Trash2, X } from 'lucide-react';
-import { useEffect, useMemo, useState, type FormEvent } from 'react';
+import { memo, useEffect, useMemo, useState, type FormEvent } from 'react';
 
 import {
   useCreateCollectionMutation,
@@ -18,6 +18,8 @@ import LoadingSpinner from '@/shared/ui/LoadingSpinner';
 import { cn } from '@/shared/utils/cn';
 import { getErrorMessage } from '@/shared/utils/getErrorMessage';
 import './Saves.css';
+
+const EMPTY_COLLECTIONS: SavedCollection[] = [];
 
 type SavedCollectionsPanelProps = {
   viewerId?: string;
@@ -44,8 +46,11 @@ const SavedCollectionsPanel = ({ viewerId }: SavedCollectionsPanelProps) => {
   const [updateCollection, { isLoading: isUpdating }] = useUpdateCollectionMutation();
   const [deleteCollection, { isLoading: isDeleting }] = useDeleteCollectionMutation();
 
-  const collections = useMemo(() => data?.collections || [], [data?.collections]);
-  const selectedCollection = collections.find((collection) => collection._id === selectedCollectionId);
+  const collections = data?.collections || EMPTY_COLLECTIONS;
+  const selectedCollection = useMemo(
+    () => collections.find((collection) => collection._id === selectedCollectionId),
+    [collections, selectedCollectionId],
+  );
   const {
     data: savedPostsData,
     isError: isPostsError,
@@ -239,4 +244,4 @@ const SavedCollectionsPanel = ({ viewerId }: SavedCollectionsPanelProps) => {
   );
 };
 
-export default SavedCollectionsPanel;
+export default memo(SavedCollectionsPanel);
