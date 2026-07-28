@@ -1,5 +1,5 @@
 import { Loader2, RotateCw, UserRound, UsersRound, X } from 'lucide-react';
-import { useEffect, useLayoutEffect, useMemo, useState } from 'react';
+import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Link } from 'react-router-dom';
 
@@ -16,6 +16,11 @@ type DashboardUserListModalProps = {
   onClose: () => void;
   type: DashboardUserListType;
   userId?: string;
+};
+
+type DashboardUserRowProps = {
+  onClose: () => void;
+  profile: UserProfile;
 };
 
 const getAvatarUrl = (url: unknown): string | null => (typeof url === 'string' && url.trim() ? url : null);
@@ -36,6 +41,17 @@ const mergeUsers = (current: UserProfile[], next: UserProfile[]) => {
   const existingIds = new Set(current.map((user) => user._id));
   return [...current, ...next.filter((user) => !existingIds.has(user._id))];
 };
+
+const DashboardUserRow = memo(({ onClose, profile }: DashboardUserRowProps) => (
+  <Link to={`/profile/${profile._id}`} className="dashboard-modal__row" onClick={onClose}>
+    <span className="user-row__avatar">
+      {getAvatarUrl(profile.profilePicture?.url) ? <img src={profile.profilePicture?.url} alt="" /> : <UserRound size={18} aria-hidden="true" />}
+    </span>
+    <span><strong>{profile.userName}</strong><small>{profile.headline || 'Disuza member'}</small></span>
+  </Link>
+));
+
+DashboardUserRow.displayName = 'DashboardUserRow';
 
 const DashboardUserListModal = ({ isOpen, onClose, type, userId }: DashboardUserListModalProps) => {
   const [page, setPage] = useState(1);
@@ -62,6 +78,10 @@ const DashboardUserListModal = ({ isOpen, onClose, type, userId }: DashboardUser
     setUsers((current) => (page === 1 ? latestUsers : mergeUsers(current, latestUsers)));
   }, [isOpen, latestUsers, page]);
 
+  const handleLoadMore = useCallback(() => {
+    setPage((current) => current + 1);
+  }, []);
+
   if (!isOpen) return null;
 
   return createPortal(
@@ -80,18 +100,11 @@ const DashboardUserListModal = ({ isOpen, onClose, type, userId }: DashboardUser
         <div className="dashboard-modal__list">
           {activeQuery.isFetching && users.length === 0 && <LoadingSpinner className="empty-copy" label={`Loading ${copy.title.toLowerCase()}`} />}
           {!activeQuery.isFetching && users.length === 0 && <p className="empty-copy">{copy.empty}</p>}
-          {users.map((profile) => (
-            <Link to={`/profile/${profile._id}`} className="dashboard-modal__row" key={profile._id} onClick={onClose}>
-              <span className="user-row__avatar">
-                {getAvatarUrl(profile.profilePicture?.url) ? <img src={profile.profilePicture?.url} alt="" /> : <UserRound size={18} aria-hidden="true" />}
-              </span>
-              <span><strong>{profile.userName}</strong><small>{profile.headline || 'Disuza member'}</small></span>
-            </Link>
-          ))}
+          {users.map((profile) => <DashboardUserRow key={profile._id} profile={profile} onClose={onClose} />)}
 
           {activeQuery.currentData?.hasMore && (
             <div className="dashboard-modal__load-more">
-              <button type="button" onClick={() => setPage((current) => current + 1)} disabled={activeQuery.isFetching} aria-label={`Load more ${copy.title.toLowerCase()}`}>
+              <button type="button" onClick={handleLoadMore} disabled={activeQuery.isFetching} aria-label={`Load more ${copy.title.toLowerCase()}`}>
                 {activeQuery.isFetching ? <Loader2 className="spin" size={16} aria-hidden="true" /> : <RotateCw size={16} aria-hidden="true" />}
               </button>
             </div>
@@ -103,5 +116,5 @@ const DashboardUserListModal = ({ isOpen, onClose, type, userId }: DashboardUser
   );
 };
 
-export default DashboardUserListModal;
+export default memo(DashboardUserListModal);
 export type { DashboardUserListType };
