@@ -1,4 +1,5 @@
 import { AlertCircle, X } from 'lucide-react';
+import { memo } from 'react';
 import { createPortal } from 'react-dom';
 
 import { useReportAProblemModal } from '@/features/issues/ui/hooks/useReportAProblemModal';
@@ -12,6 +13,16 @@ type ReportAProblemModalProps = {
   isOpen: boolean;
   onClose: () => void;
 };
+
+const ReportProblemCategoryOptions = memo(({ categories }: { categories: readonly string[] }) => (
+  <>
+    {categories.map((option) => (
+      <option value={option} key={option}>{option}</option>
+    ))}
+  </>
+));
+
+ReportProblemCategoryOptions.displayName = 'ReportProblemCategoryOptions';
 
 const ReportAProblemModal = ({ isOpen, onClose }: ReportAProblemModalProps) => {
   const {
@@ -49,9 +60,7 @@ const ReportAProblemModal = ({ isOpen, onClose }: ReportAProblemModalProps) => {
           <label className="field">
             <span>Category</span>
             <select className="input report-modal__select" value={category} onChange={handleCategoryChange}>
-              {categories.map((option) => (
-                <option value={option} key={option}>{option}</option>
-              ))}
+              <ReportProblemCategoryOptions categories={categories} />
             </select>
           </label>
 
@@ -81,4 +90,4 @@ const ReportAProblemModal = ({ isOpen, onClose }: ReportAProblemModalProps) => {
   );
 };
 
-export default ReportAProblemModal;
+export default memo(ReportAProblemModal);
