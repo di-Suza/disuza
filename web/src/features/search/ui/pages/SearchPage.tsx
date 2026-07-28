@@ -1,7 +1,10 @@
 import { Crown, Loader2, RefreshCw, Search, Sparkles, TrendingUp, X } from 'lucide-react';
+import { memo } from 'react';
 
 import SearchPostCard from '@/features/search/ui/components/SearchPostCard';
 import SearchUserCard from '@/features/search/ui/components/SearchUserCard';
+import type { SearchUser } from '@/features/search/model/search.types';
+import type { Post } from '@/features/posts/model/post.types';
 import ErrorBoundary from '@/shared/components/ErrorBoundary/ErrorBoundary';
 import Button from '@/shared/ui/Button';
 import Input from '@/shared/ui/Input';
@@ -9,6 +12,42 @@ import { getErrorMessage } from '@/shared/utils/getErrorMessage';
 import { useSearchPage } from './useSearchPage';
 import './SearchPage.css';
 import '@/app/layouts/ProductShell.css';
+
+type SearchUserGridProps = {
+  boundaryTitle: string;
+  className?: string;
+  currentUserId?: string;
+  users: SearchUser[];
+};
+
+const SearchUserGrid = memo(({ boundaryTitle, className, currentUserId, users }: SearchUserGridProps) => (
+  <div className={['search-user-grid', className].filter(Boolean).join(' ')}>
+    {users.map((user, index) => (
+      <ErrorBoundary key={user._id} variant="section" title={boundaryTitle} resetKeys={[user._id]} showReload={false}>
+        <SearchUserCard user={user} index={index} currentUserId={currentUserId} />
+      </ErrorBoundary>
+    ))}
+  </div>
+));
+
+SearchUserGrid.displayName = 'SearchUserGrid';
+
+type SearchPostGridProps = {
+  boundaryTitle: string;
+  posts: Post[];
+};
+
+const SearchPostGrid = memo(({ boundaryTitle, posts }: SearchPostGridProps) => (
+  <div className="search-post-grid">
+    {posts.map((post) => (
+      <ErrorBoundary key={post._id} variant="section" title={boundaryTitle} resetKeys={[post._id]} showReload={false}>
+        <SearchPostCard post={post} />
+      </ErrorBoundary>
+    ))}
+  </div>
+));
+
+SearchPostGrid.displayName = 'SearchPostGrid';
 
 const SearchPage = () => {
   const {
@@ -97,13 +136,7 @@ const SearchPage = () => {
                       <Crown size={19} aria-hidden="true" />
                       <h2>People</h2>
                     </div>
-                    <div className="search-user-grid">
-                      {matchedUsers.map((user, index) => (
-                        <ErrorBoundary key={user._id} variant="section" title="User result could not be rendered." resetKeys={[user._id]} showReload={false}>
-                          <SearchUserCard user={user} index={index} currentUserId={currentUserId} />
-                        </ErrorBoundary>
-                      ))}
-                    </div>
+                    <SearchUserGrid users={matchedUsers} currentUserId={currentUserId} boundaryTitle="User result could not be rendered." />
                     {hasMoreSearchUsers && (
                       <div className="search-load-more">
                         <Button variant="secondary" onClick={handleLoadMoreSearchUsers} isLoading={isFetching} loadingLabel="Loading users">
@@ -121,13 +154,7 @@ const SearchPage = () => {
                       <TrendingUp size={19} aria-hidden="true" />
                       <h2>Posts</h2>
                     </div>
-                    <div className="search-post-grid">
-                      {matchedPosts.map((post) => (
-                        <ErrorBoundary key={post._id} variant="section" title="Post result could not be rendered." resetKeys={[post._id]} showReload={false}>
-                          <SearchPostCard post={post} />
-                        </ErrorBoundary>
-                      ))}
-                    </div>
+                    <SearchPostGrid posts={matchedPosts} boundaryTitle="Post result could not be rendered." />
                     {hasMoreSearchPosts && (
                       <div className="search-load-more">
                         <Button variant="secondary" onClick={handleLoadMoreSearchPosts} isLoading={isFetching} loadingLabel="Loading posts">
@@ -148,13 +175,12 @@ const SearchPage = () => {
                 <Crown size={19} aria-hidden="true" />
                 <h2>Top Contributors</h2>
               </div>
-              <div className="search-user-grid search-user-grid--contributors">
-                {topContributors.map((user, index) => (
-                  <ErrorBoundary key={user._id} variant="section" title="Contributor card could not be rendered." resetKeys={[user._id]} showReload={false}>
-                    <SearchUserCard user={user} index={index} currentUserId={currentUserId} />
-                  </ErrorBoundary>
-                ))}
-              </div>
+              <SearchUserGrid
+                users={topContributors}
+                currentUserId={currentUserId}
+                boundaryTitle="Contributor card could not be rendered."
+                className="search-user-grid--contributors"
+              />
             </section>
 
             <section className="search-section">
@@ -163,13 +189,7 @@ const SearchPage = () => {
                 <h2>Trending Posts</h2>
               </div>
               {trendingPosts.length > 0 ? (
-                <div className="search-post-grid">
-                  {trendingPosts.map((post) => (
-                    <ErrorBoundary key={post._id} variant="section" title="Trending post could not be rendered." resetKeys={[post._id]} showReload={false}>
-                      <SearchPostCard post={post} />
-                    </ErrorBoundary>
-                  ))}
-                </div>
+                <SearchPostGrid posts={trendingPosts} boundaryTitle="Trending post could not be rendered." />
               ) : (
                 <section className="post-empty-state search-state">
                   <Sparkles size={24} aria-hidden="true" />
