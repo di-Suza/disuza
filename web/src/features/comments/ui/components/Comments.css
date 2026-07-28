@@ -55,7 +55,8 @@
   display: grid;
   grid-template-columns: 40px minmax(0, 1fr) auto;
   align-items: start;
-  gap: 10px;
+  column-gap: 14px;
+  row-gap: 10px;
   border: 1px solid var(--border-secondary);
   border-radius: 10px;
   background: rgba(255, 255, 255, 0.025);
@@ -80,7 +81,7 @@
   height: 40px;
   overflow: hidden;
   border: 1px solid var(--border-secondary);
-  border-radius: 14px;
+  border-radius: 999px;
   background: rgba(59, 99, 255, 0.12);
   color: var(--accent);
 }
@@ -88,7 +89,7 @@
 .comment-avatar--small {
   width: 32px;
   height: 32px;
-  border-radius: 12px;
+  border-radius: 999px;
 }
 
 .comment-avatar img {
@@ -270,7 +271,8 @@
   .comment-item,
   .comment-item--reply {
     grid-template-columns: 32px minmax(0, 1fr) auto;
-    gap: 8px;
+    column-gap: 10px;
+    row-gap: 8px;
     padding: 10px;
   }
 
