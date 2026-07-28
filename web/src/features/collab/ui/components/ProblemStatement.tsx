@@ -1,4 +1,5 @@
 import { FileText } from 'lucide-react';
+import { memo } from 'react';
 
 import type { RoomProblem } from '@/features/collab/model/collab.types';
 
@@ -66,4 +67,4 @@ const ProblemStatement = ({ problem }: ProblemStatementProps) => {
   );
 };
 
-export default ProblemStatement;
+export default memo(ProblemStatement);

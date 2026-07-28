@@ -1,5 +1,5 @@
 import { Mic, MicOff, PanelRightClose, PhoneOff, Users } from 'lucide-react';
-import type { RefObject } from 'react';
+import { memo, type RefObject } from 'react';
 
 import type { CollabParticipant } from '@/features/collab/model/collab.types';
 
@@ -92,4 +92,4 @@ const UsersPanel = ({
   );
 };
 
-export default UsersPanel;
+export default memo(UsersPanel);
