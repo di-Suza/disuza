@@ -5,7 +5,7 @@ Current baseline:
 - Pino application logger.
 - `pino-http` request logging.
 - secret redaction for authorization and cookie headers.
-- shared `ObservabilityContext` type for future request, job, socket, and provider logs.
+- shared `ObservabilityContext` type for request, job, socket, and provider logs.
 
 Future additions:
 

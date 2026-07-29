@@ -1425,7 +1425,7 @@ Verification used:
 npm run check:web
 ```
 
-## Step 27: product flow Completion Missing Fixes
+## Step 27: Product Flow Completion Missing Fixes
 
 Built the missed product-flow fixes on `fix/product-flow-completion`.
 
@@ -1470,7 +1470,7 @@ npm run build:web
 git diff --check
 ```
 
-## Step 40: Code Execution Runner Status Documentation
+## Delivery Note: Code Execution Runner Status Documentation
 
 Recorded the current collaborative room code-execution status.
 
@@ -1491,7 +1491,7 @@ Verification used:
 git diff --check
 ```
 
-## Step 39: Room Code Execution Completion
+## Delivery Note: Room Code Execution Completion
 
 Tightened the collaborative room code execution flow after comparing the original room module file-by-file with the current TypeScript implementation.
 
@@ -1559,7 +1559,7 @@ npm run build:web
 git diff --check
 ```
 
-## Step 29: exact product Feed, Post Card, and Dashboard UI Correction
+## Step 29: Exact Product Feed, Post Card, and Dashboard UI Correction
 
 Tightened the frontend consistency pass on `feature/web-ui-consistency` after comparing directly against the accepted JSX/CSS baseline values.
 
@@ -1641,16 +1641,15 @@ Added:
 - verified current maps for the current API and web applications
 - domain rules inherited from product requirements for auth, social relationships, posts, media, comments, contributions, saves, reports, notifications, messaging, blocking, and collaborative rooms
 - current request, auth refresh, post, comment, feedback, and cleanup flows
-- explicit infrastructure boundaries for future Redis, Socket.IO, BullMQ, Yjs, code execution, TURN, OpenAPI, testing, CI, and Docker work
+- explicit infrastructure boundaries for Redis, Socket.IO, BullMQ, Yjs, code execution, AI generation, TURN, OpenAPI, testing, CI, and Docker work
 
 Documentation sources:
 
 - project root `README.md` and `docs.md`
-- backend `disuza-api/docs.md`
-- frontend `disuza-web/docs.md`
-- the product specification `futureFixes.md` risk backlog
-- live current code and this development journal
-- the Collabify architecture guide for documentation and boundary inspiration only
+- live API and web source code
+- project root, contracts, testing, and infrastructure documentation
+- this development journal
+- the architecture decision register
 
 Important status rule:
 
@@ -1661,7 +1660,7 @@ Important status rule:
 
 Why:
 
-Current codebase already had good feature-level implementation history, but it did not yet have one system-level document explaining product boundaries, module ownership, cross-domain rules, current delivery status, and accepted future direction. This foundation prevents planned product-specified capabilities from being mistaken for completed current work and gives future branches a stable place to record architecture changes.
+The codebase already had feature-level implementation history, but it did not yet have one system-level document explaining product boundaries, module ownership, cross-domain rules, delivery status, and accepted future direction. This foundation prevents planned capabilities from being mistaken for completed work and gives future branches a stable place to record architecture changes.
 
 No runtime behavior or product flow changed in this step.
 
@@ -1671,7 +1670,7 @@ Verification used:
 git diff --check
 ```
 
-The documented repository maps, module statuses, product rules, and source-of-truth hierarchy were also cross-checked against the live current code and the product documentation.
+The documented repository maps, module statuses, product rules, and source-of-truth hierarchy were also cross-checked against the live code and product documentation.
 
 ## Step 31: Architecture Foundation Integrity And Debugging Playbook
 
@@ -1716,21 +1715,21 @@ Completed the first eight foundation modifications before the remaining product-
 - backend module public APIs with `api/src/modules/<domain>/index.ts`
 - centralized API route registry in `api/src/modules/index.ts`
 - backend `core` boundary for provider-neutral HTTP contracts, domain events, and policy decisions
-- backend `infrastructure` boundary for database, observability, storage, email, OAuth, cache, jobs, realtime, and future code execution adapters
+- backend `infrastructure` boundary for database, observability, storage, email, OAuth, cache, jobs, realtime, code execution, and AI adapters
 - frontend route-level `pages` layer so the router lazy-loads page entries instead of feature internals
 - frontend public feature/shared exports, plus reserved `entities` and `widgets` layers for gradual Feature-Sliced growth
 - root `contracts` folder with a draft OpenAPI baseline and REST contract rules
-- testing/CI foundation with test-layout docs, `npm run verify`, and a GitHub Actions typecheck/build workflow
+- testing/CI foundation with test-layout docs, `npm run verify`, and a GitHub Actions test/typecheck/build workflow
 
 Deferred intentionally:
 
-- Docker/local infrastructure packaging and production deployment manifests remain for the final hardening phase after the app modules are complete.
-- Redis, BullMQ, Socket.IO, Yjs, code-execution, and TURN folders are structure targets only until real implementation branches add and verify those runtimes.
-- Full endpoint OpenAPI coverage, lint-enforced boundaries, and automated unit/integration/component/E2E tests are planned follow-up work on top of this foundation.
+- Docker/local infrastructure packaging was deferred at this stage and later added through Compose.
+- Redis, BullMQ, Socket.IO, Yjs, code execution, and AI generation were introduced through later implementation branches; production TURN hardening remains planned.
+- Full endpoint OpenAPI coverage, lint-enforced boundaries, E2E, visual regression, and broader contract gates remain planned follow-up work on top of the current automated API/web test foundation.
 
 Why:
 
-The app had working current modules, but the product-level folder boundaries were still mostly documentation. This step makes the accepted architecture visible in the repo without changing product flow: modules keep their current behavior, routes remain REST-first, the web UI still renders through existing feature pages, and future implementations now have clear places for public APIs, contracts, adapters, tests, and large page composition.
+The app had working modules, but the product-level folder boundaries were still mostly documentation. This step makes the accepted architecture visible in the repo without changing product flow: modules keep their behavior, routes remain REST-first, the web UI still renders through existing feature pages, and future implementations now have clear places for public APIs, contracts, adapters, tests, and large page composition.
 
 Verification used:
 
@@ -1777,7 +1776,7 @@ Verification used:
 npm run check:api
 ```
 
-## Step 34: Frontend Messaging And Chat UI consistency
+## Step 34: Frontend Messaging And Chat UI Consistency
 
 Built the frontend messaging/chat consistency pass on `feature/web-messaging-chat-module`.
 
@@ -1809,7 +1808,7 @@ Deferred:
 
 Why:
 
-Messaging is a core product flow and should not remain as a placeholder while the rest of the product modules move. This step keeps the UI and interaction model aligned with the product specification while moving the implementation to typed hooks, RTK Query cache boundaries, feature-local helpers, and the current route/store structure.
+Messaging is a core product flow. This step keeps the UI and interaction model aligned with the product specification while moving the implementation to typed hooks, RTK Query cache boundaries, feature-local helpers, and the current route/store structure.
 
 Verification used:
 
@@ -1872,7 +1871,7 @@ npm --prefix web run build
 git diff --check
 ```
 
-## Step 38: Rich Post Content And Sharing Upgrade
+## Feature Note: Rich Post Content And Sharing Upgrade
 
 Upgraded the post module on `feature/post-rich-content-sharing`.
 
@@ -1908,7 +1907,7 @@ Preserved:
 
 Why:
 
-The old post flow forced every post to include media, which blocked LinkedIn/Twitter-style text posts, code snippets, link sharing, hashtags, reposts, and chat sharing. This step turns posts into a richer product surface while keeping the existing module architecture and interaction contracts stable.
+The initial media-only post flow forced every post to include media, which blocked LinkedIn/Twitter-style text posts, code snippets, link sharing, hashtags, reposts, and chat sharing. This step turns posts into a richer product surface while keeping the existing module architecture and interaction contracts stable.
 
 Verification used:
 
@@ -1946,7 +1945,7 @@ Preserved:
 
 Why:
 
-The previous implementation branches had the right core modules, but several visible surfaces still felt like generic current placeholders instead of the product flow. This pass brings the dashboard, landing, profile, notifications, realtime cache behavior, unread badges, and composer modal closer to the product specification while keeping the newer TypeScript, RTK Query, and module boundaries.
+Several visible surfaces still needed product-specific polish around dashboard, landing, profile, notifications, realtime cache behavior, unread badges, and composer modal behavior. This pass brings those surfaces closer to the product specification while keeping the TypeScript, RTK Query, and module boundaries.
 
 Verification used:
 
@@ -1957,7 +1956,7 @@ npm run build:web
 npm run build:api
 ```
 
-## Step 37: complete product flow Completion Cleanup
+## Step 37: Product Flow Completion Cleanup
 
 Completed the final product consistency cleanup pass on `fix/product-flow-completion-cleanup`.
 
