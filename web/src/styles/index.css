@@ -6,11 +6,20 @@
   font-weight: 300 400;
 }
 
+@font-face {
+  font-family: "Melfira";
+  src: url("../shared/assets/fonts/Melfira-Regular.ttf") format("truetype");
+  font-display: swap;
+  font-style: normal;
+  font-weight: 400;
+}
+
 :root {
   color: var(--text-primary);
   background: var(--bg-main);
+  --app-font-family: "Melfira";
   font-family:
-    "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    var(--app-font-family), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
     "Liberation Mono", monospace;
   font-style: normal;
   font-weight: 400;
@@ -213,7 +222,7 @@ svg {
 /* Global typography override */
 :where(html, body, #root, body *) {
   font-family:
-    "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    var(--app-font-family), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
     "Liberation Mono", monospace !important;
   font-style: normal !important;
 }
