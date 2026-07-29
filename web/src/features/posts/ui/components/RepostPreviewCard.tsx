@@ -4,6 +4,8 @@ import { useNavigate } from 'react-router-dom';
 
 import { getPostAuthor, getPostImageUrl, getPostMedia, isVideoMedia } from '@/features/posts/model/post.helpers';
 import type { Repost } from '@/features/posts/model/post.types';
+import AvatarImage from '@/shared/components/Avatar/AvatarImage';
+import Image from '@/shared/components/Image/Image';
 import { cn } from '@/shared/utils/cn';
 
 type RepostPreviewCardProps = {
@@ -40,7 +42,7 @@ const RepostPreviewCard = ({ className, repost }: RepostPreviewCardProps) => {
             <i><Play size={14} aria-hidden="true" /></i>
           </>
         ) : firstMedia ? (
-          <img src={firstMedia.url} alt="Reposted post" loading="lazy" />
+          <Image src={firstMedia.thumbnailUrl || firstMedia.url} type="thumbnail" alt="Reposted post" />
         ) : (
           <span className="repost-preview-card__empty"><Repeat2 size={22} aria-hidden="true" /></span>
         )}
@@ -49,7 +51,7 @@ const RepostPreviewCard = ({ className, repost }: RepostPreviewCardProps) => {
       <span className="dashboard-post-preview-card__body">
         <span className="repost-preview-card__meta">
           <span className="repost-preview-card__avatar">
-            {avatarUrl ? <img src={avatarUrl} alt="" /> : <UserRound size={13} aria-hidden="true" />}
+            <AvatarImage src={avatarUrl} fallback={<UserRound size={13} aria-hidden="true" />} fallbackSize={13} />
           </span>
           <span>
             <b>{repost.user?.userName || 'User'} reposted</b>

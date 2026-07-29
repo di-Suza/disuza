@@ -5,12 +5,26 @@ import { useAppSelector } from '@/app/store/hooks';
 import { useGetFeedQuery } from '@/features/posts/api/post.api';
 import type { FeedType } from '@/features/posts/model/post.types';
 
+type FeedPaginationState = {
+  feedType: FeedType;
+  loadedPostIds: string[];
+  page: number;
+};
+
+const preservedFeedPagination: FeedPaginationState = {
+  feedType: 'all',
+  loadedPostIds: [],
+  page: 1,
+};
+
 export const useFeedPage = () => {
   const user = useAppSelector((state) => state.auth.user);
   const [searchParams] = useSearchParams();
   const feedType: FeedType = searchParams.get('type') === 'following' ? 'following' : 'all';
-  const [page, setPage] = useState(1);
-  const [loadedPostIds, setLoadedPostIds] = useState<string[]>([]);
+  const [page, setPage] = useState(() => (preservedFeedPagination.feedType === feedType ? preservedFeedPagination.page : 1));
+  const [loadedPostIds, setLoadedPostIds] = useState<string[]>(() => (
+    preservedFeedPagination.feedType === feedType ? preservedFeedPagination.loadedPostIds : []
+  ));
   const feedQueryArgs = useMemo(
     () => ({ page, limit: 10, type: feedType, excludePostIds: page > 1 ? loadedPostIds : undefined }),
     [feedType, loadedPostIds, page],
@@ -18,9 +32,18 @@ export const useFeedPage = () => {
   const { data, isError, isFetching, isLoading, refetch } = useGetFeedQuery(feedQueryArgs);
 
   useEffect(() => {
-    setPage(1);
-    setLoadedPostIds([]);
-  }, [feedType]);
+    if (preservedFeedPagination.feedType !== feedType) {
+      preservedFeedPagination.feedType = feedType;
+      preservedFeedPagination.loadedPostIds = [];
+      preservedFeedPagination.page = 1;
+      setPage(1);
+      setLoadedPostIds([]);
+      return;
+    }
+
+    preservedFeedPagination.loadedPostIds = loadedPostIds;
+    preservedFeedPagination.page = page;
+  }, [feedType, loadedPostIds, page]);
 
   const loadMore = useCallback(() => {
     if (isFetching || !data?.hasMore) return;

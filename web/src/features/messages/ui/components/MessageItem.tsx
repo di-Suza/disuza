@@ -3,6 +3,7 @@ import { lazy, memo, Suspense, useEffect, useRef, useState } from 'react';
 
 import { formatChatMessageTime, getFeedbackMediaUrl, getSharedPostMediaUrl } from '@/features/messages/model/chat.helpers';
 import type { ChatMessage } from '@/features/messages/model/chat.types';
+import Image from '@/shared/components/Image/Image';
 import ChatAvatar from './ChatAvatar';
 import MessageAttachment from './MessageAttachment';
 import { useMessageItem } from './useMessageItem';
@@ -134,7 +135,7 @@ const MessageItem = ({ message, senderName }: MessageItemProps) => {
                   <button type="button" className="messages-v1-feedback-post" onClick={goToFeedbackPost}>
                     {feedbackMediaUrl && (
                       <span className="messages-v1-feedback-post__media">
-                        <img src={feedbackMediaUrl} alt="" loading="lazy" />
+                        <Image src={feedbackMediaUrl} type="thumbnail" alt="" />
                         {feedbackPostCaption && (
                           <span>
                             {feedbackPostCaption.substring(0, 20)}
@@ -166,7 +167,7 @@ const MessageItem = ({ message, senderName }: MessageItemProps) => {
 
             {isPostMessage && (
               <button type="button" className="messages-v1-shared-post" onClick={goToSharedPost}>
-                {sharedPostMediaUrl && <img src={sharedPostMediaUrl} alt="" loading="lazy" />}
+                {sharedPostMediaUrl && <Image src={sharedPostMediaUrl} type="thumbnail" alt="" />}
                 <span>
                   <small>{message.sharedPostDetails?.isProjectPost ? 'Project post' : 'Shared post'}</small>
                   <strong>{sharedPostAuthor}</strong>

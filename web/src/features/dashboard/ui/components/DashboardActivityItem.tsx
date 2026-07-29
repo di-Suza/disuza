@@ -4,6 +4,8 @@ import { Link } from 'react-router-dom';
 
 import { getPostMedia, isVideoMedia } from '@/features/posts/model/post.helpers';
 import type { Post } from '@/features/posts/model/post.types';
+import AvatarImage from '@/shared/components/Avatar/AvatarImage';
+import Image from '@/shared/components/Image/Image';
 
 type DashboardActivityKind = 'likes' | 'comments' | 'follows' | 'feedbacks';
 type ActivityRecord = Record<string, unknown>;
@@ -33,7 +35,7 @@ const PostPreview = ({ meta, post, onNavigate }: { meta: string; post: ActivityR
       <span className="activity-post-preview-v1__media">
         {firstMedia && isVideoMedia(firstMedia)
           ? <video src={firstMedia.url} poster={firstMedia.thumbnailUrl} muted preload="metadata" />
-          : firstMedia ? <img src={firstMedia.url} alt="" /> : <MessageSquare size={20} aria-hidden="true" />}
+          : firstMedia ? <Image src={firstMedia.thumbnailUrl || firstMedia.url} type="thumbnail" alt="" /> : <MessageSquare size={20} aria-hidden="true" />}
       </span>
       <span className="activity-post-preview-v1__body">
         <strong>{caption}</strong>
@@ -96,10 +98,10 @@ const DashboardActivityItem = ({ activity, isLoading, onAction, onNavigate, type
   if (type === 'follows') {
     const following = asRecord(record?.following);
     const userId = text(following?._id);
-    const avatar = text(asRecord(following?.profilePicture)?.url);
+    const avatar = text(asRecord(following?.profilePicture)?.url).trim();
     const content = (
       <>
-        <i>{avatar ? <img src={avatar} alt="" /> : <UserRound size={20} aria-hidden="true" />}</i>
+        <i><AvatarImage src={avatar} fallback={<UserRound size={20} aria-hidden="true" />} /></i>
         <span><strong>{text(following?.userName) || 'Developer'}</strong><small>{text(following?.headline) || 'Disuza member'}</small></span>
       </>
     );
@@ -118,6 +120,7 @@ const DashboardActivityItem = ({ activity, isLoading, onAction, onNavigate, type
   const detailMedia = details ? getPostMedia(details as unknown as Post) : [];
   const image = detailMedia[0];
   const targetLink = targetId ? (targetType === 'User' ? `/profile/${targetId}` : `/post/${targetId}`) : '';
+  const feedbackAvatar = text(asRecord(details?.profilePicture)?.url).trim();
 
   return (
     <article className="activity-feedback-v1">
@@ -131,8 +134,8 @@ const DashboardActivityItem = ({ activity, isLoading, onAction, onNavigate, type
           <Link to={targetLink} onClick={onNavigate} className="activity-feedback-v1__target">
             <i>
               {targetType === 'User'
-                ? text(asRecord(details.profilePicture)?.url) ? <img src={text(asRecord(details.profilePicture)?.url)} alt="" /> : <UserRound size={20} />
-                : image ? <img src={image.url} alt="" /> : <MessageSquare size={20} />}
+                ? <AvatarImage src={feedbackAvatar} fallback={<UserRound size={20} aria-hidden="true" />} />
+                : image ? <Image src={image.thumbnailUrl || image.url} type="thumbnail" alt="" /> : <MessageSquare size={20} aria-hidden="true" />}
             </i>
             <span><strong>{targetType === 'User' ? text(details.userName) || 'Profile' : text(details.caption) || 'Untitled post'}</strong><small>{targetType === 'User' ? 'Profile feedback' : 'Post feedback'}</small></span>
           </Link>

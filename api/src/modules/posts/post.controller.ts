@@ -49,10 +49,11 @@ class PostController {
 
   private async handleCreatePost(req: Request, res: Response) {
     const post = await this.service.createPost(req.user!.id, req.body, getUploadedPostMediaFiles(req));
+    const isQueuedUpload = post.uploadState?.status === 'processing';
 
     res.status(201).json({
       success: true,
-      message: 'Post created successfully!',
+      message: isQueuedUpload ? 'Post upload started.' : 'Post created successfully!',
       post,
     });
   }

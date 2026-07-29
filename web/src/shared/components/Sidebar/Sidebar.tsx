@@ -8,6 +8,7 @@ import logo from '@/shared/assets/images/logo.png';
 import useUnreadMessagesCount from '@/shared/hooks/useUnreadMessagesCount';
 import { useUnreadNotificationsCount } from '@/shared/hooks/useUnreadNotificationsCount';
 import { useToast } from '@/shared/hooks/useToast';
+import AvatarImage from '@/shared/components/Avatar/AvatarImage';
 import { getErrorMessage } from '@/shared/utils/getErrorMessage';
 import './Sidebar.css';
 
@@ -209,11 +210,11 @@ const Sidebar = () => {
             }}
             aria-label="Open profile"
           >
-            {profilePictureUrl ? (
-              <img className="app-mobile-navbar__avatar" src={profilePictureUrl} alt="" />
-            ) : (
-              <UserRound size={22} aria-hidden="true" />
-            )}
+            <AvatarImage
+              className="app-mobile-navbar__avatar"
+              src={profilePictureUrl}
+              fallback={<UserRound size={22} aria-hidden="true" />}
+            />
           </Link>
           <button
             type="button"
@@ -295,11 +296,11 @@ const Sidebar = () => {
                 }}
               >
                 <span className="app-sidebar__icon-wrap">
-                  {profilePictureUrl ? (
-                    <img className="app-sidebar__profile-avatar" src={profilePictureUrl} alt="" />
-                  ) : (
-                    <UserRound size={24} aria-hidden="true" />
-                  )}
+                  <AvatarImage
+                    className="app-sidebar__profile-avatar"
+                    src={profilePictureUrl}
+                    fallback={<UserRound size={24} aria-hidden="true" />}
+                  />
                 </span>
                 <span className="app-sidebar__label">Profile</span>
               </Link>

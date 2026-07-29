@@ -53,7 +53,7 @@ Delivery is tracked separately:
 | DISUZA-030 | Apply defense-in-depth security and abuse limits | Accepted | Partial |
 | DISUZA-031 | Use structured observability across HTTP, sockets, and jobs | Accepted | Partial |
 | DISUZA-032 | Add layered automated tests and CI before production claims | Accepted | Partial |
-| DISUZA-033 | Add Docker without coupling application design to containers | Accepted | Planned |
+| DISUZA-033 | Add Docker without coupling application design to containers | Accepted | Implemented |
 | DISUZA-034 | Extract services only after measured modular-monolith limits | Accepted | Planned |
 | DISUZA-035 | Keep admin moderation as a separate future product surface | Accepted | Deferred |
 | DISUZA-036 | Add GenAI problem generation with clear validation and safety limits | Accepted | Partial |
@@ -442,17 +442,19 @@ Decision:
 
 Consequence: architecture boundaries become enforceable rather than documentation-only preferences.
 
-Current delivery note: CI now installs API/web dependencies, typechecks, and builds on pull requests and protected branch pushes. Real unit, integration, component, E2E, socket, worker, visual, lint, and contract gates remain planned.
+Current delivery note: CI now installs API/web dependencies, runs API and web tests, typechecks, and builds on pull requests and protected branch pushes. Broader E2E, socket/worker integration, visual, lint, coverage, and contract gates remain planned.
 
 ### DISUZA-033: Docker as packaging
 
 Decision:
 
-- Docker may be added after core implementation without rewriting application code.
+- Docker can package the existing application without rewriting product code.
 - Compose should describe API, web, MongoDB, Redis, and worker process types for local/product-like environments.
 - Configuration remains environment-driven and the app remains runnable outside containers.
 
 Consequence: containers improve repeatability but do not become hidden application architecture.
+
+Current delivery note: Dockerfiles and Compose configuration exist for API, web, MongoDB, Redis, and shared local runtime wiring. Production image publishing and dedicated worker process deployment remain future hardening.
 
 ### DISUZA-034: Evidence-based service extraction
 

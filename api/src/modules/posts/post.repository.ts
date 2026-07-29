@@ -9,6 +9,7 @@ import PostModel, {
   type PostLinkClick,
   type PostMedia,
   type PostSettings,
+  type PostUploadState,
   type ProjectLinks,
 } from './post.model.js';
 
@@ -23,11 +24,18 @@ type CreatePostInput = {
   links?: PostLink[];
   codeSnippet?: CodeSnippet;
   hashtags?: string[];
+  uploadState?: PostUploadState;
 };
 
-type UpdatePostInput = Partial<Pick<Post, 'caption' | 'media' | 'settings' | 'projectLinks' | 'links' | 'codeSnippet' | 'hashtags'>>;
+type UpdatePostInput = Partial<Pick<Post, 'caption' | 'media' | 'settings' | 'projectLinks' | 'links' | 'codeSnippet' | 'hashtags' | 'uploadState'>>;
 
-const visiblePostQuery = { isDeleting: { $ne: true } } as const;
+const visiblePostQuery: FilterQuery<Post> = {
+  isDeleting: { $ne: true },
+  $or: [
+    { 'uploadState.status': { $exists: false } },
+    { 'uploadState.status': 'ready' },
+  ],
+};
 
 class PostRepository {
   create(data: CreatePostInput): Promise<PostDocument> {
@@ -169,6 +177,22 @@ class PostRepository {
       { _id: postId, ...visiblePostQuery },
       { $set: data },
       { new: true, runValidators: true },
+    ).populate('user', 'profilePicture userName headline');
+  }
+
+  completeMediaUpload(postId: string | Types.ObjectId, userId: string | Types.ObjectId, media: PostMedia[], uploadState: PostUploadState) {
+    return PostModel.findOneAndUpdate(
+      { _id: postId, user: userId, isDeleting: { $ne: true } },
+      { $set: { media, uploadState } },
+      { new: true, runValidators: true },
+    ).populate('user', 'profilePicture userName headline');
+  }
+
+  failMediaUpload(postId: string | Types.ObjectId, userId: string | Types.ObjectId, uploadState: PostUploadState) {
+    return PostModel.findOneAndUpdate(
+      { _id: postId, user: userId, isDeleting: { $ne: true } },
+      { $set: { uploadState } },
+      { new: true },
     ).populate('user', 'profilePicture userName headline');
   }
 

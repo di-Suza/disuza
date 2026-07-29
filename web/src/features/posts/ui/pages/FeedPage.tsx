@@ -1,15 +1,18 @@
 import { Eye, RefreshCw, Sparkles, UserRound } from 'lucide-react';
 import { useWindowVirtualizer } from '@tanstack/react-virtual';
-import { memo, useEffect, useMemo, useState } from 'react';
+import { memo, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
+import { useAppSelector } from '@/app/store/hooks';
 import { useGetUserRecommendationsQuery } from '@/features/users/api/user.api';
 import type { UserProfile } from '@/features/users/model/user.types';
-import type { Post, PostAuthor } from '@/features/posts/model/post.types';
+import type { FeedType, Post, PostAuthor } from '@/features/posts/model/post.types';
+import AvatarImage from '@/shared/components/Avatar/AvatarImage';
 import ErrorBoundary from '@/shared/components/ErrorBoundary/ErrorBoundary';
 import LoadingSpinner from '@/shared/ui/LoadingSpinner';
 import InlinePostComposer from '../components/InlinePostComposer';
 import PostCard from '../components/PostCard';
+import PostUploadStatusCard from '../components/PostUploadStatusCard';
 import { useFeedPage } from './useFeedPage';
 import '../posts.css';
 import '@/app/layouts/ProductShell.css';
@@ -31,7 +34,7 @@ const RecommendationCard = memo(({ user }: { user: UserProfile }) => {
 
   return (
     <button type="button" onClick={() => navigate(`/profile/${user._id}`)} className="recommendation-slider-card">
-      <span className="recommendation-slider-card__avatar">{avatarUrl ? <img src={avatarUrl} alt="" /> : <UserRound size={22} aria-hidden="true" />}</span>
+      <span className="recommendation-slider-card__avatar"><AvatarImage src={avatarUrl} fallback={<UserRound size={22} aria-hidden="true" />} /></span>
       <span className="recommendation-slider-card__copy"><strong>{user.userName}</strong>{user.headline && <small>{user.headline}</small>}</span>
       <em><Eye size={14} aria-hidden="true" />View</em>
     </button>
@@ -60,7 +63,7 @@ const UserRecommendations = memo(({ recommendations, variant = 'rail' }: { recom
           const avatarUrl = typeof item.profilePicture?.url === 'string' ? item.profilePicture.url : '';
           return (
             <Link key={item._id} to={`/profile/${item._id}`} className="recommendation-row">
-              <span>{avatarUrl ? <img src={avatarUrl} alt="" /> : <UserRound size={18} aria-hidden="true" />}</span>
+              <span><AvatarImage src={avatarUrl} fallback={<UserRound size={18} aria-hidden="true" />} /></span>
               <span><strong>{item.userName}</strong><small>{item.headline || 'Disuza member'}</small></span>
             </Link>
           );
@@ -82,19 +85,35 @@ FeedPostItem.displayName = 'FeedPostItem';
 
 const FEED_RENDER_BATCH_SIZE = 8;
 
+const preservedHomeFeedView: { feedType: FeedType; scrollY: number; visiblePostCount: number } = {
+  feedType: 'all',
+  scrollY: 0,
+  visiblePostCount: FEED_RENDER_BATCH_SIZE,
+};
+
 type FeedVirtualItem =
   | { id: string; type: 'post'; post: Post }
   | { id: string; type: 'recommendations' };
 
 const FeedPage = () => {
   const [recommendationInsertIndex] = useState(() => Math.floor(Math.random() * 3) + 2);
-  const [visiblePostCount, setVisiblePostCount] = useState(FEED_RENDER_BATCH_SIZE);
   const { feedType, hasMore, isError, isFetching, isLoading, loadMore, posts, refetch, user } = useFeedPage();
+  const [visiblePostCount, setVisiblePostCount] = useState(() => (
+    preservedHomeFeedView.feedType === feedType ? preservedHomeFeedView.visiblePostCount : FEED_RENDER_BATCH_SIZE
+  ));
+  const hasRestoredScrollRef = useRef(false);
+  const previousFeedTypeRef = useRef(feedType);
+  const pendingUploads = useAppSelector((state) => state.postUploads.tasks);
   const { data: recommendationsData } = useGetUserRecommendationsQuery({ limit: 12 });
   const recommendations = recommendationsData?.recommendations || EMPTY_RECOMMENDATIONS;
   const hasRecommendations = recommendations.length > 0;
-  const inlineRecommendationIndex = posts.length >= 2 ? Math.min(recommendationInsertIndex, posts.length) : null;
-  const visiblePosts = useMemo(() => posts.slice(0, visiblePostCount), [posts, visiblePostCount]);
+  const pendingPostIds = useMemo(() => new Set(pendingUploads.map((task) => task.postId).filter(Boolean)), [pendingUploads]);
+  const readyPosts = useMemo(() => posts.filter((post) => (
+    (post.uploadState?.status === undefined || post.uploadState.status === 'ready')
+    && !pendingPostIds.has(post._id)
+  )), [pendingPostIds, posts]);
+  const inlineRecommendationIndex = readyPosts.length >= 2 ? Math.min(recommendationInsertIndex, readyPosts.length) : null;
+  const visiblePosts = useMemo(() => readyPosts.slice(0, visiblePostCount), [readyPosts, visiblePostCount]);
   const feedItems = useMemo<FeedVirtualItem[]>(() => {
     const items: FeedVirtualItem[] = [];
 
@@ -107,7 +126,7 @@ const FeedPage = () => {
 
     return items;
   }, [hasRecommendations, inlineRecommendationIndex, visiblePosts]);
-  const hasHiddenLoadedPosts = visiblePostCount < posts.length;
+  const hasHiddenLoadedPosts = visiblePostCount < readyPosts.length;
   const rowVirtualizer = useWindowVirtualizer({
     count: feedItems.length,
     estimateSize: (index) => (feedItems[index]?.type === 'recommendations' ? 230 : 760),
@@ -115,6 +134,7 @@ const FeedPage = () => {
     overscan: 4,
   });
   const virtualItems = rowVirtualizer.getVirtualItems();
+  const virtualListHeight = rowVirtualizer.getTotalSize();
   const lastVirtualIndex = virtualItems[virtualItems.length - 1]?.index ?? -1;
 
   const fallbackAuthor = useMemo<PostAuthor | undefined>(() => {
@@ -123,19 +143,67 @@ const FeedPage = () => {
   }, [user]);
 
   useEffect(() => {
+    if (previousFeedTypeRef.current === feedType) return;
+
+    previousFeedTypeRef.current = feedType;
+    preservedHomeFeedView.feedType = feedType;
+    preservedHomeFeedView.scrollY = 0;
+    preservedHomeFeedView.visiblePostCount = FEED_RENDER_BATCH_SIZE;
+    hasRestoredScrollRef.current = true;
     setVisiblePostCount(FEED_RENDER_BATCH_SIZE);
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
   }, [feedType]);
+
+  useEffect(() => {
+    preservedHomeFeedView.feedType = feedType;
+    preservedHomeFeedView.visiblePostCount = visiblePostCount;
+  }, [feedType, visiblePostCount]);
+
+  useEffect(() => {
+    const rememberScrollPosition = () => {
+      preservedHomeFeedView.feedType = feedType;
+      preservedHomeFeedView.scrollY = window.scrollY;
+      preservedHomeFeedView.visiblePostCount = visiblePostCount;
+    };
+
+    window.addEventListener('scroll', rememberScrollPosition, { passive: true });
+    window.addEventListener('beforeunload', rememberScrollPosition);
+
+    return () => {
+      rememberScrollPosition();
+      window.removeEventListener('scroll', rememberScrollPosition);
+      window.removeEventListener('beforeunload', rememberScrollPosition);
+    };
+  }, [feedType, visiblePostCount]);
+
+  useLayoutEffect(() => {
+    if (hasRestoredScrollRef.current || isLoading || preservedHomeFeedView.feedType !== feedType) return;
+
+    const scrollY = preservedHomeFeedView.scrollY;
+    if (scrollY <= 0) {
+      hasRestoredScrollRef.current = true;
+      return;
+    }
+
+    const maxScrollY = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+    if (maxScrollY <= 0) return;
+
+    hasRestoredScrollRef.current = true;
+    window.requestAnimationFrame(() => {
+      window.scrollTo({ top: Math.min(scrollY, maxScrollY), left: 0, behavior: 'auto' });
+    });
+  }, [feedType, isLoading, readyPosts.length, virtualListHeight]);
 
   useEffect(() => {
     if (lastVirtualIndex < Math.max(0, feedItems.length - 3)) return;
 
     if (hasHiddenLoadedPosts) {
-      setVisiblePostCount((current) => Math.min(posts.length, current + FEED_RENDER_BATCH_SIZE));
+      setVisiblePostCount((current) => Math.min(readyPosts.length, current + FEED_RENDER_BATCH_SIZE));
       return;
     }
 
     if (hasMore && !isFetching) loadMore();
-  }, [feedItems.length, hasHiddenLoadedPosts, hasMore, isFetching, lastVirtualIndex, loadMore, posts.length]);
+  }, [feedItems.length, hasHiddenLoadedPosts, hasMore, isFetching, lastVirtualIndex, loadMore, readyPosts.length]);
 
   return (
     <div className={hasRecommendations ? 'home-feed-exact has-recommendations' : 'home-feed-exact'}>
@@ -143,15 +211,20 @@ const FeedPage = () => {
         <ErrorBoundary variant="section" title="Post composer could not be rendered." showReload={false}>
           <InlinePostComposer />
         </ErrorBoundary>
+        {pendingUploads.length > 0 && (
+          <div className="home-feed-exact__uploads">
+            {pendingUploads.map((task) => <PostUploadStatusCard key={task.clientUploadId} task={task} />)}
+          </div>
+        )}
         {isLoading ? (
           <><PostCardSkeleton /><PostCardSkeleton /></>
         ) : isError ? (
           <div className="post-empty-state"><RefreshCw size={24} aria-hidden="true" /><p>Feed could not be loaded.</p><button type="button" onClick={() => refetch()}>Retry</button></div>
-        ) : posts.length === 0 ? (
+        ) : readyPosts.length === 0 && pendingUploads.length === 0 ? (
           <p className="home-feed-exact__empty">{feedType === 'following' ? 'No posts from people you follow yet' : 'No posts yet'}</p>
         ) : (
           <>
-            <div className="home-feed-exact__virtual-list" style={{ height: `${rowVirtualizer.getTotalSize()}px` }}>
+            <div className="home-feed-exact__virtual-list" style={{ height: `${virtualListHeight}px` }}>
               {virtualItems.map((virtualItem) => {
                 const item = feedItems[virtualItem.index];
                 if (!item) return null;
@@ -186,7 +259,7 @@ const FeedPage = () => {
               <div className="home-feed-exact__sentinel">
                 <button
                   type="button"
-                  onClick={() => setVisiblePostCount((current) => Math.min(posts.length, current + FEED_RENDER_BATCH_SIZE))}
+                  onClick={() => setVisiblePostCount((current) => Math.min(readyPosts.length, current + FEED_RENDER_BATCH_SIZE))}
                 >
                   Show more posts
                 </button>
@@ -196,7 +269,7 @@ const FeedPage = () => {
                 <button type="button" onClick={loadMore} disabled={isFetching}>Load more</button>
               </div>
             )}
-            {!hasHiddenLoadedPosts && !hasMore && !isFetching && <p className="home-feed-exact__caught-up">You're all caught up</p>}
+            {!hasHiddenLoadedPosts && !hasMore && !isFetching && pendingUploads.length === 0 && <p className="home-feed-exact__caught-up">You're all caught up</p>}
           </>
         )}
         {isFetching && !isLoading && <LoadingSpinner className="home-feed-exact__loader" label="Loading more posts" />}

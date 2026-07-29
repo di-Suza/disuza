@@ -7,6 +7,7 @@ import { useCreateGroupMutation, useStartConversationMutation } from '@/features
 import type { ChatConversation } from '@/features/messages/model/chat.types';
 import { useGetFollowersQuery, useGetFollowingQuery } from '@/features/users/api/user.api';
 import type { UserProfile } from '@/features/users/model/user.types';
+import AvatarImage from '@/shared/components/Avatar/AvatarImage';
 import Button from '@/shared/ui/Button';
 import Input from '@/shared/ui/Input';
 import LoadingSpinner from '@/shared/ui/LoadingSpinner';
@@ -46,7 +47,7 @@ const ConversationPersonCard = memo(({ onToggle, selected, user }: ConversationP
       onClick={() => onToggle(user._id)}
     >
       <span className="messages-v1-person-card__avatar">
-        {avatarUrl ? <img src={avatarUrl} alt="" /> : <UserRound size={16} aria-hidden="true" />}
+        <AvatarImage src={avatarUrl} fallback={<UserRound size={16} aria-hidden="true" />} />
       </span>
       <span>
         <strong>{user.userName || getInitial(user)}</strong>

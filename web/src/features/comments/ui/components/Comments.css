@@ -31,6 +31,11 @@
   text-align: center;
 }
 
+.comment-state--empty {
+  align-content: center;
+  gap: 6px;
+}
+
 .comment-state p {
   margin: 0;
   line-height: 1.5;
@@ -50,7 +55,8 @@
   display: grid;
   grid-template-columns: 40px minmax(0, 1fr) auto;
   align-items: start;
-  gap: 10px;
+  column-gap: 14px;
+  row-gap: 10px;
   border: 1px solid var(--border-secondary);
   border-radius: 10px;
   background: rgba(255, 255, 255, 0.025);
@@ -75,7 +81,7 @@
   height: 40px;
   overflow: hidden;
   border: 1px solid var(--border-secondary);
-  border-radius: 14px;
+  border-radius: 999px;
   background: rgba(59, 99, 255, 0.12);
   color: var(--accent);
 }
@@ -83,7 +89,7 @@
 .comment-avatar--small {
   width: 32px;
   height: 32px;
-  border-radius: 12px;
+  border-radius: 999px;
 }
 
 .comment-avatar img {
@@ -150,6 +156,8 @@
   min-width: 34px;
   min-height: 34px;
   border-radius: 12px;
+  align-self: start;
+  justify-self: end;
 }
 
 .comment-replies {
@@ -222,14 +230,20 @@
 
 .comments-composer__row {
   display: grid;
-  grid-template-columns: 32px minmax(0, 1fr) 44px;
+  grid-template-columns: 44px minmax(0, 1fr) 44px;
   align-items: center;
   gap: 10px;
 }
 
+.comments-composer__row .comment-avatar--small {
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+}
+
 .comments-composer__input {
   min-height: 44px;
-  border-radius: 999px;
+  border-radius: 12px;
   padding: 0 16px;
 }
 
@@ -250,17 +264,55 @@
     padding-left: 14px;
   }
 
+  .comment-state {
+    min-height: 170px;
+  }
+
   .comment-item,
   .comment-item--reply {
-    grid-template-columns: 34px minmax(0, 1fr);
+    grid-template-columns: 32px minmax(0, 1fr) auto;
+    column-gap: 10px;
+    row-gap: 8px;
+    padding: 10px;
   }
 
   .comment-item__delete {
-    grid-column: 2;
-    justify-self: start;
+    width: 30px;
+    min-width: 30px;
+    min-height: 30px;
+    border-radius: 10px;
   }
 
   .comment-replies {
     margin-left: 20px;
+  }
+
+  .comments-composer {
+    padding: 12px;
+  }
+
+  .comments-composer__row {
+    grid-template-columns: 40px minmax(0, 1fr) 40px;
+    gap: 8px;
+  }
+
+  .comments-composer__row .comment-avatar--small {
+    width: 40px;
+    height: 40px;
+    border-radius: 999px;
+  }
+
+  .comments-composer__input {
+    width: 100%;
+    height: 40px;
+    min-height: 40px;
+    border-radius: 10px;
+    padding: 0 12px;
+  }
+
+  .comments-composer__row > .button--icon {
+    width: 40px;
+    min-width: 40px;
+    min-height: 40px;
   }
 }

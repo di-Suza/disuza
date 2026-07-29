@@ -1,6 +1,6 @@
 # AI Generation Adapter
 
-AI-assisted room problem generation is wired through Gemini Interactions structured JSON output.
+AI-assisted room problem generation is wired through Gemini structured JSON generation.
 
 Current flow:
 

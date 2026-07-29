@@ -1,5 +1,5 @@
 # Web Testing Helpers
 
-Keep web-specific render helpers, mocked providers, fixture builders, and RTK Query test utilities here when a test runner is added.
+Keep web-specific render helpers, mocked providers, fixture builders, and RTK Query test utilities here when they are shared by multiple web test suites.
 
-Production code should not import from this folder.
+Production code must not import from this folder.

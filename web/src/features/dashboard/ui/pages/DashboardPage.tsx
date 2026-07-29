@@ -29,6 +29,7 @@ import {
   UserX,
 } from 'lucide-react';
 
+import AvatarImage from '@/shared/components/Avatar/AvatarImage';
 import ErrorBoundary from '@/shared/components/ErrorBoundary/ErrorBoundary';
 import LoadingSpinner from '@/shared/ui/LoadingSpinner';
 import HeatmapRules from '../components/HeatmapRules';
@@ -83,7 +84,9 @@ const getInitialTheme = (): Theme => {
   return window.localStorage.getItem(THEME_STORAGE_KEY) === 'light' ? 'light' : 'dark';
 };
 
-const getAvatarUrl = (url: unknown): string | null => (typeof url === 'string' && url.trim() ? url : null);
+const getAvatarUrl = (url: unknown): string | null => (
+  typeof url === 'string' && url.trim() ? url : null
+);
 
 const SettingsRow = ({
   description,
@@ -175,7 +178,12 @@ const DashboardPage = () => {
               <div className="dashboard-v1-user">
                 <span className="dashboard-v1-avatar-wrap">
                   <span className="dashboard-v1-avatar">
-                    {avatarUrl ? <img src={avatarUrl} alt={user?.userName || 'Profile'} /> : <UserRound size={34} aria-hidden="true" />}
+                    <AvatarImage
+                      src={avatarUrl}
+                      imageType="avatar"
+                      alt={user?.userName || 'Profile'}
+                      fallback={<UserRound size={34} aria-hidden="true" />}
+                    />
                   </span>
                 </span>
                 <span className="dashboard-v1-user__copy">

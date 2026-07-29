@@ -6,6 +6,7 @@ import { useAppSelector } from '@/app/store/hooks';
 import { useGetAllPostsQuery, useGetUserRepostsQuery } from '@/features/posts/api/post.api';
 import { getPostMedia, isVideoMedia } from '@/features/posts/model/post.helpers';
 import type { Post } from '@/features/posts/model/post.types';
+import Image from '@/shared/components/Image/Image';
 import LoadingSpinner from '@/shared/ui/LoadingSpinner';
 import RepostPreviewCard from './RepostPreviewCard';
 import '../posts.css';
@@ -30,7 +31,7 @@ const PostPreviewCard = memo(({ post }: { post: Post }) => {
             <i><Play size={14} aria-hidden="true" /></i>
           </>
         ) : firstMedia ? (
-          <img src={firstMedia.url} alt="Post" loading="lazy" />
+          <Image src={firstMedia.thumbnailUrl || firstMedia.url} type="thumbnail" alt="Post" />
         ) : null}
         <em><Eye size={14} aria-hidden="true" /></em>
       </span>

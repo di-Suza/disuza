@@ -8,6 +8,7 @@ import {
   useGetSavedPostsCollectionsQuery,
 } from '@/features/posts/api/post.api';
 import type { SavedCollection } from '@/features/posts/model/post.types';
+import Image from '@/shared/components/Image/Image';
 import { useLockBodyScroll } from '@/shared/hooks/useLockBodyScroll';
 import { useToast } from '@/shared/hooks/useToast';
 import Button from '@/shared/ui/Button';
@@ -154,7 +155,7 @@ const ManageSaveCollectionsModal = ({ isOpen, onClose, onSaved, postId }: Manage
                     aria-pressed={isSelected}
                   >
                     <span className="saves-collection-card__image">
-                      {collection.coverImage ? <img src={collection.coverImage} alt="" /> : <ImageIcon size={24} aria-hidden="true" />}
+                      {collection.coverImage ? <Image src={collection.coverImage} type="thumbnail" alt="" /> : <ImageIcon size={24} aria-hidden="true" />}
                     </span>
                     <span className="saves-collection-card__meta">
                       <strong>{collection.name}</strong>

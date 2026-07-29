@@ -3,6 +3,7 @@ import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 
 import { getPostMedia, isVideoMedia } from '@/features/posts/model/post.helpers';
 import type { PostMedia } from '@/features/posts/model/post.types';
+import Image from '@/shared/components/Image/Image';
 import { cn } from '@/shared/utils/cn';
 
 type PostMediaCarouselProps = {
@@ -37,7 +38,7 @@ const PostMediaCarousel = ({ className, media }: PostMediaCarouselProps) => {
         {isVideoMedia(activeMedia) ? (
           <video src={activeMedia.url} controls preload="metadata" />
         ) : (
-          <img src={activeMedia.url} alt={activeMedia.name || 'Post media'} loading="lazy" />
+          <Image src={activeMedia.url} type="post" alt={activeMedia.name || 'Post media'} />
         )}
 
         {isVideoMedia(activeMedia) && (

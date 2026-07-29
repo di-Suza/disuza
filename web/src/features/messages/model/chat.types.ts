@@ -12,8 +12,8 @@ export type FeedbackDetails = {
   userName?: string;
   profilePicture?: ChatImage;
   caption?: string;
-  media?: Array<{ url?: string; mediaType?: string }>;
-  images?: Array<{ url?: string; mediaType?: string }>;
+  media?: Array<{ url?: string; mediaType?: string; thumbnailUrl?: string }>;
+  images?: Array<{ url?: string; mediaType?: string; thumbnailUrl?: string }>;
 };
 
 export type SharedPostDetails = {

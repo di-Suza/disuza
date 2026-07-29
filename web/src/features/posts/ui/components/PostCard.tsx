@@ -35,6 +35,8 @@ import type { Post, PostAuthor, PostLink } from '@/features/posts/model/post.typ
 import { usePostLike } from '@/features/posts/ui/hooks/usePostLike';
 import { usePostRepost } from '@/features/posts/ui/hooks/usePostRepost';
 import { usePostSave } from '@/features/saves/ui/hooks/usePostSave';
+import AvatarImage from '@/shared/components/Avatar/AvatarImage';
+import Image from '@/shared/components/Image/Image';
 import { useLockBodyScroll } from '@/shared/hooks/useLockBodyScroll';
 import { useToast } from '@/shared/hooks/useToast';
 import { cn } from '@/shared/utils/cn';
@@ -114,63 +116,320 @@ const normalizeLink = (url?: string) => {
 
 const truncateUrl = (url: string) => url.replace(/^https?:\/\//i, '').replace(/\/$/, '');
 
+const FEED_VIDEO_MUTED_STORAGE_KEY = 'disuza:feed-video-muted';
+const FEED_VIDEO_PLAY_EVENT = 'disuza:feed-video-play';
+const FEED_VIDEO_MUTED_EVENT = 'disuza:feed-video-muted';
+const FEED_VIDEO_VISIBLE_THRESHOLD = 0.4;
+
+type VideoPreviewSnapshot = {
+  currentTime: number;
+  src: string;
+  userPaused: boolean;
+  wasPlaying: boolean;
+};
+
+type VideoRestoreRequest = VideoPreviewSnapshot & {
+  requestId: number;
+};
+
+let sharedFeedVideoMuted: boolean | null = null;
+
+const getSharedFeedVideoMuted = () => {
+  if (sharedFeedVideoMuted !== null) return sharedFeedVideoMuted;
+
+  if (typeof window === 'undefined') {
+    sharedFeedVideoMuted = true;
+    return sharedFeedVideoMuted;
+  }
+
+  try {
+    const storedValue = window.localStorage.getItem(FEED_VIDEO_MUTED_STORAGE_KEY);
+    sharedFeedVideoMuted = storedValue === null ? true : storedValue === 'true';
+  } catch {
+    sharedFeedVideoMuted = true;
+  }
+
+  return sharedFeedVideoMuted;
+};
+
+const updateSharedFeedVideoMuted = (muted: boolean) => {
+  sharedFeedVideoMuted = muted;
+
+  if (typeof window === 'undefined') return;
+
+  try {
+    window.localStorage.setItem(FEED_VIDEO_MUTED_STORAGE_KEY, String(muted));
+  } catch {
+    // Local storage can be unavailable in private or restricted browser sessions.
+  }
+
+  window.dispatchEvent(new CustomEvent(FEED_VIDEO_MUTED_EVENT, { detail: { muted } }));
+};
+
 const PostVideoPlayer = memo(({
   ariaLabel,
   className,
   onOpenPreview,
+  playerId,
+  restoreRequest,
   src,
+  suspendAutoPlay = false,
   variant,
 }: {
   ariaLabel: string;
   className: string;
-  onOpenPreview?: () => void;
+  onOpenPreview?: (snapshot: VideoPreviewSnapshot) => void;
+  playerId: string;
+  restoreRequest?: VideoRestoreRequest | null;
   src: string;
+  suspendAutoPlay?: boolean;
   variant: 'card' | 'preview';
 }) => {
+  const playerRef = useRef<HTMLDivElement | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
-  const [isPaused, setPaused] = useState(false);
-  const [isMuted, setMuted] = useState(true);
+  const isInViewRef = useRef(variant === 'preview');
+  const isPausedRef = useRef(variant === 'card');
+  const userPausedRef = useRef(false);
+  const [isInView, setInView] = useState(variant === 'preview');
+  const [isPaused, setPausedState] = useState(variant === 'card');
+  const [isMuted, setMutedState] = useState(() => getSharedFeedVideoMuted());
 
-  useEffect(() => {
-    setPaused(false);
-    setMuted(true);
-  }, [src]);
+  const setPaused = useCallback((paused: boolean) => {
+    isPausedRef.current = paused;
+    setPausedState(paused);
+  }, []);
 
-  useEffect(() => {
+  const setMuted = useCallback((muted: boolean) => {
+    setMutedState(muted);
+
     const video = videoRef.current;
-    if (!video) return;
+    if (video) {
+      video.muted = muted;
+    }
+  }, []);
 
-    video.muted = isMuted;
-    if (isPaused) {
+  const announceActiveVideo = useCallback(() => {
+    if (variant !== 'card') return;
+    window.dispatchEvent(new CustomEvent(FEED_VIDEO_PLAY_EVENT, { detail: { playerId } }));
+  }, [playerId, variant]);
+
+  const pauseVideo = useCallback(() => {
+    const video = videoRef.current;
+    if (video) {
       video.pause();
+    }
+
+    setPaused(true);
+  }, [setPaused]);
+
+  const playVideo = useCallback((announce = false) => {
+    const video = videoRef.current;
+    if (!video) {
+      setPaused(false);
       return;
     }
 
+    video.muted = getSharedFeedVideoMuted();
     const playRequest = video.play();
+    setPaused(false);
+
     if (playRequest) {
-      playRequest.catch(() => setPaused(true));
+      playRequest
+        .then(() => {
+          if (announce) announceActiveVideo();
+        })
+        .catch(() => setPaused(true));
+      return;
     }
-  }, [isMuted, isPaused, src]);
+
+    if (announce) announceActiveVideo();
+  }, [announceActiveVideo, setPaused]);
+
+  useEffect(() => {
+    userPausedRef.current = false;
+    setMuted(getSharedFeedVideoMuted());
+
+    const video = videoRef.current;
+    if (!video) {
+      setPaused(variant === 'card');
+      return;
+    }
+
+    if (variant === 'preview') {
+      try {
+        video.currentTime = 0;
+      } catch {
+        // Some browsers only allow currentTime updates after metadata is ready.
+      }
+
+      playVideo(false);
+      return;
+    }
+
+    setPaused(true);
+    video.pause();
+  }, [playVideo, setMuted, setPaused, src, variant]);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (video) {
+      video.muted = isMuted;
+    }
+  }, [isMuted]);
+
+  useEffect(() => {
+    const handleMutedChange = (event: Event) => {
+      const nextMuted = (event as CustomEvent<{ muted: boolean }>).detail?.muted;
+      if (typeof nextMuted === 'boolean') {
+        setMuted(nextMuted);
+      }
+    };
+
+    window.addEventListener(FEED_VIDEO_MUTED_EVENT, handleMutedChange);
+    return () => window.removeEventListener(FEED_VIDEO_MUTED_EVENT, handleMutedChange);
+  }, [setMuted]);
+
+  useEffect(() => {
+    if (variant !== 'card') return;
+
+    const handleActiveVideoChange = (event: Event) => {
+      const activePlayerId = (event as CustomEvent<{ playerId: string }>).detail?.playerId;
+      if (activePlayerId && activePlayerId !== playerId) {
+        pauseVideo();
+      }
+    };
+
+    window.addEventListener(FEED_VIDEO_PLAY_EVENT, handleActiveVideoChange);
+    return () => window.removeEventListener(FEED_VIDEO_PLAY_EVENT, handleActiveVideoChange);
+  }, [pauseVideo, playerId, variant]);
+
+  useEffect(() => {
+    if (variant !== 'card') return;
+
+    const player = playerRef.current;
+    if (!player || typeof IntersectionObserver === 'undefined') {
+      isInViewRef.current = true;
+      setInView(true);
+      return;
+    }
+
+    const observer = new IntersectionObserver(([entry]) => {
+      const nextIsInView = entry.isIntersecting && entry.intersectionRatio >= FEED_VIDEO_VISIBLE_THRESHOLD;
+      isInViewRef.current = nextIsInView;
+      setInView(nextIsInView);
+    }, { threshold: [0, 0.25, FEED_VIDEO_VISIBLE_THRESHOLD, 0.6, 0.8, 1] });
+
+    observer.observe(player);
+    return () => observer.disconnect();
+  }, [src, variant]);
+
+  useEffect(() => {
+    if (variant !== 'card') return;
+
+    if (!isInView || suspendAutoPlay) {
+      pauseVideo();
+      return;
+    }
+
+    if (!userPausedRef.current) {
+      playVideo(true);
+    }
+  }, [isInView, pauseVideo, playVideo, suspendAutoPlay, variant]);
+
+  useEffect(() => {
+    if (variant !== 'card' || !restoreRequest || restoreRequest.src !== src) return;
+
+    userPausedRef.current = restoreRequest.userPaused;
+
+    const video = videoRef.current;
+    if (video) {
+      try {
+        video.currentTime = restoreRequest.currentTime;
+      } catch {
+        // The browser will keep the current frame if the saved time cannot be applied yet.
+      }
+    }
+
+    if (restoreRequest.wasPlaying && !restoreRequest.userPaused && isInViewRef.current && !suspendAutoPlay) {
+      playVideo(true);
+      return;
+    }
+
+    pauseVideo();
+  }, [
+    pauseVideo,
+    playVideo,
+    restoreRequest,
+    restoreRequest?.currentTime,
+    restoreRequest?.requestId,
+    restoreRequest?.src,
+    restoreRequest?.userPaused,
+    restoreRequest?.wasPlaying,
+    src,
+    suspendAutoPlay,
+    variant,
+  ]);
+
+  useEffect(() => () => {
+    const video = videoRef.current;
+    if (video) {
+      video.pause();
+    }
+  }, []);
+
+  const openPreview = useCallback(() => {
+    if (!onOpenPreview) return;
+
+    const video = videoRef.current;
+    const snapshot: VideoPreviewSnapshot = {
+      currentTime: video?.currentTime || 0,
+      src,
+      userPaused: userPausedRef.current,
+      wasPlaying: video ? !video.paused && !video.ended : !isPausedRef.current,
+    };
+
+    pauseVideo();
+    onOpenPreview(snapshot);
+  }, [onOpenPreview, pauseVideo, src]);
 
   const togglePlayback = useCallback((event?: MouseEvent<HTMLButtonElement>) => {
     event?.stopPropagation();
-    setPaused((current) => !current);
-  }, []);
+    const shouldPlay = isPausedRef.current;
+
+    if (shouldPlay) {
+      userPausedRef.current = false;
+      playVideo(variant === 'card');
+      return;
+    }
+
+    userPausedRef.current = variant === 'card';
+    pauseVideo();
+  }, [pauseVideo, playVideo, variant]);
 
   const toggleMute = useCallback((event: MouseEvent<HTMLButtonElement>) => {
     event.stopPropagation();
-    setMuted((current) => !current);
+    updateSharedFeedVideoMuted(!getSharedFeedVideoMuted());
   }, []);
+
+  const handlePlayerClick = useCallback(() => {
+    if (variant === 'card') {
+      openPreview();
+      return;
+    }
+
+    togglePlayback();
+  }, [openPreview, togglePlayback, variant]);
 
   return (
     <div
+      ref={playerRef}
       className={cn('v1-post-card__video-player', `v1-post-card__video-player--${variant}`)}
-      onClick={variant === 'card' ? onOpenPreview : () => setPaused((current) => !current)}
+      onClick={handlePlayerClick}
       onKeyDown={(event) => {
         if (variant !== 'card' || !onOpenPreview) return;
         if (event.key === 'Enter' || event.key === ' ') {
           event.preventDefault();
-          onOpenPreview();
+          openPreview();
         }
       }}
       role={variant === 'card' ? 'button' : undefined}
@@ -181,14 +440,17 @@ const PostVideoPlayer = memo(({
         ref={videoRef}
         className={className}
         src={src}
-        autoPlay
+        autoPlay={variant === 'preview'}
         muted={isMuted}
         playsInline
         loop
         preload="metadata"
         disablePictureInPicture
         aria-label={ariaLabel}
-        onPlay={() => setPaused(false)}
+        onPlay={() => {
+          setPaused(false);
+          announceActiveVideo();
+        }}
         onPause={() => setPaused(true)}
       />
       <div className="v1-post-card__video-controls" aria-label="Video controls">
@@ -220,10 +482,11 @@ const PostCard = ({ className, fallbackAuthor, hideFeedbackAction = false, post,
   const [showFullCaption, setShowFullCaption] = useState(false);
   const [showFullCode, setShowFullCode] = useState(false);
   const [activeAttachmentPanel, setActiveAttachmentPanel] = useState<PostAttachmentPanel>('code');
-  const [hasManuallySelectedAttachmentPanel, setHasManuallySelectedAttachmentPanel] = useState(false);
   const [isMediaPreviewOpen, setMediaPreviewOpen] = useState(false);
+  const [videoRestoreRequest, setVideoRestoreRequest] = useState<VideoRestoreRequest | null>(null);
   const [showSaveTooltip, setShowSaveTooltip] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const previewRestoreRef = useRef<VideoPreviewSnapshot | null>(null);
   const [deletePost, { isLoading: isDeleting }] = useDeletePostMutation();
   const [trackPostLinkClick] = useTrackPostLinkClickMutation();
   const { data: fullPostData, isFetching: isPostFetching } = useGetPostQuery(post._id, { skip: !isEditOpen });
@@ -288,7 +551,13 @@ const PostCard = ({ className, fallbackAuthor, hideFeedbackAction = false, post,
   }, []);
 
   const closeMediaPreview = useCallback(() => {
+    const restoreSnapshot = previewRestoreRef.current;
+    previewRestoreRef.current = null;
     setMediaPreviewOpen(false);
+
+    if (restoreSnapshot) {
+      setVideoRestoreRequest({ ...restoreSnapshot, requestId: Date.now() });
+    }
   }, []);
 
   const closeReport = useCallback(() => {
@@ -311,9 +580,14 @@ const PostCard = ({ className, fallbackAuthor, hideFeedbackAction = false, post,
     setFeedbackOpen(true);
   }, []);
 
-  const openMediaPreview = useCallback(() => {
+  const openMediaPreview = useCallback((snapshot?: VideoPreviewSnapshot) => {
+    previewRestoreRef.current = snapshot || null;
     setMediaPreviewOpen(true);
   }, []);
+
+  const openImagePreview = useCallback(() => {
+    openMediaPreview();
+  }, [openMediaPreview]);
 
   const toggleDropdown = useCallback(() => {
     setShowDropdown((current) => !current);
@@ -329,27 +603,17 @@ const PostCard = ({ className, fallbackAuthor, hideFeedbackAction = false, post,
 
   const selectAttachmentPanel = useCallback((panel: PostAttachmentPanel) => {
     setActiveAttachmentPanel(panel);
-    setHasManuallySelectedAttachmentPanel(true);
   }, []);
 
   useLockBodyScroll(isMediaPreviewOpen);
 
   useEffect(() => {
     setActiveAttachmentPanel('code');
-    setHasManuallySelectedAttachmentPanel(false);
     setShowFullCode(false);
     setCurrentIndex(0);
+    setVideoRestoreRequest(null);
+    previewRestoreRef.current = null;
   }, [post._id]);
-
-  useEffect(() => {
-    if (!hasAttachmentSwitcher || hasManuallySelectedAttachmentPanel) return;
-
-    const intervalId = window.setInterval(() => {
-      setActiveAttachmentPanel((current) => (current === 'code' ? 'media' : 'code'));
-    }, 4000);
-
-    return () => window.clearInterval(intervalId);
-  }, [hasAttachmentSwitcher, hasManuallySelectedAttachmentPanel]);
 
   useEffect(() => {
     if (!isMediaPreviewOpen) return;
@@ -427,7 +691,7 @@ const PostCard = ({ className, fallbackAuthor, hideFeedbackAction = false, post,
         <header className="v1-post-card__header">
           <button type="button" onClick={() => navigate(author?._id ? `/profile/${author._id}` : '/dashboard')} className="v1-post-card__author">
             <span className="v1-post-card__avatar">
-              {avatarUrl ? <img src={avatarUrl} alt="" /> : <UserRound size={22} aria-hidden="true" />}
+              <AvatarImage src={avatarUrl} fallback={<UserRound size={22} aria-hidden="true" />} />
             </span>
             <span className="v1-post-card__author-copy">
               <strong>{userName}</strong>
@@ -526,20 +790,23 @@ const PostCard = ({ className, fallbackAuthor, hideFeedbackAction = false, post,
         {shouldShowMedia && activeMedia && (
           <section className="v1-post-card__media-shell">
             <div className="v1-post-card__media-stage" style={mediaStageStyle}>
-              {!isVideoMedia(activeMedia) && <img className="v1-post-card__media-bg" src={activeMedia.url} alt="" aria-hidden="true" />}
+              {!isVideoMedia(activeMedia) && <Image className="v1-post-card__media-bg" src={activeMedia.url} type="card" alt="" aria-hidden="true" />}
               <div className="v1-post-card__media-overlay" />
               {isVideoMedia(activeMedia) ? (
                 <PostVideoPlayer
                   ariaLabel={`Post video ${currentIndex + 1}`}
                   className="v1-post-card__media-main"
+                  playerId={`post-card:${post._id}:${currentIndex}:${activeMedia.fileId || activeMedia.url}`}
+                  restoreRequest={videoRestoreRequest}
                   src={activeMedia.url}
+                  suspendAutoPlay={isMediaPreviewOpen}
                   variant="card"
                   onOpenPreview={openMediaPreview}
                 />
               ) : (
-                <img className="v1-post-card__media-main" src={activeMedia.url} alt={`Post content ${currentIndex + 1}`} loading="lazy" />
+                <Image className="v1-post-card__media-main" src={activeMedia.url} type="post" alt={`Post content ${currentIndex + 1}`} />
               )}
-              {!isVideoMedia(activeMedia) && <button type="button" className="v1-post-card__media-open" onClick={openMediaPreview} aria-label="Open media preview" />}
+              {!isVideoMedia(activeMedia) && <button type="button" className="v1-post-card__media-open" onClick={openImagePreview} aria-label="Open media preview" />}
 
               {media.length > 1 && currentIndex > 0 && <button type="button" className="v1-post-card__media-nav v1-post-card__media-nav--left" onClick={goToPrevious} aria-label="Previous media"><ChevronLeft size={20} /></button>}
               {media.length > 1 && currentIndex < media.length - 1 && <button type="button" className="v1-post-card__media-nav v1-post-card__media-nav--right" onClick={goToNext} aria-label="Next media"><ChevronRight size={20} /></button>}
@@ -611,13 +878,15 @@ const PostCard = ({ className, fallbackAuthor, hideFeedbackAction = false, post,
           <div className="v1-post-card__media-preview-stage">
             {isVideoMedia(activeMedia) ? (
               <PostVideoPlayer
+                key={`post-preview:${post._id}:${currentIndex}:${activeMedia.fileId || activeMedia.url}`}
                 ariaLabel={`Post video ${currentIndex + 1} preview`}
                 className="v1-post-card__media-preview-media"
+                playerId={`post-preview:${post._id}:${currentIndex}:${activeMedia.fileId || activeMedia.url}`}
                 src={activeMedia.url}
                 variant="preview"
               />
             ) : (
-              <img className="v1-post-card__media-preview-media" src={activeMedia.url} alt={`Post content ${currentIndex + 1}`} />
+              <Image className="v1-post-card__media-preview-media" src={activeMedia.url} type="preview" alt={`Post content ${currentIndex + 1}`} />
             )}
           </div>
           <button type="button" className="v1-post-card__media-preview-close" onClick={closeMediaPreview} aria-label="Close media preview">

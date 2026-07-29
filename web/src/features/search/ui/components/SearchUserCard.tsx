@@ -3,6 +3,7 @@ import { memo } from 'react';
 import { Link } from 'react-router-dom';
 
 import type { SearchUser } from '@/features/search/model/search.types';
+import AvatarImage from '@/shared/components/Avatar/AvatarImage';
 import { cn } from '@/shared/utils/cn';
 
 type SearchUserCardProps = {
@@ -29,7 +30,7 @@ const SearchUserCard = ({ currentUserId, index, user }: SearchUserCardProps) => 
         </span>
       )}
       <span className="search-user-card__avatar">
-        {avatarUrl ? <img src={avatarUrl} alt="" /> : <UserRound size={22} aria-hidden="true" />}
+        <AvatarImage src={avatarUrl} fallback={<UserRound size={22} aria-hidden="true" />} />
       </span>
       <span className="search-user-card__body">
         <strong>{user.userName}</strong>

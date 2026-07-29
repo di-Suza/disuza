@@ -4,6 +4,7 @@ import { memo } from 'react';
 import type { Post, PostAuthor } from '@/features/posts/model/post.types';
 import { cn } from '@/shared/utils/cn';
 import PostCard from './PostCard';
+import PostUploadStatusCard from './PostUploadStatusCard';
 import '../posts.css';
 
 type PostListProps = {
@@ -28,7 +29,9 @@ const PostList = ({ className, compact = false, emptyText = 'No posts yet.', fal
   return (
     <div className={cn('post-list', compact && 'post-list--compact', className)}>
       {posts.map((post) => (
-        <PostCard key={post._id} post={post} viewerId={viewerId} fallbackAuthor={fallbackAuthor} compact={compact} />
+        post.uploadState?.status && post.uploadState.status !== 'ready'
+          ? <PostUploadStatusCard key={post._id} post={post} />
+          : <PostCard key={post._id} post={post} viewerId={viewerId} fallbackAuthor={fallbackAuthor} compact={compact} />
       ))}
     </div>
   );

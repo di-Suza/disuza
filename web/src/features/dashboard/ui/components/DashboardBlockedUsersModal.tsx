@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom';
 
 import { useGetBlockedUsersQuery, useUnblockUserMutation } from '@/features/users/api/user.api';
 import type { BlockedUserItem } from '@/features/users/model/user.types';
+import AvatarImage from '@/shared/components/Avatar/AvatarImage';
 import { useLockBodyScroll } from '@/shared/hooks/useLockBodyScroll';
 import { useToast } from '@/shared/hooks/useToast';
 import Button from '@/shared/ui/Button';
@@ -23,7 +24,9 @@ type BlockedUserRowProps = {
   onUnblock: (userId: string) => void;
 };
 
-const getAvatarUrl = (url: unknown): string | null => (typeof url === 'string' && url.trim() ? url : null);
+const getAvatarUrl = (url: unknown): string | null => (
+  typeof url === 'string' && url.trim() ? url : null
+);
 
 const mergeBlockedUsers = (current: BlockedUserItem[], next: BlockedUserItem[]) => {
   const existingIds = new Set(current.map((item) => item._id));
@@ -39,7 +42,7 @@ const BlockedUserRow = memo(({ isUnblocking, item, onClose, onUnblock }: Blocked
     <article className="dashboard-modal__row dashboard-modal__row--action">
       <Link to={`/profile/${item.blockedUser._id}`} className="dashboard-modal__person" onClick={onClose}>
         <span className="user-row__avatar">
-          {avatarUrl ? <img src={avatarUrl} alt="" /> : <UserRound size={18} aria-hidden="true" />}
+          <AvatarImage src={avatarUrl} fallback={<UserRound size={18} aria-hidden="true" />} />
         </span>
         <span>
           <strong>{item.blockedUser.userName}</strong>
