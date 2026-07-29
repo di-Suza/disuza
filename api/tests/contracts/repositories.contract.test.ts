@@ -115,6 +115,8 @@ const expectedRepositories: Record<string, string[]> = {
     'findDashboardPosts',
     'findProfilePosts',
     'updateById',
+    'completeMediaUpload',
+    'failMediaUpload',
     'markDeleting',
     'restoreDeleting',
     'findFeedPosts',
