@@ -365,9 +365,10 @@ button.profile-preview-stat:hover:not(:disabled) {
 .profile-page-panel .profile-posts-section__header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: 12px;
   margin-bottom: 16px;
+  text-align: left;
 }
 
 .profile-page-panel .profile-posts-section__title {
@@ -391,7 +392,7 @@ button.profile-preview-stat:hover:not(:disabled) {
   flex: 0 0 auto;
   place-items: center;
   border-radius: 10px;
-  background: rgba(16, 185, 129, 0.12);
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
   color: var(--accent);
 }
 
@@ -400,10 +401,6 @@ button.profile-preview-stat:hover:not(:disabled) {
   margin: 0;
   color: var(--text-primary);
   font-size: 20px;
-}
-
-.profile-page-panel .profile-posts-section__title > span {
-  background: color-mix(in srgb, var(--accent) 14%, transparent);
 }
 
 .profile-posts-section__see-all {
