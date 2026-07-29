@@ -29,13 +29,14 @@ Repository health commands from the root:
 
 ```bash
 git status --short --branch
+npm test
 npm run check
 npm run build:api
 npm run build:web
 git diff --check
 ```
 
-There is no complete automated test, lint, OpenAPI contract, visual-regression, socket, or worker gate yet. Do not report those gates as passing until they are actually added and run.
+API and web automated tests now run through `npm test` and CI, but they are not a coverage percentage. Lint, full OpenAPI contract validation, visual regression, E2E, socket integration, and worker integration gates remain planned unless a specific branch adds and verifies them.
 
 ## 3. Evidence Record
 
@@ -241,12 +242,13 @@ UI action
 - [ ] Confirm search excludes blocked or invisible resources consistently.
 - [ ] Confirm discovery and typed-search loading/empty states remain separate.
 
-### Messaging and feedback: partial
+### Messaging and feedback
 
 - [ ] Confirm contextual feedback stores its post/profile source and creates or reuses the correct conversation.
 - [ ] Confirm conversation hiding is participant-specific.
 - [ ] Confirm contribution and activity effects are updated with feedback lifecycle changes.
-- [ ] Do not expect realtime delivery, complete read-state synchronization, or full message moderation until those modules are implemented.
+- [ ] Confirm socket fan-out, unread counts, selected-chat read state, typing indicators, pin/leave/delete behavior, and reconnect resync where the flow uses realtime.
+- [ ] Confirm message reporting/unsend actions remain server-authorized and do not bypass block or membership policy.
 
 ## 10. Data Consistency And Cleanup
 
@@ -269,9 +271,9 @@ UI action
 
 Current providers include ImageKit, Resend, Google OAuth, Redis, BullMQ, Socket.IO, Gemini AI generation, and the Piston-compatible code-execution adapter. The default public Piston endpoint is a demo fallback only; if execution fails with the generic client message, first confirm whether `PISTON_API_URL` points to a reliable paid or self-hosted runner before treating the room/editor flow as broken. If AI problem generation fails, confirm `GEMINI_API_KEY`, model availability, provider quota/rate limits, and structured-output validation before treating the room problem flow as broken. TURN-related providers remain planned.
 
-## 12. Realtime, Rooms, And Workers: Planned Baseline
+## 12. Realtime, Rooms, And Workers
 
-Use this checklist when these runtimes are implemented:
+Use this checklist for socket, room, and worker defects:
 
 - [ ] Authenticate socket handshakes and re-check authorization for protected events.
 - [ ] Record event name, acknowledgement, actor, room, resource version, and reconnect state.
@@ -285,15 +287,13 @@ Use this checklist when these runtimes are implemented:
 - [ ] Confirm code execution is backed by a reliable paid or self-hosted runner before claiming production execution support.
 - [ ] Confirm call signaling and TURN behavior without treating peer state as durable product state.
 
-Until implementation exists, debugging should stop at the documented HTTP/persistence boundary and record the missing capability as planned work.
-
 ## 13. Logging And Security
 
 - [ ] Use structured API logs and preserve the relevant timestamp, method, path, status, and safe user/resource context.
-- [ ] Add explicit correlation IDs for sockets, jobs, rooms, and external calls when those runtimes are introduced.
+- [ ] Add explicit correlation IDs for sockets, jobs, rooms, and external calls where the current logs are not enough to trace the defect safely.
 - [ ] Redact Authorization headers, cookies, passwords, OTPs, tokens, provider secrets, and sensitive request bodies.
 - [ ] Return safe client errors while keeping diagnostic detail server-side.
-- [ ] Treat repeated auth, report, upload, message, and future execution failures as possible abuse signals.
+- [ ] Treat repeated auth, report, upload, message, and execution failures as possible abuse signals.
 - [ ] Remove temporary debug logging before commit.
 
 ## 14. Verification Matrix
@@ -307,7 +307,7 @@ Until implementation exists, debugging should stop at the documented HTTP/persis
 | Auth/session | Login, refresh, retry, current logout, logout-all, expired/revoked cases |
 | Data relation/counter | Create, duplicate, delete, failure rollback, authoritative-record check |
 | UI Consistency | Desktop/tablet/mobile comparison plus overflow and modal checks |
-| Future socket/worker | Contract, reconnect/retry, idempotency, multi-instance, durable recovery |
+| Socket/worker | Contract, reconnect/retry, idempotency, multi-instance assumptions, durable recovery |
 
 A bug is closed only when:
 
