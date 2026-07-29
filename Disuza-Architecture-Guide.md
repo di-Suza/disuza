@@ -2,7 +2,7 @@
 
 This document is the architecture source of truth for Disuza. It records the product behavior defined by the Disuza product specification, the structure already implemented in the current codebase, and the boundaries that future work must preserve.
 
-Snapshot date: 2026-07-12
+Snapshot date: 2026-07-29
 
 ## 1. How To Read This Guide
 
@@ -17,10 +17,8 @@ The sources used for this baseline are:
 
 1. The live code, which is the implementation source of truth.
 2. The development log in `docs.md`, which explains when and why work was added.
-3. The project root, backend, and frontend documentation, which define existing product behavior that must be preserved during implementation.
-4. `Collabify-Architecture-Guide.md`, used only as inspiration for documentation discipline, module boundaries, and public APIs.
-
-Collabify's exact stack is not a Disuza requirement. Disuza remains an Express REST API with MongoDB and a React client unless a future architecture decision explicitly changes that choice.
+3. The project root, backend, frontend, contracts, testing, and infrastructure documentation, which define existing product behavior that must be preserved during implementation.
+4. The architecture decision register, which records durable engineering choices and delivery status.
 
 ## 2. Product Definition
 
@@ -67,7 +65,7 @@ Express 5 + TypeScript modular monolith
   +-- BullMQ workers for destructive cleanup
   +-- Socket.IO for chat, notifications, and rooms
   +-- Piston-compatible adapter for room code execution
-  +-- Gemini Interactions structured output for AI-generated room problems
+  +-- Gemini structured generation for AI-generated room problems
   +-- PeerJS/WebRTC room audio signaling
   +-- Planned: production TURN hardening for room audio
 
@@ -130,8 +128,8 @@ disuza/
   api/                              Express and TypeScript backend
   web/                              React, Vite, and TypeScript frontend
   contracts/                        REST/OpenAPI contract baseline
-  tests/                            Test strategy and future test layout
-  .github/workflows/ci.yml          Pull request typecheck and build gate
+  tests/                            Test strategy and coverage notes
+  .github/workflows/ci.yml          Pull request test, typecheck, and build gate
   README.md                         Quick project entry point
   docs.md                           Chronological development journal
   Disuza-Architecture-Guide.md System architecture and product rules
@@ -176,7 +174,7 @@ request
   -> global error handler
 ```
 
-Future socket and worker startup must be composed explicitly. Worker processes must not be hidden as side effects of importing the HTTP app.
+Socket startup and worker startup must be composed explicitly. Worker processes must not be hidden as side effects of importing the HTTP app.
 
 ### 6.3 Current source map
 
@@ -268,14 +266,14 @@ Small modules may omit unnecessary files. The layer pattern is a responsibility 
 | Comments and replies | Implemented | Paginated comments, one-level replies, contribution linkage |
 | Likes | Implemented | User-post relation and count updates |
 | Saves and collections | Implemented | Collection lifecycle and saved-post movement |
-| Reports | Partial | Post and profile reporting; message/admin workflows remain |
+| Reports | Partial | Post, profile, and message reporting; admin workflows remain |
 | Notifications | Partial | Persistent HTTP flow with realtime delivery; richer moderation/admin flows remain |
 | Search and discovery | Implemented | Users, posts, contributors, trending results |
 | Issues | Partial | User submission/history; admin workflow remains |
 | Contributions | Implemented | Heatmap and source-linked contribution records |
 | Chat and feedback | Partial | Feedback persistence/API, realtime messages, unread state, groups, and attachments; admin workflows remain |
 | Rooms and problems | Partial | Personal/collab rooms, problem state, access policy, Yjs sync, Piston-compatible execution adapter, Gemini-backed AI problem generation, presence, room chat, and audio signaling; reliable paid/self-hosted execution runner, production TURN, admin review, and production-grade AI validation remain |
-| Background jobs | Partial | Post, account, and hidden-conversation cleanup workers; broader reconciliation remains |
+| Background jobs | Partial | Post upload processing plus post, account, and hidden-conversation cleanup workers; broader reconciliation remains |
 
 ### 6.6 Infrastructure boundaries
 
@@ -591,7 +589,7 @@ Post/profile feedback modal
   -> conversation is found or created
   -> contextual message is persisted
   -> contribution/activity state is updated
-  -> future realtime delivery emits after durable write
+  -> realtime delivery emits after durable write
 ```
 
 ### 9.5 Destructive cleanup target flow
@@ -631,7 +629,7 @@ The current codebase uses queued cleanup for implemented destructive flows. Broa
 - Sensitive flows receive both IP and identity-aware rate limits where appropriate.
 - Logs must not contain passwords, OTPs, raw tokens, cookies, or provider secrets.
 - Unexpected errors return a safe response while structured logs retain diagnostic context.
-- Authorization checks must be shared by HTTP handlers, future socket handlers, and workers.
+- Authorization checks must be shared by HTTP handlers, socket handlers, and workers.
 
 ## 12. Realtime And Background Work
 
@@ -668,6 +666,7 @@ OpenAPI now has a draft baseline in `contracts/openapi/disuza.yaml`. It is not c
 Current baseline commands:
 
 ```bash
+npm test
 npm run check
 npm run build:api
 npm run build:web
@@ -685,7 +684,7 @@ Target quality layers:
 6. Socket and worker integration tests for reconnect, idempotency, and cleanup.
 7. Visual regression checks for exact product key product surfaces.
 
-CI now runs dependency install, type checking, and API/web builds on pull requests and pushes to `develop` and `main`. Tests, linting, visual checks, and contract validation should be added as their tools are introduced. Docker can be added after feature work, but local infrastructure and deployment process types must remain explicit.
+CI now runs dependency install, API/web tests, type checking, and API/web builds on pull requests and pushes to `develop` and `main`. Linting, coverage reports, visual checks, E2E suites, and contract validation should be added as their tools are introduced. Docker Compose is available for local API/web/MongoDB/Redis runtime wiring while deployment process types remain explicit.
 
 ## 15. Delivery Roadmap
 
@@ -694,7 +693,7 @@ CI now runs dependency install, type checking, and API/web builds on pull reques
 - Keep this guide and the decision register current.
 - Continue moving cross-module imports to public APIs and enforce import boundaries gradually.
 - Expand the draft OpenAPI contract into verified endpoint coverage.
-- Add real automated tests on top of the testing and CI foundation.
+- Expand automated tests on top of the current testing and CI foundation.
 - Add indexes and transaction/reconciliation rules for implemented modules.
 
 ### Messaging and rooms hardening
@@ -710,19 +709,19 @@ CI now runs dependency install, type checking, and API/web builds on pull reques
 - Harden collab requests, room access policy, personal/shared rooms, and problem execution with integration tests.
 - Improve Yjs/Monaco collaboration with cursor awareness and reconnect replay.
 - Track code execution latency, failures, and provider limits after a reliable execution runner is configured.
-- complete production TURN configuration for audio.
+- Complete production TURN configuration for audio.
 
 ### Production hardening
 
 - Cursor pagination for high-growth timelines.
 - Queue and socket observability.
 - Admin moderation and support workflows.
-- Dockerized local infrastructure and deployment manifests.
+- Production image publishing, worker process deployment, and deployment manifests.
 - Security, accessibility, performance, and recovery testing.
 
 ## 16. Debugging Checklist
 
-The complete operational playbook is maintained in `DEBUGGING-GUIDE.md`. It covers evidence capture, symptom triage, layer-by-layer request tracing, auth/session failures, RTK Query cache behavior, domain-specific invariants, data consistency, external providers, security-safe logging, verification gates, and planned realtime/worker diagnostics.
+The complete operational playbook is maintained in `DEBUGGING-GUIDE.md`. It covers evidence capture, symptom triage, layer-by-layer request tracing, auth/session failures, RTK Query cache behavior, domain-specific invariants, data consistency, external providers, security-safe logging, verification gates, realtime diagnostics, and worker diagnostics.
 
 Use the short path below to locate the owning layer, then continue with the detailed guide before closing a defect.
 
