@@ -31,7 +31,7 @@ The current hosted/demo setup depends on the configured Piston-compatible runner
 
 ## AI Problem Generation
 
-Room AI problem generation uses Gemini Interactions structured JSON output through `/api/problem/ai/generate`. The API validates the prompt, confirms room access, rate-limits generation, asks Gemini for one schema-shaped DSA problem, validates the returned fields/test-case shape, and saves it to the shared `problems` collection with `isAIGenerated: true`.
+Room AI problem generation uses Gemini structured JSON generation through `/api/problem/ai/generate`. The API validates the prompt, confirms room access, rate-limits generation, asks Gemini for one schema-shaped DSA problem, validates the returned fields/test-case shape, and saves it to the shared `problems` collection with `isAIGenerated: true`.
 
 Required only when the feature should be enabled:
 
