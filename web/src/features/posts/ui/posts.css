@@ -1014,6 +1014,17 @@
     flex-direction: column;
   }
 
+  .profile-page-panel .profile-posts-section__header {
+    align-items: center;
+    flex-direction: row;
+    justify-content: flex-start;
+    text-align: left;
+  }
+
+  .profile-page-panel .profile-posts-section__title {
+    justify-content: flex-start;
+  }
+
   .dashboard-posts-panel__actions,
   .feed-header__actions,
   .post-card__header-actions {
