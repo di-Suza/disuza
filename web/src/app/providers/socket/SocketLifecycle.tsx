@@ -402,12 +402,17 @@ const SocketLifecycle = () => {
       const isOwnMessage = message.sender === currentUserId;
       const isActiveConversation = isActiveWindow && activeChatId === message.conversationId;
       let conversationWasPresent = false;
+      let conversationWasUnread = false;
 
       dispatch(
         chatApi.util.updateQueryData('getConversations', undefined, (draft) => {
           const conversationIndex = draft.conversations.findIndex((conversation) => conversation._id === message.conversationId);
           conversationWasPresent = conversationIndex !== -1;
           if (conversationIndex === -1) return;
+          conversationWasUnread = Boolean(
+            draft.conversations[conversationIndex].isUnread
+            || Number(draft.conversations[conversationIndex].unreadCount || 0) > 0,
+          );
 
           draft.conversations[conversationIndex].lastMessage = {
             _id: message._id,
@@ -446,7 +451,7 @@ const SocketLifecycle = () => {
         dispatch(chatApi.util.invalidateTags(['Conversations']));
       }
 
-      if (!isOwnMessage && !isActiveConversation) {
+      if (!isOwnMessage && !isActiveConversation && conversationWasPresent && !conversationWasUnread) {
         dispatch(
           chatApi.util.updateQueryData('getUnreadMessagesCount', undefined, (draft) => {
             draft.unreadCount = Number(draft.unreadCount || 0) + 1;

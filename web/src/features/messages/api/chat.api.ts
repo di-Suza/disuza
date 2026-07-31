@@ -587,12 +587,12 @@ export const chatApi = api.injectEndpoints({
       async onQueryStarted(conversationId, { dispatch, getState, queryFulfilled }) {
         const currentUserId = (getState() as { auth?: { user?: { _id?: string } } }).auth?.user?._id || '';
         const seenAt = new Date().toISOString();
-        let clearedUnreadCount = 0;
+        let clearedUnreadConversationCount = 0;
         const conversationPatch = dispatch(
           chatApi.util.updateQueryData('getConversations', undefined, (draft) => {
             const conversation = draft.conversations.find((item) => item._id === conversationId);
             if (conversation) {
-              clearedUnreadCount = Number(conversation.unreadCount || 0);
+              clearedUnreadConversationCount = (conversation.isUnread || Number(conversation.unreadCount || 0) > 0) ? 1 : 0;
               conversation.isUnread = false;
               conversation.unreadCount = 0;
             }
@@ -600,7 +600,7 @@ export const chatApi = api.injectEndpoints({
         );
         const countPatch = dispatch(
           chatApi.util.updateQueryData('getUnreadMessagesCount', undefined, (draft) => {
-            draft.unreadCount = Math.max(0, Number(draft.unreadCount || 0) - clearedUnreadCount);
+            draft.unreadCount = Math.max(0, Number(draft.unreadCount || 0) - clearedUnreadConversationCount);
           }),
         );
         const messagesPatch = currentUserId
