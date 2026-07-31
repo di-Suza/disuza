@@ -83,8 +83,8 @@ const LandingPage = () => (
             collaborative coding rooms from the same product experience.
           </p>
           <div className="landing-v1-actions">
-            <Link to="/auth/signup">
-              Start free
+            <Link to="/auth/signin">
+              Free demo available
               <ArrowRight size={16} aria-hidden="true" />
             </Link>
             <a href="#workflow">See workflow</a>
