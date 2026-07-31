@@ -19,7 +19,7 @@ export const getUnreadMessagesCount = (
 
     if (!hasIncomingUnread) return count;
 
-    return count + Math.max(1, unreadCount);
+    return count + 1;
   }, 0);
 };
 

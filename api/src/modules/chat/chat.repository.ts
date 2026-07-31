@@ -265,7 +265,8 @@ class ChatRepository {
           },
         },
       },
-      { $group: { _id: null, unreadCount: { $sum: '$unreadCount' } } },
+      { $match: { unreadCount: { $gt: 0 } } },
+      { $count: 'unreadCount' },
     ]);
 
     return Number(result?.unreadCount || 0);

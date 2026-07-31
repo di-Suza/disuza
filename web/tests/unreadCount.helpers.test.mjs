@@ -7,7 +7,7 @@ import {
 } from '../dist-tests/shared/hooks/unreadCount.helpers.js';
 
 describe('Unread count hook helpers', () => {
-  it('counts only incoming unread messages and preserves numeric badges', () => {
+  it('counts only incoming unread conversations for message badges', () => {
     const conversations = [
       { isUnread: true, unreadCount: 3, lastMessage: { sender: 'other-1' } },
       { isUnread: true, unreadCount: 0, lastMessage: { sender: 'other-2' } },
@@ -15,7 +15,7 @@ describe('Unread count hook helpers', () => {
       { isUnread: false, unreadCount: 0, lastMessage: { sender: 'other-3' } },
     ];
 
-    assert.equal(getUnreadMessagesCount(conversations, 'viewer-1'), 4);
+    assert.equal(getUnreadMessagesCount(conversations, 'viewer-1'), 2);
   });
 
   it('returns zero without a viewer or conversations', () => {
