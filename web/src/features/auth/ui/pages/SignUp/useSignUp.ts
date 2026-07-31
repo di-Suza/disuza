@@ -78,7 +78,7 @@ export const useSignUp = () => {
       try {
         const result = await googleLogin({ code }).unwrap();
         showSuccess(result.message);
-        navigate('/dashboard', { replace: true });
+        navigate('/home', { replace: true });
       } catch (error) {
         showError(getErrorMessage(error, 'Something went wrong while creating account'));
       }

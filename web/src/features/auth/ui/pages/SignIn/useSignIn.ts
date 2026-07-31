@@ -60,7 +60,7 @@ export const useSignIn = () => {
         const result = await login({ email, password: formData.password }).unwrap();
         showSuccess(result.message);
         setFormData(initialData);
-        navigate('/dashboard', { replace: true });
+        navigate('/home', { replace: true });
       } catch (error) {
         const message = getErrorMessage(error);
         setFormError(message);
@@ -75,7 +75,7 @@ export const useSignIn = () => {
       try {
         const result = await googleLogin({ code }).unwrap();
         showSuccess(result.message);
-        navigate('/dashboard', { replace: true });
+        navigate('/home', { replace: true });
       } catch (error) {
         showError(getErrorMessage(error));
       }

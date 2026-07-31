@@ -164,7 +164,7 @@ export const useOtpVerificationModal = ({
       initialFormDataReset();
       setOtpResponse(null);
       onClose();
-      navigate('/dashboard', { replace: true });
+      navigate('/home', { replace: true });
     } catch (error) {
       setOtpIncorrect(true);
       window.setTimeout(() => setOtpIncorrect(false), 900);
