@@ -8,7 +8,10 @@ import { useToast } from '@/shared/hooks/useToast';
 import { getErrorMessage } from '@/shared/utils/getErrorMessage';
 import { isStrongEnoughPassword, isValidEmail } from '@/shared/utils/authValidation';
 
-const initialData = { email: '', password: '' };
+const initialData = {
+  email: 'rajputsujal992@gmail.com',
+  password: 'demotestpass',
+};
 
 export const useSignIn = () => {
   const navigate = useNavigate();
