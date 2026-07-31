@@ -85,6 +85,17 @@ FeedPostItem.displayName = 'FeedPostItem';
 
 const FEED_RENDER_BATCH_SIZE = 8;
 
+const shufflePostIds = (postIds: string[]) => {
+  const shuffledIds = [...postIds];
+
+  for (let index = shuffledIds.length - 1; index > 0; index -= 1) {
+    const randomIndex = Math.floor(Math.random() * (index + 1));
+    [shuffledIds[index], shuffledIds[randomIndex]] = [shuffledIds[randomIndex], shuffledIds[index]];
+  }
+
+  return shuffledIds;
+};
+
 const preservedHomeFeedView: { feedType: FeedType; scrollY: number; visiblePostCount: number } = {
   feedType: 'all',
   scrollY: 0,
@@ -97,21 +108,50 @@ type FeedVirtualItem =
 
 const FeedPage = () => {
   const [recommendationInsertIndex] = useState(() => Math.floor(Math.random() * 3) + 2);
-  const { feedType, hasMore, isError, isFetching, isLoading, loadMore, posts, refetch, user } = useFeedPage();
+  const { feedType, hasMore, isError, isFetching, isLoading, loadMore, page, posts, refetch, user } = useFeedPage();
   const [visiblePostCount, setVisiblePostCount] = useState(() => (
     preservedHomeFeedView.feedType === feedType ? preservedHomeFeedView.visiblePostCount : FEED_RENDER_BATCH_SIZE
   ));
   const hasRestoredScrollRef = useRef(false);
   const previousFeedTypeRef = useRef(feedType);
+  const shuffledFeedRef = useRef<{ feedType: FeedType; orderedIds: string[]; sourceKey: string }>({ feedType, orderedIds: [], sourceKey: '' });
   const pendingUploads = useAppSelector((state) => state.postUploads.tasks);
   const { data: recommendationsData } = useGetUserRecommendationsQuery({ limit: 12 });
   const recommendations = recommendationsData?.recommendations || EMPTY_RECOMMENDATIONS;
   const hasRecommendations = recommendations.length > 0;
   const pendingPostIds = useMemo(() => new Set(pendingUploads.map((task) => task.postId).filter(Boolean)), [pendingUploads]);
-  const readyPosts = useMemo(() => posts.filter((post) => (
+  const randomizedPosts = useMemo(() => {
+    const currentPostIds = posts.map((post) => post._id).filter(Boolean);
+    const currentPostIdSet = new Set(currentPostIds);
+    const postById = new Map(posts.map((post) => [post._id, post]));
+    const sourceKey = currentPostIds.join('|');
+
+    if (shuffledFeedRef.current.feedType !== feedType || (page <= 1 && shuffledFeedRef.current.sourceKey !== sourceKey)) {
+      shuffledFeedRef.current = {
+        feedType,
+        orderedIds: shufflePostIds(currentPostIds),
+        sourceKey,
+      };
+    } else {
+      const retainedIds = shuffledFeedRef.current.orderedIds.filter((postId) => currentPostIdSet.has(postId));
+      const retainedIdSet = new Set(retainedIds);
+      const newIds = currentPostIds.filter((postId) => !retainedIdSet.has(postId));
+
+      shuffledFeedRef.current = {
+        feedType,
+        orderedIds: [...retainedIds, ...shufflePostIds(newIds)],
+        sourceKey,
+      };
+    }
+
+    return shuffledFeedRef.current.orderedIds
+      .map((postId) => postById.get(postId))
+      .filter((post): post is Post => Boolean(post));
+  }, [feedType, page, posts]);
+  const readyPosts = useMemo(() => randomizedPosts.filter((post) => (
     (post.uploadState?.status === undefined || post.uploadState.status === 'ready')
     && !pendingPostIds.has(post._id)
-  )), [pendingPostIds, posts]);
+  )), [pendingPostIds, randomizedPosts]);
   const inlineRecommendationIndex = readyPosts.length >= 2 ? Math.min(recommendationInsertIndex, readyPosts.length) : null;
   const visiblePosts = useMemo(() => readyPosts.slice(0, visiblePostCount), [readyPosts, visiblePostCount]);
   const feedItems = useMemo<FeedVirtualItem[]>(() => {
