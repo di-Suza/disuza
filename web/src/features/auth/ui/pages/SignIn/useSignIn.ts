@@ -8,7 +8,10 @@ import { useToast } from '@/shared/hooks/useToast';
 import { getErrorMessage } from '@/shared/utils/getErrorMessage';
 import { isStrongEnoughPassword, isValidEmail } from '@/shared/utils/authValidation';
 
-const initialData = { email: '', password: '' };
+const initialData = {
+  email: 'rajputsujal992@gmail.com',
+  password: 'demotestpass',
+};
 
 export const useSignIn = () => {
   const navigate = useNavigate();
@@ -57,7 +60,7 @@ export const useSignIn = () => {
         const result = await login({ email, password: formData.password }).unwrap();
         showSuccess(result.message);
         setFormData(initialData);
-        navigate('/dashboard', { replace: true });
+        navigate('/home', { replace: true });
       } catch (error) {
         const message = getErrorMessage(error);
         setFormError(message);
@@ -72,7 +75,7 @@ export const useSignIn = () => {
       try {
         const result = await googleLogin({ code }).unwrap();
         showSuccess(result.message);
-        navigate('/dashboard', { replace: true });
+        navigate('/home', { replace: true });
       } catch (error) {
         showError(getErrorMessage(error));
       }

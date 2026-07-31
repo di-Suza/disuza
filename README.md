@@ -12,15 +12,15 @@ Disuza is a TypeScript-first real-time social and collaboration platform for dev
 
 ## Documentation
 
-- [Architecture guide](./Disuza-Architecture-Guide.md)
-- [Architecture decision register](./ARCHITECTURE-DECISIONS.md)
-- [Debugging guide](./DEBUGGING-GUIDE.md)
+- [Architecture guide](./docs/Disuza-Architecture-Guide.md)
+- [Architecture decision register](./docs/ARCHITECTURE-DECISIONS.md)
+- [Debugging guide](./docs/DEBUGGING-GUIDE.md)
 - [API contracts](./contracts/README.md)
 - [Testing strategy](./tests/README.md)
-- [Deployment guide](./DEPLOYMENT.md)
-- [Production notes and demo limitations](./PRODUCTION_NOTES.md)
-- [Future plan](./FUTUREPLAN.md)
-- [Development journey](./docs.md)
+- [Deployment guide](./docs/DEPLOYMENT.md)
+- [Production notes and demo limitations](./docs/PRODUCTION_NOTES.md)
+- [Future plan](./docs/FUTUREPLAN.md)
+- [Development journey](./docs/docs.md)
 
 ## Current Demo Limitations
 
