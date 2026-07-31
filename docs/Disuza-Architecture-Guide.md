@@ -128,13 +128,10 @@ disuza/
   api/                              Express and TypeScript backend
   web/                              React, Vite, and TypeScript frontend
   contracts/                        REST/OpenAPI contract baseline
+  docs/                             Project documentation, decisions, metrics, and playbooks
   tests/                            Test strategy and coverage notes
   .github/workflows/ci.yml          Pull request test, typecheck, and build gate
   README.md                         Quick project entry point
-  docs.md                           Chronological development journal
-  Disuza-Architecture-Guide.md System architecture and product rules
-  ARCHITECTURE-DECISIONS.md         Architecture decision register
-  DEBUGGING-GUIDE.md                Operational troubleshooting playbook
   package.json                      Root development commands
 ```
 

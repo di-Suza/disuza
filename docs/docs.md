@@ -1645,7 +1645,7 @@ Added:
 
 Documentation sources:
 
-- project root `README.md` and `docs.md`
+- project root `README.md` and `docs/docs.md`
 - live API and web source code
 - project root, contracts, testing, and infrastructure documentation
 - this development journal
