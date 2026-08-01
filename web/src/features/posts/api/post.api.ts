@@ -131,6 +131,7 @@ export const postApi = api.injectEndpoints({
         currentArg?.page !== previousArg?.page
         || currentArg?.type !== previousArg?.type
         || currentArg?.limit !== previousArg?.limit
+        || currentArg?.excludePostIds?.join(',') !== previousArg?.excludePostIds?.join(',')
       ),
       providesTags: ['Feed'],
     }),
