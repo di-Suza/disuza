@@ -4,18 +4,7 @@ import { useSearchParams } from 'react-router-dom';
 import { useAppSelector } from '@/app/store/hooks';
 import { useGetFeedQuery } from '@/features/posts/api/post.api';
 import type { FeedType } from '@/features/posts/model/post.types';
-
-type FeedPaginationState = {
-  feedType: FeedType;
-  loadedPostIds: string[];
-  page: number;
-};
-
-const preservedFeedPagination: FeedPaginationState = {
-  feedType: 'all',
-  loadedPostIds: [],
-  page: 1,
-};
+import { preservedFeedPagination, resetPreservedFeedPagination } from '@/features/posts/state/feedPaginationState';
 
 export const useFeedPage = () => {
   const user = useAppSelector((state) => state.auth.user);
@@ -30,6 +19,14 @@ export const useFeedPage = () => {
     [feedType, loadedPostIds, page],
   );
   const { data, isError, isFetching, isLoading, refetch } = useGetFeedQuery(feedQueryArgs);
+  const shouldRecoverFromEmptyPage = Boolean(
+    data
+    && !isFetching
+    && !isLoading
+    && page > 1
+    && loadedPostIds.length > 0
+    && (data.posts?.length || 0) === 0,
+  );
 
   useEffect(() => {
     if (preservedFeedPagination.feedType !== feedType) {
@@ -62,6 +59,26 @@ export const useFeedPage = () => {
     setPage(1);
   }, [page, refetch]);
 
+  const resetFeed = useCallback(() => {
+    resetPreservedFeedPagination(feedType);
+    setLoadedPostIds([]);
+
+    if (page === 1) {
+      refetch();
+      return;
+    }
+
+    setPage(1);
+  }, [feedType, page, refetch]);
+
+  useEffect(() => {
+    if (!shouldRecoverFromEmptyPage) return;
+
+    resetPreservedFeedPagination(feedType);
+    setLoadedPostIds([]);
+    setPage(1);
+  }, [feedType, shouldRecoverFromEmptyPage]);
+
   useEffect(() => {
     const ids = data?.posts?.map((post) => post._id).filter(Boolean) || [];
     if (ids.length === 0 && loadedPostIds.length === 0) return;
@@ -82,11 +99,12 @@ export const useFeedPage = () => {
     hasMore: Boolean(data?.hasMore),
     isError,
     isFetching,
-    isLoading,
+    isLoading: isLoading || shouldRecoverFromEmptyPage,
     loadMore,
     page,
     posts: data?.posts || [],
     refetch: refresh,
+    resetFeed,
     user,
-  }), [data?.hasMore, data?.posts, feedType, isError, isFetching, isLoading, loadMore, page, refresh, user]);
+  }), [data?.hasMore, data?.posts, feedType, isError, isFetching, isLoading, loadMore, page, refresh, resetFeed, shouldRecoverFromEmptyPage, user]);
 };

@@ -108,7 +108,7 @@ type FeedVirtualItem =
 
 const FeedPage = () => {
   const [recommendationInsertIndex] = useState(() => Math.floor(Math.random() * 3) + 2);
-  const { feedType, hasMore, isError, isFetching, isLoading, loadMore, page, posts, refetch, user } = useFeedPage();
+  const { feedType, hasMore, isError, isFetching, isLoading, loadMore, page, posts, refetch, resetFeed, user } = useFeedPage();
   const [visiblePostCount, setVisiblePostCount] = useState(() => (
     preservedHomeFeedView.feedType === feedType ? preservedHomeFeedView.visiblePostCount : FEED_RENDER_BATCH_SIZE
   ));
@@ -116,6 +116,7 @@ const FeedPage = () => {
   const previousFeedTypeRef = useRef(feedType);
   const shuffledFeedRef = useRef<{ feedType: FeedType; orderedIds: string[]; sourceKey: string }>({ feedType, orderedIds: [], sourceKey: '' });
   const pendingUploads = useAppSelector((state) => state.postUploads.tasks);
+  const previousPendingUploadCountRef = useRef(pendingUploads.length);
   const { data: recommendationsData } = useGetUserRecommendationsQuery({ limit: 12 });
   const recommendations = recommendationsData?.recommendations || EMPTY_RECOMMENDATIONS;
   const hasRecommendations = recommendations.length > 0;
@@ -181,6 +182,15 @@ const FeedPage = () => {
     if (!user) return undefined;
     return { _id: user._id, userName: user.userName, profilePicture: user.profilePicture, headline: user.headline };
   }, [user]);
+
+  useEffect(() => {
+    const previousPendingUploadCount = previousPendingUploadCountRef.current;
+    previousPendingUploadCountRef.current = pendingUploads.length;
+
+    if (previousPendingUploadCount > pendingUploads.length) {
+      resetFeed();
+    }
+  }, [pendingUploads.length, resetFeed]);
 
   useEffect(() => {
     if (previousFeedTypeRef.current === feedType) return;
@@ -260,7 +270,7 @@ const FeedPage = () => {
           <><PostCardSkeleton /><PostCardSkeleton /></>
         ) : isError ? (
           <div className="post-empty-state"><RefreshCw size={24} aria-hidden="true" /><p>Feed could not be loaded.</p><button type="button" onClick={() => refetch()}>Retry</button></div>
-        ) : readyPosts.length === 0 && pendingUploads.length === 0 ? (
+        ) : readyPosts.length === 0 && pendingUploads.length === 0 && !isFetching ? (
           <p className="home-feed-exact__empty">{feedType === 'following' ? 'No posts from people you follow yet' : 'No posts yet'}</p>
         ) : (
           <>
